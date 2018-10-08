@@ -656,7 +656,7 @@ sf.model = new function(){
     self.queuePreprocess = function(targetNode = false){
         var childNodes = (targetNode || document.body).childNodes;
 
-        var excludes = ['html','head','style','title','link','meta','script','object','iframe'];
+        var excludes = ['html','head','style','link','meta','script','object','iframe'];
         for (var i = 0; i < excludes.length; i++) {
             excludes[i] = excludes[i].toUpperCase();
         }

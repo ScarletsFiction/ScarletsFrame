@@ -125,7 +125,7 @@ sf.router = new function(){
     var currentRouterURL = '';
     var LazyRouter = function(path){
         for (var i = 0; i < onEvent['loading'].length; i++) {
-            onEvent['loading'][i]();
+            onEvent['loading'][i](path);
         }
         var oldPath = window.location.pathname;
         initialized = false;
@@ -185,10 +185,10 @@ sf.router = new function(){
                 self.currentPage = name;
                 currentRouterURL = path;
             },
-            error:function(){
+            error:function(e){
                 window.history.replaceState(null, "", oldPath);
                 for (var i = 0; i < onEvent['error'].length; i++) {
-                    onEvent['error'][i]();
+                    onEvent['error'][i](e);
                 }
             }
         });
