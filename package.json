@@ -1,0 +1,29 @@
+{
+  "name": "scarletsframe",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
+  },
+  "author": "Stefanus Arya CG",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ScarletsFiction/ScarletsFrame/issues"
+  },
+  "browserslist": [
+    "Android > 4",
+    "IOS >= 7",
+    "last 2 versions",
+    "ie >= 10"
+  ],
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-autoprefixer": "*",
+    "gulp-header": "*",
+    "gulp-csso": "*",
+    "browser-sync": "*",
+    "gulp-concat": "*",
+    "gulp-sourcemaps": "*",
+    "gulp-uglify-es": "*"
+  }
+}
