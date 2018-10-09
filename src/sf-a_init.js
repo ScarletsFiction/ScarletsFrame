@@ -8,9 +8,6 @@ if(typeof sf === 'undefined'){
 
 setTimeout(function(){
 	sf(function(){
-		sf.model.queuePreprocess();
-		sf.model.parsePreprocess();
-
 		$('[sf-controller]').each(function(){
 			sf.router.init(this.attributes['sf-controller'].value);
 		});
