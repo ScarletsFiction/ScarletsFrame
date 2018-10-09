@@ -58,28 +58,29 @@ sf.model = new function(){
 
 	// For contributor of this library
 	// Please be careful when you're passing the eval argument
-	var dataParser = function(html, model, mask, scope, runEval = ''){
+	var dataParser = function(html, _model_, mask, scope, runEval = ''){
+		var _modelScope = sf.model.root[scope];
+
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
 
 		if(mask)
 			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
 
 		bindingEnabled = true;
 
-		var _modelScope = sf.model.root[scope];
 		return html.replace(/{{([^@].*?)}}/g, function(actual, temp){
+
+			// Mask item variable
+			if(mask)
+				temp = temp.replace(itemMask, function(matched){
+					return '_model_.'+matched[0].slice(1);
+				});
+
 			// Mask model for variable
 			temp = temp.replace(scopeMask, function(full, matched){
 				return '_modelScope.'+matched;
 			});
-
-			// Mask item variable
-			if(mask){
-				temp = temp.replace(itemMask, function(matched){
-					return 'model.'+matched[0].slice(1);
-				});
-			}
 
 			// Prevent vulnerability by remove bracket to avoid a function call
 			temp = temp.split('(').join('').split(')').join('');
@@ -91,7 +92,7 @@ sf.model = new function(){
 		});
 	}
 
-	var uniqueDataParser = function(html, model, mask, scope){
+	var uniqueDataParser = function(html, _model_, mask, scope){
 		// Get prepared html content
 		var _content_ = {
 			length:0,
@@ -115,7 +116,7 @@ sf.model = new function(){
 				// Disable function call for addional security eval protection
 				strDeclare = strDeclare.split('(').join('').split(')').join('');
 
-				return dataParser(this[currentIndex], model, mask, scope, strDeclare + ';');
+				return dataParser(this[currentIndex], _model_, mask, scope, strDeclare + ';');
 			}
 		};
 
@@ -130,25 +131,25 @@ sf.model = new function(){
 			return 'result += _content_.take('+VarPass+', '+(_content_.length - 1)+');';
 		});
 
-		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
 		var _modelScope = sf.model.root[scope];
+
+		// Don't match text inside quote, or object keys
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
 
 		if(mask)
 			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
 
 		return html.replace(/{{(@.*?)}}/gs, function(actual, temp){
+			// Mask item variable
+			if(mask)
+				temp = temp.replace(itemMask, function(matched){
+					return '_model_.'+matched[1].slice(1);
+				});
+
 			// Mask model for variable
 			temp = temp.replace(scopeMask, function(matched){
 				return '_modelScope.'+matched[1].slice(1);
 			});
-
-			// Mask item variable
-			if(mask){
-				temp = temp.replace(itemMask, function(matched){
-					return 'model.'+matched[1].slice(1);
-				});
-			}
 
 			// Prevent vulnerability by remove bracket to avoid a function call
 			temp = temp.split(':');
@@ -299,6 +300,8 @@ sf.model = new function(){
 		}
 		var propertyProxy = function(subject, name){
 			Object.defineProperty(subject, name, {
+				enumerable: true,
+				configurable: true,
 				value: function(){
 					var temp = undefined;
 
@@ -435,7 +438,10 @@ sf.model = new function(){
 		});
 	}
 
-	self.init = function(){
+	self.init = function(targetNode = false){
+		sf.model.queuePreprocess(targetNode);
+		sf.model.parsePreprocess(targetNode);
+
 		$('[sf-repeat-this]').each(function(){
 			var self = $(this);
 			var parent = self.parent();
@@ -477,55 +483,85 @@ sf.model = new function(){
 		if(!bindingEnabled || !bindRef.length) return;
 
 		var element = e.target;
-		$(element).find('[sf-bind-id]').each(function(){
-			removeBinding(this);
+		var models = [];
+		$(element).find('[sf-controller]').each(function(){
+			models.push(this.attributes['sf-controller'].value);
 		});
+
+		if(element.attributes && element.attributes['sf-controller'])
+			models.push(element.attributes['sf-controller'].value);
+
+		$(element).find('[sf-bind-id], [sf-bind-list], [sf-bounded], [sf-repeat-this]').each(function(){
+			removeBinding(this, models);
+		});
+
 		removeBinding(element);
 	});
-	document.addEventListener('DOMNodeInserted', function(e){
-		if(!bindingEnabled) return;
-		
-		var element = e.target;
-		if(element.outerHTML && element.outerHTML.indexOf('{{') !== -1){
-			var elem = $(element);
-			var model = elem.parents('sf-model');
 
-			if(!model.length)
-				model = elem.parents('sf-controller');
-			if(!model.length)
+	var removeBinding = function(element, modelNames = false){
+		if(!element.attributes) return;
+
+		var attrs = element.attributes;
+		if(attrs['sf-bind-id']){
+			var id = attrs['sf-bind-id'].value;
+
+			if(!bindRef[id]) return;
+			var ref = bindRef[id];
+			
+			if(bindRef.cache[id].created >= Date.now() - 3000)
 				return;
 
-			// Process data binding
+			for (var i = 0; i < ref.length; i++) {
+				var value = ref[i].object[ref[i].propertyName];
+				Object.defineProperty(ref[i].object, ref[i].propertyName, {
+					value:value
+				});
+			}
+
+			delete bindRef[id];
+
+			// Remove callback left
+			var cache = bindRef.cache
+			for(var i in cache){
+				if(cache[i].callback && cache[i].callback[id])
+					delete cache[i].callback[id];
+				if(cache[i].callback.length === 0)
+					delete cache[i];
+			}
+
+			if(cache[id]){
+				delete cache[id].attrs;
+				delete cache[id].innerHTML;
+				delete cache[id].modelName;
+				delete cache[id].model;
+				delete cache[id].created;
+				delete cache[id].element;
+			}
+
+			bindRef.length--;
 		}
-	});
 
-	var removeBinding = function(element){
-		if(!element.attributes || !element.attributes['sf-bind-id']) return;
+		if(!modelNames) return;
 
-		var id = element.attributes['sf-bind-id'].value;
-		if(!bindRef[id]) return;
-		var ref = bindRef[id];
-		
-		if(bindRef.cache[id].created >= Date.now() - 3000)
-			return;
+		var propertyName = false;
+		if(attrs['sf-bind-list'])
+			propertyName = attrs['sf-bind-list'].value;
 
-		for (var i = 0; i < ref.length; i++) {
-			var value = ref[i].object[ref[i].propertyName];
-			Object.defineProperty(ref[i].object, ref[i].propertyName, {
+		if(attrs['sf-repeat-this'])
+			propertyName = attrs['sf-repeat-this'].value.split(' in ')[1];
+
+		if(attrs['sf-bounded'])
+			propertyName = attrs['sf-bounded'].value;
+
+		for (var i = 0; i < modelNames.length; i++) {
+			var modelRef = self.root[modelNames[i]];
+			if(!modelRef[propertyName]) continue;
+
+			var value = modelRef[propertyName];
+			Object.defineProperty(modelRef, propertyName, {
 				value:value
 			});
 		}
-
-		delete bindRef[id];
-
-		// Remove callback left
-		var cache = bindRef.cache
-		for(var i in cache){
-			if(cache[i].callback && cache[i].callback[id])
-				delete cache[i].callback[id];
-		}
-
-		bindRef.length--;
 	}
 
 	/*{
@@ -668,10 +704,11 @@ sf.model = new function(){
 				continue;
 
 			if(currentNode.nodeType === 1){ // Tag
-				if(currentNode.attributes['sf-repeat-this']) continue;
+				var attrs = currentNode.attributes;
+				if(attrs['sf-bind-id'] || attrs['sf-repeat-this'] || attrs['sf-bind-list']) continue;
 
-				for (var a = 0; a < currentNode.attributes.length; a++) {
-					if(currentNode.attributes[a].value.indexOf('{{') !== -1){
+				for (var a = 0; a < attrs.length; a++) {
+					if(attrs[a].value.indexOf('{{') !== -1){
 						currentNode.setAttribute('sf-preprocess', 'attronly');
 						temp.push(currentNode);
 					}
