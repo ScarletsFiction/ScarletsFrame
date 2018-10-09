@@ -1,53 +1,53 @@
 if(typeof sf === 'undefined'){
-    sf = function(){
-        if(arguments[0].constructor === Function){
-            return sf.loader.onFinish.apply(null, arguments);
-        }
-    };
+	sf = function(){
+		if(arguments[0].constructor === Function){
+			return sf.loader.onFinish.apply(null, arguments);
+		}
+	};
 }
 
 setTimeout(function(){
-    sf(function(){
-        sf.model.queuePreprocess();
-        sf.model.parsePreprocess();
+	sf(function(){
+		sf.model.queuePreprocess();
+		sf.model.parsePreprocess();
 
-        $('[sf-controller]').each(function(){
-            sf.router.init(this.attributes['sf-controller'].value);
-        });
-    });
+		$('[sf-controller]').each(function(){
+			sf.router.init(this.attributes['sf-controller'].value);
+		});
+	});
 }, 10);
 
 // Add animate.css feature on jQuery
 $.fn.extend({
   animateCSS: function(animationName, callback, duration) {
-    var self = this;
-    var animationEnd = {
-        animation: 'animationend',
-        OAnimation: 'oAnimationEnd',
-        MozAnimation: 'mozAnimationEnd',
-        WebkitAnimation: 'webkitAnimationEnd',
-    };
+	var self = this;
+	var animationEnd = {
+		animation: 'animationend',
+		OAnimation: 'oAnimationEnd',
+		MozAnimation: 'mozAnimationEnd',
+		WebkitAnimation: 'webkitAnimationEnd',
+	};
 
-    for (var t in animationEnd)
-        if (self[0].style[t] !== undefined){
-            animationEnd = animationEnd[t];
-            break;
-        }
+	for (var t in animationEnd)
+		if (self[0].style[t] !== undefined){
+			animationEnd = animationEnd[t];
+			break;
+		}
 
-    if(duration)
-        self.css('-webkit-animation-duration', duration+'s').css('animation-duration', duration+'s');
+	if(duration)
+		self.css('-webkit-animation-duration', duration+'s').css('animation-duration', duration+'s');
 
-    self.addClass('animated ' + animationName).one(animationEnd, function(){
-        setTimeout(function(){
-            $(self).removeClass('animated ' + animationName);
-        }, 1);
+	self.addClass('animated ' + animationName).one(animationEnd, function(){
+		setTimeout(function(){
+			$(self).removeClass('animated ' + animationName);
+		}, 1);
 
-        if(duration)
-            $(self).css('-webkit-animation-duration', '').css('animation-duration', '');
+		if(duration)
+			$(self).css('-webkit-animation-duration', '').css('animation-duration', '');
 
-        if (typeof callback === 'function') callback();
-    });
+		if (typeof callback === 'function') callback();
+	});
 
-    return self;
+	return self;
   }
 });
