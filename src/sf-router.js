@@ -1,6 +1,7 @@
 sf.router = new function(){
 	var self = this;
 	self.loading = false;
+	self.enabled = false;
 	self.currentPage = '';
 	var initialized = false;
 	var lazyRouting = false;
@@ -23,6 +24,20 @@ sf.router = new function(){
 		initialized = true;
 		self.currentPage = name;
 		currentRouterURL = path;
+	}
+
+	self.enable = function(status = true){
+		self.enabled = status;
+
+		if(status)
+			self.lazy();
+		else{
+			$('a[href][onclick]').each(function(){
+				var current = $(this);
+				if(current.attr('onclick') === 'return sf.router.load(this)')
+					current.removeAttr('onclick');
+			});
+		}
 	}
 
 	var before = {};
@@ -54,7 +69,7 @@ sf.router = new function(){
 	}
 
 	// Running 'before' new page going to be displayed
-	var beforeEvent = function(name){
+	var beforeEvent = function(name, DOMReference = false){
 		// Load controller
 		sf.controller.run(name);
 
@@ -68,7 +83,7 @@ sf.router = new function(){
 		}
 
 		// Init model binding
-		sf.model.init(name);
+		sf.model.init(DOMReference);
 	}
 
 	// Running 'after' old page going to be removed
@@ -102,6 +117,8 @@ sf.router = new function(){
 		}
 	*/
 	self.lazy = function(){
+		if(!self.enabled) return;
+
 		$('a[href]:not([onclick])').each(function(){
 			var url = this.href;
 			if(url.indexOf('#') !== -1)
@@ -132,6 +149,9 @@ sf.router = new function(){
 
 		if(RouterLoading) RouterLoading.abort();
 		RouterLoading = loadURL(window.location.origin + path, {
+            data:{
+                _scarlets:'.dynamic.'
+            },
 			success:function(data){
 				if(initialized) return;
 				lazyRouting = true;
@@ -189,7 +209,7 @@ sf.router = new function(){
 				self.lazy();
 
 				// Run 'before' event for new page view
-				beforeEvent(name, DOMReference);
+				beforeEvent(name, DOMReference[0]);
 
 				initialized = true;
 				lazyRouting = false;
