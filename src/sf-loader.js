@@ -28,20 +28,38 @@ sf.loader = new function(){
 	}
 
 	self.css = function(list){
+		if(self.DOMWasLoaded){
+			// check if some list was loaded
+			for (var i = list.length - 1; i >= 0; i--) {
+				if($('link[href*="'+list[i]+'"]').length!==0)
+					list.splice(i, 1);
+			}
+			if(list.length === 0) return;
+		}
 		self.totalContent = self.totalContent + list.length;
 		var temp = '';
 		for(var i = 0; i < list.length; i++){
 			temp += '<link onload="sf.loader.f(this)" rel="stylesheet" href="'+list[i]+'">';
 		}
+
 		document.getElementsByTagName('head')[0].innerHTML += temp;
 	}
 
 	self.js = function(list, target = 'head'){
+		if(self.DOMWasLoaded){
+			// check if some list was loaded
+			for (var i = list.length - 1; i >= 0; i--) {
+				if($('script[src*="'+list[i]+'"]').length!==0)
+					list.splice(i, 1);
+			}
+			if(list.length === 0) return;
+		}
 		self.totalContent = self.totalContent + list.length;
 		var text = '';
 		for(var i = 0; i < list.length; i++){
 			text += '<script onload="sf.loader.f(this)" type="text/'+'javascript" src="'+list[i]+'"></'+'script>';
 		}
+
 		$(text).appendTo(target);
 	}
 
@@ -58,3 +76,11 @@ sf.loader = new function(){
 	}, 100);
 };
 sf.prototype.constructor = sf.loader.onFinish;
+
+// Find images
+$(function(){
+	$('img:not(onload)[src]').each(function(){
+		sf.loader.totalContent++;
+		this.setAttribute('onload', "sf.loader.f(this)");
+	});
+});
