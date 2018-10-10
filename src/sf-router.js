@@ -2,28 +2,28 @@ sf.router = new function(){
 	var self = this;
 	self.loading = false;
 	self.enabled = false;
-	self.currentPage = '';
+	self.currentPage = [];
 	var initialized = false;
 	var lazyRouting = false;
 
 	// Should be called if not using lazy page load
-	self.init = function(name){
+	self.init = function(){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
-				self.init(name);
+				self.init();
 			});
-
-		var path = window.location.pathname;
 
 		// Reinit lazy router
 		self.lazy();
 
-		// Run 'before' event foxr new page view
-		beforeEvent(name);
+		// Run 'before' event for new page view
+		$('[sf-page]').each(function(){
+			var name = this.attributes['sf-page'].value;
+			beforeEvent(name);
+		});
 
 		initialized = true;
-		self.currentPage = name;
-		currentRouterURL = path;
+		currentRouterURL = window.location.pathname;
 	}
 
 	self.enable = function(status = true){
@@ -70,30 +70,36 @@ sf.router = new function(){
 
 	// Running 'before' new page going to be displayed
 	var beforeEvent = function(name, DOMReference = false){
-		// Load controller
-		sf.controller.run(name);
+		if(self.currentPage.indexOf(name) === -1)
+			self.currentPage.push(name);
+
+		// Init all controller
+		sf.controller.init();
+
+		// Init template to model binding
+		sf.model.init(DOMReference);
 
 		if(before[name]){
 			if(!sf.model.root[name])
 				sf.model.root[name] = {};
 
 			for (var i = 0; i < before[name].length; i++) {
-				before[name][i](sf.model.root[name], sf.model.root);
+				before[name][i](sf.model.root);
 			}
 		}
-
-		// Init model binding
-		sf.model.init(DOMReference);
 	}
 
 	// Running 'after' old page going to be removed
 	var afterEvent = function(){
+		if(self.currentPage.indexOf(name) === -1)
+			self.currentPage.splice(self.currentPage.indexOf(name), 1);
+
 		if(self.currentPage !== '' && after[self.currentPage]){
 			if(!sf.model.root[self.currentPage])
 				sf.model.root[self.currentPage] = {};
 
 			for (var i = 0; i < after[self.currentPage].length; i++) {
-				after[self.currentPage][i](sf.model.root[self.currentPage], sf.model.root);
+				after[self.currentPage][i](sf.model.root);
 			}
 		}
 	}
@@ -156,9 +162,6 @@ sf.router = new function(){
 				if(initialized) return;
 				lazyRouting = true;
 
-				// Run 'after' event for old page view
-				afterEvent();
-
 				// Run 'loaded' event
 				RouterLoading = false;
 				var skipLazyView = false;
@@ -175,8 +178,10 @@ sf.router = new function(){
 								if(currentRouterURL.indexOf(oldURL) !== -1){
 									// Put new view
 									DOMReference = $(self.lazyViewPoint[oldURL][newURL]);
-									DOMReference.html(data);
 
+									// Run 'after' event for old page view
+									afterEvent(DOMReference.find('[sf-page]'));
+									DOMReference.html(data);
 									found = true;
 									break;
 								}
@@ -190,6 +195,9 @@ sf.router = new function(){
 						// Use fallback if exist
 						if(sf.router.lazyViewPoint["@default"]){
 							DOMReference = $(sf.router.lazyViewPoint["@default"]);
+
+							// Run 'after' event for old page view
+							afterEvent(DOMReference.find('[sf-page]'));
 							DOMReference.html(data);
 							found = true;
 						}
@@ -209,12 +217,17 @@ sf.router = new function(){
 				self.lazy();
 
 				// Run 'before' event for new page view
-				beforeEvent(name, DOMReference[0]);
+				DOMReference.find('[sf-controller], [sf-page]').each(function(){
+					if(this.attributes['sf-controller'])
+						sf.controller.run(this.attributes['sf-controller'].value);
+
+					if(this.attributes['sf-page'])
+						beforeEvent(this.attributes['sf-page'].value, DOMReference[0]);
+				});
 
 				initialized = true;
 				lazyRouting = false;
 
-				self.currentPage = name;
 				currentRouterURL = path;
 			},
 			error:function(e){
