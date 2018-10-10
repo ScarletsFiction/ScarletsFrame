@@ -1,34 +1,8 @@
 // Data save and HTML content binding
 sf.model = new function(){
 	var self = this;
-	self.root = {};
-
 	var bindingEnabled = false;
-
-	self.fromElement = function(element, func = false){
-		var elem = $(element);
-		var model = sf.controller.fromElement(element);
-
-		if(!model)
-			throw 'model or controller was not found';
-
-		var bindedList = elem.attr('[sf-bind-list]');
-		if(!bindedList)
-			bindedList = elem.parents('[sf-bind-list]').attr('sf-bind-list');
-
-		if(!bindedList){
-			if(func) return func(self.root[model], -1);
-			else return self.root[model];
-		}
-
-		// Find index
-		var bindedListIndex = 0;
-		if(bindedList)
-			bindedListIndex = elem.parents('[sf-bind-list]').prevAll('[sf-bind-list]').length;
-
-		if(func) return func(self.root[model][bindedList], bindedListIndex);
-		else return self.root[model][bindedList][bindedListIndex];
-	}
+	self.root = {};
 
 	self.for = function(name, func){
 		if(!self.root[name])
