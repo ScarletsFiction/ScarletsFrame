@@ -78,9 +78,15 @@ sf.router.after('todo.page', function(){
 
 Here you can listen if any page was loaded, loading, or load error
 ```js
-sf.router.on('error', function(error){ ... });
-sf.router.on('loading', function(path){ ... });
-sf.router.on('loaded', function(currentRouterURL, path, data){ ... });
+sf.router.on('loading', function(target) {
+    console.log("Loading path to " + target);
+});
+sf.router.on('loaded', function(current, target) {
+    console.log("Navigated from " + current + " to " + target);
+});
+sf.router.on('error', function(e) {
+    console.log("Navigation failed", e);
+});
 ```
 
 Find href link redirect from DOM and listen to it if it can be accepted for lazy router
