@@ -300,7 +300,7 @@ sf.model = new function(){
 		}
 		var propertyProxy = function(subject, name){
 			Object.defineProperty(subject, name, {
-				enumerable: true,
+				enumerable: false,
 				configurable: true,
 				value: function(){
 					var temp = undefined;
@@ -507,13 +507,11 @@ sf.model = new function(){
 
 			if(!bindRef[id]) return;
 			var ref = bindRef[id];
-			
-			if(bindRef.cache[id].created >= Date.now() - 3000)
-				return;
 
-			for (var i = 0; i < ref.length; i++) {
-				var value = ref[i].object[ref[i].propertyName];
-				Object.defineProperty(ref[i].object, ref[i].propertyName, {
+			for (var i = 0; i < ref.propertyName.length; i++) {
+				var value = ref.object[ref.propertyName[i]];
+				Object.defineProperty(ref.object, ref.propertyName[i], {
+					configurable: true,
 					value:value
 				});
 			}
@@ -525,7 +523,7 @@ sf.model = new function(){
 			for(var i in cache){
 				if(cache[i].callback && cache[i].callback[id])
 					delete cache[i].callback[id];
-				if(cache[i].callback.length === 0)
+				if($.isEmptyObject(cache[i].callback))
 					delete cache[i];
 			}
 
@@ -539,6 +537,8 @@ sf.model = new function(){
 			}
 
 			bindRef.length--;
+			if(bindRef.length === 0)
+				bindRef.index = 0;
 		}
 
 		if(!modelNames) return;
@@ -559,19 +559,21 @@ sf.model = new function(){
 
 			var value = modelRef[propertyName];
 			Object.defineProperty(modelRef, propertyName, {
+				configurable: true,
 				value:value
 			});
 		}
 	}
 
 	/*{
-		id:[{
+		id:{
 			object,
-			propertyName
-		}]
+			[propertyName]
+		}
 	}*/
 	// For resetting object property it the element was removed from DOM
 	var bindRef = {length:0, index:0, cache:{}};
+	self.bindRef = bindRef;
 	var dcBracket = /{{.*?}}/;
 	var bindObject = function(element, object, propertyName, which){
 		if(!(element instanceof Node))
@@ -610,10 +612,8 @@ sf.model = new function(){
 			cache.innerHTML = element.innerHTML;
 
 		// Get current object reference
-		bindRef[id] = {
-			object:object,
-			propertyName:propertyName
-		};
+		if(!bindRef[id]) bindRef[id] = {object:object, propertyName:[]};
+		bindRef[id].propertyName.push(propertyName);
 
 		cache.element = $(element);
 		var callbackFunction = function(){
@@ -640,7 +640,7 @@ sf.model = new function(){
 
 		if(Object.getOwnPropertyDescriptor(cache.model, propertyName)['set']){
 			for(var i in bindRef){
-				if(bindRef[i].propertyName === propertyName){
+				if(cache.model === bindRef[i].object && bindRef[i].propertyName.indexOf(propertyName) !== -1){
 					bindRef.cache[i].callback[id] = callbackFunction;
 					break;
 				}
