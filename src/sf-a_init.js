@@ -7,11 +7,7 @@ if(typeof sf === 'undefined'){
 }
 
 setTimeout(function(){
-	sf(function(){
-		$('[sf-controller]').each(function(){
-			sf.router.init(this.attributes['sf-controller'].value);
-		});
-	});
+	sf(sf.router.init);
 }, 10);
 
 // Add animate.css feature on jQuery
