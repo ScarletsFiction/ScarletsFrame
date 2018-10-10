@@ -8,7 +8,7 @@
       <script src='../../dist/scarletsframe.min.js'></script>
    </head>
    <body class="body">
-      <div class="container" sf-controller="todo-app" style="display:none;">
+      <div sf-page="todo/index" class="container" sf-controller="todo-app" style="display:none;">
          <div class="today" sf-bind="html">{{ todayMessage }}</div>
          <div class="row">
             <div class="col-md-4 col-md-offset-4 col-xs-6 col-xs-offset-3">
@@ -42,15 +42,25 @@
 
       <!-- Model and Controller -->
       <script type="text/javascript">
-         // Run this function after all script was completely loaded
+         // Run this function after content loader was finished
          sf(function(){
             $('.container').css('display', '');
          });
 
+         // Define dynamic model data for current page
          sf.model.for('todo-app', function(self){
             self.todayMessage = 'Greetings';
             self.list = [];
             self.itemInput = '';
+
+            /* 
+               If you modify `itemInput` from the console just like below
+               sf.model.root["todo-app"].itemInput = 123;
+
+               It will also modify the input box and connected element
+               Also when you modify the input box, this variable will also
+               being modified just as the connected element.
+            */
 
             // Register event when 'list' was modified
             self.on$list = {
@@ -72,6 +82,12 @@
 
             self.class_error = 'hidden';
             self.class_no_item = 'hidden';
+         });
+
+         // Place your logic here model was initialized
+         // And before router `before` event being triggered
+         sf.controller.run('todo-app', function(self){
+            // self.list.splice(0);
          });
       </script>
 
@@ -107,8 +123,8 @@
             cf_cdn+'/jqueryui/1.11.2/jquery-ui.min.js',
             'https://unpkg.com/scrollreveal/dist/scrollreveal.min.js',
 
-            // Script Internal (Not work if you're accessing with file:/// protocol)
-            // 'app/controller.js', // Load controller first
+            // Script Internal
+            // 'app/controller.js',
             // 'app/router.js',
          ], 'body');
       </script>
