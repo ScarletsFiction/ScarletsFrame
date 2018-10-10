@@ -5,6 +5,8 @@ sf.router = new function(){
 	self.currentPage = [];
 	var initialized = false;
 	var lazyRouting = false;
+	var RouterLoading = false;
+	var currentRouterURL = '';
 
 	// Should be called if not using lazy page load
 	self.init = function(){
@@ -144,8 +146,6 @@ sf.router = new function(){
 		return !LazyRouter(elem.href.replace(window.location.origin, ''));
 	}
 
-	var RouterLoading = false;
-	var currentRouterURL = '';
 	var LazyRouter = function(path){
 		for (var i = 0; i < onEvent['loading'].length; i++) {
 			onEvent['loading'][i](path);
@@ -171,18 +171,27 @@ sf.router = new function(){
 
 				var DOMReference = false;
 				if(!skipLazyView){
+					var foundAction = function(ref){
+						DOMReference = $(ref);
+
+						// Run 'after' event for old page view
+						afterEvent(DOMReference.find('[sf-page]'));
+						DOMReference.html(data);
+
+						// Redefine title if exist
+						var title = DOMReference.find('title').eq(0).html();
+						if(title)
+							$('head title').html(title);
+
+						found = true;
+					};
+
 					var found = false;
 					for(var oldURL in self.lazyViewPoint){
 						if(currentRouterURL.indexOf(oldURL) !== -1){
 							for(var newURL in self.lazyViewPoint[oldURL]){
 								if(currentRouterURL.indexOf(oldURL) !== -1){
-									// Put new view
-									DOMReference = $(self.lazyViewPoint[oldURL][newURL]);
-
-									// Run 'after' event for old page view
-									afterEvent(DOMReference.find('[sf-page]'));
-									DOMReference.html(data);
-									found = true;
+									foundAction(self.lazyViewPoint[oldURL][newURL]);
 									break;
 								}
 							}
@@ -193,14 +202,8 @@ sf.router = new function(){
 					// When the view point was not found
 					if(!found){
 						// Use fallback if exist
-						if(sf.router.lazyViewPoint["@default"]){
-							DOMReference = $(sf.router.lazyViewPoint["@default"]);
-
-							// Run 'after' event for old page view
-							afterEvent(DOMReference.find('[sf-page]'));
-							DOMReference.html(data);
-							found = true;
-						}
+						if(sf.router.lazyViewPoint["@default"])
+							foundAction(sf.router.lazyViewPoint["@default"]);
 
 						if(!found){
 							for (var i = 0; i < onEvent['error'].length; i++) {
@@ -217,6 +220,7 @@ sf.router = new function(){
 				self.lazy();
 
 				// Run 'before' event for new page view
+				if(!DOMReference) DOMReference = $('body');
 				DOMReference.find('[sf-controller], [sf-page]').each(function(){
 					if(this.attributes['sf-controller'])
 						sf.controller.run(this.attributes['sf-controller'].value);
@@ -229,16 +233,32 @@ sf.router = new function(){
 				lazyRouting = false;
 
 				currentRouterURL = path;
+				routingError = false;
 			},
-			error:function(e){
-				window.history.replaceState(null, "", oldPath);
+			error:function(xhr){
+				RouterLoading = false;
 				for (var i = 0; i < onEvent['error'].length; i++) {
-					onEvent['error'][i](e.message);
+					onEvent['error'][i](xhr.status);
 				}
+
+				// Back on error
+				routingError = true;
+				window.history.back();
 			}
 		});
 
 		window.history.pushState(null, "", path);
 		return true;
 	}
+
+	var routingError = false;
+	window.addEventListener('popstate', function(event) {
+		// Don't continue if the last routing was error
+		if(routingError){
+			routingError = false;
+			return;
+		}
+
+		LazyRouter(window.location.pathname);
+	}, false);
 };
