@@ -62,16 +62,22 @@ sf.loader.onFinish(function(){
 ### Router
 This currently unfinished yet, but you can still use it.
 
-Let's define event listener before element with controller `todo.page` was loaded to current DOM.
+Enable lazy router feature
 ```js
-sf.router.before('todo.page', function(){
+sf.router.enable(status = true);
+```
+
+Define event listener when element with attributes `sf-page="todo/page"` was loaded to current DOM. The defined event will being called after all model and controller was finished.
+```js
+sf.router.before('todo/page', function(ModelRoot){
     // Data Re-initialization
+    var self = ModelRoot['todo.page']; // sf.model.root['todo.page']
 });
 ```
 
-Let's define event listener when `todo.page` is going to be removed from DOM.
+Define event listener when element with attributes `sf-page="todo/page"` is going to be removed from DOM.
 ```js
-sf.router.after('todo.page', function(){
+sf.router.after('todo/page', function(ModelRoot){
     // Data cleanup
 });
 ```
@@ -89,27 +95,48 @@ sf.router.on('error', function(e) {
 });
 ```
 
-Find href link redirect from DOM and listen to it if it can be accepted for lazy router
-```js
-sf.router.lazy();
-```
-
 ### Controller
-On the controller, you can define any static function for the model. The controller will be loaded once when the first page was loaded.  
+Controller is used for controling your model, so this would have a list of your static function.
 
-Get controller name for the selected element
+Get controller name for the selected element node
+```html
+<div sf-controller="something">
+  <span id="username"></span>
+</div>
+```
 ```js
-sf.controller.fromElement(element, function(name){ ... })
+sf.controller.fromElement($('#username')[0], function(name){
+    // name == 'something'
+})
 ```
 
-Run once on initialization
+Get model scope for the selected element node
 ```js
-sf.controller.for(name, func)
+sf.controller.elementModel($('#username')[0], function(obj){
+    // obj == sf.model.root['something']
+})
 ```
 
-Can be run more than once when the controller for current DOM is currently active.
+Register controller when initialization.<br>
+You should use this for defining static function for your controller only.<br>
+This will run on first page load and can't be called twice.
 ```js
-sf.controller.run(name, func)
+sf.controller.for(name, function(self){
+    self.myFunction = function(){
+        return true;
+    }
+});
+```
+
+This is where you put your logic to control after the model was loaded and the controller was initialized. This function can be called more than once before the router invoke the `before` event and after the page was contain the matched `sf-controller` attribute. If the attribute was not found, then it will not be executed.
+```js
+sf.controller.run(name, function(self){
+    var time = Date.now();
+
+    if(self.myFunction()){
+        alert('Hello world!');
+    }
+});
 ```
 
 ### Model & Template feature
@@ -176,11 +203,6 @@ sf.model.for('music.feedback', function(self){
     <p class='review-comment'>{{x.content}}</p>
   </div>
 </body>
-```
-
-Get model object scope for the selected element.
-```js
-sf.model.fromElement(element, func = false)
 ```
 
 Bind the element for html, attr, or all
