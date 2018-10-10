@@ -24,7 +24,7 @@ sf.loader = new function(){
 		for (var i = 0; i < whenProgress.length; i++) {
 			whenProgress[i](self.loadedContent, self.totalContent);
 		}
-		if(element) element.removeAttribute('onload');
+		if(element && element.removeAttribute) element.removeAttribute('onload');
 	}
 
 	self.css = function(list){
@@ -39,13 +39,15 @@ sf.loader = new function(){
 		self.totalContent = self.totalContent + list.length;
 		var temp = '';
 		for(var i = 0; i < list.length; i++){
-			temp += '<link onload="sf.loader.f(this)" rel="stylesheet" href="'+list[i]+'">';
+			temp += '<link onload="sf.loader.f(this);" rel="stylesheet" href="'+list[i]+'">';
 		}
 
-		document.getElementsByTagName('head')[0].innerHTML += temp;
+		$(function(){
+			document.getElementsByTagName('body')[0].innerHTML += temp;
+		});
 	}
 
-	self.js = function(list, target = 'head'){
+	self.js = function(list, target = 'body'){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
@@ -55,12 +57,14 @@ sf.loader = new function(){
 			if(list.length === 0) return;
 		}
 		self.totalContent = self.totalContent + list.length;
-		var text = '';
 		for(var i = 0; i < list.length; i++){
-			text += '<script onload="sf.loader.f(this)" type="text/'+'javascript" src="'+list[i]+'"></'+'script>';
+			$.ajax({
+			  url: list[i],
+			  dataType: "script",
+			  cache: true,
+			  success: sf.loader.f
+			});
 		}
-
-		$(text).appendTo(target);
 	}
 
 	var everythingLoaded = setInterval(function() {
