@@ -12,7 +12,7 @@ gulp.task('js', function(){
   return gulp.src('src/**/*.js')
     .pipe(sourcemaps.init())
     .pipe(concat('scarletsframe.min.js'))
-    .pipe(uglify())
+    //.pipe(uglify())
     .pipe(header(`/*
   ScarletsFrame
   A frontend library for Scarlets Framework that support
@@ -26,14 +26,18 @@ gulp.task('js', function(){
     .pipe(gulp.dest('dist'));
 });
 
+gulp.task('watch', function() {
+  gulp.watch(['src/**/*.js'], ['js']);
+});
+
 gulp.task('serve', function() {
   browserSync({
     server: {
-      baseDir: 'app'
+      baseDir: 'example'
     }
   });
 
-  gulp.watch(['*.html', 'styles/**/*.css', 'scripts/**/*.js'], {cwd: 'app'}, reload);
+  gulp.watch(['*.html', 'styles/**/*.css', 'scripts/**/*.js'], {cwd: 'example'}, reload);
 });
 
 gulp.task('css', function () {
