@@ -186,13 +186,13 @@ sf.model.for('music.feedback', function(self){
   <div sf-repeat-this="x in reviews" class='review' id='review{{x.id}}'>
     <img style='height: 65px;' data-src='{{x.profilePicture}}' alt='picture'>
     <h5>{{x.name}} - {{x.date}}
-    {{@if x.owner:
+    {{@if(x.owner)
       <a sf-click='delete("review")' style='cursor:pointer;color:#6b6b6b;'>Delete</a>
     }}
     </h5>
     <ul class='stars'>{{@exec
-      for# var i = 1; i <= 5; i++: {
-        if# i <= x.rate: {
+      for(var i = 1; i <= 5; i++){
+        if(i <= x.rate){
           {[<li class='active'><i class='icon-star'></i></li>]}
         }
         else{
