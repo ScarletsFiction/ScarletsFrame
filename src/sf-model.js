@@ -60,9 +60,11 @@ sf.model = new function(){
 			temp = temp.split('(').join('').split(')').join('');
 
 			// Evaluate
-			temp = eval(runEval + temp);
+			temp = '' + eval(runEval + temp);
 
-			return temp;
+			return temp.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+		        return '&#'+i.charCodeAt(0)+';';
+		    });
 		});
 	}
 
