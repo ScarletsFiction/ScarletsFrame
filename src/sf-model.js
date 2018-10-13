@@ -4,6 +4,30 @@ sf.model = new function(){
 	var bindingEnabled = false;
 	self.root = {};
 
+	// ToDo: Need help to skip escaped quote
+	var skipQuotes = '(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)';
+
+	var bracketMatch = RegExp('([\\w.\\]]*?)\\(.*?\\)'+skipQuotes, 'g');
+	var allowedFunction = ['for', 'if', 'while', '_content_.take', 'console.log'];
+	var localEval = function(script_, _model_, _modelScope, _content_){
+		var script = script_;
+		script = script.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
+
+		// Prevent vulnerability by remove bracket to avoid a function call
+		var script = script_.replace(bracketMatch, function(full, matched){
+			if(matched !== '' && allowedFunction.indexOf(matched) === -1)
+				return full.replace(/\(.*?\)/g, '.<Function Not Allowed>');
+			return full;
+		});
+		
+		var _result_ = '';
+		script = script.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
+		var _evaled_ = eval(script);
+
+		if(_result_ !== '') return _result_;
+		return _evaled_;
+	}
+
 	self.for = function(name, func){
 		if(!self.root[name])
 			self.root[name] = {};
@@ -36,14 +60,17 @@ sf.model = new function(){
 		var _modelScope = sf.model.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+skipQuotes+'\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
+			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+skipQuotes+'\\b', 'g');
+
 
 		bindingEnabled = true;
 
 		return html.replace(/{{([^@].*?)}}/g, function(actual, temp){
+			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
+			temp = temp.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
 
 			// Mask item variable
 			if(mask)
@@ -56,11 +83,10 @@ sf.model = new function(){
 				return '_modelScope.'+matched;
 			});
 
-			// Prevent vulnerability by remove bracket to avoid a function call
-			temp = temp.split('(').join('').split(')').join('');
+			temp = temp.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
 
 			// Evaluate
-			temp = '' + eval(runEval + temp);
+			temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
 
 			return temp.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
 		        return '&#'+i.charCodeAt(0)+';';
@@ -73,6 +99,9 @@ sf.model = new function(){
 		var _content_ = {
 			length:0,
 			take:function(passVar, currentIndex){
+				if(!passVar)
+					return dataParser(this[currentIndex], _model_, mask, scope);
+
 				var strDeclare = '"use strict";var ';
 				var firstTime = true;
 
@@ -96,26 +125,24 @@ sf.model = new function(){
 			}
 		};
 
-		var VarPass = ['i', 'obj'];
-		for (var i = 0; i < VarPass.length; i++) {
-			VarPass[i] += ':(typeof '+VarPass[i]+'!="undefined"?'+VarPass[i]+':null)';
-		}
-		VarPass = '{'+VarPass.join(',')+'}';
 		html = html.replace(/{\[(.*?)\]}/gs, function(full, matched){
 			_content_[_content_.length] = matched;
 			_content_.length++;
-			return 'result += _content_.take('+VarPass+', '+(_content_.length - 1)+');';
+			return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
 		});
 
 		var _modelScope = sf.model.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+skipQuotes+'\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
+			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+skipQuotes+'\\b', 'g');
 
 		return html.replace(/{{(@.*?)}}/gs, function(actual, temp){
+			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
+			temp = temp.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
+
 			// Mask item variable
 			if(mask)
 				temp = temp.replace(itemMask, function(matched){
@@ -126,11 +153,24 @@ sf.model = new function(){
 			temp = temp.replace(scopeMask, function(matched){
 				return '_modelScope.'+matched[1].slice(1);
 			});
+			temp = temp.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
 
-			// Prevent vulnerability by remove bracket to avoid a function call
-			temp = temp.split(':');
-			temp[0] = temp[0].split('(').join('').split(')').join('');
-			temp = temp.join(':');
+			// Get defined variables
+			var VarPass = temp.match(/(?<=var|let)\W.*?[\w, =\n\t]+.*?/g);
+			if(VarPass){
+				var obtained = [];
+				for (var i = 0; i < VarPass.length; i++) {
+					VarPass[i].replace(/[\n\t\r]+/g, '').split(',').forEach(function(inside){
+						obtained.push(inside.split('=')[0]);
+					});
+				};
+				VarPass = obtained;
+				for (var i = 0; i < VarPass.length; i++) {
+					VarPass[i] += ':(typeof '+VarPass[i]+'!="undefined"?'+VarPass[i]+':undefined)';
+				}
+				VarPass = '{'+VarPass.join(',')+'}';
+				temp = temp.split('&VarPass&').join(VarPass);
+			}
 
 			var result = '';
 			var check = false;
@@ -140,7 +180,7 @@ sf.model = new function(){
 				check = check[1].split(':');
 			
 				// If condition was meet
-				if(eval(check[0])){
+				if(localEval.apply(self.root, [check[0], _model_, _modelScope, _content_])){
 					check.shift();
 					result = check.join(':');
 				}
@@ -158,8 +198,8 @@ sf.model = new function(){
 					args = call[1];
 
 					args = args.split(' ').join('').split(',');
-					for (var a = 0; a < args.length; a++) {
-						args[a] = eval(args[a]);
+					for (var a_a = 0; a_a < args.length; a_a++) {
+						args[a_a] = localEval.apply(self.root, [args[a_a], _model_, _modelScope, _content_]);
 					}
 				}
 
@@ -178,22 +218,8 @@ sf.model = new function(){
 			if(check.length != 1){
 				check = check[1].split('&lt;').join('<').split('&gt;').join('>').split('&amp;').join('&');
 
-				// Allowed: for, if, while
-				var regex = /(for|if|while)#(.*?):/gs;
-				var match = regex.exec(check);
-				while (match !== null) {
-				  check = check.replace(match[0], match[1] + '(' + match[2] + ')');
-				  match = regex.exec(check);
-				}
-
-				var currentIndex = i;
-				try{
-					eval(check);
-				} catch(e) {
-					console.error("Error in @exec with message: "+e.message);
-					return;
-				}
-				i = currentIndex;
+				temp = localEval.apply(self.root, [check, _model_, _modelScope, _content_]);
+				result = temp;
 			}
 
 			return result;
@@ -244,8 +270,8 @@ sf.model = new function(){
 			// Create or update
 			var item = self.root[modelName][propertyName][index];
 
-			var temp = dataParser(html, item, mask, modelName);
-			temp = uniqueDataParser(temp, item, mask, modelName);
+			var temp = uniqueDataParser(html, item, mask, modelName);
+			temp = dataParser(temp, item, mask, modelName);
 			temp = $(temp);
 
 			// Create
@@ -356,8 +382,8 @@ sf.model = new function(){
 			for(var i in items){
 				var item = items[i];
 
-				temp = dataParser(content, item, mask, name);
-				temp = uniqueDataParser(temp, item, mask, name);
+				temp = uniqueDataParser(content, item, mask, name);
+				temp = dataParser(temp, item, mask, name);
 				returns += temp;
 			}
 			Object.defineProperty(self.root[name], method[1], {
@@ -456,7 +482,7 @@ sf.model = new function(){
 	}
 
 	document.addEventListener('DOMNodeRemoved', function(e){
-		if(!bindingEnabled || !bindRef.length) return;
+		if(!bindingEnabled) return;
 
 		var element = e.target;
 		var models = [];
@@ -488,6 +514,8 @@ sf.model = new function(){
 				var value = ref.object[ref.propertyName[i]];
 				Object.defineProperty(ref.object, ref.propertyName[i], {
 					configurable: true,
+					enumerable:true,
+					writable:true,
 					value:value
 				});
 			}
@@ -533,9 +561,11 @@ sf.model = new function(){
 			var modelRef = self.root[modelNames[i]];
 			if(!modelRef[propertyName]) continue;
 
-			var value = modelRef[propertyName];
+			var value = modelRef[propertyName].slice(0);
 			Object.defineProperty(modelRef, propertyName, {
 				configurable: true,
+				enumerable:true,
+				writable:true,
 				value:value
 			});
 		}
@@ -651,7 +681,7 @@ sf.model = new function(){
 		var model = self.root[modelName];
 		if(!model) return console.error("Model for "+modelName+" was not found while binding:", element);
 
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')'+skipQuotes+'\\b', 'g');
 
 		var html = element.outerHTML;
 		if(which === 'attr')
