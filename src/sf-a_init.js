@@ -10,6 +10,13 @@ setTimeout(function(){
 	sf(sf.router.init);
 }, 10);
 
+if(typeof $ === 'undefined' || !$.fn || !$.fn.extend){
+	setTimeout(function(){
+		console.clear();
+		console.error("Please load jQuery before before ScarletsFrame");
+	}, 1000);
+}
+
 // Add animate.css feature on jQuery
 $.fn.extend({
   animateCSS: function(animationName, callback, duration) {
