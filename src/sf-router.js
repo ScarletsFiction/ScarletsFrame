@@ -147,6 +147,7 @@ sf.router = new function(){
 		return !LazyRouter(elem.href.replace(window.location.origin, ''));
 	}
 
+	var routingBack = false;
 	var LazyRouter = function(path){
 		for (var i = 0; i < onEvent['loading'].length; i++) {
 			if(onEvent['loading'][i](path)) return;
@@ -268,7 +269,10 @@ sf.router = new function(){
 			}
 		});
 
-		window.history.pushState(null, "", path);
+		if(!routingBack)
+			window.history.pushState(null, "", path);
+
+		routingBack = false;
 		return true;
 	}
 
@@ -280,6 +284,7 @@ sf.router = new function(){
 			return;
 		}
 
+		routingBack = true;
 		LazyRouter(window.location.pathname);
 	}, false);
 };
