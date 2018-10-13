@@ -109,6 +109,7 @@ sf.router = new function(){
 	var onEvent = {
 		'loading':[],
 		'loaded':[],
+		'special':[],
 		'error':[]
 	};
 	self.on = function(event, func){
@@ -148,7 +149,7 @@ sf.router = new function(){
 
 	var LazyRouter = function(path){
 		for (var i = 0; i < onEvent['loading'].length; i++) {
-			onEvent['loading'][i](path);
+			if(onEvent['loading'][i](path)) return;
 		}
 		var oldPath = window.location.pathname;
 		initialized = false;
@@ -165,6 +166,26 @@ sf.router = new function(){
 				// Run 'loaded' event
 				RouterLoading = false;
 				var skipLazyView = false;
+
+				// Find special data
+				var special = {};
+				
+				// This will not match string inside quotes to avoid security problem
+				data = data.replace(/<!-- SF-Special:(.*?)-->(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)/g, function(full, matched){
+					// Unescape symbol
+					var temp = matched.split('--|&>').join('-->');
+					special = Object.assign(special, JSON.parse(temp));
+
+					return '';
+				});
+
+				if(!$.isEmptyObject(special)){
+					for (var i = 0; i < onEvent['special'].length; i++) {
+						if(onEvent['special'][i](special)) return;
+					}
+				}
+
+				// Trigger loaded event
 				for (var i = 0; i < onEvent['loaded'].length; i++) {
 					skipLazyView = onEvent['loaded'][i](currentRouterURL, path, data) || skipLazyView;
 				}
@@ -235,10 +256,10 @@ sf.router = new function(){
 				currentRouterURL = path;
 				routingError = false;
 			},
-			error:function(xhr){
+			error:function(xhr, data){
 				RouterLoading = false;
 				for (var i = 0; i < onEvent['error'].length; i++) {
-					onEvent['error'][i](xhr.status);
+					onEvent['error'][i](xhr.status, data);
 				}
 
 				// Back on error
