@@ -146,17 +146,21 @@ Get data from current controller's model scope
 `{{ model.variable }}`
 
 Conditional template
-`{{@if model.view === true : do stuff}}`
+```html
+{{@if model.view === true :
+    {[ <html_content>]}
+}}
+```
 
 Replacement for `<script>` tag. You can also output html by wrap it inside '{[ ... ]}'
 `{{@exec javascript stuff}}`
-For security reason, bracket `()` will be removed. But if you want to use for, if, or while you should use `# ... :` as the bracket replacement.
+For security reason, unrecognized function call will prevent template execution. The recognized function is only from the model scope itself.
 
 Any element with `sf-repeat-this` will be binded with the array condition on the model. If you push or splice the array data, then the element will also being modified.
 
 Open the model scope for the selected controller for modification.
 ```js
-sf.model.for('music.feedback', function(self){
+sf.model.for('music.feedback', function(self, root){
     self.reviews = [{
       name:"Aliz Feriana",
       date:"January 17",
@@ -166,6 +170,9 @@ sf.model.for('music.feedback', function(self){
     // After reviews was binded
     // '.refreshBind()' can be used for refresh
     // binded elements
+
+    // If you want to refer other model scope
+    self.users = root['user.info']; // sf.model.root['user.info'];
 
     // Register event when 'reviews' was modified
     self.on$reviews = {
