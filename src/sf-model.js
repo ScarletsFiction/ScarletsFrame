@@ -6,23 +6,34 @@ sf.model = new function(){
 
 	// ToDo: Need help to skip escaped quote
 	var skipQuotes = '(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)';
+	var processingElement = null;
 
-	var bracketMatch = RegExp('([\\w.\\]]*?)\\(.*?\\)'+skipQuotes, 'g');
-	var allowedFunction = ['for', 'if', 'while', '_content_.take', 'console.log'];
+	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+skipQuotes, 'g');
+	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
 	var localEval = function(script_, _model_, _modelScope, _content_){
 		var script = script_;
-		script = script.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
+		script_ = script_.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
 
 		// Prevent vulnerability by remove bracket to avoid a function call
-		var script = script_.replace(bracketMatch, function(full, matched){
-			if(matched !== '' && allowedFunction.indexOf(matched) === -1)
-				return full.replace(/\(.*?\)/g, '.<Function Not Allowed>');
-			return full;
-		});
+		var preventExecution = false;
+		var check = null;
+		while((check = bracketMatch.exec(script_)) !== null){
+			check[1] = check[1].trim();
+
+			if(allowedFunction.indexOf(check[1]) === -1 && check[1].split('.')[0] !== '_modelScope'){
+				preventExecution = check[1];
+				break;
+			}
+		}
 		
 		var _result_ = '';
-		script = script.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
-		var _evaled_ = eval(script);
+		script_ = script_.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
+		if(preventExecution){
+			console.error("Trying to executing unrecognized function ("+preventExecution+")");
+			console.log(processingElement);
+			return '';
+		}
+		var _evaled_ = eval(script_);
 
 		if(_result_ !== '') return _result_;
 		return _evaled_;
@@ -57,14 +68,13 @@ sf.model = new function(){
 	// For contributor of this library
 	// Please be careful when you're passing the eval argument
 	var dataParser = function(html, _model_, mask, scope, runEval = ''){
-		var _modelScope = sf.model.root[scope];
+		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
 		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+skipQuotes+'\\b', 'g');
 
 		if(mask)
 			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+skipQuotes+'\\b', 'g');
-
 
 		bindingEnabled = true;
 
@@ -131,7 +141,7 @@ sf.model = new function(){
 			return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
 		});
 
-		var _modelScope = sf.model.root[scope];
+		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
 		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+skipQuotes+'\\b', 'g');
@@ -146,14 +156,28 @@ sf.model = new function(){
 			// Mask item variable
 			if(mask)
 				temp = temp.replace(itemMask, function(matched){
-					return '_model_.'+matched[1].slice(1);
+					return '_model_.'+matched[0].slice(1);
 				});
 
 			// Mask model for variable
-			temp = temp.replace(scopeMask, function(matched){
-				return '_modelScope.'+matched[1].slice(1);
+			temp = temp.replace(scopeMask, function(full, matched){
+				return '_modelScope.'+matched;
 			});
 			temp = temp.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
+
+			var result = '';
+			var check = false;
+
+			check = temp.split('@if ');
+			if(check.length != 1){
+				check = check[1].split(':');
+			
+				// If condition was meet
+				if(localEval.apply(self.root, [check[0], _model_, _modelScope, _content_])){
+					check.shift();
+					return check.join(':');
+				}
+			}
 
 			// Get defined variables
 			var VarPass = temp.match(/(?<=var|let)\W.*?[\w, =\n\t]+.*?/g);
@@ -172,45 +196,6 @@ sf.model = new function(){
 				temp = temp.split('&VarPass&').join(VarPass);
 			}
 
-			var result = '';
-			var check = false;
-
-			check = temp.split('@if ');
-			if(check.length != 1){
-				check = check[1].split(':');
-			
-				// If condition was meet
-				if(localEval.apply(self.root, [check[0], _model_, _modelScope, _content_])){
-					check.shift();
-					result = check.join(':');
-				}
-			}
-
-			// Function arguments should like: function@arg1, arg2
-			// And it will converted to: model.function(arg1, arg2)
-			check = temp.split('@call');
-			if(check.length != 1){
-				check = check[1].trim();
-				var call = check.split('@');
-				var args = [];
-
-				if(call.length !== 1){
-					args = call[1];
-
-					args = args.split(' ').join('').split(',');
-					for (var a_a = 0; a_a < args.length; a_a++) {
-						args[a_a] = localEval.apply(self.root, [args[a_a], _model_, _modelScope, _content_]);
-					}
-				}
-
-				call = call[0];
-				if(!sf.model.root[scope][call])
-					throw "'"+call+"' was not available inside '"+scope+"' model";
-
-				var values = sf.model.root[scope][call].apply(null, args);
-				result = values;
-			}
-
 			// Warning! Avoid unencoded user inputted content
 			// And always check/remove closing ']}' in user content
 			// Any function call will be removed for addional security
@@ -219,10 +204,9 @@ sf.model = new function(){
 				check = check[1].split('&lt;').join('<').split('&gt;').join('>').split('&amp;').join('&');
 
 				temp = localEval.apply(self.root, [check, _model_, _modelScope, _content_]);
-				result = temp;
+				return temp;
 			}
-
-			return result;
+			return '';
 		});
 	}
 
@@ -371,11 +355,15 @@ sf.model = new function(){
 		var method = script.split(' in ');
 		var mask = method[0];
 
-		if(!sf.model.root[name])
+		if(!self.root[name])
 			return console.error("Can't parse element because model for '"+name+"' was not found", $(content)[0]);
 
 		var items = self.root[name][method[1]];
-		content = $(content).attr('sf-bind-list', method[1])[0].outerHTML;
+
+		// Get reference for debugging
+		processingElement = $(content).attr('sf-bind-list', method[1])[0];
+
+		content = processingElement.outerHTML;
 		content = content.replace(/  +|\t+/g, '');
 
 		if(method.length === 2){
@@ -441,8 +429,8 @@ sf.model = new function(){
 	}
 
 	self.init = function(targetNode = false){
-		sf.model.queuePreprocess(targetNode);
-		sf.model.parsePreprocess(targetNode);
+		self.queuePreprocess(targetNode);
+		self.parsePreprocess(targetNode);
 
 		$('[sf-repeat-this]').each(function(){
 			var self = $(this);
@@ -461,6 +449,10 @@ sf.model = new function(){
 			var controller = self.parents('[sf-controller]').attr('sf-controller');
 
 			var content = this.outerHTML;
+
+			// Check if the element was already bound to prevent vulnerability
+			if(/sf-bind-id|sf-bind-list/.test(content))
+				throw "Can't parse element that already bound";
 
 			var data = loopParser(controller, content, script);
 			if(data){
@@ -585,6 +577,9 @@ sf.model = new function(){
 		if(!(element instanceof Node))
 			element = element[0];
 
+		// Get reference for debugging
+		processingElement = element;
+
 		// First initialization
 		var id = bindRef.index;
 		$(element).attr('sf-bind-id', id);
@@ -684,6 +679,11 @@ sf.model = new function(){
 		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')'+skipQuotes+'\\b', 'g');
 
 		var html = element.outerHTML;
+
+		// Check if the child element was already bound to prevent vulnerability
+		if(/sf-bind-id|sf-bind-list/.test(html))
+			throw "Can't parse element that already bound";
+
 		if(which === 'attr')
 			html = html.replace(element.innerHTML, '');
 
@@ -711,6 +711,8 @@ sf.model = new function(){
 
 			if(currentNode.nodeType === 1){ // Tag
 				var attrs = currentNode.attributes;
+
+				// Skip element and it's childs that already bound to prevent vulnerability
 				if(attrs['sf-bind-id'] || attrs['sf-repeat-this'] || attrs['sf-bind-list']) continue;
 
 				for (var a = 0; a < attrs.length; a++) {
@@ -742,17 +744,27 @@ sf.model = new function(){
 			var model = sf.controller.fromElement(this);
 			this.removeAttribute('sf-preprocess');
 
-			if(!sf.model.root[model])
+			if(!self.root[model])
 				return console.error("Can't parse element because model for '"+model+"' was not found", this);
+
+			// Get reference for debugging
+			processingElement = this;
+
+			// Double check if the child element already bound to prevent vulnerability
+			if(/sf-bind-id|sf-bind-list/.test(this.innerHTML)){
+				console.error("Can't parse element that already bound");
+				console.log(processingElement);
+				return;
+			}
 
 			self.bindElement(this, $(this).attr('sf-bind'));
 
 			// Avoid editing the outerHTML because it will remove the bind
-			var temp = uniqueDataParser(this.innerHTML, sf.model.root[model], false, model);
-			this.innerHTML = dataParser(temp, sf.model.root[model], false, model);
+			var temp = uniqueDataParser(this.innerHTML, self.root[model], false, model);
+			this.innerHTML = dataParser(temp, self.root[model], false, model);
 			for (var i = 0; i < this.attributes.length; i++) {
 				if(this.attributes[i].value.indexOf('{{') !== -1){
-					this.attributes[i].value = dataParser(this.attributes[i].value, sf.model.root[model], false, model);
+					this.attributes[i].value = dataParser(this.attributes[i].value, self.root[model], false, model);
 				}
 			}
 		});
