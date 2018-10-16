@@ -526,7 +526,7 @@ sf.model = new function(){
 			document.body.addEventListener('DOMNodeRemoved', function(e){
 				if(bindingEnabled){
 					var tagName = e.target.nodeName;
-					if(tagName !== 'TEXT' || tagName !== '#comment') continue;
+					if(tagName !== 'TEXT' || tagName !== '#comment') return;
 					DOMNodeRemoved(e.target);
 				}
 			});
