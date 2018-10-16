@@ -9,6 +9,7 @@ sf.model = new function(){
 	var processingElement = null;
 
 	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+skipQuotes, 'g');
+	var chackValidFunctionCall = /[a-zA-Z0-9 \]\$\)]/;
 	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
 	var localEval = function(script_, _model_, _modelScope, _content_){
 		var script = script_;
@@ -20,7 +21,10 @@ sf.model = new function(){
 		while((check = bracketMatch.exec(script_)) !== null){
 			check[1] = check[1].trim();
 
-			if(allowedFunction.indexOf(check[1]) === -1 && check[1].split('.')[0] !== '_modelScope'){
+			if(allowedFunction.indexOf(check[1]) === -1 &&
+				check[1].split('.')[0] !== '_modelScope' &&
+				chackValidFunctionCall.test(check[1][check[1].length-1])
+			){
 				preventExecution = check[1];
 				break;
 			}
@@ -30,7 +34,8 @@ sf.model = new function(){
 		script_ = script_.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
 		if(preventExecution){
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
-			console.log(processingElement);
+			console.log($(processingElement.outerHTML)[0]);
+			console.log(script_);
 			return '';
 		}
 		var _evaled_ = eval(script_);
@@ -180,12 +185,12 @@ sf.model = new function(){
 			}
 
 			// Get defined variables
-			var VarPass = temp.match(/(?<=var|let)\W.*?[\w, =\n\t]+.*?/g);
+			var VarPass = temp.match(/(?<=var|let)[\w,\s]+(?=\s(?==|in|of))/g);
 			if(VarPass){
 				var obtained = [];
 				for (var i = 0; i < VarPass.length; i++) {
-					VarPass[i].replace(/[\n\t\r]+/g, '').split(',').forEach(function(inside){
-						obtained.push(inside.split('=')[0]);
+					VarPass[i].replace(/([\n\t\r]|  )+/g, '').split(',').forEach(function(val){
+						obtained.push(val);
 					});
 				};
 				VarPass = obtained;
@@ -473,23 +478,59 @@ sf.model = new function(){
 		});
 	}
 
-	document.addEventListener('DOMNodeRemoved', function(e){
-		if(!bindingEnabled) return;
+	// Initialize the controller
+	// Call only when the element has sf-controller on it's attributes
+	function DOMNodeInserted(element){
+		sf.controller.run(sf.controller.modelName(element));
+	}
 
-		var element = e.target;
-		var models = [];
-		$(element).find('[sf-controller]').each(function(){
-			models.push(this.attributes['sf-controller'].value);
-		});
-
-		if(element.attributes && element.attributes['sf-controller'])
-			models.push(element.attributes['sf-controller'].value);
+	// Reset model properties
+	// Don't call if the removed element is TEXT or #comment
+	function DOMNodeRemoved(element){
+		var model = sf.controller.modelName(element);
 
 		$(element).find('[sf-bind-id], [sf-bind-list], [sf-bounded], [sf-repeat-this]').each(function(){
-			removeBinding(this, models);
+			removeBinding(this, model);
 		});
 
 		removeBinding(element);
+	}
+
+	$(function(){
+		if(typeof MutationObserver === 'function' && MutationObserver.prototype.observe){
+			var observer = new MutationObserver(function(records){
+				if(!bindingEnabled) return;
+
+				for(var i in records){
+					for(var a in records[i].addedNodes){
+						var attr = records[i].addedNodes[a].attributes;
+						if(!attr || !attr['sf-controller']) continue;
+						DOMNodeInserted(records[i].addedNodes[a]);
+					}
+					for(var a in records[i].removedNodes){
+						var tagName = records[i].removedNodes[a].nodeName;
+						if(tagName !== 'TEXT' || tagName !== '#comment') continue;
+						DOMNodeRemoved(records[i].removedNodes[a]);
+					}
+				}
+			});
+			observer.observe(document.body, { childList: true, subtree: true });
+		}
+		else {
+			document.body.addEventListener('DOMNodeInserted', function(e){
+				if(bindingEnabled && e.target.attributes && e.target.attributes['sf-controller']){
+					DOMNodeInserted(e.target);
+				}
+			});
+
+			document.body.addEventListener('DOMNodeRemoved', function(e){
+				if(bindingEnabled){
+					var tagName = e.target.nodeName;
+					if(tagName !== 'TEXT' || tagName !== '#comment') continue;
+					DOMNodeRemoved(e.target);
+				}
+			});
+		}
 	});
 
 	var removeBinding = function(element, modelNames = false){
@@ -591,7 +632,7 @@ sf.model = new function(){
 
 		cache.attrs = {};
 		cache.innerHTML = '';
-		cache.modelName = sf.controller.fromElement(element);
+		cache.modelName = sf.controller.modelName(element);
 		cache.model = self.root[cache.modelName];
 		cache.created = Date.now();
 
@@ -672,7 +713,7 @@ sf.model = new function(){
 	}
 
 	self.bindElement = function(element, which = false){
-		var modelName = sf.controller.fromElement(element);
+		var modelName = sf.controller.modelName(element);
 		var model = self.root[modelName];
 		if(!model) return console.error("Model for "+modelName+" was not found while binding:", element);
 
@@ -741,7 +782,7 @@ sf.model = new function(){
 
 	self.parsePreprocess = function(targetNode = false){
 		$(targetNode || document.body).find('[sf-preprocess]').each(function(){
-			var model = sf.controller.fromElement(this);
+			var model = sf.controller.modelName(this);
 			this.removeAttribute('sf-preprocess');
 
 			if(!self.root[model])
@@ -753,11 +794,12 @@ sf.model = new function(){
 			// Double check if the child element already bound to prevent vulnerability
 			if(/sf-bind-id|sf-bind-list/.test(this.innerHTML)){
 				console.error("Can't parse element that already bound");
-				console.log(processingElement);
+				console.log($(processingElement.outerHTML)[0]);
 				return;
 			}
 
-			self.bindElement(this, $(this).attr('sf-bind'));
+			if($(this).attr('sf-bind'))
+				self.bindElement(this, $(this).attr('sf-bind'));
 
 			// Avoid editing the outerHTML because it will remove the bind
 			var temp = uniqueDataParser(this.innerHTML, self.root[model], false, model);
