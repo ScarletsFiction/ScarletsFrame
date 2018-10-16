@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en" >
    <head>
       <title>Sample App</title>
@@ -19,7 +20,7 @@
                   </div>
                </div>
                <p class="err text-danger text-center {{class_error}}"><i class="fa fa-warning"></i>Please enter item name</p>
-               <p class="text-center" style="font-size:16px">You typed: {{itemInput}}</p>
+               <p class="text-center" style="font-size:16px" sf-bind="html">You typed: {{itemInput}}</p>
                <p class="no-items text-muted text-center {{class_no_item}}"><i class="fa fa-ban"></i></p>
 
                <ul class="todo-list">
@@ -35,9 +36,6 @@
                </ul>
             </div>
          </div>
-      </div>
-      </section>
-      </main>
       </div>
 
       <!-- Model and Controller -->
