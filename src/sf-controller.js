@@ -11,9 +11,9 @@ sf.controller = new function(){
 		controller[name] = func;
 	}
 
-	self.elementModel = function(element, func = false){
+	self.modelScope = function(element, func = false){
 		var elem = $(element);
-		var model = sf.controller.fromElement(element);
+		var model = sf.controller.modelName(element);
 
 		if(!model)
 			throw 'model or controller was not found';
@@ -23,8 +23,8 @@ sf.controller = new function(){
 			bindedList = elem.parents('[sf-bind-list]').attr('sf-bind-list');
 
 		if(!bindedList){
-			if(func) return func(self.root[model], -1);
-			else return self.root[model];
+			if(func) return func(sf.model.root[model], -1);
+			else return sf.model.root[model];
 		}
 
 		// Find index
@@ -32,16 +32,15 @@ sf.controller = new function(){
 		if(bindedList)
 			bindedListIndex = elem.parents('[sf-bind-list]').prevAll('[sf-bind-list]').length;
 
-		if(func) return func(self.root[model][bindedList], bindedListIndex);
-		else return self.root[model][bindedList][bindedListIndex];
+		if(func) return func(sf.model.root[model][bindedList], bindedListIndex);
+		else return sf.model.root[model][bindedList][bindedListIndex];
 	}
 
-	self.fromElement = function(element){
-		var elem = $(element);
-		var model = elem.parents("[sf-model]").attr('sf-model');
-		if(!model)
-			model = elem.parents('[sf-controller]').attr('sf-controller');
-		return model;
+	self.modelName = function(element){
+		if(element.attributes['sf-controller'])
+			return element.attributes['sf-controller'].value;
+		else
+			return $(element).parents('[sf-controller]').attr('sf-controller');
 	}
 
 	var listenSFClick = function(e){
