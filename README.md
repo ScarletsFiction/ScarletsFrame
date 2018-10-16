@@ -105,14 +105,14 @@ Get controller name for the selected element node
 </div>
 ```
 ```js
-sf.controller.fromElement($('#username')[0], function(name){
+sf.controller.modelName($('#username')[0], function(name){
     // name == 'something'
 })
 ```
 
 Get model scope for the selected element node
 ```js
-sf.controller.elementModel($('#username')[0], function(obj){
+sf.controller.modelScope($('#username')[0], function(obj){
     // obj == sf.model.root['something']
 })
 ```
