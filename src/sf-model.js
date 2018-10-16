@@ -295,15 +295,16 @@ sf.model = new function(){
 				configurable: true,
 				value: function(){
 					var temp = undefined;
+					var lastLength = this.length;
 
 					if(Array.prototype[name])
 						temp = Array.prototype[name].apply(this, arguments);
 
 					if(name === 'pop')
-						processElement(this.length);
+						processElement(lastLength - 1);
 
 					else if(name === 'push')
-						processElement(this.length - 1, true);
+						processElement(lastLength, true);
 
 					else if(name === 'shift')
 						processElement(0);
@@ -315,13 +316,13 @@ sf.model = new function(){
 						}
 						else{
 							var real = arguments[0];
-							if(real < 0) real = this.length + real + 1;
+							if(real < 0) real = lastLength + real + 1;
 
-							var until = arguments[1];
-							if(!until) until = this.length - real;
+							var limit = arguments[1];
+							if(!limit) limit = lastLength - real;
 
-							for (var i = 0; i < until; i++) {
-								processElement(real);
+							for (var i = limit - 1; i >= real; i--) {
+								processElement(i);
 							}
 						}
 					}
@@ -331,19 +332,40 @@ sf.model = new function(){
 
 					if(name === 'refreshBind'){
 						if(arguments[0] || arguments[0] === 0)
-							processElement(arguments[0], true);
+							processElement(arguments[0], !!oldArray[arguments[0]]);
 						else {
 							var foundChanges = false;
+
+							// Update
 							for (var i = 0; i < this.length; i++) {
 								if(JSON.stringify(oldArray[i]) !== JSON.stringify(this[i])){
 									foundChanges = true;
-									processElement(i, true);
+									processElement(i, !!oldArray[i]);
 								}
 							}
-							if(foundChanges)
+
+							// Removal
+							if(oldArray.length > this.length){
+								for (var i = oldArray.length - 1; i >= this.length; i--) {
+									foundChanges = true;
+									processElement(i);
+								}
+							}
+
+							// Creates
+							if(oldArray.length < this.length){
+								for (var i = this.length; i < this.length; i++) {
+									foundChanges = true;
+									processElement(i, true, true);
+								}
+							}
+
+							if(foundChanges){
 								oldArray = JSON.parse(JSON.stringify(this));
+							}
 						}
 					}
+					else Array.prototype[name].apply(oldArray, arguments);
 
 					return temp;
 				}
@@ -395,7 +417,7 @@ sf.model = new function(){
 					}
 
 					if(items.length > val.length)
-						items.splice(items.length - val.length);
+						items.splice(val.length);
 
 					return items;
 				}
