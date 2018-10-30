@@ -200,6 +200,7 @@ sf.model = new function(){
 				VarPass = '{'+VarPass.join(',')+'}';
 				temp = temp.split('&VarPass&').join(VarPass);
 			}
+			else temp = temp.split('&VarPass&').join('{}'); 
 
 			// Warning! Avoid unencoded user inputted content
 			// And always check/remove closing ']}' in user content

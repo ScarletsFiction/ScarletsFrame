@@ -7,6 +7,10 @@
 # ScarletsFrame
 A frontend library for Scarlets Framework that support lazy page load and element binding that can help simplify your code.
 
+# Example
+- [Todo Application](https://playcode.io/134963?tabs=console&resource-loader.js&output)
+- [Simple Element Binding](https://jsbin.com/liluhul/1/edit?js,console,output)
+
 ## Install
 You can download minified js from this repository or use this CDN link
 `<script type="text/javascript" src='https://cdn.jsdelivr.net/gh/ScarletsFiction/ScarletsFrame@latest/dist/scarletsframe.min.js'>`
