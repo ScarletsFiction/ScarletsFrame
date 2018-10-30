@@ -67,6 +67,12 @@ Enable lazy router feature
 sf.router.enable(status = true);
 ```
 
+After enabling the LazyRouter, normally all href attribute will be registered.
+But you can also route by calling `sf.router.goto` function from the script.
+```js
+sf.router.goto('/user/home');
+```
+
 Define event listener when element with attributes `sf-page="todo/page"` was loaded to current DOM. The defined event will being called after all model and controller was finished.
 ```js
 sf.router.before('todo/page', function(ModelRoot){
@@ -167,9 +173,10 @@ sf.model.for('music.feedback', function(self, root){
       rate:4,
       ...
     }];
-    // After reviews was binded
-    // '.refreshBind()' can be used for refresh
-    // binded elements
+    // After reviews was binded and want to redraw the element
+    // You can use
+    // '.hardRefresh()' redraw all element at once
+    // '.softRefresh(index = -1)' redraw some element only
 
     // If you want to refer other model scope
     self.users = root['user.info']; // sf.model.root['user.info'];
