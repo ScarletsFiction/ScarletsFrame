@@ -74,7 +74,7 @@ sf.router.enable(status = true);
 After enabling the LazyRouter, normally all href attribute will be registered.
 But you can also route by calling `sf.router.goto` function from the script.
 ```js
-sf.router.goto('/user/home');
+sf.router.goto('/user/home', data = {}, method = 'get');
 ```
 
 Define event listener when element with attributes `sf-page="todo/page"` was loaded to current DOM. The defined event will being called after all model and controller was finished.
