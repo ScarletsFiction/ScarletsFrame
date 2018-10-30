@@ -135,11 +135,13 @@ sf.controller = new function(){
 				self.init(name);
 			});
 
-		// Listen to sf-click
-		$('body').on('click', '[sf-controller] [sf-click]', listenSFClick);
-
 		$('[sf-controller]').each(function(){
 			self.run(this.attributes['sf-controller'].value);
 		});
 	}
+
+	$(function(){
+		// Listen to sf-click
+		$('body').on('click', '[sf-controller] [sf-click]', listenSFClick);
+	});
 }
