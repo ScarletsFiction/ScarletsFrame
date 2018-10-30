@@ -115,9 +115,7 @@ Get controller name for the selected element node
 </div>
 ```
 ```js
-sf.controller.modelName($('#username')[0], function(name){
-    // name == 'something'
-})
+sf.controller.modelName($('#username')[0]) // return == 'something'
 ```
 
 Get model scope for the selected element node
