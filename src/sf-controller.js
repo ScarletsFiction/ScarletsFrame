@@ -100,7 +100,7 @@ sf.controller = new function(){
 			script = [];
 
 		try{
-			method.apply(element, script);
+			method.apply(element[0], script);
 		} catch(e) {
 			console.error("Error on sf-click for model: " + model + '\n', e.target, '\n', e);
 		}
@@ -116,9 +116,6 @@ sf.controller = new function(){
 			if(!self.active[name]){
 				if(controller[name])
 					controller[name](sf.model.root[name], sf.model.root);
-
-				// Listen to sf-click
-				$('[sf-controller="'+name+'"]').on('click', '[sf-click]', listenSFClick);
 
 				self.active[name] = true;
 			}
@@ -137,6 +134,9 @@ sf.controller = new function(){
 			return sf(function(){
 				self.init(name);
 			});
+
+		// Listen to sf-click
+		$('body').on('click', '[sf-controller] [sf-click]', listenSFClick);
 
 		$('[sf-controller]').each(function(){
 			self.run(this.attributes['sf-controller'].value);

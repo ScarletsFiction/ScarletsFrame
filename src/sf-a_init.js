@@ -13,7 +13,7 @@ setTimeout(function(){
 if(typeof $ === 'undefined' || !$.fn || !$.fn.extend){
 	setTimeout(function(){
 		console.clear();
-		console.error("Please load jQuery before before ScarletsFrame");
+		console.error("Please load jQuery before ScarletsFrame");
 	}, 1000);
 }
 

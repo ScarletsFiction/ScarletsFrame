@@ -144,11 +144,11 @@ sf.router = new function(){
 		if(!history.pushState || $(elem).attr('sf-router') == 'ignore')
 			return true;
 
-		return !LazyRouter(elem.href.replace(window.location.origin, ''));
+		return !self.goto(elem.href.replace(window.location.origin, ''));
 	}
 
 	var routingBack = false;
-	var LazyRouter = function(path){
+	self.goto = function(path){
 		for (var i = 0; i < onEvent['loading'].length; i++) {
 			if(onEvent['loading'][i](path)) return;
 		}
@@ -285,6 +285,6 @@ sf.router = new function(){
 		}
 
 		routingBack = true;
-		LazyRouter(window.location.pathname);
+		self.goto(window.location.pathname);
 	}, false);
 };
