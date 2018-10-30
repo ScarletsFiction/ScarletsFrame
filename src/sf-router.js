@@ -5,7 +5,6 @@ sf.router = new function(){
 	self.currentPage = [];
 	var initialized = false;
 	var lazyRouting = false;
-	var RouterLoading = false;
 	var currentRouterURL = '';
 
 	// Should be called if not using lazy page load
@@ -147,8 +146,14 @@ sf.router = new function(){
 		return !self.goto(elem.href.replace(window.location.origin, ''));
 	}
 
+	var RouterLoading = false;
 	var routingBack = false;
-	self.goto = function(path){
+	self.goto = function(path, data, method){
+		data = {};
+
+		if(!method) method = 'GET';
+        else method = method.toUpperCase();
+
 		for (var i = 0; i < onEvent['loading'].length; i++) {
 			if(onEvent['loading'][i](path)) return;
 		}
@@ -156,10 +161,12 @@ sf.router = new function(){
 		initialized = false;
 
 		if(RouterLoading) RouterLoading.abort();
-		RouterLoading = loadURL(window.location.origin + path, {
-            data:{
+		RouterLoading = $.ajax({
+			url:window.location.origin + path,
+			method:method,
+            data:Object.assign(data, {
                 _scarlets:'.dynamic.'
-            },
+            }),
 			success:function(data){
 				if(initialized) return;
 				lazyRouting = true;
@@ -258,13 +265,15 @@ sf.router = new function(){
 				routingError = false;
 			},
 			error:function(xhr, data){
+				routingError = true;
+				if(xhr.aborted) return;
+
 				RouterLoading = false;
 				for (var i = 0; i < onEvent['error'].length; i++) {
 					onEvent['error'][i](xhr.status, data);
 				}
 
 				// Back on error
-				routingError = true;
 				window.history.back();
 			}
 		});
