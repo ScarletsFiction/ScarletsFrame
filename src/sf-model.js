@@ -216,9 +216,9 @@ sf.model = new function(){
 	}
 
 	var bindArray = function(html, list, mask, modelName, propertyName){
-		var oldArray = JSON.parse(JSON.stringify(list));
-		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'refreshBind'];
-		var processElement = function(index, update = false, insertBefore = false){
+		var oldArray = list.slice(0);
+		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'softRefresh', 'hardRefresh'];
+		var processElement = function(index, update = false, insertBefore = false, insertAfter = false){
 			var exist = $("[sf-model='"+modelName+"']");
 			if(exist.length === 0)
 				exist = $("[sf-controller='"+modelName+"']");
@@ -230,6 +230,26 @@ sf.model = new function(){
 			if(self.root[modelName]['on$'+propertyName])
 				callback = self.root[modelName]['on$'+propertyName];
 
+			// Hard refresh
+			if(index === -1){
+				var item = self.root[modelName][propertyName];
+				var all = '';
+				for (var i = 0; i < item.length; i++) {
+					var temp = uniqueDataParser(html, item[i], mask, modelName);
+					all += dataParser(temp, item[i], mask, modelName);
+				}
+
+				// Get first element
+				var first = exist.eq(0).before();
+				if(first[0] === exist[0])
+					exist.parent().prepend(all);
+				else
+					$(all).insertAfter(first);
+				exist.remove();
+				
+				return;
+			}
+
 			// Remove
 			if(!update){
 				if(exist[index]){
@@ -240,7 +260,7 @@ sf.model = new function(){
 
 						if(exist.length <= 1)
 							return clearElementData(exist[index]);
-						
+
 						exist[index].remove();
 					}
 
@@ -264,11 +284,11 @@ sf.model = new function(){
 			temp = $(temp);
 
 			// Create
-			if(!exist[index]){
+			if(!exist[index] || insertAfter){
 				if(callback.create)
 					callback.create(temp[0]);
 
-				temp.insertAfter(exist[exist.length - 1]);
+				temp.insertAfter(exist[index !== 0 ? index - 1 : (exist.length - 1)]);
 			}
 
 			else{
@@ -310,19 +330,19 @@ sf.model = new function(){
 						processElement(0);
 
 					else if(name === 'splice'){
-						if(arguments.length >= 3){
+						if(arguments.length >= 3){ // Inserting data
 							arguments[0] = false;
-							name = 'refreshBind';
+							name = 'softRefresh';
 						}
-						else{
+						else{ // Removing data
 							var real = arguments[0];
-							if(real < 0) real = lastLength + real + 1;
+							if(real < 0) real = lastLength + real;
 
 							var limit = arguments[1];
-							if(!limit) limit = lastLength - real;
-
-							for (var i = limit - 1; i >= real; i--) {
-								processElement(i);
+							if(!limit) limit = oldArray.length;
+							
+							for (var i = limit - 1; i >= 0; i--) {
+								processElement(real + i);
 							}
 						}
 					}
@@ -330,40 +350,45 @@ sf.model = new function(){
 					else if(name === 'unshift')
 						processElement(0, true, true);
 
-					if(name === 'refreshBind'){
+					if(name === 'softRefresh'){
 						if(arguments[0] || arguments[0] === 0)
 							processElement(arguments[0], !!oldArray[arguments[0]]);
 						else {
 							var foundChanges = false;
 
-							// Update
-							for (var i = 0; i < this.length; i++) {
-								if(JSON.stringify(oldArray[i]) !== JSON.stringify(this[i])){
-									foundChanges = true;
-									processElement(i, !!oldArray[i]);
-								}
-							}
-
 							// Removal
 							if(oldArray.length > this.length){
 								for (var i = oldArray.length - 1; i >= this.length; i--) {
-									foundChanges = true;
-									processElement(i);
+									if(this.indexOf(oldArray[i]) === -1){
+										foundChanges = true;
+										processElement(i);
+									}
 								}
 							}
 
 							// Creates
 							if(oldArray.length < this.length){
-								for (var i = this.length; i < this.length; i++) {
+								for (var i = oldArray.length - 1; i < this.length; i++) {
 									foundChanges = true;
 									processElement(i, true, true);
 								}
 							}
 
-							if(foundChanges){
-								oldArray = JSON.parse(JSON.stringify(this));
+							// Update
+							for (var i = 0; i < this.length; i++) {
+								if(compareObject(oldArray[i], this[i]) === false){
+									foundChanges = true;
+									processElement(i, true);
+								}
 							}
+
+							if(foundChanges)
+								oldArray = this.slice(0);
 						}
+					}
+					else if(name === 'hardRefresh'){
+						oldArray = this.slice(0);
+						processElement(-1);
 					}
 					else Array.prototype[name].apply(oldArray, arguments);
 
@@ -375,6 +400,17 @@ sf.model = new function(){
 		for (var i = 0; i < editProperty.length; i++) {
 			propertyProxy(list, editProperty[i]);
 		}
+	}
+
+	function compareObject(obj1, obj2){
+		if(!obj1 || !obj2)
+			return false;
+
+		for(var i in obj1){
+			if(typeof obj1[i] !== 'object' && obj1[i] !== obj2[i])
+				return false;
+		}
+		return true;
 	}
 
 	var loopParser = function(name, content, script){
@@ -411,7 +447,7 @@ sf.model = new function(){
 					for (var i = 0; i < val.length; i++) {
 						if(items[i]){
 							items[i] = val[i];
-							items.refreshBind(i);
+							items.softRefresh(i);
 						}
 						else items.push(val[i]);
 					}
