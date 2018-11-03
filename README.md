@@ -13,7 +13,7 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 
 ## Install
 You can download minified js from this repository or use this CDN link
-`<script type="text/javascript" src='https://cdn.jsdelivr.net/gh/ScarletsFiction/ScarletsFrame@latest/dist/scarletsframe.min.js'>`
+`<script type="text/javascript" src='https://cdn.jsdelivr.net/gh/ScarletsFiction/ScarletsFrame@latest/dist/scarletsframe.min.js'></script>`
 
 Make sure you put it on html header after jQuery.
 
