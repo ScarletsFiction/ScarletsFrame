@@ -63,7 +63,7 @@ sf.controller = new function(){
 		var _modelScope = sf.model.root[model];
 
 		var modelKeys = sf.model.modelKeys(_modelScope);
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+modelKeys+')(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		script = script.replace(scopeMask, function(full, matched){
 			return '_modelScope.'+matched;

@@ -4,6 +4,10 @@ if(typeof sf === 'undefined'){
 			return sf.loader.onFinish.apply(null, arguments);
 		}
 	};
+	sf.regex = {
+		// ToDo: Need help to skip escaped quote
+		avoidQuotes:'(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)',
+	};
 }
 
 setTimeout(function(){

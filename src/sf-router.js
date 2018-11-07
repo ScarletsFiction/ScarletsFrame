@@ -149,8 +149,6 @@ sf.router = new function(){
 	var RouterLoading = false;
 	var routingBack = false;
 	self.goto = function(path, data, method){
-		data = {};
-
 		if(!method) method = 'GET';
         else method = method.toUpperCase();
 
@@ -176,20 +174,16 @@ sf.router = new function(){
 				var skipLazyView = false;
 
 				// Find special data
-				var special = {};
-				
-				// This will not match string inside quotes to avoid security problem
-				data = data.replace(/<!-- SF-Special:(.*?)-->(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)/g, function(full, matched){
-					// Unescape symbol
-					var temp = matched.split('--|&>').join('-->');
-					special = Object.assign(special, JSON.parse(temp));
+				var regex = RegExp('<!-- SF-Special:(.*?)-->'+sf.regex.avoidQuotes, 'g');
+				var found = regex.exec(data);
+				if(found && found.length !== 1){
+					found = found[1].split('--|&>').join('-->');
+					found = JSON.parse(found);
 
-					return '';
-				});
-
-				if(!$.isEmptyObject(special)){
-					for (var i = 0; i < onEvent['special'].length; i++) {
-						if(onEvent['special'][i](special)) return;
+					if(!$.isEmptyObject(found)){
+						for (var i = 0; i < onEvent['special'].length; i++) {
+							if(onEvent['special'][i](special)) return;
+						}
 					}
 				}
 

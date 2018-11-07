@@ -4,11 +4,9 @@ sf.model = new function(){
 	var bindingEnabled = false;
 	self.root = {};
 
-	// ToDo: Need help to skip escaped quote
-	var skipQuotes = '(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)';
 	var processingElement = null;
 
-	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+skipQuotes, 'g');
+	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+sf.regex.avoidQuotes, 'g');
 	var chackValidFunctionCall = /[a-zA-Z0-9 \]\$\)]/;
 	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
 	var localEval = function(script_, _model_, _modelScope, _content_){
@@ -76,10 +74,10 @@ sf.model = new function(){
 		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+skipQuotes+'\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+skipQuotes+'\\b', 'g');
+			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		bindingEnabled = true;
 
@@ -149,10 +147,10 @@ sf.model = new function(){
 		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+skipQuotes+'\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+skipQuotes+'\\b', 'g');
+			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		return html.replace(/{{(@.*?)}}/gs, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
@@ -776,7 +774,7 @@ sf.model = new function(){
 		var model = self.root[modelName];
 		if(!model) return console.error("Model for "+modelName+" was not found while binding:", element);
 
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')'+skipQuotes+'\\b', 'g');
+		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		var html = element.outerHTML;
 
