@@ -174,7 +174,7 @@ sf.router = new function(){
 				var skipLazyView = false;
 
 				// Find special data
-				var regex = RegExp('<!-- SF-Special:(.*?)-->'+sf.regex.avoidQuotes, 'g');
+				var regex = RegExp('<!-- SF-Special:(.*?)-->'+sf.regex.avoidQuotes, 'gm');
 				var found = regex.exec(data);
 				if(found && found.length !== 1){
 					found = found[1].split('--|&>').join('-->');
@@ -182,7 +182,7 @@ sf.router = new function(){
 
 					if(!$.isEmptyObject(found)){
 						for (var i = 0; i < onEvent['special'].length; i++) {
-							if(onEvent['special'][i](special)) return;
+							if(onEvent['special'][i](found)) return;
 						}
 					}
 				}
