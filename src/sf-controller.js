@@ -37,10 +37,17 @@ sf.controller = new function(){
 	}
 
 	self.modelName = function(element){
+		var name = undefined;
 		if(element.attributes['sf-controller'])
-			return element.attributes['sf-controller'].value;
+			name = element.attributes['sf-controller'].value;
 		else
-			return $(element).parents('[sf-controller]').attr('sf-controller');
+			name = $(element).parents('[sf-controller]').attr('sf-controller');
+
+		// Initialize it first
+		if(name !== undefined && !self.active[name])
+			self.run(name);
+
+		return name;
 	}
 
 	var listenSFClick = function(e){
@@ -52,10 +59,7 @@ sf.controller = new function(){
 			script = element.attr('sf-click');
 		}
 
-		var model = element.parents('[sf-model]').attr('sf-model');
-
-		if(!sf.model.root[model])
-			model = element.parents('[sf-controller]').attr('sf-controller');
+		var model = element.parents('[sf-controller]').attr('sf-controller');
 
 		if(!sf.model.root[model])
 			throw "Couldn't find model for "+model+" that was called from sf-click";
@@ -129,13 +133,13 @@ sf.controller = new function(){
 			delete controller[name];
 	}
 
-	self.init = function(){
+	self.init = function(parent){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
 				self.init(name);
 			});
 
-		$('[sf-controller]').each(function(){
+		$('[sf-controller]', parent ? $(parent)[0] : document.body).each(function(){
 			self.run(this.attributes['sf-controller'].value);
 		});
 	}

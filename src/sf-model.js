@@ -42,6 +42,10 @@ sf.model = new function(){
 		return _evaled_;
 	}
 
+	self.index = function(element){
+		return $(element).prevAll(element.tagName).length;
+	}
+
 	self.for = function(name, func){
 		if(!self.root[name])
 			self.root[name] = {};
@@ -59,6 +63,10 @@ sf.model = new function(){
 	}
 
 	var clearElementData = function(current){
+		// Clean associated data on jQuery
+		if($ && $.cleanData)
+			$.cleanData(current.getElementsByTagName("*"));
+
 		current.innerHTML = '';
 		for (var i = 0; i < current.attributes.length; i++) {
 			var name = current.attributes[i].name;
@@ -214,15 +222,13 @@ sf.model = new function(){
 		});
 	}
 
-	var bindArray = function(html, list, mask, modelName, propertyName){
+	var bindArray = function(html, list, mask, modelName, propertyName, targetNode){
 		var oldArray = list.slice(0);
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'softRefresh', 'hardRefresh'];
 		var processElement = function(index, update = false, insertBefore = false, insertAfter = false){
-			var exist = $("[sf-model='"+modelName+"']");
-			if(exist.length === 0)
-				exist = $("[sf-controller='"+modelName+"']");
-
+			var exist = $("[sf-controller='"+modelName+"']", targetNode);
 			if(exist.length === 0) return;
+
 			exist = exist.find("[sf-bind-list='"+propertyName+"']");
 
 			var callback = false;
@@ -303,6 +309,12 @@ sf.model = new function(){
 				else{
 					if(callback.update)
 						callback.update(temp[0]);
+
+					// Clean associated data on jQuery
+					if($ && $.cleanData){
+						$.cleanData(exist[index].getElementsByTagName("*"));
+						$.cleanData(exist[index]);
+					}
 
 					exist[index].outerHTML = temp[0].outerHTML;
 				}
@@ -412,7 +424,7 @@ sf.model = new function(){
 		return true;
 	}
 
-	var loopParser = function(name, content, script){
+	var loopParser = function(name, content, script, targetNode){
 		var returns = '';
 		var method = script.split(' in ');
 		var mask = method[0];
@@ -457,13 +469,13 @@ sf.model = new function(){
 					return items;
 				}
 			});
-			bindArray(content, items, mask, name, method[1]);
+			bindArray(content, items, mask, name, method[1], targetNode);
 		}
 		return returns;
 	}
 
-	var bindInput = function(){
-		$('input[sf-bound]').each(function(){
+	var bindInput = function(targetNode){
+		$('input[sf-bound]', targetNode).each(function(){
 			var element = $(this);
 			var model = element.parents('[sf-controller]').attr('sf-controller');
 			if(!model) return;
@@ -490,11 +502,19 @@ sf.model = new function(){
 		});
 	}
 
-	self.init = function(targetNode = false){
-		self.queuePreprocess(targetNode);
-		self.parsePreprocess(targetNode);
+	var alreadyInitialized = false;
+	self.init = function(targetNode){
+		if(alreadyInitialized) return;
+		alreadyInitialized = true;
+		setTimeout(function(){
+			alreadyInitialized = false;
+		}, 50);
 
-		$('[sf-repeat-this]').each(function(){
+		targetNode = targetNode ? $(targetNode)[0] : document.body;
+		self.parsePreprocess(self.queuePreprocess(targetNode));
+		bindInput(targetNode);
+
+		$('[sf-repeat-this]', targetNode).each(function(){
 			var self = $(this);
 			var parent = self.parent();
 
@@ -508,7 +528,7 @@ sf.model = new function(){
 
 			var script = self.attr('sf-repeat-this');
 			self.removeAttr('sf-repeat-this');
-			var controller = self.parents('[sf-controller]').attr('sf-controller');
+			var controller = sf.controller.modelName(this);
 
 			var content = this.outerHTML;
 
@@ -516,7 +536,7 @@ sf.model = new function(){
 			if(/sf-bind-id|sf-bind-list/.test(content))
 				throw "Can't parse element that already bound";
 
-			var data = loopParser(controller, content, script);
+			var data = loopParser(controller, content, script, targetNode);
 			if(data){
 				self.remove();
 				
@@ -535,18 +555,12 @@ sf.model = new function(){
 		});
 	}
 
-	// Initialize the controller
-	// Call only when the element has sf-controller on it's attributes
-	function DOMNodeInserted(element){
-		sf.controller.run(sf.controller.modelName(element));
-	}
-
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
 	function DOMNodeRemoved(element){
 		var model = sf.controller.modelName(element);
 
-		$(element).find('[sf-bind-id], [sf-bind-list], [sf-bounded], [sf-repeat-this]').each(function(){
+		$('[sf-bind-id], [sf-bind-list], [sf-bounded], [sf-repeat-this]', element).each(function(){
 			removeBinding(this, model);
 		});
 
@@ -559,11 +573,6 @@ sf.model = new function(){
 				if(!bindingEnabled) return;
 
 				for(var i in records){
-					for(var a in records[i].addedNodes){
-						var attr = records[i].addedNodes[a].attributes;
-						if(!attr || !attr['sf-controller']) continue;
-						DOMNodeInserted(records[i].addedNodes[a]);
-					}
 					for(var a in records[i].removedNodes){
 						var tagName = records[i].removedNodes[a].nodeName;
 						if(tagName !== 'TEXT' || tagName !== '#comment') continue;
@@ -574,12 +583,6 @@ sf.model = new function(){
 			observer.observe(document.body, { childList: true, subtree: true });
 		}
 		else {
-			document.body.addEventListener('DOMNodeInserted', function(e){
-				if(bindingEnabled && e.target.attributes && e.target.attributes['sf-controller']){
-					DOMNodeInserted(e.target);
-				}
-			});
-
 			document.body.addEventListener('DOMNodeRemoved', function(e){
 				if(bindingEnabled){
 					var tagName = e.target.nodeName;
@@ -820,7 +823,7 @@ sf.model = new function(){
 					}
 				}
 
-				self.queuePreprocess(currentNode);
+				temp = temp.concat(self.queuePreprocess(currentNode));
 			}
 
 			else if(currentNode.nodeType === 3){ // Text
@@ -831,43 +834,48 @@ sf.model = new function(){
 					for (var a = 0; a < temp.length; a++) {
 						temp[a].removeAttribute('sf-preprocess');
 					}
-					return;
+					temp.push(currentNode.parentNode);
+
+					break;
 				}
 			}
 		}
+
+		return temp;
 	}
 
-	self.parsePreprocess = function(targetNode = false){
-		$(targetNode || document.body).find('[sf-preprocess]').each(function(){
-			var model = sf.controller.modelName(this);
-			this.removeAttribute('sf-preprocess');
+	self.parsePreprocess = function(nodes){
+		for (var a = 0; a < nodes.length; a++) {
+			var model = sf.controller.modelName(nodes[a]);
+			nodes[a].removeAttribute('sf-preprocess');
 
 			if(!self.root[model])
-				return console.error("Can't parse element because model for '"+model+"' was not found", this);
+				return console.error("Can't parse element because model for '"+model+"' was not found", nodes[a]);
 
 			// Get reference for debugging
-			processingElement = this;
+			processingElement = nodes[a];
 
 			// Double check if the child element already bound to prevent vulnerability
-			if(/sf-bind-id|sf-bind-list/.test(this.innerHTML)){
+			if(/sf-bind-id|sf-bind-list/.test(nodes[a].innerHTML)){
 				console.error("Can't parse element that already bound");
 				console.log($(processingElement.outerHTML)[0]);
 				return;
 			}
 
-			if($(this).attr('sf-bind'))
-				self.bindElement(this, $(this).attr('sf-bind'));
+			if($(nodes[a]).attr('sf-bind'))
+				self.bindElement(nodes[a], $(nodes[a]).attr('sf-bind'));
 
 			// Avoid editing the outerHTML because it will remove the bind
-			var temp = uniqueDataParser(this.innerHTML, self.root[model], false, model);
-			this.innerHTML = dataParser(temp, self.root[model], false, model);
-			for (var i = 0; i < this.attributes.length; i++) {
-				if(this.attributes[i].value.indexOf('{{') !== -1){
-					this.attributes[i].value = dataParser(this.attributes[i].value, self.root[model], false, model);
+			var temp = uniqueDataParser(nodes[a].innerHTML, self.root[model], false, model);
+			nodes[a].innerHTML = dataParser(temp, self.root[model], false, model);
+			for (var i = 0; i < nodes[a].attributes.length; i++) {
+				if(nodes[a].attributes[i].value.indexOf('{{') !== -1){
+					nodes[a].attributes[i].value = dataParser(nodes[a].attributes[i].value, self.root[model], false, model);
 				}
 			}
-		});
-
-		bindInput();
+		}
 	}
+
+	// Initialize at load time
+	sf(self.init);
 }

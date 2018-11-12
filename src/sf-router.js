@@ -2,13 +2,14 @@ sf.router = new function(){
 	var self = this;
 	self.loading = false;
 	self.enabled = false;
+	self.pauseTransitionRender = false;
 	self.currentPage = [];
 	var initialized = false;
 	var lazyRouting = false;
 	var currentRouterURL = '';
 
 	// Should be called if not using lazy page load
-	self.init = function(){
+	self.init = function(targetNode){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
 				self.init();
@@ -18,9 +19,14 @@ sf.router = new function(){
 		self.lazy();
 
 		// Run 'before' event for new page view
-		$('[sf-page]').each(function(){
-			var name = this.attributes['sf-page'].value;
-			beforeEvent(name);
+		$('[sf-controller], [sf-page]', $(targetNode)[0]).each(function(){
+			if(this.attributes['sf-controller'])
+				sf.controller.run(this.attributes['sf-controller'].value);
+			
+			if(this.attributes['sf-page']){
+				var name = this.attributes['sf-page'].value;
+				beforeEvent(name);
+			}
 		});
 
 		initialized = true;
@@ -28,6 +34,7 @@ sf.router = new function(){
 	}
 
 	self.enable = function(status = true){
+		if(self.enabled === status) return;
 		self.enabled = status;
 
 		if(status)
@@ -39,6 +46,17 @@ sf.router = new function(){
 					current.removeAttr('onclick');
 			});
 		}
+
+		window.addEventListener('popstate', function(event) {
+			// Don't continue if the last routing was error
+			if(routingError){
+				routingError = false;
+				return;
+			}
+
+			routingBack = true;
+			self.goto(window.location.pathname);
+		}, false);
 	}
 
 	var before = {};
@@ -73,9 +91,6 @@ sf.router = new function(){
 	var beforeEvent = function(name, DOMReference = false){
 		if(self.currentPage.indexOf(name) === -1)
 			self.currentPage.push(name);
-
-		// Init all controller
-		sf.controller.init();
 
 		// Init template to model binding
 		sf.model.init(DOMReference);
@@ -148,6 +163,7 @@ sf.router = new function(){
 
 	var RouterLoading = false;
 	var routingBack = false;
+	var routingError = false;
 	self.goto = function(path, data, method){
 		if(!method) method = 'GET';
         else method = method.toUpperCase();
@@ -171,7 +187,6 @@ sf.router = new function(){
 
 				// Run 'loaded' event
 				RouterLoading = false;
-				var skipLazyView = false;
 
 				// Find special data
 				var regex = RegExp('<!-- SF-Special:(.*?)-->'+sf.regex.avoidQuotes, 'gm');
@@ -187,70 +202,74 @@ sf.router = new function(){
 					}
 				}
 
-				// Trigger loaded event
-				for (var i = 0; i < onEvent['loaded'].length; i++) {
-					skipLazyView = onEvent['loaded'][i](currentRouterURL, path, data) || skipLazyView;
+				var DOMReference = false;
+				var foundAction = function(ref){
+					DOMReference = $(ref);
+
+					if(!self.pauseTransitionRender)
+						DOMReference.css('display', 'none'); // Pending DOM rendering
+
+					// Run 'after' event for old page view
+					afterEvent($('[sf-page]', DOMReference[0]));
+					DOMReference.html(data);
+
+					// Redefine title if exist
+					var title = $('title', DOMReference[0]).eq(0).html();
+					if(title)
+						$('head title').html(title);
+
+					found = true;
+				};
+
+				var found = false;
+				for(var oldURL in self.lazyViewPoint){
+					if(currentRouterURL.indexOf(oldURL) !== -1){
+						for(var newURL in self.lazyViewPoint[oldURL]){
+							if(currentRouterURL.indexOf(oldURL) !== -1){
+								foundAction(self.lazyViewPoint[oldURL][newURL]);
+								break;
+							}
+						}
+					}
+					if(found) break;
 				}
 
-				var DOMReference = false;
-				if(!skipLazyView){
-					var foundAction = function(ref){
-						DOMReference = $(ref);
+				// When the view point was not found
+				if(!found){
+					// Use fallback if exist
+					if(sf.router.lazyViewPoint["@default"])
+						foundAction(sf.router.lazyViewPoint["@default"]);
 
-						// Run 'after' event for old page view
-						afterEvent(DOMReference.find('[sf-page]'));
-						DOMReference.html(data);
-
-						// Redefine title if exist
-						var title = DOMReference.find('title').eq(0).html();
-						if(title)
-							$('head title').html(title);
-
-						found = true;
-					};
-
-					var found = false;
-					for(var oldURL in self.lazyViewPoint){
-						if(currentRouterURL.indexOf(oldURL) !== -1){
-							for(var newURL in self.lazyViewPoint[oldURL]){
-								if(currentRouterURL.indexOf(oldURL) !== -1){
-									foundAction(self.lazyViewPoint[oldURL][newURL]);
-									break;
-								}
-							}
-						}
-						if(found) break;
-					}
-
-					// When the view point was not found
 					if(!found){
-						// Use fallback if exist
-						if(sf.router.lazyViewPoint["@default"])
-							foundAction(sf.router.lazyViewPoint["@default"]);
-
-						if(!found){
-							for (var i = 0; i < onEvent['error'].length; i++) {
-								onEvent['error'][i]('sf.router.lazyViewPoint["'+oldURL+'"]["'+newURL+'"] was not found');
-							}
+						for (var i = 0; i < onEvent['error'].length; i++) {
+							onEvent['error'][i]('sf.router.lazyViewPoint["'+oldURL+'"]["'+newURL+'"] was not found');
 						}
 					}
+				}
 
-					// If the init function was called
-					if(initialized) return;
+				// If the init function was called
+				if(initialized){
+					if(!self.pauseTransitionRender)
+						DOMReference.css('display', ''); // Resume DOM rendering
+
+					routerLoaded(currentRouterURL, path, data);
+					return;
 				}
 
 				// Reinit lazy router
 				self.lazy();
 
 				// Run 'before' event for new page view
-				if(!DOMReference) DOMReference = $('body');
-				DOMReference.find('[sf-controller], [sf-page]').each(function(){
-					if(this.attributes['sf-controller'])
-						sf.controller.run(this.attributes['sf-controller'].value);
-
+				if(!DOMReference) DOMReference = $(document.body);
+				$('[sf-page]', DOMReference[0]).each(function(){
 					if(this.attributes['sf-page'])
 						beforeEvent(this.attributes['sf-page'].value, DOMReference[0]);
 				});
+
+				if(!self.pauseTransitionRender)
+					DOMReference.css('display', ''); // Resume DOM rendering
+				
+				routerLoaded(currentRouterURL, path, data);
 
 				initialized = true;
 				lazyRouting = false;
@@ -279,15 +298,10 @@ sf.router = new function(){
 		return true;
 	}
 
-	var routingError = false;
-	window.addEventListener('popstate', function(event) {
-		// Don't continue if the last routing was error
-		if(routingError){
-			routingError = false;
-			return;
+	// Trigger loaded event
+	function routerLoaded(currentRouterURL, path, data){
+		for (var i = 0; i < onEvent['loaded'].length; i++) {
+			onEvent['loaded'][i](currentRouterURL, path, data);
 		}
-
-		routingBack = true;
-		self.goto(window.location.pathname);
-	}, false);
+	}
 };
