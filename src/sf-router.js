@@ -2,7 +2,7 @@ sf.router = new function(){
 	var self = this;
 	self.loading = false;
 	self.enabled = false;
-	self.pauseTransitionRender = false;
+	self.pauseRenderOnTransition = false;
 	self.currentPage = [];
 	var initialized = false;
 	var lazyRouting = false;
@@ -206,7 +206,7 @@ sf.router = new function(){
 				var foundAction = function(ref){
 					DOMReference = $(ref);
 
-					if(!self.pauseTransitionRender)
+					if(self.pauseRenderOnTransition)
 						DOMReference.css('display', 'none'); // Pending DOM rendering
 
 					// Run 'after' event for old page view
@@ -249,7 +249,7 @@ sf.router = new function(){
 
 				// If the init function was called
 				if(initialized){
-					if(!self.pauseTransitionRender)
+					if(self.pauseRenderOnTransition)
 						DOMReference.css('display', ''); // Resume DOM rendering
 
 					routerLoaded(currentRouterURL, path, data);
@@ -266,7 +266,7 @@ sf.router = new function(){
 						beforeEvent(this.attributes['sf-page'].value, DOMReference[0]);
 				});
 
-				if(!self.pauseTransitionRender)
+				if(self.pauseRenderOnTransition)
 					DOMReference.css('display', ''); // Resume DOM rendering
 				
 				routerLoaded(currentRouterURL, path, data);
