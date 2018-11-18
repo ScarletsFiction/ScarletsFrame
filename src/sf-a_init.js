@@ -1,24 +1,28 @@
-if(typeof sf === 'undefined'){
-	sf = function(){
-		if(arguments[0].constructor === Function){
-			return sf.loader.onFinish.apply(null, arguments);
-		}
-	};
-}
+sf = function(){
+	if(arguments[0].constructor === Function){
+		return sf.loader.onFinish.apply(null, arguments);
+	}
+};
+
 sf.regex = {
 	// ToDo: Need help to skip escaped quote
 	avoidQuotes:'(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)',
+	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )'
 };
 
-setTimeout(function(){
-	sf(sf.router.init);
-}, 10);
-
-if(typeof $ === 'undefined' || !$.fn || !$.fn.extend){
+if(typeof $ === 'undefined' || !$.fn){
 	setTimeout(function(){
 		console.clear();
 		console.error("Please load jQuery before ScarletsFrame");
 	}, 1000);
+}
+
+if(!$.fn.extend){
+	$.fn.extend = function(obj){
+		for(var func in obj){
+			$.fn[func] = obj[func];
+		}
+	}
 }
 
 // Add animate.css feature on jQuery

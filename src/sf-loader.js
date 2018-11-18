@@ -1,7 +1,7 @@
 sf.loader = new function(){
 	var self = this;
 	self.loadedContent = 0;
-	self.totalContent = 1;
+	self.totalContent = 0;
 	self.DOMWasLoaded = false;
 
 	var whenDOMLoaded = [];
@@ -47,7 +47,7 @@ sf.loader = new function(){
 		});
 	}
 
-	self.js = function(list, target = 'body'){
+	self.js = function(list){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
@@ -62,20 +62,36 @@ sf.loader = new function(){
 			  url: list[i],
 			  dataType: "script",
 			  cache: true,
-			  success: sf.loader.f
+			  complete: sf.loader.f
 			});
 		}
 	}
 
+	setTimeout(function(){
+		if(self.totalContent === 0)
+			self.loadedContent = self.totalContent = 1;
+	}, 10000);
 	var everythingLoaded = setInterval(function() {
 	if (/loaded|complete/.test(document.readyState)) {
+		if(self.loadedContent < self.totalContent || self.loadedContent === 0)
+			return;
+
 		clearInterval(everythingLoaded);
 		self.DOMWasLoaded = true;
 		for (var i = 0; i < whenDOMLoaded.length; i++) {
-			whenDOMLoaded[i]();
+			try{
+				whenDOMLoaded[i]();
+			} catch(e){
+				console.error(e);
+			}
 		}
 		whenProgress.splice(0);
 		whenDOMLoaded.splice(0);
+
+		// Last init
+		sf.controller.init();
+		sf.model.init();
+		sf.router.init();
 	}
 	}, 100);
 };

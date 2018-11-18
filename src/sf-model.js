@@ -3,6 +3,15 @@ sf.model = new function(){
 	var self = this;
 	var bindingEnabled = false;
 	self.root = {};
+	var root_ = function(scope){
+		if(!self.root[scope])
+			self.root[scope] = {};
+
+		if(sf.controller.pending[scope])
+			sf.controller.run(scope);
+
+		return self.root[scope];
+	};
 
 	var processingElement = null;
 
@@ -36,7 +45,14 @@ sf.model = new function(){
 			console.log(script_);
 			return '';
 		}
-		var _evaled_ = eval(script_);
+		try{
+			var _evaled_ = eval(script_);
+		} catch(e){
+			console.error(e);
+			console.log(script_);
+			console.log($(processingElement.outerHTML)[0]);
+			return '';
+		}
 
 		if(_result_ !== '') return _result_;
 		return _evaled_;
@@ -47,10 +63,12 @@ sf.model = new function(){
 	}
 
 	self.for = function(name, func){
-		if(!self.root[name])
-			self.root[name] = {};
-
-		func(self.root[name], self.root);
+		if(!sf.loader.DOMWasLoaded)
+			return sf(function(){
+				self.for(name, func);
+			});
+		
+		func(root_(name), root_);
 	}
 
 	self.modelKeys = function(modelRef){
@@ -78,18 +96,19 @@ sf.model = new function(){
 
 	// For contributor of this library
 	// Please be careful when you're passing the eval argument
-	var dataParser = function(html, _model_, mask, scope, runEval = ''){
+	var dataParser = function(html, _model_, mask, scope, runEval){
 		var _modelScope = self.root[scope];
+		if(!runEval) runEval = '';
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
+			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		bindingEnabled = true;
 
-		return html.replace(/{{([^@].*?)}}/g, function(actual, temp){
+		return html.replace(/{{([^@][\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
 			temp = temp.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
 
@@ -146,7 +165,7 @@ sf.model = new function(){
 			}
 		};
 
-		html = html.replace(/{\[(.*?)\]}/gs, function(full, matched){
+		html = html.replace(/{\[([\s\S]*?)\]}/g, function(full, matched){
 			_content_[_content_.length] = matched;
 			_content_.length++;
 			return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
@@ -155,12 +174,12 @@ sf.model = new function(){
 		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )'+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
+			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
 
-		return html.replace(/{{(@.*?)}}/gs, function(actual, temp){
+		return html.replace(/{{(@[\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
 			temp = temp.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
 
@@ -191,8 +210,13 @@ sf.model = new function(){
 			}
 
 			// Get defined variables
-			var VarPass = temp.match(/(?<=var|let)[\w,\s]+(?=\s(?==|in|of))/g);
-			if(VarPass){
+			var VarPass_ = /(var|let)([\w,\s]+)(?=\s(?==|in|of))/g;
+			var VarPass = [];
+			var s1 = null;
+			while((s1 = VarPass_.exec(temp)) !== null){
+				VarPass.push(s1[2]);
+			}
+			if(VarPass.length){
 				var obtained = [];
 				for (var i = 0; i < VarPass.length; i++) {
 					VarPass[i].replace(/([\n\t\r]|  )+/g, '').split(',').forEach(function(val){
@@ -225,7 +249,7 @@ sf.model = new function(){
 	var bindArray = function(html, list, mask, modelName, propertyName, targetNode){
 		var oldArray = list.slice(0);
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'softRefresh', 'hardRefresh'];
-		var processElement = function(index, update = false, insertBefore = false, insertAfter = false){
+		var processElement = function(index, update, insertBefore, insertAfter){
 			var exist = $("[sf-controller='"+modelName+"']", targetNode);
 			if(exist.length === 0) return;
 
@@ -593,7 +617,7 @@ sf.model = new function(){
 		}
 	});
 
-	var removeBinding = function(element, modelNames = false){
+	var removeBinding = function(element, modelNames){
 		if(!element.attributes) return;
 
 		var attrs = element.attributes;
@@ -673,7 +697,7 @@ sf.model = new function(){
 	// For resetting object property it the element was removed from DOM
 	var bindRef = {length:0, index:0, cache:{}};
 	self.bindRef = bindRef;
-	var dcBracket = /{{.*?}}/;
+	var dcBracket = /{{[\s\S]*?}}/;
 	var bindObject = function(element, object, propertyName, which){
 		if(!(element instanceof Node))
 			element = element[0];
@@ -772,12 +796,10 @@ sf.model = new function(){
 		});
 	}
 
-	self.bindElement = function(element, which = false){
+	self.bindElement = function(element, which){
 		var modelName = sf.controller.modelName(element);
 		var model = self.root[modelName];
 		if(!model) return console.error("Model for "+modelName+" was not found while binding:", element);
-
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+self.modelKeys(model)+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		var html = element.outerHTML;
 
@@ -788,15 +810,17 @@ sf.model = new function(){
 		if(which === 'attr')
 			html = html.replace(element.innerHTML, '');
 
-		var brackets = html.match(/(?<={{).*?(?=}})/gs);
-		for (var i = 0; i < brackets.length; i++) {
-			while ((bindable = scopeMask.exec(brackets[i])) !== null) {
-				bindObject(element, model, bindable[i], which);
+		var brackets = /{{([\s\S]*?)}}/g;
+		var scopeMask = RegExp('\\b[^.]|^|\\n| +|\\t|\\W ('+self.modelKeys(model)+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var s1, s2 = null;
+		while((s1 = brackets.exec(html)) !== null){
+			while ((s2 = scopeMask.exec(s1[1])) !== null) {
+				bindObject(element, model, s2[1], which);
 			}
 		}
 	}
 
-	self.queuePreprocess = function(targetNode = false){
+	self.queuePreprocess = function(targetNode){
 		var childNodes = (targetNode || document.body).childNodes;
 
 		var excludes = ['html','head','style','link','meta','script','object','iframe'];
@@ -875,7 +899,4 @@ sf.model = new function(){
 			}
 		}
 	}
-
-	// Initialize at load time
-	sf(self.init);
 }

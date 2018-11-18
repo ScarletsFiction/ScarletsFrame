@@ -1,17 +1,14 @@
 // DOM Controller on loaded app
 sf.controller = new function(){
 	var self = this;
-	var controller = {};
+	self.pending = {};
 	self.active = {};
 
 	self.for = function(name, func){
-		if(!sf.model.root[name])
-			sf.model.root[name] = {};
-
-		controller[name] = func;
+		self.pending[name] = func;
 	}
 
-	self.modelScope = function(element, func = false){
+	self.modelScope = function(element, func){
 		var elem = $(element);
 		var model = sf.controller.modelName(element);
 
@@ -67,7 +64,7 @@ sf.controller = new function(){
 		var _modelScope = sf.model.root[model];
 
 		var modelKeys = sf.model.modelKeys(_modelScope);
-		var scopeMask = RegExp('(?<=\\b[^.]|^|\\n| +|\\t|\\W )('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		script = script.replace(scopeMask, function(full, matched){
 			return '_modelScope.'+matched;
@@ -110,27 +107,33 @@ sf.controller = new function(){
 		}
 	}
 
+	var root_ = function(scope){
+		if(!sf.model.root[scope])
+			sf.model.root[scope] = {};
+
+		if(!sf.model.root[scope])
+			sf.controller.run(scope);
+		
+		return sf.model.root[scope];
+	}
+	// Deprecated
 	self.run = function(name, func){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
 				self.run(name, func);
 			});
 
-		if(controller[name]){
-			if(!self.active[name]){
-				if(controller[name])
-					controller[name](sf.model.root[name], sf.model.root);
-
-				self.active[name] = true;
-			}
+		if(self.pending[name]){
+			if(!sf.model.root[name])
+				sf.model.root[name] = {};
+		
+			self.pending[name](sf.model.root[name], root_);
+			self.active[name] = true;
+			delete self.pending[name];
 		}
 
 		if(func)
-			func(sf.model.root[name], sf.model.root);
-
-		// Mark as loaded
-		if(controller[name])
-			delete controller[name];
+			func(sf.model.root[name], root_);
 	}
 
 	self.init = function(parent){

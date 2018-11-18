@@ -33,7 +33,8 @@ sf.router = new function(){
 		currentRouterURL = window.location.pathname;
 	}
 
-	self.enable = function(status = true){
+	self.enable = function(status){
+		if(status === undefined) status = true;
 		if(self.enabled === status) return;
 		self.enabled = status;
 
@@ -61,11 +62,11 @@ sf.router = new function(){
 
 	var before = {};
 	// Set index with number if you want to replace old function
-	self.before = function(name, func, index = false){
+	self.before = function(name, func, index){
 		if(!before[name])
 			before[name] = [];
 
-		if(index === false){
+		if(index === undefined){
 			if(before[name].indexOf(func) === -1)
 				before[name].push(func);
 		}
@@ -75,11 +76,11 @@ sf.router = new function(){
 
 	var after = {};
 	// Set index with number if you want to replace old function
-	self.after = function(name, func, index = false){
+	self.after = function(name, func, index){
 		if(!after[name])
 			after[name] = [];
 
-		if(index === false){
+		if(index === undefined){
 			if(after[name].indexOf(func) === -1)
 				after[name].push(func);
 		}
@@ -87,35 +88,36 @@ sf.router = new function(){
 			after[name][index] = func;
 	}
 
+	var root_ = function(scope){
+		if(!sf.model.root[scope])
+			sf.model.root[scope] = {};
+
+		if(!sf.model.root[scope])
+			sf.controller.run(scope);
+		
+		return sf.model.root[scope];
+	}
+
 	// Running 'before' new page going to be displayed
-	var beforeEvent = function(name, DOMReference = false){
+	var beforeEvent = function(name){
 		if(self.currentPage.indexOf(name) === -1)
 			self.currentPage.push(name);
 
-		// Init template to model binding
-		sf.model.init(DOMReference);
-
 		if(before[name]){
-			if(!sf.model.root[name])
-				sf.model.root[name] = {};
-
 			for (var i = 0; i < before[name].length; i++) {
-				before[name][i](sf.model.root);
+				before[name][i](root_);
 			}
 		}
 	}
 
 	// Running 'after' old page going to be removed
-	var afterEvent = function(){
+	var afterEvent = function(name){
 		if(self.currentPage.indexOf(name) === -1)
 			self.currentPage.splice(self.currentPage.indexOf(name), 1);
 
-		if(self.currentPage !== '' && after[self.currentPage]){
-			if(!sf.model.root[self.currentPage])
-				sf.model.root[self.currentPage] = {};
-
-			for (var i = 0; i < after[self.currentPage].length; i++) {
-				after[self.currentPage][i](sf.model.root);
+		if(after[name]){
+			for (var i = 0; i < after[name].length; i++) {
+				after[name][i](root_);
 			}
 		}
 	}
@@ -190,14 +192,14 @@ sf.router = new function(){
 
 				// Find special data
 				var regex = RegExp('<!-- SF-Special:(.*?)-->'+sf.regex.avoidQuotes, 'gm');
-				var found = regex.exec(data);
-				if(found && found.length !== 1){
-					found = found[1].split('--|&>').join('-->');
-					found = JSON.parse(found);
+				var special = regex.exec(data);
+				if(special && special.length !== 1){
+					special = special[1].split('--|&>').join('-->');
+					special = JSON.parse(special);
 
-					if(!$.isEmptyObject(found)){
+					if(!$.isEmptyObject(special)){
 						for (var i = 0; i < onEvent['special'].length; i++) {
-							if(onEvent['special'][i](found)) return;
+							if(onEvent['special'][i](special)) return;
 						}
 					}
 				}
@@ -206,17 +208,12 @@ sf.router = new function(){
 				var foundAction = function(ref){
 					DOMReference = $(ref);
 
-					if(self.pauseRenderOnTransition)
-						DOMReference.css('display', 'none'); // Pending DOM rendering
-
 					// Run 'after' event for old page view
-					afterEvent($('[sf-page]', DOMReference[0]));
-					DOMReference.html(data);
+					afterEvent($('[sf-page]', DOMReference[0]).attr('sf-page'));
 
 					// Redefine title if exist
-					var title = $('title', DOMReference[0]).eq(0).html();
-					if(title)
-						$('head title').html(title);
+					if(special && special.title)
+						$('head title').html(special.title);
 
 					found = true;
 				};
@@ -247,29 +244,30 @@ sf.router = new function(){
 					}
 				}
 
-				// If the init function was called
-				if(initialized){
-					if(self.pauseRenderOnTransition)
-						DOMReference.css('display', ''); // Resume DOM rendering
-
-					routerLoaded(currentRouterURL, path, data);
-					return;
-				}
-
 				// Reinit lazy router
 				self.lazy();
 
 				// Run 'before' event for new page view
 				if(!DOMReference) DOMReference = $(document.body);
+				if(self.pauseRenderOnTransition)
+					self.pauseRenderOnTransition.css('display', 'none');
+
+				// Let page script running first, then update the data binding
+				DOMReference.html(data);
+
+				// Parse the DOM data binding
+				sf.model.init(DOMReference);
+
+				// Init template to model binding
 				$('[sf-page]', DOMReference[0]).each(function(){
 					if(this.attributes['sf-page'])
-						beforeEvent(this.attributes['sf-page'].value, DOMReference[0]);
+						beforeEvent(this.attributes['sf-page'].value);
 				});
 
 				if(self.pauseRenderOnTransition)
-					DOMReference.css('display', ''); // Resume DOM rendering
-				
-				routerLoaded(currentRouterURL, path, data);
+					self.pauseRenderOnTransition.css('display', '');
+
+				routerLoaded(currentRouterURL, path, DOMReference);
 
 				initialized = true;
 				lazyRouting = false;
