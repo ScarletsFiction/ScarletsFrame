@@ -21,6 +21,8 @@ sf.model = new function(){
 	var localEval = function(script_, _model_, _modelScope, _content_){
 		var script = script_;
 		script_ = script_.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
+		script_ = script_.split('._modelScope').join('');
+		script_ = script_.split('._model_').join('');
 
 		// Prevent vulnerability by remove bracket to avoid a function call
 		var preventExecution = false;
