@@ -81,7 +81,7 @@ Define event listener when element with attributes `sf-page="todo/page"` was loa
 ```js
 sf.router.before('todo/page', function(ModelRoot){
     // Data Re-initialization
-    var self = ModelRoot['todo.page']; // sf.model.root['todo.page']
+    var self = ModelRoot('todo.page'); // sf.model.root['todo.page']
 });
 ```
 
@@ -181,7 +181,7 @@ sf.model.for('music.feedback', function(self, root){
     // '.softRefresh(index = -1)' redraw some element only
 
     // If you want to refer other model scope
-    self.users = root['user.info']; // sf.model.root['user.info'];
+    self.users = root('user.info'); // sf.model.root['user.info'];
 
     // Register event when 'reviews' was modified
     self.on$reviews = {
