@@ -7,12 +7,29 @@ var csso = require('gulp-csso');
 var uglify = require('gulp-uglify-es').default;
 var autoprefixer = require('gulp-autoprefixer');
 var header = require('gulp-header');
+var babel = require('gulp-babel');
 
 gulp.task('js', function(){
   return gulp.src('src/**/*.js')
     .pipe(sourcemaps.init())
     .pipe(concat('scarletsframe.min.js'))
-    //.pipe(uglify())
+    .pipe(babel({
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "targets": {
+              "ie": "9"
+            },
+            "loose":true,
+            "modules": false
+          }
+        ]
+      ]
+    }))
+    .on('error', swallowError)
+    .pipe(uglify())
+    .on('error', swallowError)
     .pipe(header(`/*
   ScarletsFrame
   A frontend library for Scarlets Framework that support
@@ -21,7 +38,6 @@ gulp.task('js', function(){
 
   https://github.com/ScarletsFiction/ScarletsFrame
 */\n`))
-    .on('error', console.error)
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest('dist'));
 });
@@ -48,3 +64,8 @@ gulp.task('css', function () {
 });
 
 gulp.task('default', ['js']);
+
+function swallowError(error){
+  console.log(error.message)
+  this.emit('end')
+}
