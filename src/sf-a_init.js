@@ -11,10 +11,12 @@ sf.regex = {
 };
 
 if(typeof $ === 'undefined' || !$.fn){
-	setTimeout(function(){
-		console.clear();
-		console.error("Please load jQuery before ScarletsFrame");
-	}, 1000);
+	if(typeof jQuery !== 'undefined')
+		$ = jQuery;
+	else if(typeof Dom7 !== 'undefined')
+		$ = Dom7;
+	else
+		throw "Please load jQuery before ScarletsFrame";
 }
 
 if(!$.fn.extend){
