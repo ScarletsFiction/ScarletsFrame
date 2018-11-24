@@ -101,9 +101,16 @@ sf.model = new function(){
 	var dataParser = function(html, _model_, mask, scope, runEval){
 		var _modelScope = self.root[scope];
 		if(!runEval) runEval = '';
+		
+		// Unmatch any function
+		var variableList = self.modelKeys(_modelScope);
+		for(var i = variableList.length - 1; i >= 0; i--){
+			if(_modelScope[variableList[i]] instanceof Function)
+				variableList.splice(i, 1);
+		}
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+variableList+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		if(mask)
 			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
@@ -271,7 +278,7 @@ sf.model = new function(){
 				}
 
 				// Get first element
-				var first = exist.eq(0).before();
+				var first = exist.eq(0).prev();
 				if(first[0] === exist[0])
 					exist.parent().prepend(all);
 				else
@@ -530,13 +537,18 @@ sf.model = new function(){
 
 	var alreadyInitialized = false;
 	self.init = function(targetNode){
-		if(alreadyInitialized) return;
+		if(alreadyInitialized && !targetNode) return;
 		alreadyInitialized = true;
 		setTimeout(function(){
 			alreadyInitialized = false;
 		}, 50);
 
-		targetNode = targetNode ? $(targetNode)[0] : document.body;
+		if(targetNode){
+			if(!(targetNode instanceof Node))
+				targetNode = $(targetNode)[0];
+		}
+		else targetNode = document.body;
+
 		self.parsePreprocess(self.queuePreprocess(targetNode));
 		bindInput(targetNode);
 
@@ -548,7 +560,7 @@ sf.model = new function(){
 			if(!after.length || self[0] === after[0])
 				after = false;
 
-			var before = self.before();
+			var before = self.prev();
 			if(!before.length || self[0] === before[0])
 				before = false;
 
@@ -766,6 +778,7 @@ sf.model = new function(){
 			}
 		};
 
+		if(cache.model[propertyName] === undefined) throw "Property '"+propertyName+"' was not found on '"+cache.modelName+"' model";
 		if(Object.getOwnPropertyDescriptor(cache.model, propertyName)['set']){
 			for(var i in bindRef){
 				if(cache.model === bindRef[i].object && bindRef[i].propertyName.indexOf(propertyName) !== -1){
@@ -813,7 +826,15 @@ sf.model = new function(){
 			html = html.replace(element.innerHTML, '');
 
 		var brackets = /{{([\s\S]*?)}}/g;
-		var scopeMask = RegExp('\\b[^.]|^|\\n| +|\\t|\\W ('+self.modelKeys(model)+')'+sf.regex.avoidQuotes+'\\b', 'g');
+
+		// Unmatch any function
+		var variableList = self.modelKeys(model);
+		for(var i = variableList.length - 1; i >= 0; i--){
+			if(model[variableList[i]] instanceof Function)
+				variableList.splice(i, 1);
+		}
+
+		var scopeMask = RegExp(sf.regex.strictVar+'('+variableList+')'+sf.regex.avoidQuotes+'\\b', 'g');
 		var s1, s2 = null;
 		while((s1 = brackets.exec(html)) !== null){
 			while ((s2 = scopeMask.exec(s1[1])) !== null) {
