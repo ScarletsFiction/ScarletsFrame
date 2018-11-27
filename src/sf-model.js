@@ -260,9 +260,13 @@ sf.model = new function(){
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'softRefresh', 'hardRefresh'];
 		var processElement = function(index, update, insertBefore, insertAfter){
 			var exist = $("[sf-controller='"+modelName+"']", targetNode);
-			if(exist.length === 0) return;
+			if(exist.length === 0){
+				if(targetNode.getAttribute('sf-controller') === modelName)
+					exist = targetNode;
+				else return;
+			}
 
-			exist = exist.find("[sf-bind-list='"+propertyName+"']");
+			exist = $("[sf-bind-list='"+propertyName+"']", exist);
 
 			var callback = false;
 			if(self.root[modelName]['on$'+propertyName])
