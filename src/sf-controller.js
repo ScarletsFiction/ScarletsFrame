@@ -147,8 +147,8 @@ sf.controller = new function(){
 		});
 	}
 
-	$(function(){
-		// Listen to sf-click
-		$('body').on('click', '[sf-controller] [sf-click]', listenSFClick);
+	// Create listener for sf-click
+	$(document).once('DOMContentLoaded', function(){
+		$(document.body).on('click', '[sf-click]', listenSFClick);
 	});
 }

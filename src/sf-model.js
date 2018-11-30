@@ -1,17 +1,18 @@
 // Data save and HTML content binding
-sf.model = new function(){
-	var self = this;
+sf.model = function(scope){
+	if(!sf.model.root[scope])
+		sf.model.root[scope] = {};
+
+	if(sf.controller.pending[scope])
+		sf.controller.run(scope);
+
+	return sf.model.root[scope];
+};
+
+(function(){
+	var self = sf.model;
 	var bindingEnabled = false;
 	self.root = {};
-	var root_ = function(scope){
-		if(!self.root[scope])
-			self.root[scope] = {};
-
-		if(sf.controller.pending[scope])
-			sf.controller.run(scope);
-
-		return self.root[scope];
-	};
 
 	var processingElement = null;
 
@@ -70,7 +71,7 @@ sf.model = new function(){
 				self.for(name, func);
 			});
 		
-		func(root_(name), root_);
+		func(self(name), self);
 	}
 
 	self.modelKeys = function(modelRef){
@@ -926,4 +927,4 @@ sf.model = new function(){
 			}
 		}
 	}
-}
+})();
