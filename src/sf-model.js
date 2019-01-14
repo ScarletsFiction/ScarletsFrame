@@ -256,7 +256,7 @@ sf.model = function(scope){
 		});
 	}
 
-	var bindArray = function(html, list, mask, modelName, propertyName, targetNode){
+	var bindArray = function(html, list, mask, modelName, propertyName, targetNode, parentNode, htmlParsedData){
 		var oldArray = list.slice(0);
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'softRefresh', 'hardRefresh'];
 		var processElement = function(index, update, insertBefore, insertAfter){
@@ -446,6 +446,21 @@ sf.model = function(scope){
 			});
 		}
 
+		// parentNode[0] = element, [1] = child scroll height
+		if(parentNode && parentNode[0].classList.contains('sf-virtual-list')){
+			Object.defineProperty(list, '$virtual', {
+				enumerable: false,
+				configurable: true,
+				value:{}
+			});
+
+			// Parse in virtual DOM
+			list.$virtual.dom = document.createElement('div');
+			list.$virtual.dom.innerHTML = htmlParsedData;
+
+			sf.internal.virtual_scroll.handle(list, targetNode, parentNode[0]);
+		}
+
 		for (var i = 0; i < editProperty.length; i++) {
 			propertyProxy(list, editProperty[i]);
 		}
@@ -462,7 +477,7 @@ sf.model = function(scope){
 		return true;
 	}
 
-	var loopParser = function(name, content, script, targetNode){
+	var loopParser = function(name, content, script, targetNode, parentNode){
 		var returns = '';
 		var method = script.split(' in ');
 		var mask = method[0];
@@ -507,7 +522,7 @@ sf.model = function(scope){
 					return items;
 				}
 			});
-			bindArray(content, items, mask, name, method[1], targetNode);
+			bindArray(content, items, mask, name, method[1], targetNode, parentNode, returns);
 		}
 		return returns;
 	}
@@ -561,6 +576,29 @@ sf.model = function(scope){
 			var self = $(this);
 			var parent = self.parent();
 
+			if(this.parentNode.classList.contains('sf-virtual-list')){
+				var tagName = $(this.parentNode).children('[sf-repeat-this]')[0].tagName;
+				var ceiling = document.createElement(tagName);
+				ceiling.classList.add('virtual-spacer');
+				ceiling.classList.add('ceiling');
+				//ceiling.style.transform = 'scaleY(0)';
+				this.parentNode.prepend(ceiling);
+
+				var floor = document.createElement(tagName);
+				floor.classList.add('virtual-spacer');
+				floor.classList.add('floor');
+				//floor.style.transform = 'scaleY(0)';
+				this.parentNode.append(floor);
+
+				// His total scrollHeight
+				var styles = window.getComputedStyle(this);
+				var absHeight = parseFloat(styles['marginTop']) + parseFloat(styles['marginBottom']);
+				styles = null;
+
+				// Element height + margin
+				absHeight = Math.ceil(this.offsetHeight + absHeight);
+			}
+
 			var after = self.next();
 			if(!after.length || self[0] === after[0])
 				after = false;
@@ -578,6 +616,12 @@ sf.model = function(scope){
 			// Check if the element was already bound to prevent vulnerability
 			if(/sf-bind-id|sf-bind-list/.test(content))
 				throw "Can't parse element that already bound";
+
+			if(this.parentNode.classList.contains('sf-virtual-list')){
+				loopParser(controller, content, script, targetNode, [this.parentNode, absHeight]);
+				self.remove();
+				return;
+			}
 
 			var data = loopParser(controller, content, script, targetNode);
 			if(data){
@@ -684,8 +728,9 @@ sf.model = function(scope){
 		if(!modelNames) return;
 
 		var propertyName = false;
-		if(attrs['sf-bind-list'])
+		if(attrs['sf-bind-list']){
 			propertyName = attrs['sf-bind-list'].value;
+		}
 
 		if(attrs['sf-repeat-this'])
 			propertyName = attrs['sf-repeat-this'].value.split(' in ')[1];
