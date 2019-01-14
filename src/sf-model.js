@@ -267,7 +267,27 @@ sf.model = function(scope){
 				else return;
 			}
 
-			exist = $("[sf-bind-list='"+propertyName+"']", exist);
+			if(list.$virtual){
+				var exist = [];
+
+				var length = list.$virtual.DOMCursor;
+				for (var i = 0; i < length; i++) {
+					exist.push(list.$virtual.dom.children[i]);
+				}
+
+				length = parentNode[0].childElementCount - 2;
+				for (var i = 1; i <= length; i++) {
+					exist.push(parentNode[0].children[i]);
+				}
+
+				length = list.length - length - list.$virtual.DOMCursor;
+				for (var i = list.$virtual.DOMCursor; i < length; i++) {
+					exist.push(list.$virtual.dom.children[i]);
+				}
+				
+				exist = $(exist);
+			}
+			else exist = $("[sf-bind-list='"+propertyName+"']", exist);
 
 			var callback = false;
 			if(self.root[modelName]['on$'+propertyName])
@@ -358,6 +378,7 @@ sf.model = function(scope){
 				}
 			}
 		}
+
 		var propertyProxy = function(subject, name){
 			Object.defineProperty(subject, name, {
 				enumerable: false,
