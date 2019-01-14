@@ -1,7 +1,7 @@
 // Run this function when sf-page for 'todo/index' was found
 // And all model or controller was finished running
 sf.router.before('todo/index', function(root){
-	var self = root['todo-app'];
+	var self = root('todo-app');
 	var weekday = new Array(7);
 
 	// root can be used for accessing other scope

@@ -4,6 +4,7 @@ sf = function(){
 	}
 };
 
+sf.internal = {};
 sf.regex = {
 	// ToDo: Need help to skip escaped quote
 	avoidQuotes:'(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)',

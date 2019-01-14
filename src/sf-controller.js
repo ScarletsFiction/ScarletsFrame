@@ -148,7 +148,7 @@ sf.controller = new function(){
 	}
 
 	// Create listener for sf-click
-	$(document).once('DOMContentLoaded', function(){
+	$(document).one('DOMContentLoaded', function(){
 		$(document.body).on('click', '[sf-click]', listenSFClick);
 	});
 }
