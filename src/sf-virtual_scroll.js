@@ -27,10 +27,25 @@ sf.internal.virtual_scroll = new function(){
 			list.$virtual.dCursor.floor.offsetTop - 
 			list.$virtual.dCursor.ceiling.offsetTop;
 
+		var scroller = null;
+		list.$virtual.destroy = function(){
+			$(scroller).off();
+			$(parentNode).off();
+			list.$virtual.dom.innerHTML = '';
+			delete list.$virtual;
+		}
+
+		list.$virtual.resetViewport = function(){
+			list.$virtual.visibleLength = Math.floor(scroller.clientHeight / list.$virtual.scrollHeight);
+			list.$virtual.preparedLength = list.$virtual.visibleLength + self.prepareCount * 2;
+		}
+
 		setTimeout(function(){
 			if(parentNode.parentElement.classList.contains('simplebar-content'))
 				scroller = parentNode.parentElement;
 			else scroller = parentNode;
+
+			list.$virtual.resetViewport();
 			
 			if(parentNode.classList.contains('sf-list-dynamic'))
 				dynamicHeight(list, targetNode, parentNode, scroller);
@@ -51,49 +66,44 @@ sf.internal.virtual_scroll = new function(){
 			if(i === null) break;
 
 			floor.insertAdjacentElement('beforeBegin', i);
-		} while(i.scrollTop < parentNode.clientHeight);
+		} while(i.scrollTop < scroller.clientHeight);
 
 		refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
 
 		function checkCursorPosition(){
-			if(updating || parentNode.scrollTop >= bounding.ceiling && parentNode.scrollTop <= bounding.floor)
+			if(updating || scroller.scrollTop >= bounding.ceiling && scroller.scrollTop <= bounding.floor)
 				return;
 
 			if(list.$virtual.DOMCursor + self.prepareCount > list.length) return;
 		}
 
-		$(parentNode).on('scroll', checkCursorPosition);
+		$(scroller).on('scroll', checkCursorPosition);
 	}
 
 	function staticHeight(list, targetNode, parentNode, scroller){
-		var ceiling = list.$virtual.dCursor.ceiling;
-		var floor = list.$virtual.dCursor.floor;
-
-		var visibleLength, preparedLength;
-		list.$virtual.resetViewport = function(){
-			visibleLength = Math.floor(scroller.clientHeight / list.$virtual.scrollHeight);
-			preparedLength = visibleLength + self.prepareCount * 2;
-		}
-		list.$virtual.resetViewport();
+		var virtual = list.$virtual;
+		var ceiling = virtual.dCursor.ceiling;
+		var floor = virtual.dCursor.floor;
+		var preparedLength = virtual.preparedLength;
 
 		// Insert visible element to dom tree
-		var insertCount = preparedLength <= list.length ? preparedLength : list.length;
+		var insertCount = virtual.preparedLength <= list.length ? virtual.preparedLength : list.length;
 		for (var i = 0; i < insertCount; i++) {
-			floor.insertAdjacentElement('beforeBegin', list.$virtual.dom.firstElementChild);
+			floor.insertAdjacentElement('beforeBegin', virtual.dom.firstElementChild);
 		}
 
 		function refreshVirtualSpacer(cursor){
 			if(cursor >= self.prepareCount){
-				ceiling.style.height = (cursor - self.prepareCount) * list.$virtual.scrollHeight + 'px';
-				floor.style.height = (list.length - preparedLength - cursor) * list.$virtual.scrollHeight + 'px';
+				ceiling.style.height = (cursor - self.prepareCount) * virtual.scrollHeight + 'px';
+				floor.style.height = (list.length - virtual.preparedLength - cursor) * virtual.scrollHeight + 'px';
 			}
 			else{
-				ceiling.style.height = cursor * list.$virtual.scrollHeight + 'px'; //'0px';
-				floor.style.height = list.length * list.$virtual.scrollHeight + 'px';
+				ceiling.style.height = cursor * virtual.scrollHeight + 'px'; //'0px';
+				floor.style.height = list.length * virtual.scrollHeight + 'px';
 			}
 		}
 
-		var bounding = list.$virtual.bounding;
+		var bounding = virtual.bounding;
 
 		refreshVirtualSpacer(0);
 		refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
@@ -114,9 +124,9 @@ sf.internal.virtual_scroll = new function(){
 				return;
 			}
 
-			var cursor = Math.floor(scroller.scrollTop / list.$virtual.scrollHeight);
-			if(cursor + preparedLength > list.length)
-				cursor = list.length - preparedLength;
+			var cursor = Math.floor(scroller.scrollTop / virtual.scrollHeight);
+			if(cursor + virtual.preparedLength > list.length)
+				cursor = list.length - virtual.preparedLength;
 
 			if(fromCeiling){
 				if(cursor < self.prepareCount*2)
@@ -137,7 +147,7 @@ sf.internal.virtual_scroll = new function(){
 
 			updating = true;
 
-			var changes = cursor - list.$virtual.DOMCursor;
+			var changes = cursor - virtual.DOMCursor;
 			if(cursor + changes >= list.length)
 				changes = cursor + changes - list.length;
 
@@ -147,14 +157,14 @@ sf.internal.virtual_scroll = new function(){
 				return;
 			}
 
-			list.$virtual.DOMCursor = cursor;
+			virtual.DOMCursor = cursor;
 
 			//console.log(cursor, changes);
 
 			//console.log(cursor, changes, bounding.ceiling, bounding.floor, scroller.scrollTop);
 			moveElementCursor(changes, list);
 			refreshVirtualSpacer(cursor);
-			refreshScrollBounding(cursor, bounding, list, parentNode, preparedLength);
+			refreshScrollBounding(cursor, bounding, list, parentNode);
 			//console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
 
 			updating = false;
@@ -173,7 +183,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 	}
 
-	function refreshScrollBounding(cursor, bounding, list, parentNode, preparedLength){
+	function refreshScrollBounding(cursor, bounding, list, parentNode){
 		var temp = Math.floor(self.prepareCount / 2); // half of element preparation
 		if(cursor < self.prepareCount){
 			bounding.ceiling = -1;
@@ -182,7 +192,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 		else bounding.ceiling = parentNode.children[temp + 1].offsetTop; // -2 element
 
-		if(preparedLength !== undefined && cursor >= list.length - preparedLength)
+		if(list.$virtual.preparedLength !== undefined && cursor >= list.length - list.$virtual.preparedLength)
 			bounding.floor = list.$virtual.dCursor.floor.offsetTop + list.$virtual.scrollHeight*2;
 		else
 			bounding.floor = parentNode.children[self.prepareCount + 3].offsetTop; // +2 element
