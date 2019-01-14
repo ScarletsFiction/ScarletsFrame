@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" >
+   <head>
+      <title>Sample App</title>
+      <meta name="viewport" content="height=device-height, initial-scale=1, user-scalable=no">
+      <link href="https://fonts.googleapis.com/css?family=Nunito:400,700" rel="stylesheet">
+      <meta charset="UTF-8">
+      <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+      <script src='../../dist/scarletsframe.min.js'></script>
+      <style type="text/css">
+         .sf-virtual-list .virtual-spacer{
+            visibility: hidden;
+            position: relative;
+            height: 1px;
+            transform-origin: 0 0;
+            width: 1px;
+            margin: 0;
+            padding: 0;
+            background: none;
+            border: none;
+         }
+      </style>
+   </head>
+   <body class="body">
+      <div class="container" sf-controller="large-list" style="display:none;">
+         <div class="row">
+
+            <!-- I suggest to use simplebar to prevent scroll jump when using chrome -->
+            <div data-simplebar class="col-md-4 col-md-offset-4 col-xs-6 col-xs-offset-3" style="height: 90vh;">
+               <ul class="todo-list sf-virtual-list ">
+                  <li sf-repeat-this="x in list" data-id="{{x.id}}">
+                     <div class="checkbox">
+                        <label>
+                           <span class="checkbox-mask"></span>
+                           <input sf-click="itemFinished('{{ x.id }}')" type="checkbox">{{x.text}}
+                        </label>
+                     </div>
+                  </li>
+               </ul>
+            </div>
+            
+         </div>
+      </div>
+
+      <!-- Model and Controller -->
+      <script type="text/javascript">
+         // Run this function after content loader was finished
+         sf(function(){
+            $('.container').css('display', '');
+         });
+
+         // Define dynamic model data for current page
+         sf.model.for('large-list', function(self){
+            self.list = [];
+
+            // Dummy items array
+            addDummy(50);
+         });
+
+         function addDummy(total){
+            var list = sf.model('large-list').list;
+
+            for (var i = 1; i <= total; i++) {
+               list.push({
+                  id: 'item-' + i,
+                  text: 'List - ' + i
+               });
+            }
+         }
+      </script>
+
+      <!-- Below can be used to create a progress bar -->
+      <script type="text/javascript">
+         var cf_cdn = 'https://cdnjs.cloudflare.com/ajax/libs';
+         var bt_cdn = 'https://maxcdn.bootstrapcdn.com';
+
+         // Optional feature for make preloader percentage
+         sf.loader.onProgress(function(loadedContent, totalContent){
+            console.log(loadedContent+ ' of ' +totalContent+ ' was loaded');
+         });
+
+         sf.loader.onFinish(function(){
+            console.log("All loaded from internet or cache");
+         });
+
+         // Load before DOM loaded
+         sf.loader.css([
+            // Styles External
+            cf_cdn+'/meyer-reset/2.0/reset.min.css',
+            cf_cdn+'/animate.css/3.4.0/animate.min.css',
+            bt_cdn+'/bootstrap/3.3.5/css/bootstrap.min.css',
+            bt_cdn+'/font-awesome/4.4.0/css/font-awesome.min.css',
+            'https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css',
+
+            // Styles Internal
+            'style.css',
+         ]);
+
+         // Load after DOM loaded
+         sf.loader.js([
+            // Script External
+            cf_cdn+'/jqueryui/1.11.2/jquery-ui.min.js',
+            'https://unpkg.com/scrollreveal/dist/scrollreveal.min.js',
+            'https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.js',
+
+            // Script Internal
+            // 'app/controller.js',
+            // 'app/router.js',
+         ], 'body');
+      </script>
+
+      <!-- If you're accessing from file:/// protocol -->
+      <script type="text/javascript" src="app/controller.js"></script>
+
+      <!-- FPS Counter -->
+      <canvas id="fpsCounter" height="20" width="50" style="position:fixed;top:0;right:0"></canvas>
+      <script type="text/javascript">
+         // enableFPSCounter();
+         function enableFPSCounter(){
+            var times = [];
+            var ctx = null;
+
+            setTimeout(function(){
+               ctx = document.getElementById('fpsCounter').getContext('2d');
+               ctx.fillStyle = '#000';
+               ctx.fillRect(0, 0, 50, 20);
+               ctx.fillStyle = '#fff';
+               ctx.font = '14px sans-serif';
+            }, 1000);
+
+            var refreshFPS = function(){
+               var now = performance.now();
+               while(times.length > 0 && times[0] <= now - 1000){
+                  times.shift();
+               }
+               times.push(now);
+
+               updateFPSCanvas(times.length);
+               requestAnimationFrame(refreshFPS);
+            }
+
+            var lastUpdated = 0;
+            function updateFPSCanvas(fps){
+               if(!ctx || Math.abs(lastUpdated - fps) < 2) return;
+               lastUpdated = fps;
+               ctx.clearRect(0, 0, 50, 20);
+               ctx.fillText('FPS: '+fps, 0, 15);
+            }
+
+            requestAnimationFrame(refreshFPS);
+         }
+      </script>
+   </body>
+</html>
