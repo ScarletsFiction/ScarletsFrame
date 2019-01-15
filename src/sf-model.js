@@ -259,7 +259,8 @@ sf.model = function(scope){
 	var bindArray = function(html, list, mask, modelName, propertyName, targetNode, parentNode, htmlParsedData){
 		var oldArray = list.slice(0);
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'softRefresh', 'hardRefresh'];
-		var processElement = function(index, update, insertBefore, insertAfter){
+		var refreshTimer = -1;
+		var processElement = function(index, options){
 			var exist = $("[sf-controller='"+modelName+"']", targetNode);
 			if(exist.length === 0){
 				if(targetNode.getAttribute('sf-controller') === modelName)
@@ -284,8 +285,13 @@ sf.model = function(scope){
 				for (var i = list.$virtual.DOMCursor; i < length; i++) {
 					exist.push(list.$virtual.dom.children[i]);
 				}
-				
+
 				exist = $(exist);
+
+				clearTimeout(refreshTimer);
+				refreshTimer = setTimeout(function(){
+					list.$virtual.refresh(true);
+				}, 100);
 			}
 			else exist = $("[sf-bind-list='"+propertyName+"']", exist);
 
@@ -309,12 +315,12 @@ sf.model = function(scope){
 				else
 					$(all).insertAfter(first);
 				exist.remove();
-				
+
 				return;
 			}
 
 			// Remove
-			if(!update){
+			if(options === 'remove'){
 				if(exist[index]){
 					var currentRemoved = false;
 					var startRemove = function(){
@@ -347,7 +353,7 @@ sf.model = function(scope){
 			temp = $(temp);
 
 			// Create
-			if(!exist[index] || insertAfter){
+			if(!exist[index] || options === 'insertAfter'){
 				if(callback.create)
 					callback.create(temp[0]);
 
@@ -356,7 +362,7 @@ sf.model = function(scope){
 
 			else{
 				// Create
-				if(insertBefore){
+				if(options === 'insertBefore'){
 					if(callback.create)
 						callback.create(temp[0]);
 
@@ -391,38 +397,40 @@ sf.model = function(scope){
 						temp = Array.prototype[name].apply(this, arguments);
 
 					if(name === 'pop')
-						processElement(lastLength - 1);
+						processElement(lastLength - 1, 'remove');
 
 					else if(name === 'push')
-						processElement(lastLength, true);
+						processElement(lastLength, 'add');
 
 					else if(name === 'shift')
-						processElement(0);
+						processElement(0, 'remove');
 
 					else if(name === 'splice'){
-						if(arguments.length >= 3){ // Inserting data
-							arguments[0] = false;
-							name = 'softRefresh';
-						}
-						else{ // Removing data
-							var real = arguments[0];
-							if(real < 0) real = lastLength + real;
+						// Removing data
+						var real = arguments[0];
+						if(real < 0) real = lastLength + real;
 
-							var limit = arguments[1];
-							if(!limit) limit = oldArray.length;
-							
-							for (var i = limit - 1; i >= 0; i--) {
-								processElement(real + i);
+						var limit = arguments[1];
+						if(!limit && limit !== 0) limit = oldArray.length;
+						
+						for (var i = limit - 1; i >= 0; i--) {
+							processElement(real + i, 'remove');
+						}
+
+						if(arguments.length >= 3){ // Inserting data
+							limit = arguments.length - 2;
+							for (var i = 0; i < limit; i++) {
+								processElement(real + i, 'insertAfter');
 							}
 						}
 					}
 
 					else if(name === 'unshift')
-						processElement(0, true, true);
+						processElement(0, 'insertBefore');
 
-					if(name === 'softRefresh'){
+					else if(name === 'softRefresh'){
 						if(arguments[0] || arguments[0] === 0)
-							processElement(arguments[0], !!oldArray[arguments[0]]);
+							processElement(arguments[0], !!oldArray[arguments[0]] ? 'add':'remove');
 						else {
 							var foundChanges = false;
 
@@ -431,7 +439,7 @@ sf.model = function(scope){
 								for (var i = oldArray.length - 1; i >= this.length; i--) {
 									if(this.indexOf(oldArray[i]) === -1){
 										foundChanges = true;
-										processElement(i);
+										processElement(i, 'remove');
 									}
 								}
 							}
@@ -440,7 +448,7 @@ sf.model = function(scope){
 							if(oldArray.length < this.length){
 								for (var i = oldArray.length - 1; i < this.length; i++) {
 									foundChanges = true;
-									processElement(i, true, true);
+									processElement(i, 'insertBefore');
 								}
 							}
 
@@ -448,7 +456,7 @@ sf.model = function(scope){
 							for (var i = 0; i < this.length; i++) {
 								if(compareObject(oldArray[i], this[i]) === false){
 									foundChanges = true;
-									processElement(i, true);
+									processElement(i, 'add');
 								}
 							}
 
@@ -456,11 +464,11 @@ sf.model = function(scope){
 								oldArray = this.slice(0);
 						}
 					}
-					else if(name === 'hardRefresh'){
+					else if(name === 'hardRefresh')
+						processElement(-1, 'remove');
+
+					if(Array.prototype[name])
 						oldArray = this.slice(0);
-						processElement(-1);
-					}
-					else Array.prototype[name].apply(oldArray, arguments);
 
 					return temp;
 				}
