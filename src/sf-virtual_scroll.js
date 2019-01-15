@@ -3,6 +3,7 @@ sf.internal.virtual_scroll = new function(){
 
 	// before and after
 	self.prepareCount = 4; // 4, 8, 12, 16, ...
+	self.dynamicPrepareCount = 8; // 4, 8, 12, 16, ...
 
 	self.handle = function(list, targetNode, parentNode){
 		list.$virtual.dCursor = { // DOM Cursor
@@ -54,10 +55,10 @@ sf.internal.virtual_scroll = new function(){
 		}, 500);
 	}
 
+	// Recommended for a list that have different element height
 	function dynamicHeight(list, targetNode, parentNode, scroller){
 		var ceiling = list.$virtual.dCursor.ceiling;
 		var floor = list.$virtual.dCursor.floor;
-		var preparedLength = 0;
 
 		// Insert some element until reach visible height
 		var i = null;
@@ -80,11 +81,11 @@ sf.internal.virtual_scroll = new function(){
 		$(scroller).on('scroll', checkCursorPosition);
 	}
 
+	// Recommended for a list that have similar element height
 	function staticHeight(list, targetNode, parentNode, scroller){
 		var virtual = list.$virtual;
 		var ceiling = virtual.dCursor.ceiling;
 		var floor = virtual.dCursor.floor;
-		var preparedLength = virtual.preparedLength;
 
 		// Insert visible element to dom tree
 		var insertCount = virtual.preparedLength <= list.length ? virtual.preparedLength : list.length;
@@ -108,6 +109,79 @@ sf.internal.virtual_scroll = new function(){
 		refreshVirtualSpacer(0);
 		refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
 		bounding.ceiling = -1;
+
+		virtual.offsetTo = function(index){
+			return index * virtual.scrollHeight + ceiling.offsetTop;
+		}
+
+		var vCursor = list.$virtual.vCursor;
+		vCursor.floor = virtual.dom.firstElementChild;
+		virtual.scrollTo = function(index){
+			var reduce = 0;
+			if(index >= list.length - virtual.preparedLength){
+				reduce -= self.prepareCount;
+				index = list.length - virtual.preparedLength;
+			}
+
+			if(index - virtual.DOMCursor === 0 || index >= list.length) return;
+
+			updating = true;
+
+			// Already on DOM tree
+			if((virtual.DOMCursor === 0 && index < self.prepareCount + self.prepareCount/2) ||
+				(virtual.DOMCursor + self.prepareCount/2 > index
+				&& virtual.DOMCursor + self.prepareCount < index))
+				scroller.scrollTop = parentNode.children[index - virtual.DOMCursor + 1].offsetTop;
+
+			// Move cursor
+			else {
+				var temp = null;
+
+				// DOM tree to virtual DOM
+				var length = parentNode.childElementCount - 2;
+				for (var i = 0; i < length; i++) {
+					temp = ceiling.nextElementSibling;
+
+					if(vCursor.floor === null){
+						virtual.dom.insertAdjacentElement('beforeEnd', temp);
+
+						if(i === length-1)
+							vCursor.floor = temp;
+					}
+					else vCursor.floor.insertAdjacentElement('beforeBegin', temp);
+				}
+
+				if(index >= self.prepareCount){
+					if(index < list.length - virtual.preparedLength)
+						index -= self.prepareCount;
+				}
+				else{
+					reduce = self.prepareCount - index;
+					virtual.DOMCursor = index = 0;
+				}
+
+				var insertCount = virtual.preparedLength <= list.length ? virtual.preparedLength : list.length;
+
+				// Virtual DOM to DOM tree
+				for (var i = 0; i < insertCount; i++) {
+					temp = virtual.dom.children[index];
+					if(temp === null) break;
+
+					floor.insertAdjacentElement('beforeBegin', temp);
+				}
+				virtual.DOMCursor = index;
+
+				vCursor.floor = virtual.dom.children[index] || null;
+				vCursor.ceiling = vCursor.floor ? vCursor.floor.previousElementSibling : null;
+
+				refreshVirtualSpacer(index);
+				refreshScrollBounding(index, bounding, list, parentNode);
+
+				scroller.scrollTop = parentNode.children[self.prepareCount - reduce + 1].offsetTop;
+			}
+
+			updating = false;
+		}
 
 		var updating = false;
 		var fromCeiling = true;
