@@ -117,70 +117,7 @@ sf.internal.virtual_scroll = new function(){
 		var vCursor = list.$virtual.vCursor;
 		vCursor.floor = virtual.dom.firstElementChild;
 		virtual.scrollTo = function(index){
-			var reduce = 0;
-			if(index >= list.length - virtual.preparedLength){
-				reduce -= self.prepareCount;
-				index = list.length - virtual.preparedLength;
-			}
-
-			if(index - virtual.DOMCursor === 0 || index >= list.length) return;
-
-			updating = true;
-
-			// Already on DOM tree
-			if((virtual.DOMCursor === 0 && index < self.prepareCount + self.prepareCount/2) ||
-				(virtual.DOMCursor + self.prepareCount/2 > index
-				&& virtual.DOMCursor + self.prepareCount < index))
-				scroller.scrollTop = parentNode.children[index - virtual.DOMCursor + 1].offsetTop;
-
-			// Move cursor
-			else {
-				var temp = null;
-
-				// DOM tree to virtual DOM
-				var length = parentNode.childElementCount - 2;
-				for (var i = 0; i < length; i++) {
-					temp = ceiling.nextElementSibling;
-
-					if(vCursor.floor === null){
-						virtual.dom.insertAdjacentElement('beforeEnd', temp);
-
-						if(i === length-1)
-							vCursor.floor = temp;
-					}
-					else vCursor.floor.insertAdjacentElement('beforeBegin', temp);
-				}
-
-				if(index >= self.prepareCount){
-					if(index < list.length - virtual.preparedLength)
-						index -= self.prepareCount;
-				}
-				else{
-					reduce = self.prepareCount - index;
-					virtual.DOMCursor = index = 0;
-				}
-
-				var insertCount = virtual.preparedLength <= list.length ? virtual.preparedLength : list.length;
-
-				// Virtual DOM to DOM tree
-				for (var i = 0; i < insertCount; i++) {
-					temp = virtual.dom.children[index];
-					if(temp === null) break;
-
-					floor.insertAdjacentElement('beforeBegin', temp);
-				}
-				virtual.DOMCursor = index;
-
-				vCursor.floor = virtual.dom.children[index] || null;
-				vCursor.ceiling = vCursor.floor ? vCursor.floor.previousElementSibling : null;
-
-				refreshVirtualSpacer(index);
-				refreshScrollBounding(index, bounding, list, parentNode);
-
-				scroller.scrollTop = parentNode.children[self.prepareCount - reduce + 1].offsetTop;
-			}
-
-			updating = false;
+			scrollTo(index, list, self.prepareCount, parentNode, scroller, refreshVirtualSpacer);
 		}
 
 		var updating = false;
@@ -333,6 +270,79 @@ sf.internal.virtual_scroll = new function(){
 
 			vCursor.ceiling = vCursor.floor.previousElementSibling;
 		}
+	}
+
+	function scrollTo(index, list, prepareCount, parentNode, scroller, refreshVirtualSpacer){
+		var virtual = list.$virtual;
+		var reduce = 0;
+
+		if(index >= list.length - virtual.preparedLength){
+			reduce -= prepareCount;
+			index = list.length - virtual.preparedLength;
+		}
+
+		if(index - virtual.DOMCursor === 0 || index >= list.length) return;
+
+		updating = true;
+
+		// Already on DOM tree
+		if((virtual.DOMCursor === 0 && index < prepareCount + prepareCount/2) ||
+			(virtual.DOMCursor + prepareCount/2 > index
+			&& virtual.DOMCursor + prepareCount < index))
+			scroller.scrollTop = parentNode.children[index - virtual.DOMCursor + 1].offsetTop;
+
+		// Move cursor
+		else {
+			var temp = null;
+			var ceiling = virtual.dCursor.ceiling;
+			var floor = virtual.dCursor.floor;
+			var vCursor = virtual.vCursor;
+
+			// DOM tree to virtual DOM
+			var length = parentNode.childElementCount - 2;
+			for (var i = 0; i < length; i++) {
+				temp = ceiling.nextElementSibling;
+
+				if(vCursor.floor === null){
+					virtual.dom.insertAdjacentElement('beforeEnd', temp);
+
+					if(i === length-1)
+						vCursor.floor = temp;
+				}
+				else vCursor.floor.insertAdjacentElement('beforeBegin', temp);
+			}
+
+			if(index >= prepareCount){
+				if(index < list.length - virtual.preparedLength)
+					index -= prepareCount;
+			}
+			else{
+				reduce = prepareCount - index;
+				virtual.DOMCursor = index = 0;
+			}
+
+			var insertCount = virtual.preparedLength <= list.length ? virtual.preparedLength : list.length;
+
+			// Virtual DOM to DOM tree
+			for (var i = 0; i < insertCount; i++) {
+				temp = virtual.dom.children[index];
+				if(temp === null) break;
+
+				floor.insertAdjacentElement('beforeBegin', temp);
+			}
+			virtual.DOMCursor = index;
+
+			vCursor.floor = virtual.dom.children[index] || null;
+			vCursor.ceiling = vCursor.floor ? vCursor.floor.previousElementSibling : null;
+
+			if(refreshVirtualSpacer)
+				refreshVirtualSpacer(index);
+
+			refreshScrollBounding(index, virtual.bounding, list, parentNode);
+			scroller.scrollTop = parentNode.children[prepareCount - reduce + 1].offsetTop;
+		}
+
+		updating = false;
 	}
 
 	function removeUserScrollFocus(parentNode){
