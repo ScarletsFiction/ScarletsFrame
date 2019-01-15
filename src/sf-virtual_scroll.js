@@ -68,6 +68,8 @@ sf.internal.virtual_scroll = new function(){
 
 			floor.insertAdjacentElement('beforeBegin', i);
 		} while(i.scrollTop < scroller.clientHeight);
+		
+		var bounding = virtual.bounding;
 
 		refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
 
@@ -118,6 +120,26 @@ sf.internal.virtual_scroll = new function(){
 		vCursor.floor = virtual.dom.firstElementChild;
 		virtual.scrollTo = function(index){
 			scrollTo(index, list, self.prepareCount, parentNode, scroller, refreshVirtualSpacer);
+		}
+
+		virtual.refresh = function(force){
+			var cursor = virtual.DOMCursor;
+
+			// Force move cursor if element in the DOM tree was overloaded
+			if(force || parentNode.childElementCount - 2 > virtual.preparedLength){
+				virtual.DOMCursor = list.length;
+				scrollTo(cursor <= self.prepareCount ? cursor : (cursor + self.prepareCount),
+					list,
+					self.prepareCount,
+					parentNode,
+					scroller,
+					refreshVirtualSpacer
+				);
+			}
+
+			refreshVirtualSpacer(cursor);
+			checkCursorPosition();
+			refreshScrollBounding(cursor, bounding, list, parentNode);
 		}
 
 		var updating = false;
