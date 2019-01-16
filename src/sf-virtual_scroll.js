@@ -3,7 +3,6 @@ sf.internal.virtual_scroll = new function(){
 
 	// before and after
 	self.prepareCount = 4; // 4, 8, 12, 16, ...
-	self.dynamicPrepareCount = 8; // 4, 8, 12, 16, ...
 
 	self.handle = function(list, targetNode, parentNode){
 		list.$virtual.dCursor = { // DOM Cursor
@@ -12,7 +11,7 @@ sf.internal.virtual_scroll = new function(){
 		};
 
 		list.$virtual.bounding = {
-			ceiling:0,
+			ceiling:-1,
 			floor:0
 		}
 
@@ -55,29 +54,169 @@ sf.internal.virtual_scroll = new function(){
 		}, 500);
 	}
 
+	// ToDo: Unfinished
 	// Recommended for a list that have different element height
 	function dynamicHeight(list, targetNode, parentNode, scroller){
-		var ceiling = list.$virtual.dCursor.ceiling;
-		var floor = list.$virtual.dCursor.floor;
+		var virtual = list.$virtual;
+		var ceiling = virtual.dCursor.ceiling;
+		var floor = virtual.dCursor.floor;
+		var vCursor = virtual.vCursor;
+		vCursor.floor = virtual.dom.firstElementChild;
 
 		// Insert some element until reach visible height
 		var i = null;
 		do{
-			i = list.$virtual.dom.firstElementChild;
+			i = vCursor.floor;
 			if(i === null) break;
+			vCursor.floor = i.nextElementSibling;
 
 			floor.insertAdjacentElement('beforeBegin', i);
-		} while(i.scrollTop < scroller.clientHeight);
-		
+		} while(floor.offsetTop < scroller.clientHeight);
+
+		list.$virtual.visibleLength = parentNode.childElementCount - 2;
+		list.$virtual.preparedLength = list.$virtual.visibleLength + self.prepareCount * 2;
+
+		for (var i = 0; i < self.prepareCount; i++) {
+			var temp = vCursor.floor;
+			if(temp === null) break;
+
+			vCursor.floor = temp.nextElementSibling;
+			floor.insertAdjacentElement('beforeBegin', temp);
+		}
+
+		var ceilingHeight = 0;
+		var floorHeight = 0;
+		function previousCeiling(){
+			var temp = null;
+
+			// Add some element on the ceiling
+			for (var i = 0; i < self.prepareCount; i++) {
+				if(vCursor.floor === null)
+					temp = virtual.dom.lastElementChild;
+				else
+					temp = vCursor.floor.previousElementSibling;
+
+				if(temp === null) break;
+				vCursor.ceiling = temp.previousElementSibling;
+
+				ceiling.insertAdjacentElement('afterEnd', temp);
+				ceilingHeight -= getAbsoluteHeight(temp);
+			}
+
+			if(ceilingHeight < 0)
+				ceilingHeight = 0;
+
+			var length = parentNode.childElementCount - 2 - list.$virtual.preparedLength;
+			// Remove some element on the floor
+			for (var i = 0; i < self.prepareCount; i++) {
+				temp = floor.previousElementSibling;
+				floorHeight += getAbsoluteHeight(temp);
+
+				if(vCursor.floor === null)
+					virtual.dom.insertAdjacentElement('beforeEnd', temp);
+				else vCursor.floor.insertAdjacentElement('beforeBegin', temp);
+
+				vCursor.floor = temp;
+			}
+
+			if(vCursor.ceiling === null)
+				vCursor.ceiling = virtual.dom.lastElementChild;
+			else 
+				vCursor.ceiling = vCursor.floor.previousElementSibling;
+
+			ceiling.style.height = ceilingHeight+'px';
+			floor.style.height = floorHeight+'px';
+		}
+
+		function nextFloor(){
+			var temp = null;
+
+			// Insert some element until reach visible height 
+			while(floor.offsetTop < scroller.clientHeight){
+				if(vCursor.ceiling === null)
+					temp = virtual.dom.firstElementChild;
+				else
+					temp = vCursor.ceiling.nextElementSibling;
+
+				if(temp === null) break;
+				vCursor.floor = temp.nextElementSibling;
+
+				floor.insertAdjacentElement('beforeBegin', temp);
+			}
+
+			if(vCursor.ceiling === null)
+				vCursor.ceiling = vCursor.floor.previousElementSibling;
+
+			// Add extra element based on prepare count
+			for (var i = 0; i < self.prepareCount; i++) {
+				var temp = vCursor.floor;
+				if(temp === null) break;
+
+				if(floorHeight > 0)
+					floorHeight -= getAbsoluteHeight(temp);
+
+				vCursor.floor = temp.nextElementSibling;
+				floor.insertAdjacentElement('beforeBegin', temp);
+			}
+
+			if(floorHeight < 0)
+				floorHeight = 0;
+
+			// Remove some element on the ceiling
+			var length = parentNode.childElementCount - 2 - list.$virtual.preparedLength;
+			for (var i = 0; i < length; i++) {
+				var temp = ceiling.nextElementSibling;
+				ceilingHeight += getAbsoluteHeight(temp);
+
+				if(vCursor.ceiling === null)
+					virtual.dom.insertAdjacentElement('afterBegin', temp);
+				else vCursor.ceiling.insertAdjacentElement('afterEnd', temp);
+
+				vCursor.ceiling = temp;
+			}
+
+			if(vCursor.ceiling === null)
+				vCursor.floor = virtual.dom.firstElementChild;
+			else 
+				vCursor.floor = vCursor.ceiling.nextElementSibling;
+
+			ceiling.style.height = ceilingHeight+'px';
+			floor.style.height = floorHeight+'px';
+		}
+
 		var bounding = virtual.bounding;
+		function refreshScrollBounding2(){
+			if(vCursor.ceiling === null)
+				bounding.ceiling = -1;
+			else bounding.ceiling = parentNode.children[self.prepareCount].offsetTop;
 
-		refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
+			if(vCursor.floor === null)
+				bounding.floor = parentNode.lastElementChild.offsetTop + 1000;
+			else{
+				var i = parentNode.childElementCount - self.prepareCount - 2;
+				bounding.floor = floor.offsetTop - parentNode.children[i].offsetTop;
+			}
+		}
+		refreshScrollBounding2(0, bounding, list, parentNode);
 
+		var updating = false;
 		function checkCursorPosition(){
-			if(updating || scroller.scrollTop >= bounding.ceiling && scroller.scrollTop <= bounding.floor)
-				return;
+			if(updating) return;
+			updating = true;
 
-			if(list.$virtual.DOMCursor + self.prepareCount > list.length) return;
+			if(scroller.scrollTop < bounding.ceiling){
+				console.log('back');
+				previousCeiling();
+				refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
+			}
+
+			else if(scroller.scrollTop > bounding.floor){
+				console.log('front');
+				nextFloor();
+				refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
+			}
+
+			updating = false;
 		}
 
 		$(scroller).on('scroll', checkCursorPosition);
@@ -372,5 +511,11 @@ sf.internal.virtual_scroll = new function(){
 		setTimeout(function(){
 			parentNode.style.overflow = '';
 		}, 50);
+	}
+
+	function getAbsoluteHeight(el){
+	  var styles = window.getComputedStyle(el);
+	  var margin = parseInt(styles['marginTop']) + parseInt(styles['marginBottom']);
+	  return el.offsetHeight + margin;
 	}
 };
