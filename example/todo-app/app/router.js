@@ -8,9 +8,9 @@ sf.router.before('todo/index', function(root){
 	// when self are 'todo-app' is scope
 
 	self.weekday = weekday;
-	// root['todo-app'].weekday = weekday;
+	// root('todo-app').weekday = weekday;
 
-	// The weekday on root['todo-app'] will also be changed
+	// The weekday on root('todo-app') will also be changed
 	// Because array is passed by reference on a object
 	weekday[0] = "Sunday 🍻";
 	weekday[1] = "Monday 💪🍻";
