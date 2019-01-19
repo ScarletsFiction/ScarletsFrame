@@ -72,6 +72,28 @@ sf.internal.virtual_scroll = new function(){
 		var floor = virtual.dCursor.floor;
 		var vCursor = virtual.vCursor;
 		vCursor.floor = virtual.dom.firstElementChild;
+		
+		virtual.scrollTo = function(index){
+			scrollTo(index, list, self.prepareCount, parentNode, scroller);
+		}
+
+		virtual.refresh = function(force){
+			var cursor = virtual.DOMCursor;
+
+			// Force move cursor if element in the DOM tree was overloaded
+			if(force || parentNode.childElementCount - 2 > virtual.preparedLength){
+				virtual.DOMCursor = list.length;
+				scrollTo(cursor <= self.prepareCount ? cursor : (cursor + self.prepareCount),
+					list,
+					self.prepareCount,
+					parentNode,
+					scroller
+				);
+			}
+
+			checkCursorPosition();
+			refreshScrollBounding(cursor, bounding, list, parentNode);
+		}
 
 		// Insert some element until reach visible height
 		fillViewport();
