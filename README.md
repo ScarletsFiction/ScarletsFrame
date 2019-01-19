@@ -64,6 +64,11 @@ sf.loader.onFinish(function(){
 
 ```
 
+Model and controller will be start after content loader was finished. But if you don't use this feature, you need to turn it off with
+```js
+sf.loader.off();
+```
+
 ### Router
 This currently unfinished yet, but you can still use it.
 
