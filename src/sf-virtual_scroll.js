@@ -1,10 +1,20 @@
 sf.internal.virtual_scroll = new function(){
 	var self = this;
+	var styleInitialized = false;
 
 	// before and after
 	self.prepareCount = 4; // 4, 8, 12, 16, ...
 
 	self.handle = function(list, targetNode, parentNode){
+		if(!styleInitialized){
+			initStyles();
+			styleInitialized = true;
+		}
+
+		list.$virtual.elements = function(){
+			return obtainElements(list, parentNode);
+		}
+
 		list.$virtual.dCursor = { // DOM Cursor
 			ceiling:parentNode.querySelector('.virtual-spacer.ceiling'),
 			floor:parentNode.querySelector('.virtual-spacer.floor')
@@ -46,7 +56,7 @@ sf.internal.virtual_scroll = new function(){
 			else scroller = parentNode;
 
 			list.$virtual.resetViewport();
-			
+
 			if(parentNode.classList.contains('sf-list-dynamic'))
 				dynamicHeight(list, targetNode, parentNode, scroller);
 			else
@@ -64,17 +74,10 @@ sf.internal.virtual_scroll = new function(){
 		vCursor.floor = virtual.dom.firstElementChild;
 
 		// Insert some element until reach visible height
-		var i = null;
-		do{
-			i = vCursor.floor;
-			if(i === null) break;
-			vCursor.floor = i.nextElementSibling;
+		fillViewport();
 
-			floor.insertAdjacentElement('beforeBegin', i);
-		} while(floor.offsetTop < scroller.clientHeight);
-
-		list.$virtual.visibleLength = parentNode.childElementCount - 2;
-		list.$virtual.preparedLength = list.$virtual.visibleLength + self.prepareCount * 2;
+		virtual.visibleLength = parentNode.childElementCount - 2;
+		virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
 
 		for (var i = 0; i < self.prepareCount; i++) {
 			var temp = vCursor.floor;
@@ -83,11 +86,13 @@ sf.internal.virtual_scroll = new function(){
 			vCursor.floor = temp.nextElementSibling;
 			floor.insertAdjacentElement('beforeBegin', temp);
 		}
+		virtual.DOMCursor = 0;
 
 		var ceilingHeight = 0;
 		var floorHeight = 0;
 		function previousCeiling(){
 			var temp = null;
+			var resetCeiling = false;
 
 			// Add some element on the ceiling
 			for (var i = 0; i < self.prepareCount; i++) {
@@ -98,17 +103,26 @@ sf.internal.virtual_scroll = new function(){
 
 				if(temp === null) break;
 				vCursor.ceiling = temp.previousElementSibling;
+				virtual.DOMCursor--;
 
 				ceiling.insertAdjacentElement('afterEnd', temp);
-				ceilingHeight -= getAbsoluteHeight(temp);
+
+				if(ceilingHeight > 0)
+					ceilingHeight -= getAbsoluteHeight(temp);
+
+				if(virtual.DOMCursor < self.prepareCount && !resetCeiling){
+					i = 0;
+					resetCeiling = true;
+					temp = null;
+				}
 			}
 
-			if(ceilingHeight < 0)
+			if(ceilingHeight < 0 || temp === null)
 				ceilingHeight = 0;
 
 			var length = parentNode.childElementCount - 2 - list.$virtual.preparedLength;
 			// Remove some element on the floor
-			for (var i = 0; i < self.prepareCount; i++) {
+			for (var i = 0; i < length; i++) {
 				temp = floor.previousElementSibling;
 				floorHeight += getAbsoluteHeight(temp);
 
@@ -119,7 +133,7 @@ sf.internal.virtual_scroll = new function(){
 				vCursor.floor = temp;
 			}
 
-			if(vCursor.ceiling === null)
+			if(vCursor.floor === null)
 				vCursor.ceiling = virtual.dom.lastElementChild;
 			else 
 				vCursor.ceiling = vCursor.floor.previousElementSibling;
@@ -128,11 +142,10 @@ sf.internal.virtual_scroll = new function(){
 			floor.style.height = floorHeight+'px';
 		}
 
-		function nextFloor(){
-			var temp = null;
-
-			// Insert some element until reach visible height 
-			while(floor.offsetTop < scroller.clientHeight){
+		function fillViewport(){
+			// Insert some element depend on prepared length
+			var length = virtual.preparedLength - (parentNode.childElementCount - 2);
+			for (var i = 0; i < length; i++) {
 				if(vCursor.ceiling === null)
 					temp = virtual.dom.firstElementChild;
 				else
@@ -143,30 +156,36 @@ sf.internal.virtual_scroll = new function(){
 
 				floor.insertAdjacentElement('beforeBegin', temp);
 			}
+		}
+
+		function nextFloor(){
+			var temp = null;
+			fillViewport();
 
 			if(vCursor.ceiling === null)
 				vCursor.ceiling = vCursor.floor.previousElementSibling;
 
 			// Add extra element based on prepare count
 			for (var i = 0; i < self.prepareCount; i++) {
-				var temp = vCursor.floor;
+				temp = vCursor.floor;
 				if(temp === null) break;
-
-				if(floorHeight > 0)
-					floorHeight -= getAbsoluteHeight(temp);
 
 				vCursor.floor = temp.nextElementSibling;
 				floor.insertAdjacentElement('beforeBegin', temp);
+
+				if(floorHeight > 0)
+					floorHeight -= getAbsoluteHeight(temp);
 			}
 
-			if(floorHeight < 0)
+			if(floorHeight < 0 || temp === null)
 				floorHeight = 0;
 
 			// Remove some element on the ceiling
 			var length = parentNode.childElementCount - 2 - list.$virtual.preparedLength;
 			for (var i = 0; i < length; i++) {
-				var temp = ceiling.nextElementSibling;
+				temp = ceiling.nextElementSibling;
 				ceilingHeight += getAbsoluteHeight(temp);
+				virtual.DOMCursor++;
 
 				if(vCursor.ceiling === null)
 					virtual.dom.insertAdjacentElement('afterBegin', temp);
@@ -185,19 +204,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 
 		var bounding = virtual.bounding;
-		function refreshScrollBounding2(){
-			if(vCursor.ceiling === null)
-				bounding.ceiling = -1;
-			else bounding.ceiling = parentNode.children[self.prepareCount].offsetTop;
-
-			if(vCursor.floor === null)
-				bounding.floor = parentNode.lastElementChild.offsetTop + 1000;
-			else{
-				var i = parentNode.childElementCount - self.prepareCount - 2;
-				bounding.floor = floor.offsetTop - parentNode.children[i].offsetTop;
-			}
-		}
-		refreshScrollBounding2(0, bounding, list, parentNode);
+		refreshScrollBounding(0, bounding, list, parentNode);
 
 		var updating = false;
 		function checkCursorPosition(){
@@ -205,21 +212,27 @@ sf.internal.virtual_scroll = new function(){
 			updating = true;
 
 			if(scroller.scrollTop < bounding.ceiling){
-				console.log('back');
+				// console.log('back', bounding, scroller.scrollTop, virtual.DOMCursor);
 				previousCeiling();
-				refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
+				refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
+				// console.warn('back', bounding, scroller.scrollTop, virtual.DOMCursor);
 			}
 
 			else if(scroller.scrollTop > bounding.floor){
-				console.log('front');
+				// console.log('front', bounding, scroller.scrollTop, virtual.DOMCursor);
 				nextFloor();
-				refreshScrollBounding(self.prepareCount, bounding, list, parentNode);
+				refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
+				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
 			}
 
 			updating = false;
 		}
 
 		$(scroller).on('scroll', checkCursorPosition);
+		$(scroller).on('resize', function(){
+			fillViewport();
+			refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
+		});
 	}
 
 	// Recommended for a list that have similar element height
@@ -255,7 +268,7 @@ sf.internal.virtual_scroll = new function(){
 			return index * virtual.scrollHeight + ceiling.offsetTop;
 		}
 
-		var vCursor = list.$virtual.vCursor;
+		var vCursor = virtual.vCursor;
 		vCursor.floor = virtual.dom.firstElementChild;
 		virtual.scrollTo = function(index){
 			scrollTo(index, list, self.prepareCount, parentNode, scroller, refreshVirtualSpacer);
@@ -516,6 +529,51 @@ sf.internal.virtual_scroll = new function(){
 	function getAbsoluteHeight(el){
 	  var styles = window.getComputedStyle(el);
 	  var margin = parseInt(styles['marginTop']) + parseInt(styles['marginBottom']);
-	  return el.offsetHeight + margin;
+	  return el.offsetHeight + margin || 0;
+	}
+
+	function obtainElements(list, parentNode){
+		var exist = [];
+
+		var length = list.$virtual.DOMCursor;
+		for (var i = 0; i < length; i++) {
+			exist.push(list.$virtual.dom.children[i]);
+		}
+
+		length = parentNode.childElementCount - 2;
+		for (var i = 1; i <= length; i++) {
+			exist.push(parentNode.children[i]);
+		}
+
+		length = list.length - length - list.$virtual.DOMCursor;
+		for (var i = list.$virtual.DOMCursor; i < length; i++) {
+			exist.push(list.$virtual.dom.children[i]);
+		}
+
+		return exist;
+	}
+
+	function initStyles(){
+		var style = document.getElementById('sf-styles');
+
+		if(!style){
+			style = document.createElement('style');
+			style.id = 'sf-styles';
+        	document.head.appendChild(style);
+		}
+
+		style.sheet.insertRule(
+		'.sf-virtual-list .virtual-spacer{'+
+            'visibility: hidden;'+
+            'position: relative;'+
+            'height: 1px;'+
+            'transform-origin: 0 0;'+
+            'width: 1px;'+
+            'margin: 0;'+
+            'padding: 0;'+
+            'background: none;'+
+            'border: none;'+
+            'box-shadow: none;'+
+         '}');
 	}
 };
