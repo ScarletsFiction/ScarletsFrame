@@ -3,9 +3,14 @@ sf.loader = new function(){
 	self.loadedContent = 0;
 	self.totalContent = 0;
 	self.DOMWasLoaded = false;
+	self.turnedOff = false;
 
 	var whenDOMLoaded = [];
 	var whenProgress = [];
+
+	self.off = function(){
+		self.turnedOff = true;
+	}
 
 	// Make event listener
 	self.onFinish = function(func){
@@ -68,13 +73,17 @@ sf.loader = new function(){
 	}
 
 	setTimeout(function(){
-		if(self.totalContent === 0)
+		if(self.totalContent === 0){
 			self.loadedContent = self.totalContent = 1;
+			console.warn("If you don't use content loader feature, please turn it off with `sf.loader.off()`");
+		}
 	}, 10000);
 	var everythingLoaded = setInterval(function() {
 	if (/loaded|complete/.test(document.readyState)) {
-		if(self.loadedContent < self.totalContent || self.loadedContent === 0)
-			return;
+		if(self.loadedContent < self.totalContent || self.loadedContent === 0){
+			if(!self.turnedOff)
+				return;
+		}
 
 		clearInterval(everythingLoaded);
 		self.DOMWasLoaded = true;
