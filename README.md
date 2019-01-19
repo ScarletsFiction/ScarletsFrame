@@ -13,7 +13,7 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 
 ## Install
 You can download minified js from this repository or use this CDN link
-`<script type="text/javascript" src='https://cdn.jsdelivr.net/gh/ScarletsFiction/ScarletsFrame@latest/dist/scarletsframe.min.js'></script>`
+`<script type="text/javascript" src='https://unpkg.com/scarletsframe@latest/dist/scarletsframe.min.js'></script>`
 
 Make sure you put it on html header after jQuery.
 
@@ -114,6 +114,8 @@ Get controller name for the selected element node
   <span id="username"></span>
 </div>
 ```
+
+Get current controller name for the selected element node
 ```js
 sf.controller.modelName($('#username')[0]) // return == 'something'
 ```
@@ -125,8 +127,10 @@ sf.controller.modelScope($('#username')[0], function(obj){
 })
 ```
 
+#### Initialize controller
 Register controller when initialization.<br>
 You should use this for defining static function for your controller only.<br>
+
 This will run on first page load and can't be called twice.
 ```js
 sf.controller.for(name, function(self){
@@ -164,6 +168,32 @@ Replacement for `<script>` tag. You can also output html by wrap it inside '{[ .
 `{{@exec javascript stuff}}`
 For security reason, unrecognized function call will prevent template execution. The recognized function is only from the model scope itself.
 
+#### Initialize/Define Model
+Let's start with this simple element
+```html
+<div sf-controller="something">
+  <span>{{ text }}</span>
+</div>
+```
+```js
+sf.model.for('something', function(self, other){
+  // `text` on the DOM element will be filled with `My Name`
+  self.text = 'My Name';
+});
+
+// Controller will be executed after the model was initialized
+sf.controller.for('something', function(self, other){
+  // If you want to get reference from other model scope
+  var greet = other('another-thing').stuff;
+  greet === sf.model('another-thing').stuff;
+});
+
+sf.model.for('another-thing', function(self, other){
+  self.stuff = 'Hello world';
+});
+```
+
+### Array data to list of DOM element
 Any element with `sf-repeat-this` will be binded with the array condition on the model. If you push or splice the array data, then the element will also being modified.
 
 Open the model scope for the selected controller for modification.
@@ -175,8 +205,7 @@ sf.model.for('music.feedback', function(self, root){
       rate:4,
       ...
     }];
-    // After reviews was binded and want to redraw the element
-    // You can use
+    // If you want to redraw the element
     // '.hardRefresh()' redraw all element at once
     // '.softRefresh(index = -1)' redraw some element only
 
@@ -221,6 +250,53 @@ sf.model.for('music.feedback', function(self, root){
 </body>
 ```
 
+### Virtual Scroll
+To activate virtual scroll mode on your list of element. You need to add `sf-virtual-list` on the parent element. But if you have dynamic/different row height, then you also need to add `sf-list-dynamic`.
+```html
+<ul class='sf-virtual-list'>
+  <li sf-repeat-this="x in list">
+    <label>{{x.text}</label>
+  </li>
+</ul>
+```
+```js
+// Example model for data above
+sf.model.for('example', function(self){
+  self.list = [{
+    text:'Hello'
+  },{
+    text:'world'
+  }, ...];
+});
+```
+
+Because chrome has scroll anchoring feature, you may need to use [scrollbar library](https://github.com/Grsmto/simplebar) to avoid scroll jump when scrolling with chrome scrollbar.
+
+### Available method for virtual scrolling
+#### Obtain all DOM elements
+Elements on the virtual DOM will be combined with visible DOM element and return array of element that have the same index with the actual data.
+```js
+// This will return array of elements
+var elements = self.list.$virtual.elements();
+
+// You could also wrap it to jQuery
+var $elem = $(elements);
+```
+
+#### Scroll to or get element offset by the index
+```js
+// Instantly scroll to 3rd element
+self.list.$virtual.scrollTo(8);
+
+// Recalculate scroll bounding
+self.list.$virtual.refresh(8);
+
+// This will be available on static element height
+// Get an offset that can be used for `scrollTop`
+var offsetTop = self.list.$virtual.offsetTo(8);
+```
+
+### Two-way data binding
 Bind the element for html, attr, or all
 ```js
 sf.model.bindElement(elementNode, which = false)
@@ -236,6 +312,22 @@ You could also automatically bind element by using `sf-bind` attribute
 
 <!-- Bind Attribute and Inner HTML -->
 <div sf-bind="" id='review{{id}}'>{{ content }}</div>
+
+<!-- 'myInput' on the model will be updated if input detected -->
+<input sf-bound="myInput" type="text" />
+```
+```js
+// Model for the above example
+sf.model.for('example', function(self){
+  // Any changes to this variable will change the 1st and 3rd element
+  self.id = 2;
+
+  // Any changes to this variable will change the 2nd and 3rd element
+  self.content = 'Hello world';
+
+  // Any input on 4th element will update this variable content
+  self.myInput = '';
+});
 ```
 
 Find processable template from DOM and mark them for preprocess queue. Followed by calling `parsePreprocess` to process the queued DOM.

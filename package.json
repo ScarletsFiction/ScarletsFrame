@@ -1,11 +1,12 @@
 {
   "name": "scarletsframe",
-  "version": "0.9.0",
+  "description":"A frontend framework that can help you write a simple web structure",
+  "version": "0.9.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
   },
-  "author": "Stefanus Arya CG",
+  "author": "ScarletsFiction",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ScarletsFiction/ScarletsFrame/issues"
