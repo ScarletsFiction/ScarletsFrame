@@ -53,7 +53,7 @@ sf.internal.virtual_scroll = new function(){
 		setTimeout(function(){
 			scroller = parentNode;
 
-			var length = parentNode.getAttribute('parent-scroll-index') || 0;
+			var length = parentNode.getAttribute('scroll-parent-index') || 0;
 			for (var i = 0; i < length; i++) {
 				scroller = scroller.parentElement;
 			}
@@ -383,8 +383,15 @@ sf.internal.virtual_scroll = new function(){
 
 		if(list.$virtual.preparedLength !== undefined && cursor >= list.length - list.$virtual.preparedLength)
 			bounding.floor = list.$virtual.dCursor.floor.offsetTop + list.$virtual.scrollHeight*2;
-		else
+		else{
 			bounding.floor = parentNode.children[self.prepareCount + 3].offsetTop; // +2 element
+
+			if(parentNode.hasAttribute('scroll-reduce-floor')){
+				var currentFloor = bounding.floor - parentNode.getAttribute('scroll-reduce-floor');
+				if(currentFloor > bounding.ceiling)
+					bounding.floor = currentFloor;
+			}
+		}
 	}
 
 	function moveElementCursor(changes, list){
@@ -541,24 +548,27 @@ sf.internal.virtual_scroll = new function(){
 
 	function obtainElements(list, parentNode){
 		var exist = [];
+		var temp = undefined;
 
 		var length = list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
-			if(list.$virtual.dom.children[i] === undefined) break;
-			exist.push(list.$virtual.dom.children[i]);
+			temp = list.$virtual.dom.children[i];
+			if(temp === undefined) break;
+			exist.push(temp);
 		}
 
 		length = parentNode.childElementCount - 2;
 		for (var i = 1; i <= length; i++) {
-			if(parentNode.children[i] === undefined) break;
-			exist.push(parentNode.children[i]);
+			temp = parentNode.children[i];
+			if(temp === undefined) break;
+			exist.push(temp);
 		}
 
 		length = list.length - length - list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
-			var a = list.$virtual.DOMCursor + i;
-			if(list.$virtual.dom.children[a] === undefined) break;
-			exist.push(list.$virtual.dom.children[a]);
+			temp = list.$virtual.dom.children[list.$virtual.DOMCursor + i];
+			if(temp === undefined) break;
+			exist.push(temp);
 		}
 
 		return exist;

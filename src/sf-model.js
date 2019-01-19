@@ -62,7 +62,14 @@ sf.model = function(scope){
 	}
 
 	self.index = function(element){
-		return $(element).prevAll(element.tagName).length;
+		var i = $(element).prevAll(element.tagName).length;
+		var list = element.getAttribute('sf-bind-list');
+		if(!list) return i;
+
+		var ref = sf.controller.modelScope(element)[list];
+		if(!ref.$virtual) return i;
+
+		return i + ref.$virtual.DOMCursor - 1;
 	}
 
 	self.for = function(name, func){
