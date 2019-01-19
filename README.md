@@ -8,8 +8,9 @@
 A frontend library for Scarlets Framework that support lazy page load and element binding that can help simplify your code.
 
 # Example
-- [Todo Application](https://playcode.io/134963?tabs=console&resource-loader.js&output)
+- [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
 - [Simple Element Binding](https://jsbin.com/liluhul/1/edit?js,console,output)
+- [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 
 ## Install
 You can download minified js from this repository or use this CDN link
