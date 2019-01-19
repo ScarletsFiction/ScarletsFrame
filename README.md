@@ -252,7 +252,7 @@ sf.model.for('music.feedback', function(self, root){
 ```
 
 ### Virtual Scroll
-To activate virtual scroll mode on your list of element. You need to add `sf-virtual-list` on the parent element. But if you have dynamic/different row height, then you also need to add `sf-list-dynamic`.
+To activate virtual scroll mode on your list of element. You need to add `sf-virtual-list` on the parent element. But if you have dynamic/different row height, then you also need to add `sf-list-dynamic`. When you are using a scroller that located on a parent element, you should define the parent index `parent-scroll-index="1"` on the element attribute.
 ```html
 <ul class='sf-virtual-list'>
   <li sf-repeat-this="x in list">
