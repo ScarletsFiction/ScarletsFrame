@@ -269,24 +269,7 @@ sf.model = function(scope){
 			}
 
 			if(list.$virtual){
-				var exist = [];
-
-				var length = list.$virtual.DOMCursor;
-				for (var i = 0; i < length; i++) {
-					exist.push(list.$virtual.dom.children[i]);
-				}
-
-				length = parentNode[0].childElementCount - 2;
-				for (var i = 1; i <= length; i++) {
-					exist.push(parentNode[0].children[i]);
-				}
-
-				length = list.length - length - list.$virtual.DOMCursor;
-				for (var i = list.$virtual.DOMCursor; i < length; i++) {
-					exist.push(list.$virtual.dom.children[i]);
-				}
-
-				exist = $(exist);
+				var exist = $(list.$virtual.elements());
 
 				clearTimeout(refreshTimer);
 				refreshTimer = setTimeout(function(){
