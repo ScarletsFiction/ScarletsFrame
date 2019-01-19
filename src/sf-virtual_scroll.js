@@ -51,9 +51,12 @@ sf.internal.virtual_scroll = new function(){
 		}
 
 		setTimeout(function(){
-			if(parentNode.parentElement.classList.contains('simplebar-content'))
-				scroller = parentNode.parentElement;
-			else scroller = parentNode;
+			scroller = parentNode;
+
+			var length = parentNode.getAttribute('parent-scroll-index') || 0;
+			for (var i = 0; i < length; i++) {
+				scroller = scroller.parentElement;
+			}
 
 			list.$virtual.resetViewport();
 
@@ -64,7 +67,6 @@ sf.internal.virtual_scroll = new function(){
 		}, 500);
 	}
 
-	// ToDo: Unfinished
 	// Recommended for a list that have different element height
 	function dynamicHeight(list, targetNode, parentNode, scroller){
 		var virtual = list.$virtual;
@@ -78,21 +80,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 
 		virtual.refresh = function(force){
-			var cursor = virtual.DOMCursor;
-
-			// Force move cursor if element in the DOM tree was overloaded
-			if(force || parentNode.childElementCount - 2 > virtual.preparedLength){
-				virtual.DOMCursor = list.length;
-				scrollTo(cursor <= self.prepareCount ? cursor : (cursor + self.prepareCount),
-					list,
-					self.prepareCount,
-					parentNode,
-					scroller
-				);
-			}
-
-			checkCursorPosition();
-			refreshScrollBounding(cursor, bounding, list, parentNode);
+			refresh(force, list, self.prepareCount, parentNode, scroller);
 		}
 
 		// Insert some element until reach visible height
@@ -266,6 +254,9 @@ sf.internal.virtual_scroll = new function(){
 		// Insert visible element to dom tree
 		var insertCount = virtual.preparedLength <= list.length ? virtual.preparedLength : list.length;
 		for (var i = 0; i < insertCount; i++) {
+			if(virtual.dom.firstElementChild === null)
+				break;
+
 			floor.insertAdjacentElement('beforeBegin', virtual.dom.firstElementChild);
 		}
 
@@ -276,7 +267,8 @@ sf.internal.virtual_scroll = new function(){
 			}
 			else{
 				ceiling.style.height = cursor * virtual.scrollHeight + 'px'; //'0px';
-				floor.style.height = list.length * virtual.scrollHeight + 'px';
+				var count = (list.length - virtual.preparedLength);
+				floor.style.height = (count || 0) * virtual.scrollHeight + 'px';
 			}
 		}
 
@@ -297,23 +289,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 
 		virtual.refresh = function(force){
-			var cursor = virtual.DOMCursor;
-
-			// Force move cursor if element in the DOM tree was overloaded
-			if(force || parentNode.childElementCount - 2 > virtual.preparedLength){
-				virtual.DOMCursor = list.length;
-				scrollTo(cursor <= self.prepareCount ? cursor : (cursor + self.prepareCount),
-					list,
-					self.prepareCount,
-					parentNode,
-					scroller,
-					refreshVirtualSpacer
-				);
-			}
-
-			refreshVirtualSpacer(cursor);
-			checkCursorPosition();
-			refreshScrollBounding(cursor, bounding, list, parentNode);
+			refresh(force, list, self.prepareCount, parentNode, scroller, checkCursorPosition, refreshVirtualSpacer);
 		}
 
 		var updating = false;
@@ -394,10 +370,16 @@ sf.internal.virtual_scroll = new function(){
 		var temp = Math.floor(self.prepareCount / 2); // half of element preparation
 		if(cursor < self.prepareCount){
 			bounding.ceiling = -1;
-			bounding.floor = parentNode.children[self.prepareCount * 2 + 1].offsetTop;
+			bounding.floor = parentNode.children[self.prepareCount * 2 + 1];
+
+			if(bounding.floor !== undefined)
+				bounding.floor = bounding.floor.offsetTop;
+			else bounding.floor = parentNode.lastElementChild.offsetTop + 1000;
+
 			return;
 		}
-		else bounding.ceiling = parentNode.children[temp + 1].offsetTop; // -2 element
+		else if(parentNode.children[temp + 1] !== undefined)
+				bounding.ceiling = parentNode.children[temp + 1].offsetTop; // -2 element
 
 		if(list.$virtual.preparedLength !== undefined && cursor >= list.length - list.$virtual.preparedLength)
 			bounding.floor = list.$virtual.dCursor.floor.offsetTop + list.$virtual.scrollHeight*2;
@@ -522,7 +504,7 @@ sf.internal.virtual_scroll = new function(){
 			// Virtual DOM to DOM tree
 			for (var i = 0; i < insertCount; i++) {
 				temp = virtual.dom.children[index];
-				if(temp === null) break;
+				if(temp === undefined) break;
 
 				floor.insertAdjacentElement('beforeBegin', temp);
 			}
@@ -535,7 +517,10 @@ sf.internal.virtual_scroll = new function(){
 				refreshVirtualSpacer(index);
 
 			refreshScrollBounding(index, virtual.bounding, list, parentNode);
-			scroller.scrollTop = parentNode.children[prepareCount - reduce + 1].offsetTop;
+
+			temp = parentNode.children[prepareCount - reduce + 1];
+			if(temp !== undefined)
+				scroller.scrollTop = temp.offsetTop;
 		}
 
 		updating = false;
@@ -559,20 +544,65 @@ sf.internal.virtual_scroll = new function(){
 
 		var length = list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
+			if(list.$virtual.dom.children[i] === undefined) break;
 			exist.push(list.$virtual.dom.children[i]);
 		}
 
 		length = parentNode.childElementCount - 2;
 		for (var i = 1; i <= length; i++) {
+			if(parentNode.children[i] === undefined) break;
 			exist.push(parentNode.children[i]);
 		}
 
 		length = list.length - length - list.$virtual.DOMCursor;
-		for (var i = list.$virtual.DOMCursor; i < length; i++) {
-			exist.push(list.$virtual.dom.children[i]);
+		for (var i = 0; i < length; i++) {
+			var a = list.$virtual.DOMCursor + i;
+			if(list.$virtual.dom.children[a] === undefined) break;
+			exist.push(list.$virtual.dom.children[a]);
 		}
 
 		return exist;
+	}
+
+	function refresh(force, list, prepareCount, parentNode, scroller, checkCursorPosition, refreshVirtualSpacer){
+		var cursor = list.$virtual.DOMCursor;
+
+		// Find nearest cursor for current view position
+		if(force){
+			var i = -1;
+			var length = list.$virtual.preparedLength;
+
+			do{
+				i++;
+			} while(i < length && parentNode.children[i].offsetTop < scroller.scrollTop);
+
+			cursor = cursor + i;
+			if(cursor > 0) cursor -= 1;
+		}
+
+		// Force move cursor if element in the DOM tree was overloaded
+		if(force || parentNode.childElementCount - 2 > list.$virtual.preparedLength){
+			list.$virtual.DOMCursor = list.length;
+			var moveTo = cursor;
+			if(!force)
+				moveTo = cursor <= prepareCount ? cursor : (cursor + prepareCount);
+
+			scrollTo(moveTo,
+				list,
+				prepareCount,
+				parentNode,
+				scroller,
+				refreshVirtualSpacer
+			);
+		}
+
+		if(refreshVirtualSpacer)
+			refreshVirtualSpacer(cursor);
+
+		if(checkCursorPosition)
+			checkCursorPosition();
+
+		refreshScrollBounding(cursor, list.$virtual.bounding, list, parentNode);
 	}
 
 	function initStyles(){

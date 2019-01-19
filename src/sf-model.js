@@ -630,8 +630,12 @@ sf.model = function(scope){
 				throw "Can't parse element that already bound";
 
 			if(this.parentNode.classList.contains('sf-virtual-list')){
-				loopParser(controller, content, script, targetNode, [this.parentNode, absHeight]);
-				self.remove();
+				if(loopParser(controller, content, script, targetNode, [this.parentNode, absHeight]))
+					self.remove();
+				else {
+					self.attr('sf-bind-list', script.split(' in ')[1]);
+					clearElementData(this);
+				}
 				return;
 			}
 
