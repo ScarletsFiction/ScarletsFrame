@@ -387,9 +387,8 @@ sf.internal.virtual_scroll = new function(){
 			bounding.floor = parentNode.children[self.prepareCount + 3].offsetTop; // +2 element
 
 			if(parentNode.hasAttribute('scroll-reduce-floor')){
-				var currentFloor = bounding.floor - parentNode.getAttribute('scroll-reduce-floor');
-				if(currentFloor > bounding.ceiling)
-					bounding.floor = currentFloor;
+				bounding.floor -= parentNode.getAttribute('scroll-reduce-floor');
+				bounding.ceiling -= parentNode.getAttribute('scroll-reduce-floor');
 			}
 		}
 	}
@@ -576,6 +575,7 @@ sf.internal.virtual_scroll = new function(){
 
 	function refresh(force, list, prepareCount, parentNode, scroller, checkCursorPosition, refreshVirtualSpacer){
 		var cursor = list.$virtual.DOMCursor;
+		var additionalScroll = 0;
 
 		// Find nearest cursor for current view position
 		if(force){
@@ -588,6 +588,8 @@ sf.internal.virtual_scroll = new function(){
 
 			cursor = cursor + i;
 			if(cursor > 0) cursor -= 1;
+
+			additionalScroll = scroller.scrollTop - parentNode.children[i].offsetTop;
 		}
 
 		// Force move cursor if element in the DOM tree was overloaded
@@ -604,6 +606,8 @@ sf.internal.virtual_scroll = new function(){
 				scroller,
 				refreshVirtualSpacer
 			);
+
+			scroller.scrollTop += additionalScroll;
 		}
 
 		if(refreshVirtualSpacer)
