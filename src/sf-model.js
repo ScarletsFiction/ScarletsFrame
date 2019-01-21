@@ -396,6 +396,12 @@ sf.model = function(scope){
 						processElement(0, 'remove');
 
 					else if(name === 'splice'){
+						// Obtaining all data
+						if(arguments[0] === null){
+							oldArray.splice(0);
+							return temp;
+						}
+
 						// Removing data
 						var real = arguments[0];
 						if(real < 0) real = lastLength + real;
@@ -520,7 +526,17 @@ sf.model = function(scope){
 				temp = dataParser(temp, item, mask, name);
 				returns += temp;
 			}
-			Object.defineProperty(self.root[name], method[1], {
+
+			var modelRef = self.root[name];
+
+			// Enable element binding
+			if(modelRef.sf$bindedKey === undefined)
+				initBindingInformation(modelRef);
+
+			if(modelRef.sf$bindedKey[method[1]] === undefined)
+				modelRef.sf$bindedKey[method[1]] = null;
+
+			Object.defineProperty(modelRef, method[1], {
 				enumerable: true,
 				configurable: true,
 				get:function(){
@@ -541,6 +557,7 @@ sf.model = function(scope){
 					return items;
 				}
 			});
+
 			bindArray(content, items, mask, name, method[1], targetNode, parentNode, returns);
 		}
 		return returns;
@@ -668,6 +685,19 @@ sf.model = function(scope){
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
 	function DOMNodeRemoved(element){
+		$('[sf-controller]', element).each(function(){
+			console.warn(this.getAttribute('sf-controller'));
+			removeModelBinding(this.getAttribute('sf-controller'));
+		});
+
+		if(element.hasAttribute('sf-controller') === false)
+			return;
+
+		console.warn(element.getAttribute('sf-controller'));
+		removeModelBinding(element.getAttribute('sf-controller'));
+		return;
+
+		// Code below are deprecated
 		var model = sf.controller.modelName(element);
 
 		$('[sf-bind-id], [sf-bind-list], [sf-bounded], [sf-repeat-this]', element).each(function(){
@@ -677,35 +707,77 @@ sf.model = function(scope){
 		removeBinding(element);
 	}
 
-	$(function(){
+	sf(function(){
+		var everyRemovedNodes = function(nodes){
+			var tagName = nodes.nodeName;
+			if(tagName === 'TEXT' || tagName === '#text' || tagName === '#comment') return;
+
+			DOMNodeRemoved(nodes);
+		}
+
 		if(typeof MutationObserver === 'function' && MutationObserver.prototype.observe){
+			var everyRecords = function(record){
+				record.removedNodes.forEach(everyRemovedNodes);
+			}
+
 			var observer = new MutationObserver(function(records){
 				if(!bindingEnabled) return;
-
-				for(var i in records){
-					for(var a in records[i].removedNodes){
-						var tagName = records[i].removedNodes[a].nodeName;
-						if(tagName !== 'TEXT' || tagName !== '#comment') continue;
-						DOMNodeRemoved(records[i].removedNodes[a]);
-					}
-				}
+				records.forEach(everyRecords);
 			});
+
 			observer.observe(document.body, { childList: true, subtree: true });
 		}
 		else {
 			document.body.addEventListener('DOMNodeRemoved', function(e){
-				if(bindingEnabled){
-					var tagName = e.target.nodeName;
-					if(tagName !== 'TEXT' || tagName !== '#comment') return;
-					DOMNodeRemoved(e.target);
-				}
+				if(!bindingEnabled) return;
+				everyRemovedNodes(e.target);
 			});
 		}
 	});
 
-	var removeBinding = function(element, modelNames){
-		if(!element.attributes) return;
+	var removeModelBinding = function(modelName){
+		var ref = self.root[modelName];
+		if(ref === undefined)
+			return;
 
+		var bindedKey = ref.sf$bindedKey;
+		var temp = null;
+		for(var key in bindedKey){
+			delete bindedKey[key];
+
+			if(ref[key] === undefined || ref[key] === null)
+				continue;
+
+			if(ref[key].constructor === String ||
+				ref[key].constructor === Number ||
+				ref[key].constructor === Boolean
+			){/* Ok */}
+
+			else if(ref[key].constructor === Array){
+				if(ref[key].$virtual){
+					ref[key].$virtual.destroy();
+					delete ref[key].$virtual;
+				}
+
+				// Reset property without copying the array
+				temp = ref[key].splice('obtain');
+				delete ref[key];
+				ref[key] = temp;
+			}
+			else continue;
+
+			if(Object.getOwnPropertyDescriptor(ref, key) === undefined)
+				continue;
+
+			// Reconfigure / Remove property descriptor
+			var temp = ref[key];
+			delete ref[key];
+			ref[key] = temp;
+		}
+	}
+
+	// Deprecated
+	var removeBinding = function(element, modelNames){
 		var attrs = element.attributes;
 		if(attrs['sf-bind-id']){
 			var id = attrs['sf-bind-id'].value;
@@ -750,9 +822,14 @@ sf.model = function(scope){
 
 		if(!modelNames) return;
 
+		var modelRef = self.root[modelNames];
+		if(modelRef === undefined || modelRef[propertyName] === undefined)
+			return;
+
 		var propertyName = false;
 		if(attrs['sf-bind-list']){
 			propertyName = attrs['sf-bind-list'].value;
+			console.warn(propertyName);
 		}
 
 		if(attrs['sf-repeat-this'])
@@ -761,31 +838,28 @@ sf.model = function(scope){
 		if(attrs['sf-bounded'])
 			propertyName = attrs['sf-bounded'].value;
 
-		for (var i = 0; i < modelNames.length; i++) {
-			var modelRef = self.root[modelNames[i]];
-			if(!modelRef[propertyName]) continue;
+		var value = modelRef[propertyName].slice(0);
+		Object.defineProperty(modelRef, propertyName, {
+			configurable: true,
+			enumerable:true,
+			writable:true,
+			value:value
+		});
 
-			var value = modelRef[propertyName].slice(0);
-			Object.defineProperty(modelRef, propertyName, {
-				configurable: true,
-				enumerable:true,
-				writable:true,
-				value:value
-			});
-		}
+		modelRef.sf$bindedKey.push(propertyName);
 	}
 
 	/*{
 		id:{
-			object,
+			modelRef,
 			[propertyName]
 		}
 	}*/
-	// For resetting object property it the element was removed from DOM
+	// For resetting modelRef property it the element was removed from DOM
 	var bindRef = {length:0, index:0, cache:{}};
 	self.bindRef = bindRef;
 	var dcBracket = /{{[\s\S]*?}}/;
-	var bindObject = function(element, object, propertyName, which){
+	var bindObject = function(element, modelRef, propertyName, which){
 		if(!(element instanceof Node))
 			element = element[0];
 
@@ -824,8 +898,8 @@ sf.model = function(scope){
 		if(which === 'html' || !which)
 			cache.innerHTML = element.innerHTML;
 
-		// Get current object reference
-		if(!bindRef[id]) bindRef[id] = {object:object, propertyName:[]};
+		// Get current modelRef reference
+		if(!bindRef[id]) bindRef[id] = {modelRef:modelRef, propertyName:[]};
 		bindRef[id].propertyName.push(propertyName);
 
 		cache.element = $(element);
@@ -854,7 +928,7 @@ sf.model = function(scope){
 		if(cache.model[propertyName] === undefined) throw "Property '"+propertyName+"' was not found on '"+cache.modelName+"' model";
 		if(Object.getOwnPropertyDescriptor(cache.model, propertyName)['set']){
 			for(var i in bindRef){
-				if(cache.model === bindRef[i].object && bindRef[i].propertyName.indexOf(propertyName) !== -1){
+				if(cache.model === bindRef[i].modelRef && bindRef[i].propertyName.indexOf(propertyName) !== -1){
 					bindRef.cache[i].callback[id] = callbackFunction;
 					break;
 				}
@@ -865,8 +939,23 @@ sf.model = function(scope){
 		cache.callback = {};
 		cache.callback[id] = callbackFunction;
 
-		var objValue = object[propertyName]; // Object value
-		Object.defineProperty(object, propertyName, {
+		var onChanges = function(){
+			for(var i in cache.callback){
+				cache.callback[i]();
+			}
+		};
+
+		// Enable multiple element binding
+		if(modelRef.sf$bindedKey === undefined)
+			initBindingInformation(modelRef);
+
+		if(modelRef.sf$bindedKey[propertyName] !== undefined){
+			modelRef.sf$bindedKey[propertyName].push(onChanges);
+			return;
+		}
+
+		var objValue = modelRef[propertyName]; // Object value
+		Object.defineProperty(modelRef, propertyName, {
 			enumerable: true,
 			configurable: true,
 			get:function(){
@@ -875,13 +964,16 @@ sf.model = function(scope){
 			set:function(val){
 				objValue = val;
 
-				for(var i in cache.callback){
-					cache.callback[i]();
+				var ref = modelRef.sf$bindedKey[propertyName];
+				for (var i = 0; i < ref.length; i++) {
+					ref[i]();
 				}
 
 				return objValue;
 			}
 		});
+
+		modelRef.sf$bindedKey[propertyName] = [onChanges];
 	}
 
 	self.bindElement = function(element, which){
@@ -972,6 +1064,8 @@ sf.model = function(scope){
 			if(!self.root[model])
 				return console.error("Can't parse element because model for '"+model+"' was not found", nodes[a]);
 
+			var modelRef = self.root[model];
+
 			// Get reference for debugging
 			processingElement = nodes[a];
 
@@ -994,5 +1088,18 @@ sf.model = function(scope){
 				}
 			}
 		}
+	}
+
+	function initBindingInformation(modelRef){
+		if(modelRef.sf$bindedKey !== undefined)
+			return;
+
+		// Element binding data
+		Object.defineProperty(modelRef, 'sf$bindedKey', {
+			configurable: true,
+			enumerable:false,
+			writable:true,
+			value:{}
+		});
 	}
 })();
