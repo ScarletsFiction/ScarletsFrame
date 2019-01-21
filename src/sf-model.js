@@ -565,11 +565,10 @@ sf.model = function(scope){
 
 	var bindInput = function(targetNode){
 		$('input[sf-bound]', targetNode).each(function(){
-			var element = $(this);
-			var model = element.parents('[sf-controller]').attr('sf-controller');
+			var model = sf.controller.modelName(this);
 			if(!model) return;
 
-			var whichVar = element.attr('sf-bound');
+			var whichVar = this.getAttribute('sf-bound');
 
 			// Get reference
 			if(typeof self.root[model][whichVar] === undefined){
@@ -577,17 +576,20 @@ sf.model = function(scope){
 				return;
 			}
 
-			element.attr('sf-bounded', whichVar);
-			element.removeAttr('sf-bound');
+			this.setAttribute('sf-bounded', whichVar);
+			this.removeAttribute('sf-bound');
 
-			// Bound key up
-			element.keyup(function(e){
-				self.root[model][whichVar] = element.val();
-			});
-
-			// Bind value
-			element.attr('value', '{{'+whichVar+'}}');
-			bindObject(element, self.root[model], whichVar, 'attr');
+			// Bound value change
+			var element = $(this);
+			if(this.tagName === 'INPUT' || this.tagName === 'TEXTAREA')
+				element.on('keyup', function(e){
+					self.root[model][whichVar] = element.val();
+				});
+			
+			else
+				element.on('change', function(e){
+					self.root[model][whichVar] = element.val();
+				});
 		});
 	}
 
@@ -650,7 +652,7 @@ sf.model = function(scope){
 			var content = this.outerHTML;
 
 			// Check if the element was already bound to prevent vulnerability
-			if(/sf-bind-id|sf-bind-list/.test(content))
+			if(/sf-bind-key|sf-bind-list/.test(content))
 				throw "Can't parse element that already bound";
 
 			if(this.parentNode.classList.contains('sf-virtual-list')){
@@ -686,7 +688,6 @@ sf.model = function(scope){
 	// Don't call if the removed element is TEXT or #comment
 	function DOMNodeRemoved(element){
 		$('[sf-controller]', element).each(function(){
-			console.warn(this.getAttribute('sf-controller'));
 			removeModelBinding(this.getAttribute('sf-controller'));
 		});
 
@@ -765,15 +766,6 @@ sf.model = function(scope){
 		}
 	}
 
-	/*{
-		id:{
-			modelRef,
-			[propertyName]
-		}
-	}*/
-	// For resetting modelRef property it the element was removed from DOM
-	var bindRef = {length:0, index:0, cache:{}};
-	self.bindRef = bindRef;
 	var dcBracket = /{{[\s\S]*?}}/;
 	var bindObject = function(element, modelRef, propertyName, which){
 		if(!(element instanceof Node))
@@ -783,83 +775,55 @@ sf.model = function(scope){
 		processingElement = element;
 
 		// First initialization
-		var id = bindRef.index;
-		$(element).attr('sf-bind-id', id);
+		element.setAttribute('sf-bind-key', propertyName);
+		var modelName = sf.controller.modelName(element);
 
-		bindRef.index++;
-		bindRef.length++;
-		bindRef.cache[id] = {};
-		var cache = bindRef.cache[id];
-
-		cache.attrs = {};
-		cache.innerHTML = '';
-		cache.modelName = sf.controller.modelName(element);
-		cache.model = self.root[cache.modelName];
-		cache.created = Date.now();
-
+		// Cache attribute content
 		if(which === 'attr' || !which){
+			var attrs = {};
+
 			for(var i in element.attributes){
 				// Check if it has a bracket
 				if(!dcBracket.test(element.attributes[i].value))
 					continue;
 
 				var attrName = element.attributes[i].name;
-				cache.attrs[attrName] = element.attributes[i].value;
-
 				if(attrName === 'value')
 					element.removeAttribute(attrName);
+
+				attrs[attrName] = element.attributes[i].value;
 			}
 		}
 
+		// Cache html content
 		if(which === 'html' || !which)
-			cache.innerHTML = element.innerHTML;
+			var innerHTML = element.innerHTML;
 
-		// Get current modelRef reference
-		if(!bindRef[id]) bindRef[id] = {modelRef:modelRef, propertyName:[]};
-		bindRef[id].propertyName.push(propertyName);
-
-		cache.element = $(element);
-		var callbackFunction = function(){
+		element = $(element);
+		var onChanges = function(){
 			if(which === 'attr' || !which){
-				for(var name in cache.attrs){
-					if(cache.attrs[name].indexOf(propertyName) === -1)
+				for(var name in attrs){
+					if(attrs[name].indexOf(propertyName) === -1)
 						continue;
 
-					var temp = dataParser(cache.attrs[name], cache.model, false, cache.modelName);
+					var temp = dataParser(attrs[name], modelRef, false, modelName);
 					if(name === 'value')
-						cache.element.val(temp);
+						element.val(temp);
 					else
-						cache.element.attr(name, temp);
+						element.attr(name, temp);
 					break;
 				}
 			}
 
 			if(which === 'html' || !which){
-				var temp = uniqueDataParser(cache.innerHTML, cache.model, false, cache.modelName);
-				temp = dataParser(temp, cache.model, false, cache.modelName);
-				cache.element.html(temp);
+				var temp = uniqueDataParser(innerHTML, modelRef, false, modelName);
+				temp = dataParser(temp, modelRef, false, modelName);
+				element.html(temp);
 			}
 		};
 
-		if(cache.model[propertyName] === undefined) throw "Property '"+propertyName+"' was not found on '"+cache.modelName+"' model";
-		if(Object.getOwnPropertyDescriptor(cache.model, propertyName)['set']){
-			for(var i in bindRef){
-				if(cache.model === bindRef[i].modelRef && bindRef[i].propertyName.indexOf(propertyName) !== -1){
-					bindRef.cache[i].callback[id] = callbackFunction;
-					break;
-				}
-			}
-			return;
-		}
-
-		cache.callback = {};
-		cache.callback[id] = callbackFunction;
-
-		var onChanges = function(){
-			for(var i in cache.callback){
-				cache.callback[i]();
-			}
-		};
+		if(modelRef[propertyName] === undefined)
+			throw "Property '"+propertyName+"' was not found on '"+modelName+"' model";
 
 		// Enable multiple element binding
 		if(modelRef.sf$bindedKey === undefined)
@@ -900,7 +864,7 @@ sf.model = function(scope){
 		var html = element.outerHTML;
 
 		// Check if the child element was already bound to prevent vulnerability
-		if(/sf-bind-id|sf-bind-list/.test(html))
+		if(/sf-bind-key|sf-bind-list/.test(html))
 			throw "Can't parse element that already bound";
 
 		if(which === 'attr')
@@ -942,7 +906,7 @@ sf.model = function(scope){
 				var attrs = currentNode.attributes;
 
 				// Skip element and it's childs that already bound to prevent vulnerability
-				if(attrs['sf-bind-id'] || attrs['sf-repeat-this'] || attrs['sf-bind-list']) continue;
+				if(attrs['sf-bind-key'] || attrs['sf-repeat-this'] || attrs['sf-bind-list']) continue;
 
 				for (var a = 0; a < attrs.length; a++) {
 					if(attrs[a].value.indexOf('{{') !== -1){
@@ -986,7 +950,7 @@ sf.model = function(scope){
 			processingElement = nodes[a];
 
 			// Double check if the child element already bound to prevent vulnerability
-			if(/sf-bind-id|sf-bind-list/.test(nodes[a].innerHTML)){
+			if(/sf-bind-key|sf-bind-list/.test(nodes[a].innerHTML)){
 				console.error("Can't parse element that already bound");
 				console.log($(processingElement.outerHTML)[0]);
 				return;
