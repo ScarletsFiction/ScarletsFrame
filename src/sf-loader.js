@@ -3,8 +3,10 @@ sf.loader = new function(){
 	self.loadedContent = 0;
 	self.totalContent = 0;
 	self.DOMWasLoaded = false;
+	self.DOMReady = false;
 	self.turnedOff = false;
 
+	var whenDOMReady = [];
 	var whenDOMLoaded = [];
 	var whenProgress = [];
 
@@ -17,6 +19,11 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded) return func();
 		if(whenDOMLoaded.indexOf(func) !== -1) return;
 		whenDOMLoaded.push(func);
+	}
+	self.domReady = function(func){
+		if(self.DOMReady) return func();
+		if(whenDOMReady.indexOf(func) !== -1) return;
+		whenDOMReady.push(func);
 	}
 	self.onProgress = function(func){
 		if(self.DOMWasLoaded) return func(self.loadedContent, self.totalContent);
@@ -47,7 +54,7 @@ sf.loader = new function(){
 			temp += '<link onload="sf.loader.f(this);" rel="stylesheet" href="'+list[i]+'">';
 		}
 
-		$(function(){
+		self.domReady(function(){
 			document.getElementsByTagName('body')[0].innerHTML += temp;
 		});
 	}
@@ -73,13 +80,24 @@ sf.loader = new function(){
 	}
 
 	setTimeout(function(){
-		if(self.totalContent === 0){
+		if(self.totalContent === 0 && !self.turnedOff){
 			self.loadedContent = self.totalContent = 1;
 			console.warn("If you don't use content loader feature, please turn it off with `sf.loader.off()`");
 		}
 	}, 10000);
 	var everythingLoaded = setInterval(function() {
 	if (/loaded|complete/.test(document.readyState)) {
+		if(self.DOMReady === false){
+			self.DOMReady = true;
+			for (var i = 0; i < whenDOMReady.length; i++) {
+				try{
+					whenDOMReady[i]();
+				} catch(e) {
+					console.error(e);
+				}
+			}
+		}
+
 		if(self.loadedContent < self.totalContent || self.loadedContent === 0){
 			if(!self.turnedOff)
 				return;
@@ -95,7 +113,9 @@ sf.loader = new function(){
 			}
 		}
 		whenProgress.splice(0);
+		whenDOMReady.splice(0);
 		whenDOMLoaded.splice(0);
+		whenProgress = whenDOMReady = whenDOMLoaded = null;
 
 		// Last init
 		sf.controller.init();
@@ -107,9 +127,9 @@ sf.loader = new function(){
 sf.prototype.constructor = sf.loader.onFinish;
 
 // Find images
-$(function(){
+sf.loader.domReady(function(){
 	$('img:not(onload)[src]').each(function(){
 		sf.loader.totalContent++;
 		this.setAttribute('onload', "sf.loader.f(this)");
 	});
-});
+}, 0);
