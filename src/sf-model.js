@@ -693,18 +693,7 @@ sf.model = function(scope){
 		if(element.hasAttribute('sf-controller') === false)
 			return;
 
-		console.warn(element.getAttribute('sf-controller'));
 		removeModelBinding(element.getAttribute('sf-controller'));
-		return;
-
-		// Code below are deprecated
-		var model = sf.controller.modelName(element);
-
-		$('[sf-bind-id], [sf-bind-list], [sf-bounded], [sf-repeat-this]', element).each(function(){
-			removeBinding(this, model);
-		});
-
-		removeBinding(element);
 	}
 
 	sf(function(){
@@ -774,79 +763,6 @@ sf.model = function(scope){
 			delete ref[key];
 			ref[key] = temp;
 		}
-	}
-
-	// Deprecated
-	var removeBinding = function(element, modelNames){
-		var attrs = element.attributes;
-		if(attrs['sf-bind-id']){
-			var id = attrs['sf-bind-id'].value;
-
-			if(!bindRef[id]) return;
-			var ref = bindRef[id];
-
-			for (var i = 0; i < ref.propertyName.length; i++) {
-				var value = ref.object[ref.propertyName[i]];
-				Object.defineProperty(ref.object, ref.propertyName[i], {
-					configurable: true,
-					enumerable:true,
-					writable:true,
-					value:value
-				});
-			}
-
-			delete bindRef[id];
-
-			// Remove callback left
-			var cache = bindRef.cache
-			for(var i in cache){
-				if(cache[i].callback && cache[i].callback[id])
-					delete cache[i].callback[id];
-				if($.isEmptyObject(cache[i].callback))
-					delete cache[i];
-			}
-
-			if(cache[id]){
-				delete cache[id].attrs;
-				delete cache[id].innerHTML;
-				delete cache[id].modelName;
-				delete cache[id].model;
-				delete cache[id].created;
-				delete cache[id].element;
-			}
-
-			bindRef.length--;
-			if(bindRef.length === 0)
-				bindRef.index = 0;
-		}
-
-		if(!modelNames) return;
-
-		var modelRef = self.root[modelNames];
-		if(modelRef === undefined || modelRef[propertyName] === undefined)
-			return;
-
-		var propertyName = false;
-		if(attrs['sf-bind-list']){
-			propertyName = attrs['sf-bind-list'].value;
-			console.warn(propertyName);
-		}
-
-		if(attrs['sf-repeat-this'])
-			propertyName = attrs['sf-repeat-this'].value.split(' in ')[1];
-
-		if(attrs['sf-bounded'])
-			propertyName = attrs['sf-bounded'].value;
-
-		var value = modelRef[propertyName].slice(0);
-		Object.defineProperty(modelRef, propertyName, {
-			configurable: true,
-			enumerable:true,
-			writable:true,
-			value:value
-		});
-
-		modelRef.sf$bindedKey.push(propertyName);
 	}
 
 	/*{
