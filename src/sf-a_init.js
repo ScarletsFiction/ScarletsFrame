@@ -28,6 +28,15 @@ if(!$.fn.extend){
 	}
 }
 
+if(!$.isEmptyObject){
+	$.isEmptyObject = function(obj){
+		for(var key in obj){
+			return false;
+		}
+		return true
+	}
+}
+
 // Add animate.css feature on jQuery
 $.fn.extend({
   animateCSS: function(animationName, callback, duration) {
