@@ -113,10 +113,10 @@ sf.controller = new function(){
 
 		if(!sf.model.root[scope])
 			sf.controller.run(scope);
-		
+
 		return sf.model.root[scope];
 	}
-	// Deprecated
+
 	self.run = function(name, func){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
@@ -126,7 +126,7 @@ sf.controller = new function(){
 		if(self.pending[name]){
 			if(!sf.model.root[name])
 				sf.model.root[name] = {};
-		
+
 			self.pending[name](sf.model.root[name], root_);
 			self.active[name] = true;
 			delete self.pending[name];

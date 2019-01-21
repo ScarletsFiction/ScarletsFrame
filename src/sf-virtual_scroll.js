@@ -39,9 +39,10 @@ sf.internal.virtual_scroll = new function(){
 
 		var scroller = null;
 		list.$virtual.destroy = function(){
-			$(scroller).off();
-			$(parentNode).off();
+			$(scroller).off('scroll');
+			$(parentNode).off('mousedown mouseup');
 			list.$virtual.dom.innerHTML = '';
+			offElementResize(parentNode);
 			delete list.$virtual;
 		}
 
@@ -239,8 +240,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 
 		$(scroller).on('scroll', checkCursorPosition);
-		$(scroller).on('resize', function(){
-			fillViewport();
+		onElementResize(parentNode, function(){
 			refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
 		});
 	}
@@ -617,6 +617,53 @@ sf.internal.virtual_scroll = new function(){
 			checkCursorPosition();
 
 		refreshScrollBounding(cursor, list.$virtual.bounding, list, parentNode);
+	}
+
+	var _onElementResize = [];
+	var _onElementResize_timer = -1;
+	function onElementResize(parentNode, callback){
+		if(_onElementResize_timer === -1){
+			_onElementResize_timer = setInterval(function(){
+				var temp = null;
+				for (var i = _onElementResize.length - 1; i >= 0; i--) {
+					temp = _onElementResize[i];
+
+					// Check resize
+					if(temp.element.scrollHeight === temp.height
+						|| temp.element.scrollWidth === temp.width)
+						continue;
+
+					// Check if it's removed from DOM
+					if(temp.element.parentElement === null){
+						_onElementResize.splice(i, 1);
+						continue;
+					}
+
+					temp.callback();
+				}
+
+				if(_onElementResize.length === 0){
+					clearInterval(_onElementResize_timer);
+					_onElementResize_timer = -1;
+				}
+			}, 200);
+		}
+
+		_onElementResize.push({
+			element:parentNode,
+			callback:callback,
+			height:parentNode.scrollHeight,
+			width:parentNode.scrollWidth
+		});
+	}
+
+	function offElementResize(parentNode){
+		for (var i = _onElementResize.length - 1; i >= 0; i--) {
+			if(_onElementResize[i].element === parentNode)
+				_onElementResize.splice(i, 1);
+		}
+
+		// Interval will be cleared when the array is empty
 	}
 
 	function initStyles(){
