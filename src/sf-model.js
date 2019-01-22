@@ -20,6 +20,7 @@ sf.model = function(scope){
 	var chackValidFunctionCall = /[a-zA-Z0-9 \]\$\)]/;
 	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
 	var localEval = function(script_, _model_, _modelScope, _content_){
+		"use strict";
 		var script = script_;
 		script_ = script_.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
 		script_ = script_.split('._modelScope').join('');
@@ -27,19 +28,19 @@ sf.model = function(scope){
 
 		// Prevent vulnerability by remove bracket to avoid a function call
 		var preventExecution = false;
-		var check = null;
-		while((check = bracketMatch.exec(script_)) !== null){
-			check[1] = check[1].trim();
+		var check_ = null;
+		while((check_ = bracketMatch.exec(script_)) !== null){
+			check_[1] = check_[1].trim();
 
-			if(allowedFunction.indexOf(check[1]) === -1 &&
-				check[1].split('.')[0] !== '_modelScope' &&
-				chackValidFunctionCall.test(check[1][check[1].length-1])
+			if(allowedFunction.indexOf(check_[1]) === -1 &&
+				check_[1].split('.')[0] !== '_modelScope' &&
+				chackValidFunctionCall.test(check_[1][check_[1].length-1])
 			){
-				preventExecution = check[1];
+				preventExecution = check_[1];
 				break;
 			}
 		}
-		
+
 		var _result_ = '';
 		script_ = script_.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
 		if(preventExecution){
@@ -48,8 +49,13 @@ sf.model = function(scope){
 			console.log(script_);
 			return '';
 		}
+
 		try{
-			var _evaled_ = eval(script_);
+			if(/@return /.test(script_) === true){
+				var _evaled_ = eval('(function(){'+script_.split('@return ').join('return ')+'})()');
+				return _result_ + _evaled_;
+			}
+			else var _evaled_ = eval(script_);
 		} catch(e){
 			console.error(e);
 			console.log(script_);
@@ -183,6 +189,9 @@ sf.model = function(scope){
 		};
 
 		html = html.replace(/{\[([\s\S]*?)\]}/g, function(full, matched){
+			if(/{{.*?}}/.test(matched) === false)
+				return "_result_ += '"+matched.split("'").join("\\'")+"'";
+
 			_content_[_content_.length] = matched;
 			_content_.length++;
 			return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
@@ -242,7 +251,7 @@ sf.model = function(scope){
 				};
 				VarPass = obtained;
 				for (var i = 0; i < VarPass.length; i++) {
-					VarPass[i] += ':(typeof '+VarPass[i]+'!="undefined"?'+VarPass[i]+':undefined)';
+					VarPass[i] += ':(typeof '+VarPass[i]+'!=="undefined"?'+VarPass[i]+':undefined)';
 				}
 				VarPass = '{'+VarPass.join(',')+'}';
 				temp = temp.split('&VarPass&').join(VarPass);
@@ -585,7 +594,7 @@ sf.model = function(scope){
 				element.on('keyup', function(e){
 					self.root[model][whichVar] = element.val();
 				});
-			
+
 			else
 				element.on('change', function(e){
 					self.root[model][whichVar] = element.val();
