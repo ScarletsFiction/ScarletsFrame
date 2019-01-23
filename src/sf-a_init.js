@@ -1,7 +1,29 @@
-(function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) : (global.sf = factory());
-}(this, (function(){'use strict';
+(function(global, factory){
+  var $ = null;
+  if(typeof exports === 'object' && typeof module !== 'undefined'){
+  	try { $ = require("dom7") }catch(e){
+  		try { $ = require("jquery") }catch(e){}
+  	}
+
+  	if($ === null){
+  		console.log("ScarletsFrame can't load jQuery or Dom7!");
+  		return;
+  	}
+
+  	module.exports = factory($);
+  }
+
+  else{
+	if(typeof Dom7 !== 'undefined')
+		$ = Dom7;
+	else if(typeof jQuery !== 'undefined')
+		$ = jQuery;
+	else
+		throw "Please load jQuery before ScarletsFrame";
+
+  	global.sf = factory($);
+  }
+}(this, (function($){'use strict';
 // ===== Module Init =====
 
 var sf = function(){
@@ -16,15 +38,6 @@ sf.regex = {
 	avoidQuotes:'(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)',
 	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )'
 };
-
-if(typeof $ === 'undefined' || !$.fn){
-	if(typeof jQuery !== 'undefined')
-		$ = jQuery;
-	else if(typeof Dom7 !== 'undefined')
-		$ = Dom7;
-	else
-		throw "Please load jQuery before ScarletsFrame";
-}
 
 if(!$.fn.extend){
 	$.fn.extend = function(obj){
