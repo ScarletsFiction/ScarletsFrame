@@ -480,8 +480,7 @@ sf.model = function(scope){
 			});
 		}
 
-		// parentNode[0] = element, [1] = child scroll height
-		if(parentNode && parentNode[0].classList.contains('sf-virtual-list')){
+		if(parentNode && parentNode.classList.contains('sf-virtual-list')){
 			Object.defineProperty(list, '$virtual', {
 				enumerable: false,
 				configurable: true,
@@ -492,12 +491,35 @@ sf.model = function(scope){
 			list.$virtual.dom = document.createElement('div');
 			list.$virtual.dom.innerHTML = htmlParsedData;
 
-			sf.internal.virtual_scroll.handle(list, targetNode, parentNode[0]);
+			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
 		}
 
 		for (var i = 0; i < editProperty.length; i++) {
 			propertyProxy(list, editProperty[i]);
 		}
+
+		Object.defineProperty(list, 'getElement', {
+			enumerable: false,
+			configurable: true,
+			value: function(index){
+				if(list.$virtual){
+					if(index < list.$virtual.DOMCursor)
+						return list.$virtual.dom.children[index];
+
+					index -= list.$virtual.DOMCursor;
+					var reducedIndex = index - parentNode.childElementCount + 2;
+					if(reducedIndex <= 0)
+						return parentNode.children[index + 1];
+
+					return list.$virtual.dom.children[index + list.$virtual.DOMCursor];
+				}
+
+				if(parentNode.childElementCount === list.length)
+					return parentNode.children[index];
+
+				return parentNode.querySelectorAll('[sf-bind-list="'+propertyName+'"]')[index];
+			}
+		});
 	}
 
 	function compareObject(obj1, obj2){
@@ -665,7 +687,7 @@ sf.model = function(scope){
 				throw "Can't parse element that already bound";
 
 			if(this.parentNode.classList.contains('sf-virtual-list')){
-				if(loopParser(controller, content, script, targetNode, [this.parentNode, absHeight]))
+				if(loopParser(controller, content, script, targetNode, this.parentNode))
 					self.remove();
 				else {
 					self.attr('sf-bind-list', script.split(' in ')[1]);
@@ -674,7 +696,7 @@ sf.model = function(scope){
 				return;
 			}
 
-			var data = loopParser(controller, content, script, targetNode);
+			var data = loopParser(controller, content, script, targetNode, this.parentNode);
 			if(data){
 				self.remove();
 				
