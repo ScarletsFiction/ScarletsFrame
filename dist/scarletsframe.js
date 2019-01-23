@@ -1703,6 +1703,7 @@ sf.router = new function(){
 sf.internal.virtual_scroll = new function(){
 	var self = this;
 	var styleInitialized = false;
+	var scrollingByScript = false;
 
 	// before and after
 	self.prepareCount = 4; // 4, 8, 12, 16, ...
@@ -1921,7 +1922,7 @@ sf.internal.virtual_scroll = new function(){
 
 		var updating = false;
 		function checkCursorPosition(){
-			if(updating) return;
+			if(updating || scrollingByScript) return;
 			updating = true;
 
 			if(scroller.scrollTop < bounding.ceiling){
@@ -1998,7 +1999,7 @@ sf.internal.virtual_scroll = new function(){
 		var fromCeiling = true;
 		var scrollFocused = false;
 		function checkCursorPosition(){
-			if(updating || scroller.scrollTop >= bounding.ceiling && scroller.scrollTop <= bounding.floor){
+			if(updating || scrollingByScript || scroller.scrollTop >= bounding.ceiling && scroller.scrollTop <= bounding.floor){
 				// Fix chrome scroll anchoring bugs when scrolling at corner
 				if(scrollFocused){
 					if(scroller.scrollTop === 0 || scroller.scrollTop === scroller.scrollHeight - scroller.clientHeight){
@@ -2169,7 +2170,7 @@ sf.internal.virtual_scroll = new function(){
 
 		if(index - virtual.DOMCursor === 0 || index >= list.length) return;
 
-		updating = true;
+		scrollingByScript = true;
 
 		// Already on DOM tree
 		if((virtual.DOMCursor === 0 && index < prepareCount + prepareCount/2) ||
@@ -2231,7 +2232,7 @@ sf.internal.virtual_scroll = new function(){
 				scroller.scrollTop = temp.offsetTop;
 		}
 
-		updating = false;
+		scrollingByScript = false;
 	}
 
 	function removeUserScrollFocus(parentNode){
