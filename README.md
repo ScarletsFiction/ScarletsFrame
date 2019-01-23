@@ -12,11 +12,23 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 - [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 
-## Install
+## Install with CDN link
 You can download minified js from this repository or use this CDN link
 `<script type="text/javascript" src='https://unpkg.com/scarletsframe@latest/dist/scarletsframe.min.js'></script>`
 
 Make sure you put it on html header after jQuery.
+
+## Install with NPM
+`npm i scarletsframe`
+
+And include it on your project
+```js
+let sf = require('scarletsframe');
+
+sf.model.for('things', (self, root) => {
+  ...
+});
+```
 
 ## How to use
 After this library was initialized, you could access `sf` from global scope.
@@ -166,13 +178,60 @@ Get data from current controller's model scope
 Conditional template
 ```html
 {{@if model.view === true :
-    {[ <html_content>]}
+    {[ <html_content> ]}
 }}
 ```
 
-Replacement for `<script>` tag. You can also output html by wrap it inside '{[ ... ]}'
+As a replacement for `<script>` tag. You can also output html by wrap it inside '{[ ... ]}'.
 `{{@exec javascript stuff}}`
-For security reason, unrecognized function call will prevent template execution. The recognized function is only from the model scope itself.
+All model variable or function can be referenced to the execution scope.
+For security reason, unrecognized function call will prevent template execution.
+This feature is supposed for simple execution, but if you have complex execution it's better to define it as a function on the controller.
+Make sure you write in ES5 because 
+```html
+<div sf-controller="something">
+  <span>{{@exec
+      for(var i = 0; i < 5; i++){
+        {[ <label>i -> {{ i }}</label> ]}
+      }
+
+      // alert("Finished"); // Illegal global invocation
+      myAlert('Finished');
+
+      {[ <br> ]}
+
+      // Below will displaying the data without escaping the html
+      // Don't use this if you don't know how to secure your code
+      @return number.join(',');
+    }}</span>
+</div>
+```
+```js
+sf.model.for('something', function(self, other){
+  self.number = [1, 2, 3, 4, 5];
+});
+
+sf.controller.for('something', function(self){
+  // self.myAlert = window.alert; // Illegal scope invocation
+  self.myAlert = function(msg){
+    window.alert(msg)
+  };
+});
+```
+
+And the HTML output content will be escaped like below
+```html
+<div sf-controller="something">
+  <span>
+    <label>i -&gt; 0</label>
+    <label>i -&gt; 1</label>
+    <label>i -&gt; 2</label>
+    <label>i -&gt; 3</label>
+    <label>i -&gt; 4</label>
+    <br> 1,2,3,4,5
+  </span>
+</div>
+```
 
 #### Initialize/Define Model
 Let's start with this simple element
@@ -202,6 +261,25 @@ sf.model.for('another-thing', function(self, other){
 ### Array data to list of DOM element
 Any element with `sf-repeat-this` will be binded with the array condition on the model. If you push or splice the array data, then the element will also being modified.
 
+These addional feature can be used after DOM element was binded.
+#### hardRefresh
+Redraw all element at once
+```js
+myArray..hardRefresh();
+```
+
+#### softRefresh
+Redraw some element only. If no index being passed it will search for modified object if the array.
+```js
+myArray.softRefresh(index = -1);
+```
+
+#### getElement
+Get the DOM element of the selected index
+```js
+myArray.getElement(index);
+```
+
 Open the model scope for the selected controller for modification.
 ```js
 sf.model.for('music.feedback', function(self, root){
@@ -211,9 +289,6 @@ sf.model.for('music.feedback', function(self, root){
       rate:4,
       ...
     }];
-    // If you want to redraw the element
-    // '.hardRefresh()' redraw all element at once
-    // '.softRefresh(index = -1)' redraw some element only
 
     // If you want to refer other model scope
     self.users = root('user.info'); // sf.model.root['user.info'];
