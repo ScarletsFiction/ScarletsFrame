@@ -7,12 +7,24 @@ var csso = require('gulp-csso');
 var uglify = require('gulp-uglify-es').default;
 var autoprefixer = require('gulp-autoprefixer');
 var header = require('gulp-header');
+var rename = require('gulp-rename');
 var babel = require('gulp-babel');
+var fs = require('fs');
+var notifier = require('node-notifier');
+var order = require("gulp-order");
 
 gulp.task('js', function(){
   return gulp.src('src/**/*.js')
     .pipe(sourcemaps.init())
-    .pipe(concat('scarletsframe.min.js'))
+    .pipe(order([
+      'sf-a_init.js',
+      '**/*.js',
+      'sf-z_end.js'
+    ]))
+    .pipe(concat('scarletsframe.js'))
+    .pipe(gulp.dest('dist'))
+
+    .pipe(rename('scarletsframe.min.js'))
     .pipe(babel({
       "presets": [
         [
@@ -39,14 +51,19 @@ gulp.task('js', function(){
   https://github.com/ScarletsFiction/ScarletsFrame
 */\n`))
     .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest('dist'));
+    .pipe(gulp.dest('dist')).on('end', function(){
+      notifier.notify({
+        title: 'Gulp Compilation',
+        message: 'JavaScript was finished!'
+      });
+    });
 });
 
-gulp.task('watch', function() {
-  gulp.watch(['src/**/*.js'], ['js']);
+gulp.task('watch', function(){
+  gulp.watch(['src/**/*.js'], gulp.series('js'));
 });
 
-gulp.task('serve', function() {
+gulp.task('serve', function(){
   browserSync({
     server: {
       baseDir: 'example'
@@ -56,14 +73,7 @@ gulp.task('serve', function() {
   gulp.watch(['*.html', 'styles/**/*.css', 'scripts/**/*.js'], {cwd: 'example'}, reload);
 });
 
-gulp.task('css', function () {
-  return gulp.src('src/**/*.css')
-    .pipe(autoprefixer({browsers: AUTOPREFIXER_BROWSERS}))
-    .pipe(csso())
-    .pipe(gulp.dest('./dist/css'))
-});
-
-gulp.task('default', ['js']);
+gulp.task('default', gulp.series('js'));
 
 function swallowError(error){
   console.log(error.message)
