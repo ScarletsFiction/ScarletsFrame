@@ -1,4 +1,10 @@
-sf = function(){
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) : (global.sf = factory());
+}(this, (function(){'use strict';
+// ===== Module Init =====
+
+var sf = function(){
 	if(arguments[0].constructor === Function){
 		return sf.loader.onFinish.apply(null, arguments);
 	}
