@@ -97,15 +97,15 @@ sf.router.goto('/user/home', data = {}, method = 'get');
 
 Define event listener when element with attributes `sf-page="todo/page"` was loaded to current DOM. The defined event will being called after all model and controller was finished.
 ```js
-sf.router.before('todo/page', function(ModelRoot){
+sf.router.before('todo/page', function(root){
     // Data Re-initialization
-    var self = ModelRoot('todo.page'); // sf.model.root['todo.page']
+    var self = root('todo.page'); // sf.model.root['todo.page']
 });
 ```
 
 Define event listener when element with attributes `sf-page="todo/page"` is going to be removed from DOM.
 ```js
-sf.router.after('todo/page', function(ModelRoot){
+sf.router.after('todo/page', function(root){
     // Data cleanup
 });
 ```
@@ -121,6 +121,19 @@ sf.router.on('loaded', function(current, target) {
 sf.router.on('error', function(e) {
     console.log("Navigation failed", e);
 });
+```
+
+When you're using router, every click on an element with link or `href` will trigger the router feature. And the whole HTML `body` content will be changed. But if you only want to change specific content, you should define the default view point.
+
+```html
+<custom-view></custom-view>
+<script>
+  sf.router.lazyViewPoint["@default"] = 'custom-view';
+</script>
+
+<a href="/todo/page">Go to todo page</a>
+<a href="/todo/page" sf-router-ignore>Default page load</a>
+
 ```
 
 ### Controller
@@ -265,7 +278,7 @@ These addional feature can be used after DOM element was binded.
 #### hardRefresh
 Redraw all element at once
 ```js
-myArray..hardRefresh();
+myArray.hardRefresh();
 ```
 
 #### softRefresh
@@ -372,7 +385,7 @@ var $elem = $(elements);
 self.list.$virtual.scrollTo(8);
 
 // Recalculate scroll bounding
-self.list.$virtual.refresh(8);
+self.list.$virtual.refresh();
 
 // This will be available on static element height
 // Get an offset that can be used for `scrollTop`
