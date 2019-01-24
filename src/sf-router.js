@@ -15,9 +15,6 @@ sf.router = new function(){
 				self.init();
 			});
 
-		// Reinit lazy router
-		self.lazy();
-
 		// Run 'before' event for new page view
 		$('[sf-controller], [sf-page]', $(targetNode)[0]).each(function(){
 			if(this.attributes['sf-controller'])
@@ -33,31 +30,33 @@ sf.router = new function(){
 		currentRouterURL = window.location.pathname;
 	}
 
+	function popstateListener(event) {
+		// Don't continue if the last routing was error
+		if(routingError){
+			routingError = false;
+			return;
+		}
+
+		routingBack = true;
+		self.goto(window.location.pathname);
+	}
+
 	self.enable = function(status){
 		if(status === undefined) status = true;
 		if(self.enabled === status) return;
 		self.enabled = status;
 
-		if(status)
-			self.lazy();
-		else{
-			$('a[href][onclick]').each(function(){
-				var current = $(this);
-				if(current.attr('onclick') === 'return sf.router.load(this)')
-					current.removeAttr('onclick');
-			});
+		if(status === true){
+			// Create listener for link click
+			$(document.body).on('click', 'a[href]', self.load);
+
+			// Create listener when navigate backward
+			window.addEventListener('popstate', popstateListener, false);
 		}
-
-		window.addEventListener('popstate', function(event) {
-			// Don't continue if the last routing was error
-			if(routingError){
-				routingError = false;
-				return;
-			}
-
-			routingBack = true;
-			self.goto(window.location.pathname);
-		}, false);
+		else{
+			$(document.body).off('click', 'a[href]', self.load);
+			window.removeEventListener('popstate', popstateListener, false);
+		}
 	}
 
 	var before = {};
@@ -141,26 +140,23 @@ sf.router = new function(){
 			}
 		}
 	*/
-	self.lazy = function(){
-		if(!self.enabled) return;
 
-		$('a[href]:not([onclick])').each(function(){
-			var url = this.href;
-			if(url.indexOf('#') !== -1)
-				return;
+	self.load = function(ev){
+		if(self.enabled !== true) return;
 
-			if(url.indexOf(window.location.origin) !== 0 && url.charAt(0) !== '/')
-				return; //Not current domain origin
+		var elem = ev.target;
+		if(!elem.href) return;
 
-			$(this).attr('onclick', 'return sf.router.load(this)');
-		});
-	}
+		if(!history.pushState || elem.hasAttribute('sf-router-ignore'))
+			return;
 
-	self.load = function(elem){
-		if(!history.pushState || $(elem).attr('sf-router') == 'ignore')
-			return true;
+		// Make sure it's from current origin
+		var path = elem.href.replace(window.location.origin, '');
+		if(path.indexOf('//') !== -1)
+			return;
 
-		return !self.goto(elem.href.replace(window.location.origin, ''));
+		ev.preventDefault()
+		return !self.goto(path);
 	}
 
 	var RouterLoading = false;
@@ -169,6 +165,8 @@ sf.router = new function(){
 	self.goto = function(path, data, method){
 		if(!method) method = 'GET';
         else method = method.toUpperCase();
+
+		if(!data) data = {};
 
 		for (var i = 0; i < onEvent['loading'].length; i++) {
 			if(onEvent['loading'][i](path)) return;
@@ -243,9 +241,6 @@ sf.router = new function(){
 						}
 					}
 				}
-
-				// Reinit lazy router
-				self.lazy();
 
 				// Run 'before' event for new page view
 				if(!DOMReference) DOMReference = $(document.body);
