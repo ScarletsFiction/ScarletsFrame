@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Test Page</title>
+      <meta charset="UTF-8">
+      <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+      <script src='https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.js'></script>
+      <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css">
+      <script src='/dist/scarletsframe.min.js'></script>
+   </head>
+   <body class="body">
+
+      <!-- Dynamic Page -->
+      <div>
+         <b>Dynamic Page Navigation</b><br>
+         <i>Note: the url also changed, if you hit refresh you will be redirected to other page. This feature is supposed for Scarlets Framework on PHP.</i><br><br>
+         <custom-view></custom-view>
+         <br>
+
+         <script type="text/javascript">
+            var routerOk = false;
+            sf.router.enable();
+            sf.router.lazyViewPoint["@default"] = 'custom-view';
+
+            sf.model.for('test-page1', function(self){
+               self.text = "Hello from page 1";
+            });
+
+            sf.model.for('test-page2', function(self){
+               self.text = "Hello from page 2";
+            });
+
+            sf.router.before('test/page1', function(root){
+                console.log("Page 1 is being loaded");
+                routerOk = routerOk && true;
+            });
+
+            sf.router.after('test/page2', function(root){
+                console.log("Page 2 is being removed");
+                routerOk = true;
+            });
+
+            setTimeout(function(){
+               if(!routerOk)
+                  console.error("Router 'after' or 'before' was not called");
+            }, 6000);
+
+            setTimeout(function(){
+               sf.router.goto('/test/page2', {}, 'get');
+               setTimeout(function(){
+                  sf.router.goto('/test/page1', {}, 'get');
+               }, 2000);
+            }, 3000);
+
+            sf.router.on('loading', function(target) {
+                console.log("Loading path to " + target);
+            });
+            sf.router.on('loaded', function(current, target) {
+                console.log("Navigated from " + current + " to " + target);
+            });
+            sf.router.on('error', function(e) {
+                console.error("Navigation failed", e);
+            });
+            sf.router.on('special', function(obj){
+               if(obj.title) $('title').html(obj.title);
+            });
+         </script>
+         <a href="/test/page1">Go to page 1</a>
+         <a href="/test/page2">Go to page 2</a>
+         <a href="/" sf-router-ignore>Refresh current page</a>
+      </div><br><br>
+
+      <!-- Virtual Scroll And Array Binding -->
+      <div sf-controller="virtual-scroll">
+         <style type="text/css">
+            .scroller{
+               overflow-x: hidden;
+               overflow-y: scroll;
+               height: 200px;
+            }
+         </style>
+
+         <b>Virtual Scroll - Static Height & Scroll on parent</b>
+         <div data-simplebar style="height: 200px;">
+            <ul class="sf-virtual-list" scroll-parent-index="1">
+               <li sf-repeat-this="x in list1" data-id="{{x.id}}">
+                  <label>{{x.id}}</label>
+               </li>
+            </ul>
+         </div><br>
+
+         <b>Virtual Scroll - Dynamic Height</b>
+         <i>Automatically scroll to item-11</i>
+         <ul class="scroller sf-virtual-list sf-list-dynamic">
+            <li sf-repeat-this="x in list2" data-id="{{x.id}}">
+               <label>{{x.id}}</label>
+            </li>
+         </ul>
+
+         <script type="text/javascript">
+            sf.model.for('virtual-scroll', function(self, root){
+               self.list1 = [];
+
+               for (var i = 1; i <= 50; i++) {
+                  self.list1.push({
+                     id: 'item-' + i,
+                  });
+               }
+
+               self.list2 = self.list1.slice(0);
+            });
+            sf(function(){
+               setTimeout(function(){
+                  var list = sf.model('virtual-scroll');
+
+                  // Variable height for list2
+                  var elements = list.list2.$virtual.elements();
+                  for (var i = 0; i < elements.length; i++) {
+                     elements[i].style.height = (40 + Math.round(Math.random()*3)*40) + 'px';
+                  }
+
+                  list.list2.$virtual.refresh();
+                  list.list2.$virtual.scrollTo(10);
+
+                  var posY = list.list1.$virtual.offsetTo(20);
+                  if(!posY)
+                     console.error("Can't get element offset for static height virtual scroll");
+
+                  list.list1.pop();
+                  list.list1.unshift({id:"I'm inserted on first index"});
+                  list.list1.splice(3, 1);
+                  list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"});
+                  list.list1.push({id:"I'm inserted on last index"});
+
+                  console.log("I got the first index", list.list1.getElement(0));
+               }, 2000);
+            });
+         </script>
+      </div><br><br>
+
+      <!-- Model and Controller -->
+      <div sf-controller="model-binding">
+
+         <b>Change variable on keyboard input</b><br>
+         <input type="text" sf-bound="inputBinding"><br><br>
+
+         <b>Update on variable changes</b><br>
+         <span id="test" sf-bind="html">Writed: {{ inputBinding }}</span><br><br>
+
+         <b>Conditional HTML</b><br>
+         <div>
+            {{@if showHTML === true:
+               {[<span>This 1st must not be displayed {{ stuff }}</span>]}
+            }}
+            {{@if showHTML === false:
+               {[<span>This 2th must be displayed {{ stuff }}</span>]}
+            }}<br><br>
+         </div>
+
+         <b>Execution for the current model scope</b><br>
+         <div>
+            {{@exec
+               for(var i = 1; i <= 5; i++){
+                  {[<span>{{ prefix }}{{ i }}</span><br>]}
+               }
+
+               var calculate = (5+4);
+               {[<span>5 + 4 = {{ calculate }}</span><br>]}
+
+               var escapeHTML = "<span>This must be HTML escaped</span>";
+               var noEscapeHTML = "<br><span>This shouldn't be HTML escaped</span>";
+
+               {[ <b>{{escapeHTML}}</b> ]}
+               @return noEscapeHTML;
+            }}
+         </div>
+
+         <script type="text/javascript">
+            sf.model.for('model-binding', function(self, root){
+               self.inputBinding = '';
+               self.showHTML = false;
+               self.prefix = 'i -> ';
+               self.stuff = '(text from the model)';
+            });
+            sf.controller.for('model-binding', function(self, root){
+               var list = root('virtual-scroll');
+               if(list.list1 === undefined)
+                  console.error("Can't get other model scope variable");
+
+               self.addition = function(a, b){
+                  return a + b;
+               }
+            });
+
+            sf.controller.run('dummy', function(self, root){
+               if(!root('model-binding').addition)
+                  console.error("Can't get other model scope function");
+            });
+
+            var testElement = document.getElementById('test');
+            if(sf.controller.modelName(testElement) !== 'model-binding')
+               console.error("Can't obtain correct 'modelName'");
+
+            sf(function(){
+               sf.controller.modelScope(testElement, function(self){
+                  if(!self.addition)
+                     console.error("Can't access model scope with 'modelScope' function");
+               });
+            });
+         </script>
+      </div><br><br>
+
+      <!-- Dynamic Loader -->
+      <script type="text/javascript">
+         var loaderWorking = false;
+         sf.loader.onProgress(function(loadedContent, totalContent){
+            console.log(loadedContent+ ' of ' +totalContent+ ' was loaded');
+         });
+
+         sf.loader.onFinish(function(){
+            loaderWorking = typeof assetloader !== 'undefined';
+         });
+
+         setTimeout(function(){
+            if(loaderWorking === false)
+               console.error("'sf.loader.onFinish' was not being called");
+         }, 2000);
+
+         sf.loader.css(['/tests/test_loader.css']);
+         sf.loader.js(['/tests/test_loader.js']);
+      </script>
+   </body>
+</html>
