@@ -181,6 +181,10 @@ sf.model = function(scope){
 					firstTime = false;
 				}
 
+				// Remove var because no variable are being passed
+				if(firstTime === true)
+					strDeclare = strDeclare.replace('var ', '');
+
 				// Disable function call for addional security eval protection
 				strDeclare = strDeclare.split('(').join('').split(')').join('');
 
@@ -227,12 +231,15 @@ sf.model = function(scope){
 			check = temp.split('@if ');
 			if(check.length != 1){
 				check = check[1].split(':');
+				var scopes = [check[0], _model_, _modelScope, _content_];
 			
-				// If condition was meet
-				if(localEval.apply(self.root, [check[0], _model_, _modelScope, _content_])){
-					check.shift();
-					return check.join(':');
-				}
+				// If condition was not meet
+				if(localEval.apply(self.root, scopes) == false)
+					return '';
+
+				check.shift();
+				scopes.splice(0, 1, check.join(':').split('&VarPass&').join('{}'));
+				return localEval.apply(self.root, scopes);
 			}
 
 			// Get defined variables
@@ -550,6 +557,7 @@ sf.model = function(scope){
 		content = content.replace(/  +|\t+/g, '');
 
 		if(method.length === 2){
+			var temp = '';
 			for(var i in items){
 				var item = items[i];
 
