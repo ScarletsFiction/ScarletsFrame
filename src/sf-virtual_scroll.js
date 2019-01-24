@@ -526,8 +526,9 @@ sf.internal.virtual_scroll = new function(){
 			refreshScrollBounding(index, virtual.bounding, list, parentNode);
 
 			temp = parentNode.children[prepareCount - reduce + 1];
+	
 			if(temp !== undefined)
-				scroller.scrollTop = temp.offsetTop;
+				scroller.scrollTop = temp.offsetTop - scroller.offsetTop;
 		}
 
 		scrollingByScript = false;
