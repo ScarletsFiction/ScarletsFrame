@@ -1,16 +1,16 @@
 (function(global, factory){
   var $ = null;
   if(typeof exports === 'object' && typeof module !== 'undefined'){
-  	try { $ = require("dom7") }catch(e){
-  		try { $ = require("jquery") }catch(e){}
-  	}
+  	$ = require("dom7");
 
   	if($ === null){
-  		console.log("ScarletsFrame can't load jQuery or Dom7!");
+  		console.log("ScarletsFrame can't load Dom7!");
   		return;
   	}
+  	if($.fn.one === undefined)
+  		$.fn.one = $.fn.once;
 
-  	module.exports = factory($);
+  	module.exports = factory($, global);
   }
 
   else{
@@ -19,11 +19,13 @@
 	else if(typeof jQuery !== 'undefined')
 		$ = jQuery;
 	else
-		throw "Please load jQuery before ScarletsFrame";
+		throw "Please load jQuery or Dom7 before ScarletsFrame";
 
-  	global.sf = factory($);
+  	global.sf = factory($, global);
   }
-}(this, (function($){'use strict';
+}(typeof window !== "undefined" ? window : this, (function($, window){'use strict';
+if(typeof document === undefined)
+	document = window.document;
 // ===== Module Init =====
 
 var sf = function(){
