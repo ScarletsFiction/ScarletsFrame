@@ -1,7 +1,7 @@
 {
   "name": "scarletsframe",
   "description":"A frontend framework that can help you write a simple web structure",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
@@ -33,7 +33,7 @@
     "gulp-babel": "*",
     "node-notifier": "*"
   },
-  "main": "dist/scarletsframe.min.js",
+  "main": "dist/scarletsframe.js",
   "keywords": [
     "dom-binding",
     "data-binding",
