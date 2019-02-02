@@ -76,17 +76,22 @@ $.fn.extend({
 		}
 
 	if(duration)
-		self.css('-webkit-animation-duration', duration+'s').css('animation-duration', duration+'s');
+		self.css({
+			'-webkit-animation-duration':duration+'s',
+			'animation-duration':duration+'s'
+		});
 
 	self.addClass('animated ' + animationName).one(animationEnd, function(){
-		setTimeout(function(){
-			$(self).removeClass('animated ' + animationName);
+		self.removeClass('animated ' + animationName);
+		
+		if(duration) setTimeout(function(){
+			self.css({
+				'-webkit-animation-duration':'',
+				'animation-duration':''
+			});
 		}, 1);
 
-		if(duration)
-			$(self).css('-webkit-animation-duration', '').css('animation-duration', '');
-
-		if (typeof callback === 'function') callback();
+		if(typeof callback === 'function') callback();
 	});
 
 	return self;
