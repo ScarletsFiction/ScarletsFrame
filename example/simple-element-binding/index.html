@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Sample App</title>
+      <meta charset="UTF-8">
+      <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.4.0/animate.min.css" rel="stylesheet">
+      <link href="style.css" rel="stylesheet">
+      <meta name="viewport" content="height=device-height, initial-scale=1, user-scalable=no">
+      
+      <!-- ScarletsFrame framework -->
+      <script src='../../dist/scarletsframe.min.js'></script>
+   </head>
+   <body class="body" sf-page="todo/app">
+
+      <div class="container" sf-controller="todo-app">
+        <!-- Bind the html content -->
+        <div class="today" sf-bind="html">
+          {{ todayMessage }}
+        </div>
+        <div class="row">
+          <ul class="todo-list">
+            <!-- Bind array from the model -->
+            <li sf-repeat-this="x in list">
+              <div class="checkbox">
+                <label>{{ x.text }}</label>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+  
+      <!-- If you're accessing from file:/// protocol -->
+      <script type="text/javascript" src="app/controller.js"></script>
+   </body>
+</html>
