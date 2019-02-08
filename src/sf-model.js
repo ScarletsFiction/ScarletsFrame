@@ -16,20 +16,33 @@ sf.model = function(scope){
 
 	var processingElement = null;
 
+	function trimIndentation(text){
+		var indent = text.split("\n", 3);
+		if(indent[0][0] !== ' ' || indent[0][0] !== "\t")
+			indent = indent[1];
+		else indent = indent[0];
+
+		indent = indent.length - indent.trim().length;
+		if(indent === 0) return text;
+		return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
+	}
+
 	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+sf.regex.avoidQuotes, 'g');
 	var chackValidFunctionCall = /[a-zA-Z0-9 \]\$\)]/;
 	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
-	var localEval = function(script_, _model_, _modelScope, _content_){
+	var localEval = function(script, _model_, _modelScope, _content_){
 		"use strict";
-		var script = script_;
-		script_ = script_.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
-		script_ = script_.split('._modelScope').join('');
-		script_ = script_.split('._model_').join('');
+
+		// ==== Security check ====
+		var tempScript = script;
+
+		// Remove quotes
+		tempScript = tempScript.replace(sf.regex.getQuotes, '"Quotes"');
 
 		// Prevent vulnerability by remove bracket to avoid a function call
 		var preventExecution = false;
 		var check_ = null;
-		while((check_ = bracketMatch.exec(script_)) !== null){
+		while((check_ = bracketMatch.exec(tempScript)) !== null){
 			check_[1] = check_[1].trim();
 
 			if(allowedFunction.indexOf(check_[1]) === -1 &&
@@ -41,26 +54,26 @@ sf.model = function(scope){
 			}
 		}
 
-		var _result_ = '';
-		script_ = script_.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
 		if(preventExecution){
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
-			console.log($(processingElement.outerHTML)[0]);
-			console.log(script_);
-			return '';
+			console.log(trimIndentation(processingElement.innerHTML));
+			//console.log(tempScript.replace(/_result_ \+=.*?;/g, '{[ DOM ]}'));
+			return '#DOMError';
 		}
-
+		// ==== Security check ended ====
+	
+		var _result_ = '';
 		try{
-			if(/@return /.test(script_) === true){
-				var _evaled_ = eval('(function(){'+script_.split('@return ').join('return ')+'})()');
+			if(/@return /.test(script) === true){
+				var _evaled_ = eval('(function(){'+script.split('@return ').join('return ')+'})()');
 				return _result_ + _evaled_;
 			}
-			else var _evaled_ = eval(script_);
+			else var _evaled_ = eval(script);
 		} catch(e){
 			console.error(e);
-			console.log(script_);
-			console.log($(processingElement.outerHTML)[0]);
-			return '';
+			console.log(trimIndentation(processingElement.innerHTML));
+			//console.log(tempScript.replace(/_result_ \+=.*?;/g, '{[ DOM ]}'));
+			return '#DOMError';
 		}
 
 		if(_result_ !== '') return _result_;
@@ -68,11 +81,21 @@ sf.model = function(scope){
 	}
 
 	self.index = function(element){
-		var i = $(element).prevAll(element.tagName).length;
-		var list = element.getAttribute('sf-bind-list');
+		var i = -1;
+		var tagName = element.tagName;
+		var currentElement = element;
+
+		while(element !== null) {
+			if(element.tagName === tagName)
+				i++;
+
+			element = element.previousElementSibling;
+		}
+
+		var list = currentElement.getAttribute('sf-bind-list');
 		if(!list) return i;
 
-		var ref = sf.controller.modelScope(element)[list];
+		var ref = sf.model.root[sf.controller.modelName(currentElement)][list];
 		if(!ref.$virtual) return i;
 
 		return i + ref.$virtual.DOMCursor - 1;
@@ -94,20 +117,6 @@ sf.model = function(scope){
 				keys.splice(i, 1);
 		}
 		return keys.join('|');
-	}
-
-	var clearElementData = function(current){
-		// Clean associated data on jQuery
-		if($ && $.cleanData)
-			$.cleanData(current.getElementsByTagName("*"));
-
-		current.innerHTML = '';
-		for (var i = 0; i < current.attributes.length; i++) {
-			var name = current.attributes[i].name;
-			if(name !== 'sf-bind-list')
-				current.removeAttribute(name);
-		}
-		current.setAttribute('style', 'display:none');
 	}
 
 	// For contributor of this library
@@ -151,7 +160,7 @@ sf.model = function(scope){
 			// Evaluate
 			temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
 
-			return temp.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+			return temp.replace(/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm, function(i) {
 		        return '&#'+i.charCodeAt(0)+';';
 		    });
 		});
@@ -185,8 +194,8 @@ sf.model = function(scope){
 				if(firstTime === true)
 					strDeclare = strDeclare.replace('var ', '');
 
-				// Disable function call for addional security eval protection
-				strDeclare = strDeclare.split('(').join('').split(')').join('');
+				// Escape function call for addional security eval protection
+				strDeclare = strDeclare.split('(').join('&#40;').split(')').join('&#41;');
 
 				return dataParser(this[currentIndex], _model_, mask, scope, strDeclare + ';');
 			}
@@ -280,48 +289,55 @@ sf.model = function(scope){
 	}
 
 	var bindArray = function(html, list, mask, modelName, propertyName, targetNode, parentNode, htmlParsedData){
-		var oldArray = list.slice(0);
-		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'softRefresh', 'hardRefresh'];
+		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', '$replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
-		var processElement = function(index, options){
-			var exist = $("[sf-controller='"+modelName+"']", targetNode);
-			if(exist.length === 0){
-				if(targetNode.getAttribute('sf-controller') === modelName)
-					exist = targetNode;
-				else return;
+		var processElement = function(index, options, other){
+			if(options === 'clear'){
+				if(list.$virtual)
+					var spacer = [parentNode.firstElementChild, parentNode.lastElementChild];
+
+				parentNode.textContent = '';
+
+				if(list.$virtual){
+					parentNode.appendChild(spacer[0]);
+					parentNode.appendChild(spacer[1]);
+				}
+				return;
+			}
+
+			if(options === 'swap'){
+				var ref = parentNode.children;
+				ref[index].insertAdjacentElement('afterEnd', ref[other]);
+				ref[other].insertAdjacentElement('afterEnd', ref[index]);
+				return;
 			}
 
 			if(list.$virtual){
-				var exist = $(list.$virtual.elements());
+				var exist = list.$virtual.elements();
 
 				clearTimeout(refreshTimer);
 				refreshTimer = setTimeout(function(){
 					list.$virtual.refresh(true);
 				}, 100);
 			}
-			else exist = $("[sf-bind-list='"+propertyName+"']", exist);
+			else exist = parentNode.children;
 
 			var callback = false;
 			if(self.root[modelName]['on$'+propertyName])
 				callback = self.root[modelName]['on$'+propertyName];
 
 			// Hard refresh
-			if(index === -1){
+			if(options === 'hardRefresh'){
 				var item = self.root[modelName][propertyName];
 				var all = '';
-				for (var i = 0; i < item.length; i++) {
+				for (var i = index; i < item.length; i++) {
 					var temp = uniqueDataParser(html, item[i], mask, modelName);
 					all += dataParser(temp, item[i], mask, modelName);
 				}
 
-				// Get first element
-				var first = exist.eq(0).prev();
-				if(first[0] === exist[0])
-					exist.parent().prepend(all);
-				else
-					$(all).insertAfter(first);
-				exist.remove();
-
+				if(list.$virtual)
+					parentNode.lastElementChild.insertAdjacentHTML('beforeBegin', all);
+				else parentNode.insertAdjacentHTML('beforeEnd', all);
 				return;
 			}
 
@@ -332,9 +348,6 @@ sf.model = function(scope){
 					var startRemove = function(){
 						if(currentRemoved) return;
 						currentRemoved = true;
-
-						if(exist.length <= 1)
-							return clearElementData(exist[index]);
 
 						exist[index].remove();
 					}
@@ -356,37 +369,50 @@ sf.model = function(scope){
 
 			var temp = uniqueDataParser(html, item, mask, modelName);
 			temp = dataParser(temp, item, mask, modelName);
-			temp = $(temp);
+			temp = $.parseElement(temp);
 
 			// Create
-			if(!exist[index] || options === 'insertAfter'){
+			if(options === 'insertAfter'){
 				if(callback.create)
-					callback.create(temp[0]);
+					callback.create(temp);
 
-				temp.insertAfter(exist[index !== 0 ? index - 1 : (exist.length - 1)]);
+				var index = index !== 0 ? index - 1 : (exist.length - 1);
+				if(!exist[index]){
+					if(list.$virtual && list.length !== 0){
+						exist[index].insertAdjacentElement('afterEnd', temp);
+						return;
+					}
+					parentNode.insertAdjacentElement('afterBegin', temp);
+					return;
+				}
+				exist[index].insertAdjacentElement('afterEnd', temp);
 			}
-
+			else if(options === 'append'){
+				if(list.$virtual && list.length !== 0){
+					exist[index-1].insertAdjacentElement('afterEnd', temp);
+					return;
+				}
+				parentNode.appendChild(temp);
+			}
 			else{
 				// Create
 				if(options === 'insertBefore'){
 					if(callback.create)
-						callback.create(temp[0]);
+						callback.create(temp);
 
-					temp.insertBefore(exist[0]);
+					exist[0].insertAdjacentElement('beforeBegin', temp);
 				}
 
 				// Update
 				else{
 					if(callback.update)
-						callback.update(temp[0]);
+						callback.update(temp);
 
-					// Clean associated data on jQuery
-					if($ && $.cleanData){
-						$.cleanData(exist[index].getElementsByTagName("*"));
-						$.cleanData(exist[index]);
+					if(list.$virtual){
+						exist[index].parentNode.replaceChild(temp, exist[index]);
+						return;
 					}
-
-					exist[index].outerHTML = temp[0].outerHTML;
+					parentNode.replaceChild(temp, exist[index]);
 				}
 			}
 		}
@@ -399,32 +425,77 @@ sf.model = function(scope){
 					var temp = undefined;
 					var lastLength = this.length;
 
+					if(name === 'swap'){
+						var i = arguments[0];
+						var o = arguments[1];
+						processElement(i, 'swap', o);
+						var temp = this[i];
+						this[i] = this[o];
+						this[o] = temp;
+						return;
+					}
+
+					else if(name === '$replace'){
+						// Check if appending
+						if(arguments[0].length >= lastLength && lastLength !== 0){
+							var matchLeft = lastLength;
+							var ref = arguments[0];
+
+							for (var i = 0; i < lastLength; i++) {
+								if(ref[i] === this[i]){
+									matchLeft--;
+									continue;
+								}
+								break;
+							}
+
+							if(matchLeft === 0){
+								if(ref.length === lastLength) return;
+
+								var takeIndex = lastLength-1;
+								Array.prototype.splice.apply(this, [takeIndex, 0].concat(arguments[0].slice(takeIndex)));
+								processElement(lastLength, 'hardRefresh');
+								return;
+							}
+						}
+
+						if(lastLength !== 0){
+							Array.prototype.splice.apply(this, [0]);
+							processElement(0, 'clear');
+						}
+						Array.prototype.splice.apply(this, [0,0].concat(arguments[0]));
+						processElement(0, 'hardRefresh');
+						return this;
+					}
+
+					else if(name === 'splice' && arguments[0] === 0){
+						processElement(0, 'clear');
+						return Array.prototype.splice.apply(this, arguments);
+					}
+
 					if(Array.prototype[name])
 						temp = Array.prototype[name].apply(this, arguments);
 
 					if(name === 'pop')
-						processElement(lastLength - 1, 'remove');
+						processElement(this.length, 'remove');
 
 					else if(name === 'push')
-						processElement(lastLength, 'add');
+						processElement(lastLength, 'append');
 
 					else if(name === 'shift')
 						processElement(0, 'remove');
 
 					else if(name === 'splice'){
-						// Obtaining all data
-						if(arguments[0] === null){
-							oldArray.splice(0);
+						if(!arguments[0])
 							return temp;
-						}
 
 						// Removing data
 						var real = arguments[0];
 						if(real < 0) real = lastLength + real;
 
 						var limit = arguments[1];
-						if(!limit && limit !== 0) limit = oldArray.length;
-						
+						if(!limit && limit !== 0) limit = this.length;
+
 						for (var i = limit - 1; i >= 0; i--) {
 							processElement(real + i, 'remove');
 						}
@@ -440,47 +511,11 @@ sf.model = function(scope){
 					else if(name === 'unshift')
 						processElement(0, 'insertBefore');
 
-					else if(name === 'softRefresh'){
-						if(arguments[0] || arguments[0] === 0)
-							processElement(arguments[0], !!oldArray[arguments[0]] ? 'add':'remove');
-						else {
-							var foundChanges = false;
+					else if(name === 'softRefresh')
+						processElement(arguments[0], 'update');
 
-							// Removal
-							if(oldArray.length > this.length){
-								for (var i = oldArray.length - 1; i >= this.length; i--) {
-									if(this.indexOf(oldArray[i]) === -1){
-										foundChanges = true;
-										processElement(i, 'remove');
-									}
-								}
-							}
-
-							// Creates
-							if(oldArray.length < this.length){
-								for (var i = oldArray.length - 1; i < this.length; i++) {
-									foundChanges = true;
-									processElement(i, 'insertBefore');
-								}
-							}
-
-							// Update
-							for (var i = 0; i < this.length; i++) {
-								if(compareObject(oldArray[i], this[i]) === false){
-									foundChanges = true;
-									processElement(i, 'add');
-								}
-							}
-
-							if(foundChanges)
-								oldArray = this.slice(0);
-						}
-					}
 					else if(name === 'hardRefresh')
-						processElement(-1, 'remove');
-
-					if(Array.prototype[name])
-						oldArray = this.slice(0);
+						processElement(0, 'hardRefresh');
 
 					return temp;
 				}
@@ -488,11 +523,8 @@ sf.model = function(scope){
 		}
 
 		if(parentNode && parentNode.classList.contains('sf-virtual-list')){
-			Object.defineProperty(list, '$virtual', {
-				enumerable: false,
-				configurable: true,
-				value:{}
-			});
+			delete list.$virtual;
+			list.$virtual = {};
 
 			// Parse in virtual DOM
 			list.$virtual.dom = document.createElement('div');
@@ -514,17 +546,14 @@ sf.model = function(scope){
 						return list.$virtual.dom.children[index];
 
 					index -= list.$virtual.DOMCursor;
-					var reducedIndex = index - parentNode.childElementCount + 2;
-					if(reducedIndex <= 0)
+					var childElement = parentNode.childElementCount - 2;
+					if(index <= childElement)
 						return parentNode.children[index + 1];
 
-					return list.$virtual.dom.children[index + list.$virtual.DOMCursor];
+					return list.$virtual.dom.children[index - childElement + list.$virtual.DOMCursor];
 				}
 
-				if(parentNode.childElementCount === list.length)
-					return parentNode.children[index];
-
-				return parentNode.querySelectorAll('[sf-bind-list="'+propertyName+'"]')[index];
+				return parentNode.children[index];
 			}
 		});
 	}
@@ -540,28 +569,28 @@ sf.model = function(scope){
 		return true;
 	}
 
-	var loopParser = function(name, content, script, targetNode, parentNode){
+	var loopParser = function(name, template, script, targetNode, parentNode){
 		var returns = '';
 		var method = script.split(' in ');
 		var mask = method[0];
 
 		if(!self.root[name])
-			return console.error("Can't parse element because model for '"+name+"' was not found", $(content)[0]);
+			return console.error("Can't parse element because model for '"+name+"' was not found", template);
 
 		var items = self.root[name][method[1]];
 
-		// Get reference for debugging
-		processingElement = $(content).attr('sf-bind-list', method[1])[0];
+		template.setAttribute('sf-bind-list', method[1]);
 
-		content = processingElement.outerHTML;
-		content = content.replace(/  +|\t+/g, '');
+		// Get reference for debugging
+		processingElement = template;
+		template = template.outerHTML.replace(/  +|\t+/g, '');
 
 		if(method.length === 2){
 			var temp = '';
 			for(var i in items){
 				var item = items[i];
 
-				temp = uniqueDataParser(content, item, mask, name);
+				temp = uniqueDataParser(template, item, mask, name);
 				temp = dataParser(temp, item, mask, name);
 				returns += temp;
 			}
@@ -582,32 +611,30 @@ sf.model = function(scope){
 					return items;
 				},
 				set:function(val){
-					for (var i = 0; i < val.length; i++) {
-						if(items[i]){
-							items[i] = val[i];
-							items.softRefresh(i);
-						}
-						else items.push(val[i]);
-					}
-
-					if(items.length > val.length)
-						items.splice(val.length);
-
-					return items;
+					if(val.length === 0)
+						return items.splice(0);
+					return items.$replace(val);
 				}
 			});
 
-			bindArray(content, items, mask, name, method[1], targetNode, parentNode, returns);
+			bindArray(template, items, mask, name, method[1], targetNode, parentNode, returns);
 		}
 		return returns;
 	}
 
+	var inputBoundFunction = function(e){
+		self.root[e.target['sf-model']][e.target['sf-bounded']] = e.target.value;
+	};
+
 	var bindInput = function(targetNode){
-		$('input[sf-bound]', targetNode).each(function(){
-			var model = sf.controller.modelName(this);
+		var temp = $('input[sf-bound]', targetNode);
+
+		for (var i = 0; i < temp.length; i++) {
+			var element = temp[i];
+			var model = sf.controller.modelName(element);
 			if(!model) return;
 
-			var whichVar = this.getAttribute('sf-bound');
+			var whichVar = element.getAttribute('sf-bound');
 
 			// Get reference
 			if(typeof self.root[model][whichVar] === undefined){
@@ -615,21 +642,18 @@ sf.model = function(scope){
 				return;
 			}
 
-			this.setAttribute('sf-bounded', whichVar);
-			this.removeAttribute('sf-bound');
+			element['sf-bounded'] = whichVar;
+			element['sf-model'] = model;
+			element.setAttribute('sf-bounded', '');
+			element.removeAttribute('sf-bound');
 
 			// Bound value change
-			var element = $(this);
-			if(this.tagName === 'INPUT' || this.tagName === 'TEXTAREA')
-				element.on('keyup', function(e){
-					self.root[model][whichVar] = element.val();
-				});
+			if(element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')
+				$.on(element, 'keyup', inputBoundFunction);
 
 			else
-				element.on('change', function(e){
-					self.root[model][whichVar] = element.val();
-				});
-		});
+				$.on(element, 'change', inputBoundFunction);
+		}
 	}
 
 	var alreadyInitialized = false;
@@ -640,95 +664,84 @@ sf.model = function(scope){
 			alreadyInitialized = false;
 		}, 50);
 
-		if(targetNode){
-			if(!(targetNode instanceof Node))
-				targetNode = $(targetNode)[0];
-		}
-		else targetNode = document.body;
+		if(!targetNode) targetNode = document.body;
 
 		self.parsePreprocess(self.queuePreprocess(targetNode));
 		bindInput(targetNode);
 
-		$('[sf-repeat-this]', targetNode).each(function(){
-			var self = $(this);
-			var parent = self.parent();
+		var temp = $('[sf-repeat-this]', targetNode);
+		for (var i = 0; i < temp.length; i++) {
+			var element = temp[i];
+			var parent = element.parentElement;
 
-			if(this.parentNode.classList.contains('sf-virtual-list')){
-				var tagName = $(this.parentNode).children('[sf-repeat-this]')[0].tagName;
-				var ceiling = document.createElement(tagName);
+			if(element.parentNode.classList.contains('sf-virtual-list')){
+				var ceiling = document.createElement(element.tagName);
 				ceiling.classList.add('virtual-spacer');
+				var floor = ceiling.cloneNode(true);
+
 				ceiling.classList.add('ceiling');
 				//ceiling.style.transform = 'scaleY(0)';
-				this.parentNode.prepend(ceiling);
+				element.parentNode.insertAdjacentElement('afterBegin', ceiling); // prepend
 
-				var floor = document.createElement(tagName);
-				floor.classList.add('virtual-spacer');
 				floor.classList.add('floor');
 				//floor.style.transform = 'scaleY(0)';
-				this.parentNode.append(floor);
+				element.parentNode.insertAdjacentElement('beforeEnd', floor); // append
 
 				// His total scrollHeight
-				var styles = window.getComputedStyle(this);
+				var styles = window.getComputedStyle(element);
 				var absHeight = parseFloat(styles['marginTop']) + parseFloat(styles['marginBottom']);
 				styles = null;
 
 				// Element height + margin
-				absHeight = Math.ceil(this.offsetHeight + absHeight);
+				absHeight = Math.ceil(element.offsetHeight + absHeight);
 			}
 
-			var after = self.next();
-			if(!after.length || self[0] === after[0])
+			var after = element.nextElementSibling;
+			if(after === null || element === after)
 				after = false;
 
-			var before = self.prev();
-			if(!before.length || self[0] === before[0])
+			var before = element.previousElementSibling;
+			if(before === null || element === before)
 				before = false;
 
-			var script = self.attr('sf-repeat-this');
-			self.removeAttr('sf-repeat-this');
-			var controller = sf.controller.modelName(this);
-
-			var content = this.outerHTML;
+			var script = element.getAttribute('sf-repeat-this');
+			element.removeAttribute('sf-repeat-this');
+			var controller = sf.controller.modelName(element);
 
 			// Check if the element was already bound to prevent vulnerability
-			if(/sf-bind-key|sf-bind-list/.test(content))
+			if(/sf-bind-key|sf-bind-list/.test(element.outerHTML))
 				throw "Can't parse element that already bound";
 
-			if(this.parentNode.classList.contains('sf-virtual-list')){
-				if(loopParser(controller, content, script, targetNode, this.parentNode))
-					self.remove();
-				else {
-					self.attr('sf-bind-list', script.split(' in ')[1]);
-					clearElementData(this);
-				}
-				return;
+			if(element.parentNode.classList.contains('sf-virtual-list')){
+				if(!loopParser(controller, element, script, targetNode, element.parentNode))
+					element.setAttribute('sf-bind-list', script.split(' in ')[1]);
+				element.remove();
+				continue;
 			}
 
-			var data = loopParser(controller, content, script, targetNode, this.parentNode);
+			var data = loopParser(controller, element, script, targetNode, element.parentNode);
 			if(data){
-				self.remove();
-				
-				data = $(data);
 				if(after)
-					data.insertBefore(after);
+					after.insertAdjacentElement('beforeBegin', data); // before
 				else if(before)
-					data.insertAfter(before);
+					before.insertAdjacentElement('afterEnd', data); // after
 				else
-					parent.append(data);
+					parent.insertAdjacentElement('beforeEnd', data); // append
 			}
-			else{
-				self.attr('sf-bind-list', script.split(' in ')[1]);
-				clearElementData(this);
-			}
-		});
+			else
+				element.setAttribute('sf-bind-list', script.split(' in ')[1]);
+
+			element.remove();
+		}
 	}
 
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
 	function DOMNodeRemoved(element){
-		$('[sf-controller]', element).each(function(){
-			removeModelBinding(this.getAttribute('sf-controller'));
-		});
+		var temp = $('[sf-controller]', element);
+		for (var i = 0; i < temp.length; i++) {
+			removeModelBinding(temp[i].getAttribute('sf-controller'));
+		}
 
 		if(element.hasAttribute('sf-controller') === false)
 			return;
@@ -821,24 +834,22 @@ sf.model = function(scope){
 		if(which === 'attr' || !which){
 			var attrs = {};
 
-			for(var i in element.attributes){
+			for (var i = 0; i < element.attributes.length; i++) {
+				var attr = element.attributes[i].name;
+
 				// Check if it has a bracket
-				if(!dcBracket.test(element.attributes[i].value))
+				if(dcBracket.test(element.getAttribute(attr)) === false)
 					continue;
 
-				var attrName = element.attributes[i].name;
-				if(attrName === 'value')
-					element.removeAttribute(attrName);
-
-				attrs[attrName] = element.attributes[i].value;
+				attrs[attr] = element.getAttribute(attr);
+				element.removeAttribute(attr);
 			}
 		}
 
 		// Cache html content
 		if(which === 'html' || !which)
-			var innerHTML = element.innerHTML;
+			var htmlClone = element.cloneNode(true).innerHTML;
 
-		element = $(element);
 		var onChanges = function(){
 			if(which === 'attr' || !which){
 				for(var name in attrs){
@@ -847,17 +858,18 @@ sf.model = function(scope){
 
 					var temp = dataParser(attrs[name], modelRef, false, modelName);
 					if(name === 'value')
-						element.val(temp);
+						element.value = temp;
 					else
-						element.attr(name, temp);
+						element.setAttribute(name, temp);
 					break;
 				}
 			}
 
 			if(which === 'html' || !which){
-				var temp = uniqueDataParser(innerHTML, modelRef, false, modelName);
+				var temp = uniqueDataParser(htmlClone, modelRef, false, modelName);
 				temp = dataParser(temp, modelRef, false, modelName);
-				element.html(temp);
+				element.textContent = '';
+				element.insertAdjacentHTML('afterBegin', temp);
 			}
 		};
 
@@ -927,13 +939,9 @@ sf.model = function(scope){
 		}
 	}
 
+	var excludes = ['HTML','HEAD','STYLE','LINK','META','SCRIPT','OBJECT','IFRAME'];
 	self.queuePreprocess = function(targetNode){
 		var childNodes = (targetNode || document.body).childNodes;
-
-		var excludes = ['html','head','style','link','meta','script','object','iframe'];
-		for (var i = 0; i < excludes.length; i++) {
-			excludes[i] = excludes[i].toUpperCase();
-		}
 
 		var temp = [];
 		for (var i = 0; i < childNodes.length; i++) {
@@ -991,19 +999,22 @@ sf.model = function(scope){
 			// Double check if the child element already bound to prevent vulnerability
 			if(/sf-bind-key|sf-bind-list/.test(nodes[a].innerHTML)){
 				console.error("Can't parse element that already bound");
-				console.log($(processingElement.outerHTML)[0]);
+				console.log(processingElement.cloneNode(true));
 				return;
 			}
 
-			if($(nodes[a]).attr('sf-bind'))
-				self.bindElement(nodes[a], $(nodes[a]).attr('sf-bind'));
+			if(nodes[a].hasAttribute('sf-bind'))
+				self.bindElement(nodes[a], nodes[a].getAttribute('sf-bind'));
 
 			// Avoid editing the outerHTML because it will remove the bind
 			var temp = uniqueDataParser(nodes[a].innerHTML, self.root[model], false, model);
 			nodes[a].innerHTML = dataParser(temp, self.root[model], false, model);
-			for (var i = 0; i < nodes[a].attributes.length; i++) {
-				if(nodes[a].attributes[i].value.indexOf('{{') !== -1){
-					nodes[a].attributes[i].value = dataParser(nodes[a].attributes[i].value, self.root[model], false, model);
+
+			var attrs = nodes[a].attributes;
+			for (var i = 0; i < attrs.length; i++) {
+				if(attrs[i].value.indexOf('{{') !== -1){
+					var attr = attrs[i];
+					attr.value = dataParser(attr.value, self.root[model], false, model);
 				}
 			}
 		}

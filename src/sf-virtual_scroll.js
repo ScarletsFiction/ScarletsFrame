@@ -40,8 +40,8 @@ sf.internal.virtual_scroll = new function(){
 
 		var scroller = null;
 		list.$virtual.destroy = function(){
-			$(scroller).off('scroll');
-			$(parentNode).off('mousedown mouseup');
+			$.off(scroller, 'scroll');
+			$.off(parentNode, 'mousedown mouseup');
 			list.$virtual.dom.innerHTML = '';
 			offElementResize(parentNode);
 			delete list.$virtual;
@@ -240,7 +240,7 @@ sf.internal.virtual_scroll = new function(){
 			updating = false;
 		}
 
-		$(scroller).on('scroll', checkCursorPosition);
+		$.on(scroller, 'scroll', checkCursorPosition);
 		onElementResize(parentNode, function(){
 			refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
 		});
@@ -354,14 +354,14 @@ sf.internal.virtual_scroll = new function(){
 			updating = false;
 		}
 
-		$(scroller).on('scroll', checkCursorPosition);
+		$.on(scroller, 'scroll', checkCursorPosition);
 
 		// For preventing scroll jump if scrolling over than viewport
 		if(scroller === parentNode && navigator.userAgent.indexOf('Chrom') !== -1){
-			$(parentNode).on('mousedown', function(){
+			$.on(parentNode, 'mousedown', function(){
 				scrollFocused = true;
 			});
-			$(parentNode).on('mouseup', function(){
+			$.on(parentNode, 'mouseup', function(){
 				scrollFocused = false;
 			});
 		}

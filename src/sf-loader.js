@@ -43,7 +43,7 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if($('link[href*="'+list[i]+'"]').length!==0)
+				if($('link[href*="'+list[i]+'"]').length !== 0)
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
@@ -55,7 +55,7 @@ sf.loader = new function(){
 		}
 
 		self.domReady(function(){
-			document.getElementsByTagName('body')[0].innerHTML += temp;
+			document.getElementsByTagName('body')[0].insertAdjacentHTML('beforeend', temp);
 		});
 	}
 
@@ -63,19 +63,19 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if($('script[src*="'+list[i]+'"]').length!==0)
+				if($('script[src*="'+list[i]+'"]').length !== 0)
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
 		}
 		self.totalContent = self.totalContent + list.length;
 		for(var i = 0; i < list.length; i++){
-			$.ajax({
-			  url: list[i],
-			  dataType: "script",
-			  cache: true,
-			  complete: sf.loader.f
-			});
+			var s = document.createElement('script');
+	        s.type = "text/javascript";
+	        s.async = true;
+	        s.src = list[i];
+	        s.addEventListener('load', sf.loader.f, false);
+	        document.head.appendChild(s);
 		}
 	}
 
@@ -128,8 +128,9 @@ sf.prototype.constructor = sf.loader.onFinish;
 
 // Find images
 sf.loader.domReady(function(){
-	$('img:not(onload)[src]').each(function(){
+	var temp = $('img:not(onload)[src]');
+	for (var i = 0; i < temp.length; i++) {
 		sf.loader.totalContent++;
-		this.setAttribute('onload', "sf.loader.f(this)");
-	});
+		temp[i].setAttribute('onload', "sf.loader.f(this)");
+	}
 }, 0);

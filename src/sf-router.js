@@ -16,15 +16,16 @@ sf.router = new function(){
 			});
 
 		// Run 'before' event for new page view
-		$('[sf-controller], [sf-page]', $(targetNode)[0]).each(function(){
-			if(this.attributes['sf-controller'])
-				sf.controller.run(this.attributes['sf-controller'].value);
+		var temp = $('[sf-controller], [sf-page]', targetNode);
+		for (var i = 0; i < temp.length; i++) {
+			if(temp[i].getAttribute('sf-controller'))
+				sf.controller.run(temp[i].getAttribute('sf-controller'));
 			
-			if(this.attributes['sf-page']){
-				var name = this.attributes['sf-page'].value;
+			if(temp[i].getAttribute('sf-page')){
+				var name = temp[i].getAttribute('sf-page');
 				beforeEvent(name);
 			}
-		});
+		}
 
 		initialized = true;
 		currentRouterURL = window.location.pathname;
@@ -48,13 +49,13 @@ sf.router = new function(){
 
 		if(status === true){
 			// Create listener for link click
-			$(document.body).on('click', 'a[href]', self.load);
+			$.on(document.body, 'click', 'a[href]', self.load);
 
 			// Create listener when navigate backward
 			window.addEventListener('popstate', popstateListener, false);
 		}
 		else{
-			$(document.body).off('click', 'a[href]', self.load);
+			$.off(document.body, 'click', 'a[href]', self.load);
 			window.removeEventListener('popstate', popstateListener, false);
 		}
 	}
@@ -195,7 +196,7 @@ sf.router = new function(){
 					special = special[1].split('--|&>').join('-->');
 					special = JSON.parse(special);
 
-					if(!$.isEmptyObject(special)){
+					if(!isEmptyObject(special)){
 						for (var i = 0; i < onEvent['special'].length; i++) {
 							if(onEvent['special'][i](special)) return;
 						}
@@ -204,14 +205,15 @@ sf.router = new function(){
 
 				var DOMReference = false;
 				var foundAction = function(ref){
-					DOMReference = $(ref);
+					DOMReference = $.findOne(ref);
 
 					// Run 'after' event for old page view
-					afterEvent($('[sf-page]', DOMReference[0]).attr('sf-page'));
+					var last = $.findOne('[sf-page]', DOMReference);
+					afterEvent(last ? last.getAttribute('sf-page') : '/');
 
 					// Redefine title if exist
 					if(special && special.title)
-						$('head title').html(special.title);
+						$('head > title').innerHTML = special.title;
 
 					found = true;
 				};
@@ -243,21 +245,21 @@ sf.router = new function(){
 				}
 
 				// Run 'before' event for new page view
-				if(!DOMReference) DOMReference = $(document.body);
+				if(!DOMReference) DOMReference = document.body;
 				if(self.pauseRenderOnTransition)
 					self.pauseRenderOnTransition.css('display', 'none');
 
 				// Let page script running first, then update the data binding
-				DOMReference.html(data);
+				DOMReference.innerHTML = data;
 
 				// Parse the DOM data binding
 				sf.model.init(DOMReference);
 
 				// Init template to model binding
-				$('[sf-page]', DOMReference[0]).each(function(){
-					if(this.attributes['sf-page'])
-						beforeEvent(this.attributes['sf-page'].value);
-				});
+				var temp = $('[sf-page]', DOMReference);
+				for (var i = 0; i < temp.length; i++) {
+					beforeEvent(temp[i].getAttribute('sf-page'));
+				}
 
 				if(self.pauseRenderOnTransition)
 					self.pauseRenderOnTransition.css('display', '');
