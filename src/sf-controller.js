@@ -83,7 +83,7 @@ sf.controller = new function(){
 		}
 
 		if(!method){
-			console.error("Error on sf-click for model: " + model + ' [Cannot find '+method_+']\n', e.target);
+			console.error("Error on sf-click for model: " + model + ' [Cannot find '+method_+']\n', element[0]);
 			return;
 		}
 
@@ -103,7 +103,7 @@ sf.controller = new function(){
 		try{
 			method.apply(element[0], script);
 		} catch(e) {
-			console.error("Error on sf-click for model: " + model + '\n', e.target, '\n', e);
+			console.error("Error on sf-click for model: " + model + '\n', element[0], '\n', e);
 		}
 	}
 
