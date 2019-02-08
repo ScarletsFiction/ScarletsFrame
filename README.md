@@ -16,8 +16,6 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 You can download minified js from this repository or use this CDN link
 `<script type="text/javascript" src='https://unpkg.com/scarletsframe@latest/dist/scarletsframe.min.js'></script>`
 
-Make sure you put it on html header after jQuery.
-
 ## Install with NPM
 `npm i scarletsframe`
 
