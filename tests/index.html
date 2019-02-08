@@ -3,7 +3,6 @@
    <head>
       <title>Test Page</title>
       <meta charset="UTF-8">
-      <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
       <script src='https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.js'></script>
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css">
       <script src='/dist/scarletsframe.min.js'></script>
@@ -62,7 +61,7 @@
                 console.error("Navigation failed", e);
             });
             sf.router.on('special', function(obj){
-               if(obj.title) $('title').html(obj.title);
+               if(obj.title) sf.dom.findOne('head > title').innerHTML = obj.title;
             });
          </script>
          <a href="/test/page1">Go to page 1</a>
@@ -126,13 +125,13 @@
                   if(!posY)
                      console.error("Can't get element offset for static height virtual scroll");
 
-                  list.list1.pop();
+                  list.list1.pop(); // remove item-50
                   list.list1.unshift({id:"I'm inserted on first index"});
                   list.list1.splice(3, 1);
                   list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"});
                   list.list1.push({id:"I'm inserted on last index"});
 
-                  console.log("I got the first index", list.list1.getElement(0));
+                  console.log("I got the last index", list.list1.getElement(list.list1.length-1));
                }, 2000);
             });
          </script>
@@ -142,10 +141,12 @@
       <div sf-controller="model-binding">
 
          <b>Change variable on keyboard input</b><br>
-         <input type="text" sf-bound="inputBinding"><br><br>
+         <input type="text" sf-bound="inputBinding" sf-bind="attr" value="{{ inputBinding }}"><br>
+         <span id="test" sf-bind="html">Var Content: {{ inputBinding }}</span><br><br>
 
-         <b>Update on variable changes</b><br>
-         <span id="test" sf-bind="html">Writed: {{ inputBinding }}</span><br><br>
+         <b>Another one</b><br>
+         <input type="text" sf-bound="inputBinding2"><br>
+         <span sf-bind="html">Var Content: {{ inputBinding2 }}</span><br><br>
 
          <b>Conditional HTML</b><br>
          <div>
@@ -167,17 +168,19 @@
                var calculate = (5+4);
                {[<span>5 + 4 = {{ calculate }}</span><br>]}
 
-               var escapeHTML = "<span>This must be HTML escaped</span>";
-               var noEscapeHTML = "<br><span>This shouldn't be HTML escaped</span>";
+               var escapeHTML = "<span>This must be HTML escaped (except the bold)</span>";
+               var noEscapeHTML = "<br><span>This shouldn't be HTML escaped (but parsed)</span>";
 
                {[ <b>{{escapeHTML}}</b> ]}
                @return noEscapeHTML;
             }}
+            {{@exec {[ <br><br>another exec ]} }}
          </div>
 
          <script type="text/javascript">
             sf.model.for('model-binding', function(self, root){
                self.inputBinding = '';
+               self.inputBinding2 = '';
                self.showHTML = false;
                self.prefix = 'i -> ';
                self.stuff = '(text from the model)';
@@ -207,6 +210,13 @@
                      console.error("Can't access model scope with 'modelScope' function");
                });
             });
+
+            // Simulate model binding on dynamic page load
+            sf.router.before('test/page2', function(root){
+               var self = root('model-binding');
+               self.inputBinding = 'Two way binding';
+               self.inputBinding2 = 'One way binding';
+            });
          </script>
       </div><br><br>
 
@@ -218,7 +228,9 @@
          });
 
          sf.loader.onFinish(function(){
-            loaderWorking = typeof assetloader !== 'undefined';
+            loaderWorking = true;
+            if(typeof assetloader === 'undefined')
+               console.error("External script loaded by sf.loader is not executed");
          });
 
          setTimeout(function(){
