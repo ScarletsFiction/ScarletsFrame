@@ -272,7 +272,7 @@ sf.model.for('another-thing', function(self, other){
 ```
 
 ### Array data to list of DOM element
-Any element with `sf-repeat-this` will be binded with the array condition on the model. If you push or splice the array data, then the element will also being modified.
+Any element with `sf-repeat-this` will be binded with the array condition on the model. If you `push` or `splice` the array data, then the element will also being modified.
 
 These addional feature can be used after DOM element was binded.
 #### hardRefresh
@@ -285,6 +285,12 @@ myArray.hardRefresh();
 Redraw some element only. If no index being passed it will search for modified object if the array.
 ```js
 myArray.softRefresh(index = -1);
+```
+
+#### swap
+Swap 2 array value and the related element without rebuild the element nodes.
+```js
+myArray.swap(0, 99);
 ```
 
 #### getElement
@@ -309,7 +315,7 @@ sf.model.for('music.feedback', function(self, root){
     // Register event when 'reviews' was modified
     self.on$reviews = {
        remove:function(elem, remove){
-          $(elem).animateCSS('bounceOutLeft', function(){
+          sf.dom.animateCSS(elem, 'bounceOutLeft', function(){
              remove(); // Remove the element
           });
        },
