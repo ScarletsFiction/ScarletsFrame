@@ -1697,13 +1697,12 @@ sf.model = function(scope){
 
 			var data = loopParser(controller, element, script, targetNode, element.parentNode);
 			if(data){
-				data = $.parseElement(data);
 				if(after)
-					after.insertAdjacentElement('beforeBegin', data); // before
+					after.insertAdjacentHTML('beforeBegin', data); // before
 				else if(before)
-					before.insertAdjacentElement('afterEnd', data); // after
+					before.insertAdjacentHTML('afterEnd', data); // after
 				else
-					parent.insertAdjacentElement('beforeEnd', data); // append
+					parent.insertAdjacentHTML('beforeEnd', data); // append
 			}
 			else
 				element.setAttribute('sf-bind-list', script.split(' in ')[1]);
