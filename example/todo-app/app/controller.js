@@ -83,7 +83,7 @@ sf.controller.for('todo-app', function(self, root){
 	self.itemFinished = function(id){
 		var li = $(this).parents('li');
 		li.toggleClass("danger");
-		li.animateCSS('flipInX');
+		sf.dom.animateCSS(li[0], 'flipInX');
 
 		setToDone(id);
 	}

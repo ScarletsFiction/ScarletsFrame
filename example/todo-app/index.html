@@ -15,7 +15,7 @@
             <div class="col-md-4 col-md-offset-4 col-xs-6 col-xs-offset-3">
                <div class="add-control">
                   <div class="form-group has-feedback">
-                     <input sf-bound="itemInput" type="text" class="form-control" placeholder="✍️ Add item..."/>
+                     <input sf-bound="itemInput" sf-bind='attr' value="{{ itemInput }}" type="text" class="form-control" placeholder="✍️ Add item..."/>
                      <i class="fa fa-plus form-control-feedback add-btn" sf-click="addItem(itemInput)" title="Add item"></i>
                   </div>
                </div>
@@ -63,7 +63,7 @@
             // Register event when 'list' was modified
             self.on$list = {
                remove:function(elem, remove){
-                  $(elem).animateCSS('bounceOutLeft', function(){
+                  sf.dom.animateCSS(elem, 'bounceOutLeft', function(){
                      remove();
 
                      if(self.list.length === 0)
@@ -74,7 +74,7 @@
                   // Not used
                },
                create:function(elem){
-                  $(elem).animateCSS('flipInX');
+                  sf.dom.animateCSS(elem, 'flipInX');
                },
             };
 
