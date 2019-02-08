@@ -371,48 +371,48 @@ sf.model = function(scope){
 			temp = dataParser(temp, item, mask, modelName);
 			temp = $.parseElement(temp);
 
+			var referenceNode = exist[index];
 			// Create
 			if(options === 'insertAfter'){
-				if(callback.create)
-					callback.create(temp);
-
 				var index = index !== 0 ? index - 1 : (exist.length - 1);
-				if(!exist[index]){
-					if(list.$virtual && list.length !== 0){
-						exist[index].insertAdjacentElement('afterEnd', temp);
-						return;
+				var referenceNode = exist[index];
+
+				if(!referenceNode){
+					if(!list.$virtual || list.length === 0){
+						parentNode.insertAdjacentElement('afterBegin', temp);
+						if(callback.create) callback.create(temp);
 					}
-					parentNode.insertAdjacentElement('afterBegin', temp);
 					return;
 				}
-				exist[index].insertAdjacentElement('afterEnd', temp);
+
+				referenceNode.insertAdjacentElement('afterEnd', temp);
+				if(callback.create) callback.create(temp);
 			}
 			else if(options === 'append'){
 				if(list.$virtual && list.length !== 0){
 					exist[index-1].insertAdjacentElement('afterEnd', temp);
+					if(callback.create) callback.create(temp);
 					return;
 				}
+
 				parentNode.appendChild(temp);
+				if(callback.create) callback.create(temp);
 			}
 			else{
 				// Create
 				if(options === 'insertBefore'){
-					if(callback.create)
-						callback.create(temp);
-
 					exist[0].insertAdjacentElement('beforeBegin', temp);
+					if(callback.create) callback.create(temp);
 				}
 
 				// Update
 				else{
-					if(callback.update)
-						callback.update(temp);
-
 					if(list.$virtual){
 						exist[index].parentNode.replaceChild(temp, exist[index]);
 						return;
 					}
 					parentNode.replaceChild(temp, exist[index]);
+					if(callback.update) callback.update(temp);
 				}
 			}
 		}
@@ -468,7 +468,7 @@ sf.model = function(scope){
 						return this;
 					}
 
-					else if(name === 'splice' && arguments[0] === 0){
+					else if(name === 'splice' && arguments[0] === 0 && arguments[1] === undefined){
 						processElement(0, 'clear');
 						return Array.prototype.splice.apply(this, arguments);
 					}
@@ -486,7 +486,7 @@ sf.model = function(scope){
 						processElement(0, 'remove');
 
 					else if(name === 'splice'){
-						if(!arguments[0])
+						if(arguments[0] === 0 && arguments[1] === undefined)
 							return temp;
 
 						// Removing data
@@ -721,6 +721,7 @@ sf.model = function(scope){
 
 			var data = loopParser(controller, element, script, targetNode, element.parentNode);
 			if(data){
+				data = $.parseElement(data);
 				if(after)
 					after.insertAdjacentElement('beforeBegin', data); // before
 				else if(before)
