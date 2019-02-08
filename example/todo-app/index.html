@@ -71,7 +71,8 @@
                   });
                },
                update:function(elem){
-                  // Not used
+                  // sf.model.root["todo-app"].list.softRefresh(1)
+                  sf.dom.animateCSS(elem, 'flash');
                },
                create:function(elem){
                   sf.dom.animateCSS(elem, 'flipInX');
