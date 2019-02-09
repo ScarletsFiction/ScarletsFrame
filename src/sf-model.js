@@ -119,9 +119,120 @@ sf.model = function(scope){
 		return keys.join('|');
 	}
 
+	function escapeEscapedQuote(text){
+		return text.split('\\"').join('\\$%*').split("\\'").join('\\%$*');
+	}
+
+	function unescapeEscapedQuote(text){
+		return text.split('\\$%*').join('\\"').split('\\%$*').join("\\'");
+	}
+
+	var preparedParser_regex = /{{%=([0-9]+)/gm;
+	var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
+	var preparedParser = function(template, item){
+		var html = template.html.cloneNode(true);
+		var addresses = template.addresses;
+		var parse = template.parse;
+		var parsed = {};
+
+		for (var i = 0; i < parse.length; i++) {
+			var ref = parse[i];
+			ref.data[1] = item;
+
+			if(ref.type === REF_DIRECT || ref.type === REF_EXEC)
+				parsed[i] = {type:ref.type, data:localEval.apply(self.root, ref.data)};
+
+			else if(ref.type === REF_IF){
+				var check = ref.data[0].split(':');
+				var scopes = ref.data.slice(0);
+				scopes[0] = check[0];
+
+				var condition = localEval.apply(self.root, scopes);
+
+				// If condition was not meet
+				if(condition === false)
+					condition = '';
+				else {
+					check.shift();
+					scopes.splice(0, 1, check.join(':').split('&VarPass&').join('{}'));
+					condition = localEval.apply(self.root, scopes);
+				}
+
+				parsed[i] = {type:ref.type, data:condition};
+			}
+		}
+
+		for (var i = 0; i < addresses.length; i++) {
+			var ref = addresses[i];
+			var current = $.childIndexes(ref.address, html);
+
+			// Modify element attributes
+			if(ref.nodeType === 1){
+				var refA = ref.attributes;
+				for (var a = 0; a < refA.length; a++) {
+					var refB = refA[a];
+					if(refB.direct !== false){
+						current.attributes[refB.name].value = parsed[refB.direct].data;
+						continue;
+					}
+
+					// Below is used for multiple data
+					refB = current.attributes[refB.name];
+					refB.value = refB.value.replace(preparedParser_regex, function(full, match){
+						return parsed[match].data;
+					});
+				}
+				continue;
+			}
+
+			// Replace text node
+			if(ref.nodeType === 3){
+				var refA = current;
+				if(ref.direct !== false){
+					refA.textContent = parsed[ref.direct].data;
+					continue;
+				}
+
+				// Below is used for multiple/dynamic data
+				var haveDynamicData = false;
+				refA.textContent = refA.textContent.replace(preparedParser_regex, function(full, match){
+					var replacement = parsed[match];
+
+					// Not text only type
+					if(haveDynamicData === false && replacement.type !== 3)
+						haveDynamicData = true;
+
+					// Create new node
+					if(haveDynamicData){
+						if(replacement.type === 1){ // as Element from text
+							var tDOM = $.parseElement(replacement.data, true);
+							var parentNode = current.parentNode;
+							for (var a = 0; a < tDOM.length; a++) {
+								parentNode.insertBefore(tDOM[a], current.nextSibling);
+								current = tDOM[a];
+							}
+						}
+						else{ // as Text node
+							var tDOM = document.createTextNode(replacement.data);
+							current.parentNode.insertBefore(tDOM, current.nextSibling);
+						}
+
+						current = tDOM;
+						return '';
+					}
+
+					return replacement.data;
+				}).trim();
+				continue;
+			}
+		}
+
+		return html;
+	}
+
 	// For contributor of this library
 	// Please be careful when you're passing the eval argument
-	var dataParser = function(html, _model_, mask, scope, runEval){
+	var dataParser = function(html, _model_, mask, scope, runEval, preParsedReference){
 		var _modelScope = self.root[scope];
 		if(!runEval) runEval = '';
 		
@@ -140,9 +251,12 @@ sf.model = function(scope){
 
 		bindingEnabled = true;
 
-		return html.replace(/{{([^@][\s\S]*?)}}/g, function(actual, temp){
+		if(runEval === '#noEval')
+			var preParsed = [];
+
+		var prepared = html.replace(/{{([^@][\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
-			temp = temp.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
+			temp = escapeEscapedQuote(temp); // ToDo: Escape
 
 			// Mask item variable
 			if(mask)
@@ -155,18 +269,39 @@ sf.model = function(scope){
 				return '_modelScope.'+matched;
 			});
 
-			temp = temp.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
+			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
 
 			// Evaluate
+			if(runEval === '#noEval'){
+				temp = temp.trim();
+
+				// Simplicity similar
+				var exist = preParsed.indexOf(temp);
+
+				if(exist === -1){
+					preParsed.push(temp);
+					preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
+					return '{{%=' + (preParsedReference.length - 1);
+				}
+				return '{{%=' + (exist + preParsedReference.length - 1);
+			}
+
 			temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
 
 			return temp.replace(/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm, function(i) {
 		        return '&#'+i.charCodeAt(0)+';';
 		    });
 		});
+
+		if(runEval === '#noEval'){
+			// Clear memory before return
+			preParsed = variableList = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
+			setTimeout(function(){prepared = null}, 1);
+		}
+		return prepared;
 	}
 
-	var uniqueDataParser = function(html, _model_, mask, scope){
+	var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 		// Get prepared html content
 		var _content_ = {
 			length:0,
@@ -218,9 +353,12 @@ sf.model = function(scope){
 		if(mask)
 			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
 
-		return html.replace(/{{(@[\s\S]*?)}}/g, function(actual, temp){
+		if(runEval === '#noEval')
+			var preParsedReference = [];
+
+		var prepared = html.replace(/{{(@[\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
-			temp = temp.split('\\"').join('\\$%*').split("\\'").join('\\%$*'); // ToDo: Escape
+			temp = escapeEscapedQuote(temp); // ToDo: Escape
 
 			// Mask item variable
 			if(mask)
@@ -232,13 +370,21 @@ sf.model = function(scope){
 			temp = temp.replace(scopeMask, function(full, matched){
 				return '_modelScope.'+matched;
 			});
-			temp = temp.split('\\$%*').join('\\"').split('\\%$*').join("\\'"); // ToDo: Unescape
+			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
 
 			var result = '';
 			var check = false;
 
 			check = temp.split('@if ');
-			if(check.length != 1){
+			if(check.length !== 1){
+				if(runEval === '#noEval'){
+					preParsedReference.push({
+						type:REF_IF,
+						data:[check[1], _model_, _modelScope, _content_]
+					});
+					return '{{%=' + (preParsedReference.length - 1);
+				}
+
 				check = check[1].split(':');
 				var scopes = [check[0], _model_, _modelScope, _content_];
 			
@@ -248,6 +394,7 @@ sf.model = function(scope){
 
 				check.shift();
 				scopes.splice(0, 1, check.join(':').split('&VarPass&').join('{}'));
+
 				return localEval.apply(self.root, scopes);
 			}
 
@@ -258,7 +405,7 @@ sf.model = function(scope){
 			while((s1 = VarPass_.exec(temp)) !== null){
 				VarPass.push(s1[2]);
 			}
-			if(VarPass.length){
+			if(VarPass.length !== 0){
 				var obtained = [];
 				for (var i = 0; i < VarPass.length; i++) {
 					VarPass[i].replace(/([\n\t\r]|  )+/g, '').split(',').forEach(function(val){
@@ -278,17 +425,33 @@ sf.model = function(scope){
 			// And always check/remove closing ']}' in user content
 			// Any function call will be removed for addional security
 			check = temp.split('@exec');
-			if(check.length != 1){
+			if(check.length !== 1){
 				check = check[1].split('&lt;').join('<').split('&gt;').join('>').split('&amp;').join('&');
 
-				temp = localEval.apply(self.root, [check, _model_, _modelScope, _content_]);
+				var scopes = [check, _model_, _modelScope, _content_];
+
+				if(runEval === '#noEval'){
+					preParsedReference.push({type:REF_EXEC, data:scopes});
+					return '{{%=' + (preParsedReference.length - 1);
+				}
+
+				temp = localEval.apply(self.root, scopes);
 				return temp;
 			}
 			return '';
 		});
+
+		if(runEval === '#noEval'){
+			// Clear memory before return
+			_modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
+			setTimeout(function(){prepared = null}, 1);
+			return [prepared, preParsedReference];
+		}
+
+		return prepared;
 	}
 
-	var bindArray = function(html, list, mask, modelName, propertyName, targetNode, parentNode, htmlParsedData){
+	var bindArray = function(template, list, mask, modelName, propertyName, targetNode, parentNode, tempDOM){
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', '$replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
 		var processElement = function(index, options, other){
@@ -312,6 +475,18 @@ sf.model = function(scope){
 				return;
 			}
 
+			// Hard refresh
+			if(options === 'hardRefresh'){
+				var item = self.root[modelName][propertyName];
+				for (var i = index; i < item.length; i++) {
+					if(list.$virtual)
+						parentNode.insertBefore(preparedParser(template, item[i]), parentNode.lastElementChild);
+					else
+						parentNode.appendChild(preparedParser(template, item[i]));
+				}
+				return;
+			}
+
 			if(list.$virtual){
 				var exist = list.$virtual.elements();
 
@@ -325,21 +500,6 @@ sf.model = function(scope){
 			var callback = false;
 			if(self.root[modelName]['on$'+propertyName])
 				callback = self.root[modelName]['on$'+propertyName];
-
-			// Hard refresh
-			if(options === 'hardRefresh'){
-				var item = self.root[modelName][propertyName];
-				var all = '';
-				for (var i = index; i < item.length; i++) {
-					var temp = uniqueDataParser(html, item[i], mask, modelName);
-					all += dataParser(temp, item[i], mask, modelName);
-				}
-
-				if(list.$virtual)
-					parentNode.lastElementChild.insertAdjacentHTML('beforeBegin', all);
-				else parentNode.insertAdjacentHTML('beforeEnd', all);
-				return;
-			}
 
 			// Remove
 			if(options === 'remove'){
@@ -364,14 +524,10 @@ sf.model = function(scope){
 				return;
 			}
 
-			// Create or update
 			var item = self.root[modelName][propertyName][index];
-
-			var temp = uniqueDataParser(html, item, mask, modelName);
-			temp = dataParser(temp, item, mask, modelName);
-			temp = $.parseElement(temp);
-
+			var temp = preparedParser(template, item);
 			var referenceNode = exist[index];
+
 			// Create
 			if(options === 'insertAfter'){
 				var index = index !== 0 ? index - 1 : (exist.length - 1);
@@ -417,6 +573,8 @@ sf.model = function(scope){
 			}
 		}
 
+		var _single_zero = [0]; // For arguments
+		var _double_zero = [0,0]; // For arguments
 		var propertyProxy = function(subject, name){
 			Object.defineProperty(subject, name, {
 				enumerable: false,
@@ -460,10 +618,10 @@ sf.model = function(scope){
 						}
 
 						if(lastLength !== 0){
-							Array.prototype.splice.apply(this, [0]);
+							Array.prototype.splice.apply(this, _single_zero);
 							processElement(0, 'clear');
 						}
-						Array.prototype.splice.apply(this, [0,0].concat(arguments[0]));
+						Array.prototype.splice.apply(this, _double_zero.concat(arguments[0]));
 						processElement(0, 'hardRefresh');
 						return this;
 					}
@@ -526,9 +684,8 @@ sf.model = function(scope){
 			delete list.$virtual;
 			list.$virtual = {};
 
-			// Parse in virtual DOM
-			list.$virtual.dom = document.createElement('div');
-			list.$virtual.dom.innerHTML = htmlParsedData;
+			// Transfer virtual DOM
+			list.$virtual.dom = tempDOM;
 
 			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
 		}
@@ -558,19 +715,7 @@ sf.model = function(scope){
 		});
 	}
 
-	function compareObject(obj1, obj2){
-		if(!obj1 || !obj2)
-			return false;
-
-		for(var i in obj1){
-			if(typeof obj1[i] !== 'object' && obj1[i] !== obj2[i])
-				return false;
-		}
-		return true;
-	}
-
 	var loopParser = function(name, template, script, targetNode, parentNode){
-		var returns = '';
 		var method = script.split(' in ');
 		var mask = method[0];
 
@@ -583,19 +728,15 @@ sf.model = function(scope){
 
 		// Get reference for debugging
 		processingElement = template;
-		template = template.outerHTML.replace(/  +|\t+/g, '');
+		template = self.extractPreprocess(template, mask, name);
 
 		if(method.length === 2){
-			var temp = '';
-			for(var i in items){
-				var item = items[i];
-
-				temp = uniqueDataParser(template, item, mask, name);
-				temp = dataParser(temp, item, mask, name);
-				returns += temp;
-			}
-
+			var tempDOM = document.createElement('div');
 			var modelRef = self.root[name];
+			
+			for(var i in items){
+				tempDOM.appendChild(preparedParser(template, items[i]));
+			}
 
 			// Enable element binding
 			if(modelRef.sf$bindedKey === undefined)
@@ -617,9 +758,18 @@ sf.model = function(scope){
 				}
 			});
 
-			bindArray(template, items, mask, name, method[1], targetNode, parentNode, returns);
+			bindArray(template, items, mask, name, method[1], targetNode, parentNode, tempDOM);
+
+			// Output to real DOM if not being used for virtual list
+			if(parentNode.classList.contains('sf-virtual-list') === false){
+				for (var i = 0; i < tempDOM.length; i++) {
+					parentNode.appendChild(tempDOM[i]);
+				}
+
+				tempDOM.remove();
+				tempDOM = null;
+			}
 		}
-		return returns;
 	}
 
 	var inputBoundFunction = function(e){
@@ -665,7 +815,6 @@ sf.model = function(scope){
 		}, 50);
 
 		if(!targetNode) targetNode = document.body;
-
 		self.parsePreprocess(self.queuePreprocess(targetNode));
 		bindInput(targetNode);
 
@@ -712,25 +861,7 @@ sf.model = function(scope){
 			if(/sf-bind-key|sf-bind-list/.test(element.outerHTML))
 				throw "Can't parse element that already bound";
 
-			if(element.parentNode.classList.contains('sf-virtual-list')){
-				if(!loopParser(controller, element, script, targetNode, element.parentNode))
-					element.setAttribute('sf-bind-list', script.split(' in ')[1]);
-				element.remove();
-				continue;
-			}
-
-			var data = loopParser(controller, element, script, targetNode, element.parentNode);
-			if(data){
-				if(after)
-					after.insertAdjacentHTML('beforeBegin', data); // before
-				else if(before)
-					before.insertAdjacentHTML('afterEnd', data); // after
-				else
-					parent.insertAdjacentHTML('beforeEnd', data); // append
-			}
-			else
-				element.setAttribute('sf-bind-list', script.split(' in ')[1]);
-
+			loopParser(controller, element, script, targetNode, element.parentNode);
 			element.remove();
 		}
 	}
@@ -939,14 +1070,78 @@ sf.model = function(scope){
 		}
 	}
 
+	self.extractPreprocess = function(targetNode, mask, name){
+		var copy = targetNode.outerHTML;
+
+		// Extract data to be parsed
+		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
+		var preParsed = copy[1];
+		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
+
+		// Build element and start addressing
+		copy = $.parseElement(copy)[0];
+		var nodes = self.queuePreprocess(copy, true);
+		var addressed = [];
+
+		function addressAttributes(currentNode){
+			var attrs = currentNode.attributes;
+			var keys = [];
+			for (var a = 0; a < attrs.length; a++) {
+				var found = attrs[a].value.split('{{%=');
+				if(found.length !== 1)
+					keys.push({direct:found.length === 2 ? Number(found[1]) : false, name:attrs[a].name});
+			}
+			return keys;
+		}
+
+		var currentElement = addressAttributes(copy);
+		if(currentElement.length !== 0)
+			addressed.push({
+				nodeType:1,
+				address:[0],
+				attributes:currentElement
+			});
+
+		for (var i = 0; i < nodes.length; i++) {
+			var temp = {
+				nodeType:nodes[i].nodeType,
+				direct:false,
+				address:$.getSelector(nodes[i], true)
+			};
+
+			if(temp.nodeType === 1)
+				temp.attributes = addressAttributes(nodes[i]);
+
+			else if(temp.nodeType === 3){
+				var innerHTML = nodes[i].parentNode.innerHTML;
+
+				if(innerHTML.split('<').length === 1){
+					innerHTML = innerHTML.split('{{%=');
+
+					if(innerHTML.length === 2)
+						temp.direct = Number(innerHTML[1]);
+				}
+			}
+
+			addressed.push(temp);
+		}
+
+		return {
+			html:copy,
+			parse:preParsed,
+			addresses:addressed
+		}
+	}
+
 	var excludes = ['HTML','HEAD','STYLE','LINK','META','SCRIPT','OBJECT','IFRAME'];
-	self.queuePreprocess = function(targetNode){
+	self.queuePreprocess = function(targetNode, extracting = false){
 		var childNodes = (targetNode || document.body).childNodes;
 
 		var temp = [];
-		for (var i = 0; i < childNodes.length; i++) {
+		for (var i = childNodes.length - 1; i >= 0; i--) {
 			var currentNode = childNodes[i];
-			if(excludes.indexOf(currentNode.nodeName) !== -1)
+
+			if(extracting === false && excludes.indexOf(currentNode.nodeName) !== -1)
 				continue;
 
 			if(currentNode.nodeType === 1){ // Tag
@@ -957,25 +1152,37 @@ sf.model = function(scope){
 
 				for (var a = 0; a < attrs.length; a++) {
 					if(attrs[a].value.indexOf('{{') !== -1){
-						currentNode.setAttribute('sf-preprocess', 'attronly');
+						if(extracting === false)
+							currentNode.setAttribute('sf-preprocess', 'attronly');
 						temp.push(currentNode);
 					}
 				}
 
-				temp = temp.concat(self.queuePreprocess(currentNode));
+				temp = temp.concat(self.queuePreprocess(currentNode, extracting));
 			}
 
 			else if(currentNode.nodeType === 3){ // Text
+				currentNode.textContent = currentNode.textContent.trim();
+
+				if(currentNode.textContent.length === 0){
+					currentNode.remove();
+					continue;
+				}
+
 				if(currentNode.nodeValue.indexOf('{{') !== -1){
-					currentNode.parentNode.setAttribute('sf-preprocess', '');
+					if(extracting === false){
+						currentNode.parentNode.setAttribute('sf-preprocess', '');
 
-					// Reset Siblings
-					for (var a = 0; a < temp.length; a++) {
-						temp[a].removeAttribute('sf-preprocess');
+						// Reset Siblings
+						for (var a = 0; a < temp.length; a++) {
+							temp[a].removeAttribute('sf-preprocess');
+						}
+
+						temp.push(currentNode.parentNode);
+						break;
 					}
-					temp.push(currentNode.parentNode);
 
-					break;
+					temp.push(currentNode);
 				}
 			}
 		}
