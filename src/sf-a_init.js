@@ -26,3 +26,14 @@ function isEmptyObject(obj){
 	}
 	return true
 }
+
+function compareObject(obj1, obj2){
+	if(!obj1 || !obj2)
+		return false;
+
+	for(var i in obj1){
+		if(typeof obj1[i] !== 'object' && obj1[i] !== obj2[i])
+			return false;
+	}
+	return true;
+}
