@@ -176,8 +176,8 @@ var $ = sf.dom; // Shortcut
 		table:document.createElement('table'),
 		select:document.createElement('select'),
 	};
-	self.parseElement = function(html){
-		var result = null;
+	self.parseElement = function(html, returnNode){
+		var result = [];
 		var tempDOM = emptyDOM.div;
 
         if(html.indexOf('<li') === 0) tempDOM = emptyDOM.ul;
@@ -189,16 +189,9 @@ var $ = sf.dom; // Shortcut
 		tempDOM.textContent = '';
 		tempDOM.insertAdjacentHTML('afterBegin', html);
 
-		var length = tempDOM.children.length;
-		if(length === 1)
-			result = tempDOM.firstElementChild;
-
-		else if(length !== 0){
-			result = [];
-			var ref = tempDOM.children;
-			for (var i = 0; i < ref.length; i++) {
-				result.push(ref.item(i));
-			}
+		var ref = tempDOM[returnNode ? 'childNodes' : 'children'];
+		for (var i = 0; i < ref.length; i++) {
+			result.push(ref.item(i));
 		}
 
 		return result;
@@ -224,6 +217,8 @@ var $ = sf.dom; // Shortcut
 		var names = [];
 		if(untilElement === false) untilElement = documentElement;
 
+		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
+
 		while(element.parentElement !== null){
 			if(element.id){
 				names.unshift('#'+element.id);
@@ -239,8 +234,8 @@ var $ = sf.dom; // Shortcut
 					var e = element;
 					var i = childIndexes ? 0 : 1;
 
-					while(e.previousElementSibling){
-						e = e.previousElementSibling;
+					while(e[previousSibling]){
+						e = e[previousSibling];
 						i++;
 					}
 
@@ -261,15 +256,16 @@ var $ = sf.dom; // Shortcut
 
 	self.childIndexes = function(array, context){
 		var element = context || documentElement;
-		var i = 0;
+		var i = 1;
 
-		if(array[0].constructor === String){
+		if(array[0].constructor === String)
 			element = element.querySelector(array[0]);
-			i = 1;
-		}
+
+		else if(array.length === 1)
+			return element;
 
 		for (i = i; i < array.length; i++) {
-			element = element.children.item(array[i]);
+			element = element.childNodes.item(array[i]);
 
 			if(element === null)
 				return null;
