@@ -109,8 +109,9 @@ sf.controller = new function(){
 
 		try{
 			method.apply(element, script);
+			e.preventDefault();
 		} catch(e) {
-			console.error("Error on sf-click for model: " + model + '\n', element[0], '\n', e);
+			console.error("Error on sf-click for model: " + model + '\n', element, '\n', e);
 		}
 	}
 
