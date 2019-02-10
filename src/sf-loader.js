@@ -74,7 +74,8 @@ sf.loader = new function(){
 	        s.type = "text/javascript";
 	        s.async = true;
 	        s.src = list[i];
-	        s.addEventListener('load', sf.loader.f, false);
+	        s.addEventListener('load', sf.loader.f, {once:true});
+	        s.addEventListener('error', sf.loader.f, {once:true});
 	        document.head.appendChild(s);
 		}
 	}
@@ -101,6 +102,11 @@ sf.loader = new function(){
 		if(self.loadedContent < self.totalContent || self.loadedContent === 0){
 			if(!self.turnedOff)
 				return;
+		}
+
+		var scripts = sf.dom('script');
+		for (var i = 0; i < scripts.length; i++) {
+			scripts[i].removeEventListener('error', sf.loader.f);
 		}
 
 		clearInterval(everythingLoaded);
