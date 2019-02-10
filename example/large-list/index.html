@@ -14,7 +14,7 @@
 
             <!-- I suggest to use simplebar to prevent scroll jump when using chrome -->
             <div data-simplebar class="col-md-4 col-md-offset-4 col-xs-6 col-xs-offset-3" style="height: 90vh; width: 280px;">
-               <ul class="todo-list sf-virtual-list sf-list-dynamic" scroll-parent-index="1">
+               <ul class="todo-list sf-virtual-list" scroll-parent-index="1">
                   <li sf-repeat-this="x in list" data-id="{{x.id}}">
                      <div class="checkbox">
                         <label>
@@ -52,7 +52,7 @@
             self.list = [];
 
             // Dummy items array
-            addDummy(50);
+            addDummy(500);
          });
 
          function addDummy(total){
