@@ -288,7 +288,13 @@ myArray.softRefresh(index = -1);
 #### swap
 Swap 2 array value and the related element without rebuild the element nodes.
 ```js
-myArray.swap(0, 99);
+myArray.swap(fromIndex, toIndex);
+```
+
+#### move
+Move some array value and the related element without rebuild the element nodes.
+```js
+myArray.move(fromIndex, toIndex[, length]);
 ```
 
 #### getElement
