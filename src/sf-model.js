@@ -490,38 +490,6 @@ sf.model = function(scope){
 				return;
 			}
 
-			if(options === 'swap' || options === 'move'){
-				var ref = parentNode.children;
-				if(list.$virtual){
-					index++;
-					other++;
-				}
-
-				if(index >= other){
-					var temp = index;
-					index = other;
-					other = temp;
-				}
-
-				if(options === 'move'){
-					var nextSibling = ref[other].nextSibling;
-					for (var i = 0; i < count; i++) {
-						parentNode.insertBefore(ref[index + i], nextSibling);
-						if(callback.update) callback.update(ref[index + i], 'move');
-					}
-					return;
-				}
-
-				ref[index].insertAdjacentElement('afterEnd', ref[other]);
-				ref[other].insertAdjacentElement('afterEnd', ref[index]);
-
-				if(callback.update){
-					callback.update(ref[other], 'swap');
-					callback.update(ref[index], 'swap');
-				}
-				return;
-			}
-
 			// Hard refresh
 			if(options === 'hardRefresh'){
 				var item = self.root[modelName][propertyName];
@@ -536,6 +504,56 @@ sf.model = function(scope){
 				return;
 			}
 
+			var callback = self.root[modelName]['on$'+propertyName];
+
+			if(options === 'swap' || options === 'move'){
+				var ref = parentNode.children;
+				if(list.$virtual){
+					index++;
+					other++;
+				}
+
+				if(options === 'move'){
+					var overflow = list.length - index - count;
+					if(overflow < 0)
+						count += overflow;
+
+					// Move to virtual DOM
+					var vDOM = document.createElement('div');
+					for (var i = 0; i < count; i++) {
+						vDOM.appendChild(ref[index]);
+					}
+
+					var nextSibling = ref[other] || null;
+
+					// Move to defined index
+					for (var i = 0; i < count; i++) {
+						parentNode.insertBefore(vDOM.firstElementChild, nextSibling);
+
+						if(callback !== undefined && callback.update)
+							callback.update(
+								(nextSibling !== null && nextSibling.previousElementSibling)
+								|| parentNode.lastElementChild, 'move');
+					}
+					return;
+				}
+
+				if(index >= other){
+					var temp = index;
+					index = other;
+					other = temp;
+				}
+
+				ref[index].insertAdjacentElement('afterEnd', ref[other]);
+				ref[other].insertAdjacentElement('afterEnd', ref[index]);
+
+				if(callback !== undefined && callback.update){
+					callback.update(ref[other], 'swap');
+					callback.update(ref[index], 'swap');
+				}
+				return;
+			}
+
 			if(list.$virtual){
 				var exist = list.$virtual.elements();
 
@@ -545,10 +563,6 @@ sf.model = function(scope){
 				}, 100);
 			}
 			else exist = parentNode.children;
-
-			var callback = false;
-			if(self.root[modelName]['on$'+propertyName])
-				callback = self.root[modelName]['on$'+propertyName];
 
 			// Remove
 			if(options === 'remove'){
@@ -562,7 +576,7 @@ sf.model = function(scope){
 						if(list.$virtual) list.$virtual.refresh();
 					}
 
-					if(callback.remove){
+					if(callback !== undefined && callback.remove){
 						// Auto remove if return false
 						if(!callback.remove(exist[index], startRemove))
 							setTimeout(startRemove, 800);
@@ -586,13 +600,15 @@ sf.model = function(scope){
 				if(!referenceNode){
 					if(!list.$virtual || list.length === 0){
 						parentNode.insertAdjacentElement('afterBegin', temp);
-						if(callback.create) callback.create(temp);
+						if(callback !== undefined && callback.create)
+							callback.create(temp);
 					}
 					return;
 				}
 
 				referenceNode.insertAdjacentElement('afterEnd', temp);
-				if(callback.create) callback.create(temp);
+				if(callback !== undefined && callback.create)
+					callback.create(temp);
 
 				// Refresh virtual scroll
 				if(list.$virtual) list.$virtual.refresh();
@@ -600,7 +616,8 @@ sf.model = function(scope){
 			else if(options === 'append'){
 				if(list.$virtual && list.length !== 0){
 					exist[index-1].insertAdjacentElement('afterEnd', temp);
-					if(callback.create) callback.create(temp);
+					if(callback !== undefined && callback.create)
+						callback.create(temp);
 
 					// Refresh virtual scroll
 					list.$virtual.refresh();
@@ -608,13 +625,15 @@ sf.model = function(scope){
 				}
 
 				parentNode.appendChild(temp);
-				if(callback.create) callback.create(temp);
+				if(callback !== undefined && callback.create)
+					callback.create(temp);
 			}
 			else{
 				// Create
 				if(options === 'insertBefore'){
 					exist[0].insertAdjacentElement('beforeBegin', temp);
-					if(callback.create) callback.create(temp);
+					if(callback !== undefined && callback.create)
+						callback.create(temp);
 
 					// Refresh virtual scroll
 					if(list.$virtual) list.$virtual.refresh();
@@ -627,7 +646,8 @@ sf.model = function(scope){
 						return;
 					}
 					parentNode.replaceChild(temp, exist[index]);
-					if(callback.update) callback.update(temp, 'replace');
+					if(callback !== undefined && callback.update)
+						callback.update(temp, 'replace');
 				}
 			}
 		}
