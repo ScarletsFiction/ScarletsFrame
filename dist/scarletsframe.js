@@ -1695,8 +1695,7 @@ sf.model = function(scope){
 							if(matchLeft === 0){
 								if(ref.length === lastLength) return;
 
-								var takeIndex = lastLength-1;
-								Array.prototype.splice.apply(this, [takeIndex, 0].concat(arguments[0].slice(takeIndex)));
+								Array.prototype.splice.apply(this, [lastLength, 0].concat(arguments[0].slice(lastLength)));
 								processElement(lastLength, 'hardRefresh');
 								return;
 							}
