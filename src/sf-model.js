@@ -1089,7 +1089,7 @@ sf.model = function(scope){
 			for (var a = 0; a < attrs.length; a++) {
 				var found = attrs[a].value.split('{{%=');
 				if(found.length !== 1)
-					keys.push({direct:found.length === 2 ? Number(found[1]) : false, name:attrs[a].name});
+					keys.push({direct:found.length === 2 ? Number(found[1].match(/^[0-9]+/)[0]) : false, name:attrs[a].name});
 			}
 			return keys;
 		}
@@ -1119,7 +1119,7 @@ sf.model = function(scope){
 					innerHTML = innerHTML.split('{{%=');
 
 					if(innerHTML.length === 2)
-						temp.direct = Number(innerHTML[1]);
+						temp.direct = Number(innerHTML[1].match(/^[0-9]+/)[0]);
 				}
 			}
 
