@@ -89,8 +89,14 @@
             <ul class="sf-virtual-list" scroll-parent-index="1">
                <li sf-repeat-this="x in list1" data-id="{{x.id}}">
                   <label>{{x.id}}</label>
-                  {{@if x.id === 'item-1':
+                  {{@if x.id === list1[0].id:
+                     x.first = true;
                      {[<span> - Am I the {{ one }} one?</span>]}
+                  }}
+
+                  <!-- @elseif is recommended -->
+                  {{@if x.first && x.id !== list1[0].id:
+                     {[<span> - I'm no longer the {{ one }} one..</span>]}
                   }}
                </li>
             </ul>
@@ -109,15 +115,15 @@
                self.list1 = [];
                self.one = 'first';
 
-               for (var i = 1; i <= 50; i++) {
+               for (var i = 1; i <= 1; i++) {
                   self.list1.push({
                      id: 'item-' + i,
                   });
                }
 
-               self.list2 = self.list1.slice(0);
+               //self.list2 = self.list1.slice(0);
             });
-            sf(function(){
+            sf(function(){return;
                setTimeout(function(){
                   var list = sf.model('virtual-scroll');
 
@@ -146,6 +152,7 @@
                   setTimeout(function(){
                      list.list1.swap(3, 4); // swap / up one more time
                   }, 4000);
+                  list.list1.$virtual.refresh();
 
                   console.log("I got the last index", list.list1.getElement(list.list1.length-1));
                }, 2000);
