@@ -199,6 +199,7 @@ sf.model = function(scope){
 
 				// Below is used for multiple/dynamic data
 				var haveDynamicData = false;
+				var parentNode = current.parentNode;
 				refA.textContent = refA.textContent.replace(preparedParser_regex, function(full, match){
 					var replacement = parsed[match];
 
@@ -210,7 +211,6 @@ sf.model = function(scope){
 					if(haveDynamicData){
 						if(replacement.type === 1){ // as Element from text
 							var tDOM = $.parseElement(replacement.data, true);
-							var parentNode = current.parentNode;
 							for (var a = 0; a < tDOM.length; a++) {
 								parentNode.insertBefore(tDOM[a], current.nextSibling);
 								current = tDOM[a];
@@ -276,6 +276,9 @@ sf.model = function(scope){
 			});
 
 			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
+
+			// Unescape HTML
+			temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 			// Evaluate
 			if(runEval === '#noEval'){
@@ -384,6 +387,9 @@ sf.model = function(scope){
 			});
 			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
 
+			// Unescape HTML
+			temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+
 			var result = '';
 			var check = false;
 
@@ -405,7 +411,7 @@ sf.model = function(scope){
 				}
 
 				var scopes = [check[0], _model_, _modelScope, _content_];
-			
+
 				// If condition was not meet
 				if(localEval.apply(self.root, scopes) == false)
 					return '';
@@ -447,12 +453,9 @@ sf.model = function(scope){
 			// Any function call will be removed for addional security
 			check = temp.split('@exec');
 			if(check.length !== 1){
-				check = check[1].split('&lt;').join('<').split('&gt;').join('>').split('&amp;').join('&');
-
-				var scopes = [check, _model_, _modelScope, _content_];
+				var scopes = [check[1], _model_, _modelScope, _content_];
 
 				if(runEval === '#noEval'){
-					check = check.trim();
 					preParsedReference.push({type:REF_EXEC, data:scopes});
 					return '{%{%=' + (preParsedReference.length - 1);
 				}
