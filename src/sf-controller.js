@@ -86,7 +86,7 @@ sf.controller = new function(){
 		}
 
 		if(!method){
-			console.error("Error on sf-click for model: " + model + ' [Cannot find '+method_+']\n', element[0]);
+			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element);
 			return;
 		}
 

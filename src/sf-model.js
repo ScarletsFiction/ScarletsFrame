@@ -283,7 +283,7 @@ sf.model = function(scope){
 					preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
 					return '{{%=' + (preParsedReference.length - 1);
 				}
-				return '{{%=' + (exist + preParsedReference.length - 1);
+				return '{{%=' + exist;
 			}
 
 			temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
@@ -761,9 +761,10 @@ sf.model = function(scope){
 			bindArray(template, items, mask, name, method[1], targetNode, parentNode, tempDOM);
 
 			// Output to real DOM if not being used for virtual list
-			if(parentNode.classList.contains('sf-virtual-list') === false){
-				for (var i = 0; i < tempDOM.length; i++) {
-					parentNode.appendChild(tempDOM[i]);
+			if(items.$virtual === undefined){
+				var children = tempDOM.children;
+				for (var i = 0; i < children.length; i++) {
+					parentNode.appendChild(children[i]);
 				}
 
 				tempDOM.remove();
@@ -1088,8 +1089,17 @@ sf.model = function(scope){
 			var keys = [];
 			for (var a = 0; a < attrs.length; a++) {
 				var found = attrs[a].value.split('{{%=');
-				if(found.length !== 1)
-					keys.push({direct:found.length === 2 ? Number(found[1].match(/^[0-9]+/)[0]) : false, name:attrs[a].name});
+				if(found.length !== 1){
+					var key = {
+						direct: false,
+						name:attrs[a].name
+					};
+
+					if(found[0] === '' && found.length === 2)
+						key.direct = Number(found[1]) || false;
+
+					keys.push(key);
+				}
 			}
 			return keys;
 		}
@@ -1105,7 +1115,6 @@ sf.model = function(scope){
 		for (var i = 0; i < nodes.length; i++) {
 			var temp = {
 				nodeType:nodes[i].nodeType,
-				direct:false,
 				address:$.getSelector(nodes[i], true)
 			};
 
@@ -1114,12 +1123,13 @@ sf.model = function(scope){
 
 			else if(temp.nodeType === 3){
 				var innerHTML = nodes[i].parentNode.innerHTML;
+				temp.direct = false;
 
 				if(innerHTML.split('<').length === 1){
 					innerHTML = innerHTML.split('{{%=');
 
-					if(innerHTML.length === 2)
-						temp.direct = Number(innerHTML[1].match(/^[0-9]+/)[0]);
+					if(innerHTML[0] === '' && innerHTML.length === 2)
+						temp.direct = Number(innerHTML[1]) || false;
 				}
 			}
 
