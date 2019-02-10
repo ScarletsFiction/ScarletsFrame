@@ -257,7 +257,7 @@ sf.model = function(scope){
 
 		if(runEval === '#noEval'){
 			var preParsed = [];
-			var lastParsedIndex = (preParsedReference.length - 1);
+			var lastParsedIndex = preParsedReference.length;
 		}
 
 		var prepared = html.replace(/{{([^@][\s\S]*?)}}/g, function(actual, temp){
@@ -290,7 +290,7 @@ sf.model = function(scope){
 				if(exist === -1){
 					preParsed.push(temp);
 					preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
-					return '{{%=' + (++lastParsedIndex);
+					return '{{%=' + (preParsed.length + lastParsedIndex - 1);
 				}
 				return '{{%=' + (exist + lastParsedIndex);
 			}
