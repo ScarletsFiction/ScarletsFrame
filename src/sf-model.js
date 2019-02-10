@@ -16,6 +16,7 @@ sf.model = function(scope){
 
 	var processingElement = null;
 
+	// For debugging, normalize indentation
 	function trimIndentation(text){
 		var indent = text.split("\n", 3);
 		if(indent[0][0] !== ' ' || indent[0][0] !== "\t")
@@ -27,6 +28,7 @@ sf.model = function(scope){
 		return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
 	}
 
+	// Secured evaluation
 	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+sf.regex.avoidQuotes, 'g');
 	var chackValidFunctionCall = /[a-zA-Z0-9 \]\$\)]/;
 	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
@@ -80,6 +82,7 @@ sf.model = function(scope){
 		return _evaled_;
 	}
 
+	// Find an index for the element on the list
 	self.index = function(element){
 		var i = -1;
 		var tagName = element.tagName;
@@ -101,6 +104,7 @@ sf.model = function(scope){
 		return i + ref.$virtual.DOMCursor - 1;
 	}
 
+	// Declare model for the name with a function
 	self.for = function(name, func){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
@@ -110,6 +114,7 @@ sf.model = function(scope){
 		func(self(name), self);
 	}
 
+	// Get property of the model
 	self.modelKeys = function(modelRef){
 		var keys = Object.keys(modelRef);
 		for (var i = keys.length - 1; i >= 0; i--) {
@@ -119,6 +124,7 @@ sf.model = function(scope){
 		return keys.join('|');
 	}
 
+	// Escape the escaped quote
 	function escapeEscapedQuote(text){
 		return text.split('\\"').join('\\$%*').split("\\'").join('\\%$*');
 	}
@@ -127,6 +133,7 @@ sf.model = function(scope){
 		return text.split('\\$%*').join('\\"').split('\\%$*').join("\\'");
 	}
 
+	// Template parser
 	var preparedParser_regex = /{{%=([0-9]+)/gm;
 	var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 	var preparedParser = function(template, item){
@@ -135,33 +142,30 @@ sf.model = function(scope){
 		var parse = template.parse;
 		var parsed = {};
 
+		// Get or evaluate static or dynamic data
 		for (var i = 0; i < parse.length; i++) {
 			var ref = parse[i];
 			ref.data[1] = item;
 
+			// Direct evaluation type
 			if(ref.type === REF_DIRECT || ref.type === REF_EXEC)
 				parsed[i] = {type:ref.type, data:localEval.apply(self.root, ref.data)};
 
+			// Conditional type
 			else if(ref.type === REF_IF){
-				var check = ref.data[0].split(':');
-				var scopes = ref.data.slice(0);
-				scopes[0] = check[0];
-
-				var condition = localEval.apply(self.root, scopes);
+				var scopes = ref.data;
+				parsed[i] = {type:ref.type, data:''};
+				scopes[0] = ref.condition;
 
 				// If condition was not meet
-				if(condition === false)
-					condition = '';
-				else {
-					check.shift();
-					scopes.splice(0, 1, check.join(':').split('&VarPass&').join('{}'));
-					condition = localEval.apply(self.root, scopes);
+				if(localEval.apply(self.root, scopes) === true){
+					scopes[0] = ref.value;
+					parsed[i].data = localEval.apply(self.root, scopes);
 				}
-
-				parsed[i] = {type:ref.type, data:condition};
 			}
 		}
 
+		// Find element where the data belongs to
 		for (var i = 0; i < addresses.length; i++) {
 			var ref = addresses[i];
 			var current = $.childIndexes(ref.address, html);
@@ -172,7 +176,7 @@ sf.model = function(scope){
 				for (var a = 0; a < refA.length; a++) {
 					var refB = refA[a];
 					if(refB.direct !== false){
-						current.attributes[refB.name].value = parsed[refB.direct].data;
+						current.setAttribute(refB.name, parsed[refB.direct].data);
 						continue;
 					}
 
@@ -251,8 +255,10 @@ sf.model = function(scope){
 
 		bindingEnabled = true;
 
-		if(runEval === '#noEval')
+		if(runEval === '#noEval'){
 			var preParsed = [];
+			var lastParsedIndex = (preParsedReference.length - 1);
+		}
 
 		var prepared = html.replace(/{{([^@][\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
@@ -281,9 +287,9 @@ sf.model = function(scope){
 				if(exist === -1){
 					preParsed.push(temp);
 					preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
-					return '{{%=' + (preParsedReference.length - 1);
+					return '{{%=' + (++lastParsedIndex);
 				}
-				return '{{%=' + exist;
+				return '{{%=' + (exist + lastParsedIndex);
 			}
 
 			temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
@@ -297,21 +303,25 @@ sf.model = function(scope){
 			// Clear memory before return
 			preParsed = variableList = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
 			setTimeout(function(){prepared = null}, 1);
+			prepared = prepared.split('{%{%=').join('{{%=');
 		}
 		return prepared;
 	}
 
+	// Dynamic data parser
 	var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 		// Get prepared html content
 		var _content_ = {
 			length:0,
 			take:function(passVar, currentIndex){
-				if(!passVar)
+				if(passVar === null)
 					return dataParser(this[currentIndex], _model_, mask, scope);
 
+				// Use strict mode and prepare for new variables
 				var strDeclare = '"use strict";var ';
 				var firstTime = true;
 
+				// Declare new variable
 				for(var key in passVar){
 					if(typeof passVar[key] === 'string')
 						passVar[key] = '"'+passVar[key].split('"').join('\\"')+'"';
@@ -332,10 +342,12 @@ sf.model = function(scope){
 				// Escape function call for addional security eval protection
 				strDeclare = strDeclare.split('(').join('&#40;').split(')').join('&#41;');
 
+				// Pass to static data parser for another HTML data
 				return dataParser(this[currentIndex], _model_, mask, scope, strDeclare + ';');
 			}
 		};
 
+		// Build script preparation
 		html = html.replace(/{\[([\s\S]*?)\]}/g, function(full, matched){
 			if(/{{.*?}}/.test(matched) === false)
 				return "_result_ += '"+matched.split("'").join("\\'")+"'";
@@ -377,15 +389,21 @@ sf.model = function(scope){
 
 			check = temp.split('@if ');
 			if(check.length !== 1){
+				check = check[1].split(':');
 				if(runEval === '#noEval'){
+					var condition = check[0];
+					check.shift();
+					check = check.join(':').split('&VarPass&').join('null').trim();
+
 					preParsedReference.push({
 						type:REF_IF,
-						data:[check[1], _model_, _modelScope, _content_]
+						condition:condition,
+						value:check,
+						data:[null, _model_, _modelScope, _content_]
 					});
-					return '{{%=' + (preParsedReference.length - 1);
+					return '{%{%=' + (preParsedReference.length - 1);
 				}
 
-				check = check[1].split(':');
 				var scopes = [check[0], _model_, _modelScope, _content_];
 			
 				// If condition was not meet
@@ -393,7 +411,7 @@ sf.model = function(scope){
 					return '';
 
 				check.shift();
-				scopes.splice(0, 1, check.join(':').split('&VarPass&').join('{}'));
+				scopes.splice(0, 1, check.join(':').split('&VarPass&').join('null'));
 
 				return localEval.apply(self.root, scopes);
 			}
@@ -416,10 +434,13 @@ sf.model = function(scope){
 				for (var i = 0; i < VarPass.length; i++) {
 					VarPass[i] += ':(typeof '+VarPass[i]+'!=="undefined"?'+VarPass[i]+':undefined)';
 				}
-				VarPass = '{'+VarPass.join(',')+'}';
+
+				if(VarPass.length === 0)
+					VarPass = 'null';
+				else VarPass = '{'+VarPass.join(',')+'}';
 				temp = temp.split('&VarPass&').join(VarPass);
 			}
-			temp = temp.split('&VarPass&').join('{}'); 
+			temp = temp.split('&VarPass&').join('null'); 
 
 			// Warning! Avoid unencoded user inputted content
 			// And always check/remove closing ']}' in user content
@@ -431,8 +452,9 @@ sf.model = function(scope){
 				var scopes = [check, _model_, _modelScope, _content_];
 
 				if(runEval === '#noEval'){
+					check = check.trim();
 					preParsedReference.push({type:REF_EXEC, data:scopes});
-					return '{{%=' + (preParsedReference.length - 1);
+					return '{%{%=' + (preParsedReference.length - 1);
 				}
 
 				temp = localEval.apply(self.root, scopes);
@@ -443,7 +465,7 @@ sf.model = function(scope){
 
 		if(runEval === '#noEval'){
 			// Clear memory before return
-			_modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
+			_modelScope = runEval = scopeMask = itemMask = html = null;
 			setTimeout(function(){prepared = null}, 1);
 			return [prepared, preParsedReference];
 		}
@@ -452,9 +474,9 @@ sf.model = function(scope){
 	}
 
 	var bindArray = function(template, list, mask, modelName, propertyName, targetNode, parentNode, tempDOM){
-		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', '$replace', 'softRefresh', 'hardRefresh'];
+		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', '$replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
-		var processElement = function(index, options, other){
+		var processElement = function(index, options, other, count){
 			if(options === 'clear'){
 				if(list.$virtual)
 					var spacer = [parentNode.firstElementChild, parentNode.lastElementChild];
@@ -468,10 +490,35 @@ sf.model = function(scope){
 				return;
 			}
 
-			if(options === 'swap'){
+			if(options === 'swap' || options === 'move'){
 				var ref = parentNode.children;
+				if(list.$virtual){
+					index++;
+					other++;
+				}
+
+				if(index >= other){
+					var temp = index;
+					index = other;
+					other = temp;
+				}
+
+				if(options === 'move'){
+					var nextSibling = ref[other].nextSibling;
+					for (var i = 0; i < count; i++) {
+						parentNode.insertBefore(ref[index + i], nextSibling);
+						if(callback.update) callback.update(ref[index + i], 'move');
+					}
+					return;
+				}
+
 				ref[index].insertAdjacentElement('afterEnd', ref[other]);
 				ref[other].insertAdjacentElement('afterEnd', ref[index]);
+
+				if(callback.update){
+					callback.update(ref[other], 'swap');
+					callback.update(ref[index], 'swap');
+				}
 				return;
 			}
 
@@ -484,6 +531,8 @@ sf.model = function(scope){
 					else
 						parentNode.appendChild(preparedParser(template, item[i]));
 				}
+
+				if(list.$virtual) list.$virtual.refresh();
 				return;
 			}
 
@@ -510,6 +559,7 @@ sf.model = function(scope){
 						currentRemoved = true;
 
 						exist[index].remove();
+						if(list.$virtual) list.$virtual.refresh();
 					}
 
 					if(callback.remove){
@@ -543,11 +593,17 @@ sf.model = function(scope){
 
 				referenceNode.insertAdjacentElement('afterEnd', temp);
 				if(callback.create) callback.create(temp);
+
+				// Refresh virtual scroll
+				if(list.$virtual) list.$virtual.refresh();
 			}
 			else if(options === 'append'){
 				if(list.$virtual && list.length !== 0){
 					exist[index-1].insertAdjacentElement('afterEnd', temp);
 					if(callback.create) callback.create(temp);
+
+					// Refresh virtual scroll
+					list.$virtual.refresh();
 					return;
 				}
 
@@ -559,6 +615,9 @@ sf.model = function(scope){
 				if(options === 'insertBefore'){
 					exist[0].insertAdjacentElement('beforeBegin', temp);
 					if(callback.create) callback.create(temp);
+
+					// Refresh virtual scroll
+					if(list.$virtual) list.$virtual.refresh();
 				}
 
 				// Update
@@ -568,7 +627,7 @@ sf.model = function(scope){
 						return;
 					}
 					parentNode.replaceChild(temp, exist[index]);
-					if(callback.update) callback.update(temp);
+					if(callback.update) callback.update(temp, 'replace');
 				}
 			}
 		}
@@ -583,9 +642,22 @@ sf.model = function(scope){
 					var temp = undefined;
 					var lastLength = this.length;
 
+					if(name === 'move'){
+						var from = arguments[0];
+						var to = arguments[1];
+						if(from === to) return;
+						var count = arguments[2] || 1;
+						processElement(from, 'move', to, count);
+
+						var temp = Array.prototype.splice.apply(this, [from, count]);
+						Array.prototype.splice.apply(this, [to, 0].concat(temp));
+						return;
+					}
+
 					if(name === 'swap'){
 						var i = arguments[0];
 						var o = arguments[1];
+						if(i === o) return;
 						processElement(i, 'swap', o);
 						var temp = this[i];
 						this[i] = this[o];
