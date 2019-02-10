@@ -56,6 +56,11 @@
             });
             sf.router.on('loaded', function(current, target) {
                 console.log("Navigated from " + current + " to " + target);
+
+                if(target === '/test/page1'){
+                   history.pushState(null, '', '/');
+                   console.log('Address bar was restored to initial');
+                }
             });
             sf.router.on('error', function(e) {
                 console.error("Navigation failed", e);
@@ -84,6 +89,9 @@
             <ul class="sf-virtual-list" scroll-parent-index="1">
                <li sf-repeat-this="x in list1" data-id="{{x.id}}">
                   <label>{{x.id}}</label>
+                  {{@if x.id === 'item-1':
+                     {[<span> - Am I the {{ one }} one?</span>]}
+                  }}
                </li>
             </ul>
          </div><br>
@@ -99,6 +107,7 @@
          <script type="text/javascript">
             sf.model.for('virtual-scroll', function(self, root){
                self.list1 = [];
+               self.one = 'first';
 
                for (var i = 1; i <= 50; i++) {
                   self.list1.push({
@@ -127,9 +136,16 @@
 
                   list.list1.pop(); // remove item-50
                   list.list1.unshift({id:"I'm inserted on first index"});
-                  list.list1.splice(3, 1);
-                  list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"});
+                  list.list1.splice(3, 1); // remove index 3 (item-3)
+                  list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"}); // add as index 5
                   list.list1.push({id:"I'm inserted on last index"});
+
+                  setTimeout(function(){
+                     list.list1.move(5, 4); // move index 5 after index 4
+                  }, 2000);
+                  setTimeout(function(){
+                     list.list1.swap(3, 4); // swap / up one more time
+                  }, 4000);
 
                   console.log("I got the last index", list.list1.getElement(list.list1.length-1));
                }, 2000);
