@@ -96,6 +96,7 @@
 
                   <!-- @elseif is recommended -->
                   {{@if x.first && x.id !== list1[0].id:
+                     delete x.first;
                      {[<span> - I'm no longer the {{ one }} one..</span>]}
                   }}
                </li>
@@ -115,15 +116,15 @@
                self.list1 = [];
                self.one = 'first';
 
-               for (var i = 1; i <= 1; i++) {
+               for (var i = 1; i <= 50; i++) {
                   self.list1.push({
                      id: 'item-' + i,
                   });
                }
 
-               //self.list2 = self.list1.slice(0);
+               self.list2 = self.list1.slice(0);
             });
-            sf(function(){return;
+            sf(function(){
                setTimeout(function(){
                   var list = sf.model('virtual-scroll');
 
@@ -148,6 +149,7 @@
 
                   setTimeout(function(){
                      list.list1.move(5, 4); // move index 5 after index 4
+                     list.list1.softRefresh(1); // Refresh second index
                   }, 2000);
                   setTimeout(function(){
                      list.list1.swap(3, 4); // swap / up one more time
