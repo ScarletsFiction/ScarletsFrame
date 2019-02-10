@@ -782,7 +782,9 @@ sf.model = function(scope){
 			// Transfer virtual DOM
 			list.$virtual.dom = tempDOM;
 
+			parentNode.replaceChild(template.html, parentNode.children[1]);
 			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
+			template.html.remove();
 		}
 
 		for (var i = 0; i < editProperty.length; i++) {
@@ -818,6 +820,10 @@ sf.model = function(scope){
 			return console.error("Can't parse element because model for '"+name+"' was not found", template);
 
 		var items = self.root[name][method[1]];
+		if(items === undefined){
+			console.error("Can't bind array to `"+method[1]+"` because undefined property in model `"+name+"`");
+			return;
+		}
 
 		template.setAttribute('sf-bind-list', method[1]);
 
