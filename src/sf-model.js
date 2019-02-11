@@ -58,8 +58,8 @@ sf.model = function(scope){
 
 		if(preventExecution){
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
-			console.log(trimIndentation(processingElement.innerHTML));
-			//console.log(tempScript.replace(/_result_ \+=.*?;/g, '{[ DOM ]}'));
+			console.log(trimIndentation(processingElement.outerHTML).trim());
+			//console.log(tempScript);
 			return '#DOMError';
 		}
 		// ==== Security check ended ====
@@ -73,8 +73,8 @@ sf.model = function(scope){
 			else var _evaled_ = eval(script);
 		} catch(e){
 			console.error(e);
-			console.log(trimIndentation(processingElement.innerHTML));
-			//console.log(tempScript.replace(/_result_ \+=.*?;/g, '{[ DOM ]}'));
+			console.log(trimIndentation(processingElement.outerHTML).trim());
+			//console.log(tempScript);
 			return '#DOMError';
 		}
 
@@ -133,6 +133,29 @@ sf.model = function(scope){
 		return text.split('\\$%*').join('\\"').split('\\%$*').join("\\'");
 	}
 
+	function elseIfHandle(else_, scopes){
+		var elseIf = else_.elseIf;
+
+		// Else if
+		for (var i = 0; i < elseIf.length; i++) {
+			// Check the condition
+			scopes[0] = elseIf[i][0];
+			if(localEval.apply(self.root, scopes) == false)
+				continue;
+
+			// Get the value
+			scopes[0] = elseIf[i][1];
+			return localEval.apply(self.root, scopes);
+		}
+
+		// Else
+		if(else_.elseValue === null)
+			return '';
+
+		scopes[0] = else_.elseValue;
+		return localEval.apply(self.root, scopes);
+	}
+
 	// Template parser
 	var preparedParser_regex = /{{%=([0-9]+)/gm;
 	var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
@@ -155,13 +178,16 @@ sf.model = function(scope){
 			else if(ref.type === REF_IF){
 				var scopes = ref.data;
 				parsed[i] = {type:ref.type, data:''};
-				scopes[0] = ref.condition;
+				scopes[0] = ref.if[0];
 
 				// If condition was not meet
-				if(localEval.apply(self.root, scopes) === true){
-					scopes[0] = ref.value;
-					parsed[i].data = localEval.apply(self.root, scopes);
+				if(localEval.apply(self.root, scopes) == false){
+					parsed[i].data = elseIfHandle(ref, scopes);
+					continue;
 				}
+
+				scopes[0] = ref.if[1];
+				parsed[i].data = localEval.apply(self.root, scopes);
 			}
 		}
 
@@ -203,30 +229,30 @@ sf.model = function(scope){
 				refA.textContent = refA.textContent.replace(preparedParser_regex, function(full, match){
 					var replacement = parsed[match];
 
-					// Not text only type
-					if(haveDynamicData === false && replacement.type !== 3)
-						haveDynamicData = true;
-
 					// Create new node
 					if(haveDynamicData){
-						if(replacement.type === 1){ // as Element from text
+						if(replacement.type === REF_DIRECT){ // as Text node
+							var tDOM = document.createTextNode(replacement.data);
+							current.parentNode.insertBefore(tDOM, current.nextSibling);
+						}
+						else{ // as Element from text
 							var tDOM = $.parseElement(replacement.data, true);
 							for (var a = 0; a < tDOM.length; a++) {
 								parentNode.insertBefore(tDOM[a], current.nextSibling);
 								current = tDOM[a];
 							}
 						}
-						else{ // as Text node
-							var tDOM = document.createTextNode(replacement.data);
-							current.parentNode.insertBefore(tDOM, current.nextSibling);
-						}
 
 						current = tDOM;
 						return '';
 					}
 
+					// Not text only type
+					if(haveDynamicData === false && replacement.type !== 3)
+						haveDynamicData = true;
+
 					return replacement.data;
-				}).trim();
+				});
 				continue;
 			}
 		}
@@ -393,35 +419,6 @@ sf.model = function(scope){
 			var result = '';
 			var check = false;
 
-			check = temp.split('@if ');
-			if(check.length !== 1){
-				check = check[1].split(':');
-				if(runEval === '#noEval'){
-					var condition = check[0];
-					check.shift();
-					check = check.join(':').split('&VarPass&').join('null').trim();
-
-					preParsedReference.push({
-						type:REF_IF,
-						condition:condition,
-						value:check,
-						data:[null, _model_, _modelScope, _content_]
-					});
-					return '{%{%=' + (preParsedReference.length - 1);
-				}
-
-				var scopes = [check[0], _model_, _modelScope, _content_];
-
-				// If condition was not meet
-				if(localEval.apply(self.root, scopes) == false)
-					return '';
-
-				check.shift();
-				scopes.splice(0, 1, check.join(':').split('&VarPass&').join('null'));
-
-				return localEval.apply(self.root, scopes);
-			}
-
 			// Get defined variables
 			var VarPass_ = /(var|let)([\w,\s]+)(?=\s(?==|in|of))/g;
 			var VarPass = [];
@@ -446,7 +443,75 @@ sf.model = function(scope){
 				else VarPass = '{'+VarPass.join(',')+'}';
 				temp = temp.split('&VarPass&').join(VarPass);
 			}
-			temp = temp.split('&VarPass&').join('null'); 
+			temp = temp.split('&VarPass&').join('null');
+
+			check = temp.split('@if ');
+			if(check.length !== 1){
+				check = check[1].split(':');
+
+				// {if, elseIf:([if, value], ...), elseValue}
+				var findElse = function(text){
+					text = text.join(':');
+					var else_ = null;
+
+					// Get else value
+					var text = text.split('@else' + (text.indexOf(':') !== -1 ? ':' : ' :'));
+					if(text.length === 2)
+						else_ = text.pop();
+					else text = text[0];
+
+					// Split elseIf
+					text = text.split('@elseif ');
+
+					var obj = {
+						if:text.shift(),
+						elseIf:[],
+						elseValue:else_
+					};
+
+					// Separate condition script and value
+					for (var i = 0; i < text.length; i++) {
+						var val = text[i].split(':');
+						obj.elseIf.push([val.shift(), val.join(':')]);
+					}
+
+					return obj;
+				}
+
+				if(runEval === '#noEval'){
+					var condition = check.shift();
+					var elseIf = findElse(check);
+					elseIf.type = REF_IF;
+					elseIf.data = [null, _model_, _modelScope, _content_];
+
+					// Trim Data
+					elseIf.if = [condition.trim(), elseIf.if.trim()];
+					if(elseIf.elseValue !== null)
+						elseIf.elseValue = elseIf.elseValue.trim();
+
+					for (var i = 0; i < elseIf.elseIf.length; i++) {
+						elseIf.elseIf[i][0] = elseIf.elseIf[i][0].trim();
+						elseIf.elseIf[i][1] = elseIf.elseIf[i][1].trim();
+					}
+
+					// Push data
+					preParsedReference.push(elseIf);
+					return '{%{%=' + (preParsedReference.length - 1);
+				}
+
+				var scopes = [check[0], _model_, _modelScope, _content_];
+
+				// If condition was not meet
+				if(localEval.apply(self.root, scopes) == false){
+					check.shift();
+					return elseIfHandle(findElse(check), scopes);
+				}
+
+				check.shift();
+				scopes[0] = check.join(':');
+
+				return localEval.apply(self.root, scopes);
+			}
 
 			// Warning! Avoid unencoded user inputted content
 			// And always check/remove closing ']}' in user content
@@ -644,13 +709,18 @@ sf.model = function(scope){
 
 				// Update
 				else{
-					if(list.$virtual){
-						exist[index].parentNode.replaceChild(temp, exist[index]);
-						return;
+					if(!other) other = 1;
+					for (var i = 0; i < other; i++) {
+						var oldChild = exist[index + i];
+
+						if(list.$virtual){
+							oldChild.parentNode.replaceChild(temp, oldChild);
+							return;
+						}
+						parentNode.replaceChild(temp, oldChild);
+						if(callback !== undefined && callback.update)
+							callback.update(temp, 'replace');
 					}
-					parentNode.replaceChild(temp, exist[index]);
-					if(callback !== undefined && callback.update)
-						callback.update(temp, 'replace');
 				}
 			}
 		}
@@ -764,7 +834,7 @@ sf.model = function(scope){
 						processElement(0, 'insertBefore');
 
 					else if(name === 'softRefresh')
-						processElement(arguments[0], 'update');
+						processElement(arguments[0], 'update', arguments[1]);
 
 					else if(name === 'hardRefresh')
 						processElement(0, 'hardRefresh');
@@ -1174,6 +1244,9 @@ sf.model = function(scope){
 	self.extractPreprocess = function(targetNode, mask, name){
 		var copy = targetNode.outerHTML;
 
+		// Mask the referenced item
+		copy = copy.split('#'+mask).join('_model_');
+
 		// Extract data to be parsed
 		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
 		var preParsed = copy[1];
@@ -1272,7 +1345,7 @@ sf.model = function(scope){
 			}
 
 			else if(currentNode.nodeType === 3){ // Text
-				currentNode.textContent = currentNode.textContent.trim();
+				currentNode.textContent = currentNode.textContent;
 
 				if(currentNode.textContent.length === 0){
 					currentNode.remove();
