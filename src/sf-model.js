@@ -218,6 +218,7 @@ sf.model = function(scope){
 			// Replace text node
 			if(ref.nodeType === 3){
 				var refA = current;
+				
 				if(ref.direct !== false){
 					refA.textContent = parsed[ref.direct].data;
 					continue;
@@ -239,11 +240,11 @@ sf.model = function(scope){
 					var indexes = ref.indexes;
 					var parentNode = current.parentNode;
 
-					for (var i = 0; i < indexes.length; i++) {
-						var replacement = parsed[indexes[i]];
+					for (var a = 0; a < indexes.length; a++) {
+						var replacement = parsed[indexes[a]];
 
 						// as Element from text
-						var tDOM = $.parseElement(replacement.data + ref.innerHTML[i], true);
+						var tDOM = $.parseElement(replacement.data + ref.innerHTML[a], true);
 						for (var a = 0; a < tDOM.length; a++) {
 							parentNode.insertBefore(tDOM[a], current.nextSibling);
 							current = tDOM[a];
@@ -1316,9 +1317,9 @@ sf.model = function(scope){
 				}
 				else{
 					delete temp.indexes;
-					innerHTML = nodes[i].parentNode.innerHTML.split(/{{%=(?=[0-9]+)/);
+					innerHTML = nodes[i].parentNode.innerHTML.split('{{%=');
 
-					if(innerHTML.length === 2)
+					if(innerHTML[0] === '' && innerHTML.length === 2)
 						temp.direct = Number(innerHTML[1]) || false;
 				}
 			}
