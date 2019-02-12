@@ -88,14 +88,12 @@
          <div data-simplebar style="height: 200px;">
             <ul class="sf-virtual-list" scroll-parent-index="1">
                <li sf-repeat-this="x in list1" data-id="{{x.id}}">
-                  <label>{{x.id}}</label>
-                  {{@if x.id === list1[0].id:
+                  <label>{{ x.id }}</label>
+                  {{@if #x === list1[0]:
                      x.first = true;
-                     {[<span> - Am I the {{ one }} one?</span>]}
-                  }}
+                     {[<span> - Am I the ({{ one }}) one?</span>]}
 
-                  <!-- @elseif is recommended -->
-                  {{@if x.first && x.id !== list1[0].id:
+                  @elseif x.first && #x !== list1[0]:
                      delete x.first;
                      {[<span> - I'm no longer the {{ one }} one..</span>]}
                   }}
