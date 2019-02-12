@@ -226,33 +226,30 @@ sf.model = function(scope){
 				// Below is used for multiple/dynamic data
 				var haveDynamicData = false;
 				var parentNode = current.parentNode;
-				var textTemp = refA.textContent.replace(preparedParser_regex, function(full, match){
+				refA.textContent = refA.textContent.replace(preparedParser_regex, function(full, match){
 					var replacement = parsed[match];
 
-					if(replacement.type === REF_DIRECT) // as Text node
+					if(replacement.type === REF_DIRECT)
 						return replacement.data;
 
 					return full;
-				}).split('{{%=');
+				});
 
-				if(false && ref.innerHTML !== undefined){
+				if(ref.innerHTML !== undefined){
 					var indexes = ref.indexes;
 					var parentNode = current.parentNode;
-					parentNode.innerHTML = ref.textContent[0];
 
 					for (var i = 0; i < indexes.length; i++) {
 						var replacement = parsed[indexes[i]];
 
 						// as Element from text
-						var tDOM = $.parseElement(replacement.data + ref.textContent[i + 1], true);
+						var tDOM = $.parseElement(replacement.data + ref.innerHTML[i], true);
 						for (var a = 0; a < tDOM.length; a++) {
 							parentNode.insertBefore(tDOM[a], current.nextSibling);
 							current = tDOM[a];
 						}
 					}
 				}
-				
-				refA.textContent = textTemp[0];
 			}
 		}
 
@@ -1307,11 +1304,16 @@ sf.model = function(scope){
 					if(temp.indexes !== null){
 						temp.indexes = temp.indexes.map(Number);
 
-						if(innerHTML[0] === "\n")
-							innerHTML = trimIndentation(innerHTML).trim();
-						
-						temp.innerHTML = innerHTML.split(/{%{%=[0-9]+/gm);
-						nodes[i].textContent = temp.innerHTML.shift();
+						innerHTML = innerHTML.split(/{%{%=[0-9]+/gm);
+
+						if(innerHTML[0][0] === "\n"){
+							for (var a = 0; a < innerHTML.length; a++) {
+								innerHTML[a] = trimIndentation(innerHTML[a]).trim();
+							}
+						}
+
+						nodes[i].textContent = innerHTML.shift();
+						temp.innerHTML = innerHTML;
 					}
 					else delete temp.indexes;
 				}
