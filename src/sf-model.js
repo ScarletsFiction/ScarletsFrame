@@ -226,34 +226,33 @@ sf.model = function(scope){
 				// Below is used for multiple/dynamic data
 				var haveDynamicData = false;
 				var parentNode = current.parentNode;
-				refA.textContent = refA.textContent.replace(preparedParser_regex, function(full, match){
+				var textTemp = refA.textContent.replace(preparedParser_regex, function(full, match){
 					var replacement = parsed[match];
 
-					// Create new node
-					if(haveDynamicData){
-						if(replacement.type === REF_DIRECT){ // as Text node
-							var tDOM = document.createTextNode(replacement.data);
-							current.parentNode.insertBefore(tDOM, current.nextSibling);
-						}
-						else{ // as Element from text
-							var tDOM = $.parseElement(replacement.data, true);
-							for (var a = 0; a < tDOM.length; a++) {
-								parentNode.insertBefore(tDOM[a], current.nextSibling);
-								current = tDOM[a];
-							}
-						}
+					if(replacement.type === REF_DIRECT) // as Text node
+						return replacement.data;
 
-						current = tDOM;
-						return '';
+					return full;
+				}).split('{{%=');
+
+				if(false && ref.innerHTML !== undefined){
+					var indexes = ref.indexes;
+					var parentNode = current.parentNode;
+					parentNode.innerHTML = ref.textContent[0];
+
+					for (var i = 0; i < indexes.length; i++) {
+						var replacement = parsed[indexes[i]];
+
+						// as Element from text
+						var tDOM = $.parseElement(replacement.data + ref.textContent[i + 1], true);
+						for (var a = 0; a < tDOM.length; a++) {
+							parentNode.insertBefore(tDOM[a], current.nextSibling);
+							current = tDOM[a];
+						}
 					}
-
-					// Not text only type
-					if(haveDynamicData === false && replacement.type !== 3)
-						haveDynamicData = true;
-
-					return replacement.data;
-				});
-				continue;
+				}
+				
+				refA.textContent = textTemp[0];
 			}
 		}
 
@@ -332,7 +331,7 @@ sf.model = function(scope){
 			// Clear memory before return
 			preParsed = variableList = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
 			setTimeout(function(){prepared = null}, 1);
-			prepared = prepared.split('{%{%=').join('{{%=');
+			//prepared = prepared.split('{%{%=').join('{{%=');
 		}
 		return prepared;
 	}
@@ -1291,18 +1290,30 @@ sf.model = function(scope){
 				address:$.getSelector(nodes[i], true)
 			};
 
-			if(temp.nodeType === 1)
+			if(temp.nodeType === 1) // Element
 				temp.attributes = addressAttributes(nodes[i]);
 
-			else if(temp.nodeType === 3){
-				var innerHTML = nodes[i].parentNode.innerHTML;
+			else if(temp.nodeType === 3){ // Text node
+				var innerHTML = nodes[i].parentNode.innerHTML.split(/{{%=(?=[0-9]+)/);
 				temp.direct = false;
 
-				if(innerHTML.split('<').length === 1){
-					innerHTML = innerHTML.split('{{%=');
+				if(innerHTML.length === 2)
+					temp.direct = Number(innerHTML[1]) || false;
 
-					if(innerHTML[0] === '' && innerHTML.length === 2)
-						temp.direct = Number(innerHTML[1]) || false;
+				if(temp.direct === false){
+					innerHTML = nodes[i].textContent;
+
+					temp.indexes = innerHTML.match(/(?<={%{%=)[0-9]+/gm);
+					if(temp.indexes !== null){
+						temp.indexes = temp.indexes.map(Number);
+
+						if(innerHTML[0] === "\n")
+							innerHTML = trimIndentation(innerHTML).trim();
+						
+						temp.innerHTML = innerHTML.split(/{%{%=[0-9]+/gm);
+						nodes[i].textContent = temp.innerHTML.shift();
+					}
+					else delete temp.indexes;
 				}
 			}
 
