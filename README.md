@@ -11,6 +11,7 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 - [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
 - [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
+- [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
