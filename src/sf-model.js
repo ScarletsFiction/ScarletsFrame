@@ -328,7 +328,6 @@ sf.model = function(scope){
 			// Clear memory before return
 			preParsed = variableList = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
 			setTimeout(function(){prepared = null}, 1);
-			//prepared = prepared.split('{%{%=').join('{{%=');
 		}
 		return prepared;
 	}
@@ -422,6 +421,10 @@ sf.model = function(scope){
 			while((s1 = VarPass_.exec(temp)) !== null){
 				VarPass.push(s1[2]);
 			}
+
+			if(_model_ === null && runEval === '#noEval')
+				VarPass.push('_model_');
+
 			if(VarPass.length !== 0){
 				var obtained = [];
 				for (var i = 0; i < VarPass.length; i++) {
@@ -439,7 +442,7 @@ sf.model = function(scope){
 				else VarPass = '{'+VarPass.join(',')+'}';
 				temp = temp.split('&VarPass&').join(VarPass);
 			}
-			temp = temp.split('&VarPass&').join('null');
+			else temp = temp.split('&VarPass&').join('null');
 
 			check = temp.split('@if ');
 			if(check.length !== 1){
@@ -492,7 +495,7 @@ sf.model = function(scope){
 
 					// Push data
 					preParsedReference.push(elseIf);
-					return '{%{%=' + (preParsedReference.length - 1);
+					return '{{%%=' + (preParsedReference.length - 1);
 				}
 
 				var scopes = [check[0], _model_, _modelScope, _content_];
@@ -518,7 +521,7 @@ sf.model = function(scope){
 
 				if(runEval === '#noEval'){
 					preParsedReference.push({type:REF_EXEC, data:scopes});
-					return '{%{%=' + (preParsedReference.length - 1);
+					return '{{%%=' + (preParsedReference.length - 1);
 				}
 
 				temp = localEval.apply(self.root, scopes);
@@ -708,11 +711,13 @@ sf.model = function(scope){
 					if(!other) other = 1;
 					for (var i = 0; i < other; i++) {
 						var oldChild = exist[index + i];
+						if(oldChild === undefined) break;
 
 						if(list.$virtual){
 							oldChild.parentNode.replaceChild(temp, oldChild);
 							return;
 						}
+
 						parentNode.replaceChild(temp, oldChild);
 						if(callback !== undefined && callback.update)
 							callback.update(temp, 'replace');
@@ -1291,31 +1296,30 @@ sf.model = function(scope){
 				temp.attributes = addressAttributes(nodes[i]);
 
 			else if(temp.nodeType === 3){ // Text node
-				var innerHTML = nodes[i].parentNode.innerHTML.split(/{{%=(?=[0-9]+)/);
+				var innerHTML = nodes[i].textContent;
 				temp.direct = false;
 
-				if(innerHTML.length === 2)
-					temp.direct = Number(innerHTML[1]) || false;
+				temp.indexes = innerHTML.match(/(?<={{%%=)[0-9]+/gm);
+				if(temp.indexes !== null){
+					temp.indexes = temp.indexes.map(Number);
 
-				if(temp.direct === false){
-					innerHTML = nodes[i].textContent;
+					innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
 
-					temp.indexes = innerHTML.match(/(?<={%{%=)[0-9]+/gm);
-					if(temp.indexes !== null){
-						temp.indexes = temp.indexes.map(Number);
-
-						innerHTML = innerHTML.split(/{%{%=[0-9]+/gm);
-
-						if(innerHTML[0][0] === "\n"){
-							for (var a = 0; a < innerHTML.length; a++) {
-								innerHTML[a] = trimIndentation(innerHTML[a]).trim();
-							}
+					if(innerHTML[0][0] === "\n"){
+						for (var a = 0; a < innerHTML.length; a++) {
+							innerHTML[a] = trimIndentation(innerHTML[a]).trim();
 						}
-
-						nodes[i].textContent = innerHTML.shift();
-						temp.innerHTML = innerHTML;
 					}
-					else delete temp.indexes;
+
+					nodes[i].textContent = innerHTML[0].search(/{{%%=[0-9]+/) === 0 ? '' : innerHTML.shift();
+					temp.innerHTML = innerHTML;
+				}
+				else{
+					delete temp.indexes;
+					innerHTML = nodes[i].parentNode.innerHTML.split(/{{%=(?=[0-9]+)/);
+
+					if(innerHTML.length === 2)
+						temp.direct = Number(innerHTML[1]) || false;
 				}
 			}
 
