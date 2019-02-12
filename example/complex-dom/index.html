@@ -1,0 +1,41 @@
+<!DOCTYPE html><html><head>
+  <title>Sample App</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="height=device-height, initial-scale=1, user-scalable=no">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.4.0/animate.min.css" rel="stylesheet">
+  <link href="./style.css" rel="stylesheet">
+
+  <!-- ScarletsFrame framework -->
+  <script src='../../dist/scarletsframe.js'></script>
+</head><body class="body">
+
+<div class="container" sf-controller="myList">
+  <div class="today">{{ message }}</div>
+  <div class="row">
+    <ul class="todo-list">
+
+      <!-- Bind array from the model -->
+      <li sf-repeat-this="x in list">
+        <div class="checkbox">
+          <span>{{ x.type }}</span>
+
+          {{@if x.type === 'Timer':
+            {[ - {{ x.i }} ]}
+
+          @elseif list[list.length - 1] === #x:
+            x.last = true;
+            {[ - Am I the last one? ]}
+
+          @elseif x.last:
+            delete x.last;
+            {[ - I'm no longer the last one ]}
+          }}
+        </div>
+      </li>
+      
+    </ul>
+  </div>
+  
+  <script type="text/javascript" src="app/controller.js"></script>
+</div></body>
