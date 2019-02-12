@@ -140,7 +140,7 @@ sf.model = function(scope){
 		for (var i = 0; i < elseIf.length; i++) {
 			// Check the condition
 			scopes[0] = elseIf[i][0];
-			if(localEval.apply(self.root, scopes) == false)
+			if(!localEval.apply(self.root, scopes))
 				continue;
 
 			// Get the value
@@ -181,7 +181,7 @@ sf.model = function(scope){
 				scopes[0] = ref.if[0];
 
 				// If condition was not meet
-				if(localEval.apply(self.root, scopes) == false){
+				if(!localEval.apply(self.root, scopes)){
 					parsed[i].data = elseIfHandle(ref, scopes);
 					continue;
 				}
@@ -498,7 +498,7 @@ sf.model = function(scope){
 				var scopes = [check[0], _model_, _modelScope, _content_];
 
 				// If condition was not meet
-				if(localEval.apply(self.root, scopes) == false){
+				if(!localEval.apply(self.root, scopes)){
 					check.shift();
 					return elseIfHandle(findElse(check), scopes);
 				}
