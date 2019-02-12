@@ -165,6 +165,9 @@ sf.model = function(scope){
 		var parse = template.parse;
 		var parsed = {};
 
+		// Save model item reference to node
+		html.model = item;
+
 		// Get or evaluate static or dynamic data
 		for (var i = 0; i < parse.length; i++) {
 			var ref = parse[i];
@@ -560,7 +563,7 @@ sf.model = function(scope){
 
 			// Hard refresh
 			if(options === 'hardRefresh'){
-				var item = self.root[modelName][propertyName];
+				var item = list;
 				for (var i = index; i < item.length; i++) {
 					if(list.$virtual)
 						parentNode.insertBefore(preparedParser(template, item[i]), parentNode.lastElementChild);
@@ -656,7 +659,33 @@ sf.model = function(scope){
 				return;
 			}
 
-			var item = self.root[modelName][propertyName][index];
+			// Update
+			else if(options === 'update'){
+				if(!other) other = index + 1;
+				else if(other < 0) other = list.length + other;
+				else other = index - other;
+
+				for (var i = index; i < other; i++) {
+					var oldChild = exist[i];
+					if(oldChild === undefined || list[i] === undefined)
+						break;
+
+					var temp = preparedParser(template, list[i]);
+
+					if(list.$virtual){
+						oldChild.parentNode.replaceChild(temp, oldChild);
+						return;
+					}
+
+					parentNode.replaceChild(temp, oldChild);
+					if(callback !== undefined && callback.update)
+						callback.update(temp, 'replace');
+				}
+			}
+
+			var item = list[index];
+			if(item === undefined) return;
+
 			var temp = preparedParser(template, item);
 			var referenceNode = exist[index];
 
@@ -696,34 +725,13 @@ sf.model = function(scope){
 				if(callback !== undefined && callback.create)
 					callback.create(temp);
 			}
-			else{
-				// Create
-				if(options === 'insertBefore'){
-					exist[0].insertAdjacentElement('beforeBegin', temp);
-					if(callback !== undefined && callback.create)
-						callback.create(temp);
+			else if(options === 'insertBefore'){
+				exist[0].insertAdjacentElement('beforeBegin', temp);
+				if(callback !== undefined && callback.create)
+					callback.create(temp);
 
-					// Refresh virtual scroll
-					if(list.$virtual) list.$virtual.refresh();
-				}
-
-				// Update
-				else{
-					if(!other) other = 1;
-					for (var i = 0; i < other; i++) {
-						var oldChild = exist[index + i];
-						if(oldChild === undefined) break;
-
-						if(list.$virtual){
-							oldChild.parentNode.replaceChild(temp, oldChild);
-							return;
-						}
-
-						parentNode.replaceChild(temp, oldChild);
-						if(callback !== undefined && callback.update)
-							callback.update(temp, 'replace');
-					}
-				}
+				// Refresh virtual scroll
+				if(list.$virtual) list.$virtual.refresh();
 			}
 		}
 
