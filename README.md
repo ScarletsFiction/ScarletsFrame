@@ -282,7 +282,7 @@ myArray.hardRefresh();
 #### softRefresh
 Redraw some element only. If no index being passed it will search for modified object if the array.
 ```js
-myArray.softRefresh(index = -1);
+myArray.softRefresh(index, length);
 ```
 
 #### swap
