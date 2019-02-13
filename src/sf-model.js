@@ -286,7 +286,7 @@ sf.model = function(scope){
 			var lastParsedIndex = preParsedReference.length;
 		}
 
-		var prepared = html.replace(/{{([^@][\s\S]*?)}}/g, function(actual, temp){
+		var prepared = html.replace(/{{([^@%][\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
 			temp = escapeEscapedQuote(temp); // ToDo: Escape
 
@@ -1264,6 +1264,7 @@ sf.model = function(scope){
 		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
 		var preParsed = copy[1];
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
+		console.log(copy[0]);
 
 		// Build element and start addressing
 		copy = $.parseElement(copy)[0];
@@ -1298,6 +1299,7 @@ sf.model = function(scope){
 				attributes:currentElement
 			});
 
+					console.log(nodes);
 		for (var i = 0; i < nodes.length; i++) {
 			var temp = {
 				nodeType:nodes[i].nodeType,
@@ -1316,14 +1318,11 @@ sf.model = function(scope){
 					temp.indexes = temp.indexes.map(Number);
 
 					innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
-
-					if(innerHTML[0][0] === "\n"){
-						for (var a = 0; a < innerHTML.length; a++) {
-							innerHTML[a] = trimIndentation(innerHTML[a]).trim();
-						}
+					for (var a = 0; a < innerHTML.length; a++) {
+						innerHTML[a] = trimIndentation(innerHTML[a]).trim();
 					}
 
-					nodes[i].textContent = innerHTML[0].search(/{{%%=[0-9]+/) === 0 ? '' : innerHTML.shift();
+					nodes[i].textContent = innerHTML[0].search(/{{%%=[0-9]+/) === 0 ? '' : innerHTML.shift().trim();
 					temp.innerHTML = innerHTML;
 				}
 				else{
@@ -1409,7 +1408,7 @@ sf.model = function(scope){
 
 			var model = sf.controller.modelName(current);
 			current.removeAttribute('sf-preprocess');
-			
+
 			if(queued !== false)
 				current.classList.remove('sf-dom-queued');
 
