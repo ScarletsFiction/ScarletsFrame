@@ -988,7 +988,7 @@ sf.model = function(scope){
 	}
 
 	var alreadyInitialized = false;
-	self.init = function(targetNode){
+	self.init = function(targetNode, queued = false){
 		if(alreadyInitialized && !targetNode) return;
 		alreadyInitialized = true;
 		setTimeout(function(){
@@ -996,13 +996,16 @@ sf.model = function(scope){
 		}, 50);
 
 		if(!targetNode) targetNode = document.body;
-		self.parsePreprocess(self.queuePreprocess(targetNode));
+		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
 		bindInput(targetNode);
 
 		var temp = $('[sf-repeat-this]', targetNode);
 		for (var i = 0; i < temp.length; i++) {
 			var element = temp[i];
 			var parent = element.parentElement;
+
+			if(queued !== false)
+				element.classList.remove('sf-dom-queued');
 
 			if(element.parentNode.classList.contains('sf-virtual-list')){
 				var ceiling = document.createElement(element.tagName);
@@ -1399,32 +1402,35 @@ sf.model = function(scope){
 		return temp;
 	}
 
-	self.parsePreprocess = function(nodes){
+	self.parsePreprocess = function(nodes, queued){
 		for (var a = 0; a < nodes.length; a++) {
-			var model = sf.controller.modelName(nodes[a]);
-			nodes[a].removeAttribute('sf-preprocess');
+			// Get reference for debugging
+			var current = processingElement = nodes[a];
+
+			var model = sf.controller.modelName(current);
+			current.removeAttribute('sf-preprocess');
+			
+			if(queued !== false)
+				current.classList.remove('sf-dom-queued');
 
 			if(!self.root[model])
-				return console.error("Can't parse element because model for '"+model+"' was not found", nodes[a]);
+				return console.error("Can't parse element because model for '"+model+"' was not found", current);
 
 			var modelRef = self.root[model];
 
-			// Get reference for debugging
-			processingElement = nodes[a];
-
 			// Double check if the child element already bound to prevent vulnerability
-			if(/sf-bind-key|sf-bind-list/.test(nodes[a].innerHTML)){
+			if(/sf-bind-key|sf-bind-list/.test(current.innerHTML)){
 				console.error("Can't parse element that already bound");
 				console.log(processingElement.cloneNode(true));
 				return;
 			}
 
-			if(nodes[a].hasAttribute('sf-bind'))
-				self.bindElement(nodes[a], nodes[a].getAttribute('sf-bind'));
+			if(current.hasAttribute('sf-bind'))
+				self.bindElement(current, current.getAttribute('sf-bind'));
 
 			// Avoid editing the outerHTML because it will remove the bind
-			var temp = uniqueDataParser(nodes[a].innerHTML, self.root[model], false, model);
-			nodes[a].innerHTML = dataParser(temp, self.root[model], false, model);
+			var temp = uniqueDataParser(current.innerHTML, self.root[model], false, model);
+			current.innerHTML = dataParser(temp, self.root[model], false, model);
 
 			var attrs = nodes[a].attributes;
 			for (var i = 0; i < attrs.length; i++) {

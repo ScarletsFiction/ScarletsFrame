@@ -4,7 +4,7 @@ sf.loader = new function(){
 	self.totalContent = 0;
 	self.DOMWasLoaded = false;
 	self.DOMReady = false;
-	self.turnedOff = false;
+	self.turnedOff = true;
 
 	var whenDOMReady = [];
 	var whenDOMLoaded = [];
@@ -36,7 +36,6 @@ sf.loader = new function(){
 		for (var i = 0; i < whenProgress.length; i++) {
 			whenProgress[i](self.loadedContent, self.totalContent);
 		}
-		if(element && element.removeAttribute) element.removeAttribute('onload');
 	}
 
 	self.css = function(list){
@@ -48,15 +47,17 @@ sf.loader = new function(){
 			}
 			if(list.length === 0) return;
 		}
-		self.totalContent = self.totalContent + list.length;
-		var temp = '';
-		for(var i = 0; i < list.length; i++){
-			temp += '<link onload="sf.loader.f(this);" rel="stylesheet" href="'+list[i]+'">';
-		}
+		self.turnedOff = false;
 
-		self.domReady(function(){
-			document.getElementsByTagName('body')[0].insertAdjacentHTML('beforeend', temp);
-		});
+		self.totalContent = self.totalContent + list.length;
+		for(var i = 0; i < list.length; i++){
+			var s = document.createElement('link');
+	        s.rel = 'stylesheet';
+	        s.href = list[i];
+	        s.addEventListener('load', sf.loader.f, {once:true});
+	        s.addEventListener('error', sf.loader.f, {once:true});
+	        document.head.appendChild(s);
+		}
 	}
 
 	self.js = function(list){
@@ -68,6 +69,8 @@ sf.loader = new function(){
 			}
 			if(list.length === 0) return;
 		}
+		self.turnedOff = false;
+
 		self.totalContent = self.totalContent + list.length;
 		for(var i = 0; i < list.length; i++){
 			var s = document.createElement('script');
@@ -86,57 +89,85 @@ sf.loader = new function(){
 			console.warn("If you don't use content loader feature, please turn it off with `sf.loader.off()`");
 		}
 	}, 10000);
-	var everythingLoaded = setInterval(function() {
-	if (/loaded|complete/.test(document.readyState)) {
-		if(self.DOMReady === false){
-			self.DOMReady = true;
-			for (var i = 0; i < whenDOMReady.length; i++) {
+
+	var isQueued = false;
+	document.addEventListener("DOMContentLoaded", function(event){
+		// Add processing class to queued element
+		if(isQueued === false && document.body){
+			isQueued = sf.model.queuePreprocess(document.body);
+			for (var i = 0; i < isQueued.length; i++) {
+				if(isQueued[i].nodeType === 1)
+					isQueued[i].classList.add('sf-dom-queued');
+			}
+
+			var repeatedList = $('[sf-repeat-this]', document.body);
+			for (var i = 0; i < repeatedList.length; i++) {
+				repeatedList[i].classList.add('sf-dom-queued');
+			}
+
+			// Find images
+			var temp = $('img:not(onload)[src]');
+			for (var i = 0; i < temp.length; i++) {
+				sf.loader.totalContent++;
+				temp[i].addEventListener('load', sf.loader.f, {once:true});
+				temp[i].addEventListener('error', sf.loader.f, {once:true});
+			}
+		}
+
+		function onReadyState(){
+			if(isQueued === null){
+				clearInterval(onReadyState_timer);
+				return;
+			}
+
+			if(self.turnedOff === false && self.loadedContent < self.totalContent)
+				return;
+
+			if(/loaded|complete/.test(document.readyState) === false)
+				return;
+
+			clearInterval(onReadyState_timer);
+
+			if(self.DOMReady === false){
+				self.DOMReady = true;
+				for (var i = 0; i < whenDOMReady.length; i++) {
+					try{
+						whenDOMReady[i]();
+					} catch(e) {
+						console.error(e);
+					}
+				}
+			}
+
+			var listener = sf.dom('script, link, img');
+			for (var i = 0; i < listener.length; i++) {
+				listener[i].removeEventListener('error', sf.loader.f);
+				listener[i].removeEventListener('load', sf.loader.f);
+			}
+
+			self.DOMWasLoaded = true;
+			for (var i = 0; i < whenDOMLoaded.length; i++) {
 				try{
-					whenDOMReady[i]();
-				} catch(e) {
+					whenDOMLoaded[i]();
+				} catch(e){
 					console.error(e);
 				}
 			}
+			whenProgress.splice(0);
+			whenDOMReady.splice(0);
+			whenDOMLoaded.splice(0);
+			whenDOMReady = whenDOMLoaded = null;
+
+			// Last init
+			sf.controller.init();
+			sf.model.init(document.body, isQueued);
+			sf.router.init();
+
+			isQueued = null;
 		}
 
-		if(self.loadedContent < self.totalContent || self.loadedContent === 0){
-			if(!self.turnedOff)
-				return;
-		}
-
-		var scripts = sf.dom('script');
-		for (var i = 0; i < scripts.length; i++) {
-			scripts[i].removeEventListener('error', sf.loader.f);
-		}
-
-		clearInterval(everythingLoaded);
-		self.DOMWasLoaded = true;
-		for (var i = 0; i < whenDOMLoaded.length; i++) {
-			try{
-				whenDOMLoaded[i]();
-			} catch(e){
-				console.error(e);
-			}
-		}
-		whenProgress.splice(0);
-		whenDOMReady.splice(0);
-		whenDOMLoaded.splice(0);
-		whenProgress = whenDOMReady = whenDOMLoaded = null;
-
-		// Last init
-		sf.controller.init();
-		sf.model.init();
-		sf.router.init();
-	}
-	}, 100);
-};
+		var onReadyState_timer = setInterval(onReadyState, 100);
+		onReadyState();
+	});
+}
 sf.prototype.constructor = sf.loader.onFinish;
-
-// Find images
-sf.loader.domReady(function(){
-	var temp = $('img:not(onload)[src]');
-	for (var i = 0; i < temp.length; i++) {
-		sf.loader.totalContent++;
-		temp[i].setAttribute('onload', "sf.loader.f(this)");
-	}
-}, 0);
