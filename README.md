@@ -281,7 +281,7 @@ myArray.hardRefresh();
 ```
 
 #### softRefresh
-Redraw some element only. If no index being passed it will search for modified object if the array.
+Redraw some element only. The length can be passed with negative number to select from the last index.
 ```js
 myArray.softRefresh(index, length);
 ```

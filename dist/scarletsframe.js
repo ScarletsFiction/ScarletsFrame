@@ -852,7 +852,7 @@ sf.loader = new function(){
 	self.totalContent = 0;
 	self.DOMWasLoaded = false;
 	self.DOMReady = false;
-	self.turnedOff = false;
+	self.turnedOff = true;
 
 	var whenDOMReady = [];
 	var whenDOMLoaded = [];
@@ -884,7 +884,6 @@ sf.loader = new function(){
 		for (var i = 0; i < whenProgress.length; i++) {
 			whenProgress[i](self.loadedContent, self.totalContent);
 		}
-		if(element && element.removeAttribute) element.removeAttribute('onload');
 	}
 
 	self.css = function(list){
@@ -896,15 +895,17 @@ sf.loader = new function(){
 			}
 			if(list.length === 0) return;
 		}
-		self.totalContent = self.totalContent + list.length;
-		var temp = '';
-		for(var i = 0; i < list.length; i++){
-			temp += '<link onload="sf.loader.f(this);" rel="stylesheet" href="'+list[i]+'">';
-		}
+		self.turnedOff = false;
 
-		self.domReady(function(){
-			document.getElementsByTagName('body')[0].insertAdjacentHTML('beforeend', temp);
-		});
+		self.totalContent = self.totalContent + list.length;
+		for(var i = 0; i < list.length; i++){
+			var s = document.createElement('link');
+	        s.rel = 'stylesheet';
+	        s.href = list[i];
+	        s.addEventListener('load', sf.loader.f, {once:true});
+	        s.addEventListener('error', sf.loader.f, {once:true});
+	        document.head.appendChild(s);
+		}
 	}
 
 	self.js = function(list){
@@ -916,6 +917,8 @@ sf.loader = new function(){
 			}
 			if(list.length === 0) return;
 		}
+		self.turnedOff = false;
+
 		self.totalContent = self.totalContent + list.length;
 		for(var i = 0; i < list.length; i++){
 			var s = document.createElement('script');
@@ -934,60 +937,88 @@ sf.loader = new function(){
 			console.warn("If you don't use content loader feature, please turn it off with `sf.loader.off()`");
 		}
 	}, 10000);
-	var everythingLoaded = setInterval(function() {
-	if (/loaded|complete/.test(document.readyState)) {
-		if(self.DOMReady === false){
-			self.DOMReady = true;
-			for (var i = 0; i < whenDOMReady.length; i++) {
+
+	var isQueued = false;
+	document.addEventListener("DOMContentLoaded", function(event){
+		// Add processing class to queued element
+		if(isQueued === false && document.body){
+			isQueued = sf.model.queuePreprocess(document.body);
+			for (var i = 0; i < isQueued.length; i++) {
+				if(isQueued[i].nodeType === 1)
+					isQueued[i].classList.add('sf-dom-queued');
+			}
+
+			var repeatedList = $('[sf-repeat-this]', document.body);
+			for (var i = 0; i < repeatedList.length; i++) {
+				repeatedList[i].classList.add('sf-dom-queued');
+			}
+
+			// Find images
+			var temp = $('img:not(onload)[src]');
+			for (var i = 0; i < temp.length; i++) {
+				sf.loader.totalContent++;
+				temp[i].addEventListener('load', sf.loader.f, {once:true});
+				temp[i].addEventListener('error', sf.loader.f, {once:true});
+			}
+		}
+
+		function onReadyState(){
+			if(isQueued === null){
+				clearInterval(onReadyState_timer);
+				return;
+			}
+
+			if(self.turnedOff === false && self.loadedContent < self.totalContent)
+				return;
+
+			if(/loaded|complete/.test(document.readyState) === false)
+				return;
+
+			clearInterval(onReadyState_timer);
+
+			if(self.DOMReady === false){
+				self.DOMReady = true;
+				for (var i = 0; i < whenDOMReady.length; i++) {
+					try{
+						whenDOMReady[i]();
+					} catch(e) {
+						console.error(e);
+					}
+				}
+			}
+
+			var listener = sf.dom('script, link, img');
+			for (var i = 0; i < listener.length; i++) {
+				listener[i].removeEventListener('error', sf.loader.f);
+				listener[i].removeEventListener('load', sf.loader.f);
+			}
+
+			self.DOMWasLoaded = true;
+			for (var i = 0; i < whenDOMLoaded.length; i++) {
 				try{
-					whenDOMReady[i]();
-				} catch(e) {
+					whenDOMLoaded[i]();
+				} catch(e){
 					console.error(e);
 				}
 			}
+			whenProgress.splice(0);
+			whenDOMReady.splice(0);
+			whenDOMLoaded.splice(0);
+			whenDOMReady = whenDOMLoaded = null;
+
+			// Last init
+			sf.controller.init();
+			sf.model.init(document.body, isQueued);
+			sf.router.init();
+
+			isQueued = null;
 		}
 
-		if(self.loadedContent < self.totalContent || self.loadedContent === 0){
-			if(!self.turnedOff)
-				return;
-		}
-
-		var scripts = sf.dom('script');
-		for (var i = 0; i < scripts.length; i++) {
-			scripts[i].removeEventListener('error', sf.loader.f);
-		}
-
-		clearInterval(everythingLoaded);
-		self.DOMWasLoaded = true;
-		for (var i = 0; i < whenDOMLoaded.length; i++) {
-			try{
-				whenDOMLoaded[i]();
-			} catch(e){
-				console.error(e);
-			}
-		}
-		whenProgress.splice(0);
-		whenDOMReady.splice(0);
-		whenDOMLoaded.splice(0);
-		whenProgress = whenDOMReady = whenDOMLoaded = null;
-
-		// Last init
-		sf.controller.init();
-		sf.model.init();
-		sf.router.init();
-	}
-	}, 100);
-};
+		var onReadyState_timer = setInterval(onReadyState, 100);
+		onReadyState();
+	});
+}
 sf.prototype.constructor = sf.loader.onFinish;
-
-// Find images
-sf.loader.domReady(function(){
-	var temp = $('img:not(onload)[src]');
-	for (var i = 0; i < temp.length; i++) {
-		sf.loader.totalContent++;
-		temp[i].setAttribute('onload', "sf.loader.f(this)");
-	}
-}, 0);
 // Data save and HTML content binding
 sf.model = function(scope){
 	if(!sf.model.root[scope])
@@ -1276,7 +1307,7 @@ sf.model = function(scope){
 			var lastParsedIndex = preParsedReference.length;
 		}
 
-		var prepared = html.replace(/{{([^@][\s\S]*?)}}/g, function(actual, temp){
+		var prepared = html.replace(/{{([^@%][\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
 			temp = escapeEscapedQuote(temp); // ToDo: Escape
 
@@ -1978,7 +2009,7 @@ sf.model = function(scope){
 	}
 
 	var alreadyInitialized = false;
-	self.init = function(targetNode){
+	self.init = function(targetNode, queued = false){
 		if(alreadyInitialized && !targetNode) return;
 		alreadyInitialized = true;
 		setTimeout(function(){
@@ -1986,13 +2017,16 @@ sf.model = function(scope){
 		}, 50);
 
 		if(!targetNode) targetNode = document.body;
-		self.parsePreprocess(self.queuePreprocess(targetNode));
+		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
 		bindInput(targetNode);
 
 		var temp = $('[sf-repeat-this]', targetNode);
 		for (var i = 0; i < temp.length; i++) {
 			var element = temp[i];
 			var parent = element.parentElement;
+
+			if(queued !== false)
+				element.classList.remove('sf-dom-queued');
 
 			if(element.parentNode.classList.contains('sf-virtual-list')){
 				var ceiling = document.createElement(element.tagName);
@@ -2251,6 +2285,7 @@ sf.model = function(scope){
 		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
 		var preParsed = copy[1];
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
+		console.log(copy[0]);
 
 		// Build element and start addressing
 		copy = $.parseElement(copy)[0];
@@ -2285,6 +2320,7 @@ sf.model = function(scope){
 				attributes:currentElement
 			});
 
+					console.log(nodes);
 		for (var i = 0; i < nodes.length; i++) {
 			var temp = {
 				nodeType:nodes[i].nodeType,
@@ -2303,14 +2339,11 @@ sf.model = function(scope){
 					temp.indexes = temp.indexes.map(Number);
 
 					innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
-
-					if(innerHTML[0][0] === "\n"){
-						for (var a = 0; a < innerHTML.length; a++) {
-							innerHTML[a] = trimIndentation(innerHTML[a]).trim();
-						}
+					for (var a = 0; a < innerHTML.length; a++) {
+						innerHTML[a] = trimIndentation(innerHTML[a]).trim();
 					}
 
-					nodes[i].textContent = innerHTML[0].search(/{{%%=[0-9]+/) === 0 ? '' : innerHTML.shift();
+					nodes[i].textContent = innerHTML[0].search(/{{%%=[0-9]+/) === 0 ? '' : innerHTML.shift().trim();
 					temp.innerHTML = innerHTML;
 				}
 				else{
@@ -2389,32 +2422,35 @@ sf.model = function(scope){
 		return temp;
 	}
 
-	self.parsePreprocess = function(nodes){
+	self.parsePreprocess = function(nodes, queued){
 		for (var a = 0; a < nodes.length; a++) {
-			var model = sf.controller.modelName(nodes[a]);
-			nodes[a].removeAttribute('sf-preprocess');
+			// Get reference for debugging
+			var current = processingElement = nodes[a];
+
+			var model = sf.controller.modelName(current);
+			current.removeAttribute('sf-preprocess');
+
+			if(queued !== false)
+				current.classList.remove('sf-dom-queued');
 
 			if(!self.root[model])
-				return console.error("Can't parse element because model for '"+model+"' was not found", nodes[a]);
+				return console.error("Can't parse element because model for '"+model+"' was not found", current);
 
 			var modelRef = self.root[model];
 
-			// Get reference for debugging
-			processingElement = nodes[a];
-
 			// Double check if the child element already bound to prevent vulnerability
-			if(/sf-bind-key|sf-bind-list/.test(nodes[a].innerHTML)){
+			if(/sf-bind-key|sf-bind-list/.test(current.innerHTML)){
 				console.error("Can't parse element that already bound");
 				console.log(processingElement.cloneNode(true));
 				return;
 			}
 
-			if(nodes[a].hasAttribute('sf-bind'))
-				self.bindElement(nodes[a], nodes[a].getAttribute('sf-bind'));
+			if(current.hasAttribute('sf-bind'))
+				self.bindElement(current, current.getAttribute('sf-bind'));
 
 			// Avoid editing the outerHTML because it will remove the bind
-			var temp = uniqueDataParser(nodes[a].innerHTML, self.root[model], false, model);
-			nodes[a].innerHTML = dataParser(temp, self.root[model], false, model);
+			var temp = uniqueDataParser(current.innerHTML, self.root[model], false, model);
+			current.innerHTML = dataParser(temp, self.root[model], false, model);
 
 			var attrs = nodes[a].attributes;
 			for (var i = 0; i < attrs.length; i++) {
