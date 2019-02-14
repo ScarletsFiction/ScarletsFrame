@@ -157,17 +157,11 @@ sf.model = function(scope){
 		return localEval.apply(self.root, scopes);
 	}
 
-	// Template parser
-	var preparedParser_regex = /{{%=([0-9]+)/gm;
+	// ==== Template parser ====
+	var templateParser_regex = /{{%=([0-9]+)/gm;
 	var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
-	var preparedParser = function(template, item){
-		var html = template.html.cloneNode(true);
-		var addresses = template.addresses;
-		var parse = template.parse;
+	var templateExec = function(parse, item){
 		var parsed = {};
-
-		// Save model item reference to node
-		html.model = item;
 
 		// Get or evaluate static or dynamic data
 		for (var i = 0; i < parse.length; i++) {
@@ -194,6 +188,19 @@ sf.model = function(scope){
 				parsed[i].data = localEval.apply(self.root, scopes);
 			}
 		}
+		return parsed;
+	}
+
+	var templateParser = function(template, item){
+		var html = template.html.cloneNode(true);
+		var addresses = template.addresses;
+		var parsed = templateExec(template.parse, item);
+
+		// Save model item reference to node
+		html.model = item;
+
+		var changesReference = [];
+		var pendingInsert = [];
 
 		// Find element where the data belongs to
 		for (var i = 0; i < addresses.length; i++) {
@@ -205,14 +212,22 @@ sf.model = function(scope){
 				var refA = ref.attributes;
 				for (var a = 0; a < refA.length; a++) {
 					var refB = refA[a];
+					var cRef = {attribute:refB};
+					changesReference.push(cRef);
+
 					if(refB.direct !== false){
+						cRef.direct = refB.direct;
 						current.setAttribute(refB.name, parsed[refB.direct].data);
 						continue;
 					}
 
 					// Below is used for multiple data
 					refB = current.attributes[refB.name];
-					refB.value = refB.value.replace(preparedParser_regex, function(full, match){
+					cRef.value = refB.value;
+					cRef.parse_id = [];
+
+					refB.value = refB.value.replace(templateParser_regex, function(full, match){
+						cRef.parse_id.push(match);
 						return parsed[match].data;
 					});
 				}
@@ -222,39 +237,51 @@ sf.model = function(scope){
 			// Replace text node
 			if(ref.nodeType === 3){
 				var refA = current;
-				
+				var cRef = {textContent:refA};
+				changesReference.push(cRef);
+
 				if(ref.direct !== false){
+					cRef.direct = ref.direct;
 					refA.textContent = parsed[ref.direct].data;
 					continue;
 				}
 
 				// Below is used for multiple/dynamic data
 				var haveDynamicData = false;
-				var parentNode = current.parentNode;
-				refA.textContent = refA.textContent.replace(preparedParser_regex, function(full, match){
-					var replacement = parsed[match];
+				var parentNode = current.parentElement;
+				cRef.value = refA.textContent;
+				cRef.parse_id = [];
 
-					if(replacement.type === REF_DIRECT)
-						return replacement.data;
-
-					return full;
+				refA.textContent = refA.textContent.replace(templateParser_regex, function(full, match){
+					cRef.parse_id.push(match);
+					return parsed[match].data;
 				});
+			}
 
-				if(ref.innerHTML !== undefined){
-					var indexes = ref.indexes;
-					var parentNode = current.parentNode;
+			// Replace dynamic node
+			if(ref.nodeType === -1){
+				var cRef = {
+					dynamicFlag:current,
+					parse_index:ref.parse_index,
+					parentNode:current.parentNode,
+					startFlag:ref.startFlag && $.childIndexes(ref.startFlag, html)
+				};
+				changesReference.push(cRef);
 
-					for (var a = 0; a < indexes.length; a++) {
-						var replacement = parsed[indexes[a]];
+				// Pending element insert to take other element reference
+				pendingInsert.push(cRef);
+			}
+		}
 
-						// as Element from text
-						var tDOM = $.parseElement(replacement.data + ref.innerHTML[a], true);
-						for (var a = 0; a < tDOM.length; a++) {
-							parentNode.insertBefore(tDOM[a], current.nextSibling);
-							current = tDOM[a];
-						}
-					}
-				}
+		// Save reference to element
+		html.sf$changesReference = changesReference;
+
+		// Run the pending element
+		for (var i = 0; i < pendingInsert.length; i++) {
+			var ref = pendingInsert[i];
+			var tDOM = $.parseElement(parsed[ref.parse_index].data, true);
+			for (var a = 0; a < tDOM.length; a++) {
+				ref.parentNode.insertBefore(tDOM[a], ref.dynamicFlag);
 			}
 		}
 
@@ -567,9 +594,9 @@ sf.model = function(scope){
 				var item = list;
 				for (var i = index; i < item.length; i++) {
 					if(list.$virtual)
-						parentNode.insertBefore(preparedParser(template, item[i]), parentNode.lastElementChild);
+						parentNode.insertBefore(templateParser(template, item[i]), parentNode.lastElementChild);
 					else
-						parentNode.appendChild(preparedParser(template, item[i]));
+						parentNode.appendChild(templateParser(template, item[i]));
 				}
 
 				if(list.$virtual) list.$virtual.refresh();
@@ -671,7 +698,7 @@ sf.model = function(scope){
 					if(oldChild === undefined || list[i] === undefined)
 						break;
 
-					var temp = preparedParser(template, list[i]);
+					var temp = templateParser(template, list[i]);
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
@@ -687,7 +714,7 @@ sf.model = function(scope){
 			var item = list[index];
 			if(item === undefined) return;
 
-			var temp = preparedParser(template, item);
+			var temp = templateParser(template, item);
 			var referenceNode = exist[index];
 
 			// Create
@@ -916,7 +943,7 @@ sf.model = function(scope){
 			var modelRef = self.root[name];
 			
 			for(var i in items){
-				tempDOM.appendChild(preparedParser(template, items[i]));
+				tempDOM.appendChild(templateParser(template, items[i]));
 			}
 
 			// Enable element binding
@@ -1270,7 +1297,7 @@ sf.model = function(scope){
 
 		// Build element and start addressing
 		copy = $.parseElement(copy)[0];
-		var nodes = self.queuePreprocess(copy, true);
+		var nodes = self.queuePreprocess(copy, true).reverse();
 		var addressed = [];
 
 		function addressAttributes(currentNode){
@@ -1302,14 +1329,14 @@ sf.model = function(scope){
 			});
 
 		for (var i = 0; i < nodes.length; i++) {
-			console.log(nodes[i].parentNode);
 			var temp = {
-				nodeType:nodes[i].nodeType,
-				address:$.getSelector(nodes[i], true)
+				nodeType:nodes[i].nodeType
 			};
 
-			if(temp.nodeType === 1) // Element
+			if(temp.nodeType === 1){ // Element
 				temp.attributes = addressAttributes(nodes[i]);
+				temp.address = $.getSelector(nodes[i], true);
+			}
 
 			else if(temp.nodeType === 3){ // Text node
 				var innerHTML = nodes[i].textContent;
@@ -1327,9 +1354,53 @@ sf.model = function(scope){
 					for (var a = 0; a < innerHTML.length; a++) {
 						innerHTML[a] = trimIndentation(innerHTML[a]).trim();
 					}
+					nodes[i].textContent = innerHTML.shift();
 
-					nodes[i].textContent = innerHTML[0].search(/{{%%=[0-9]+/) === 0 ? '' : innerHTML.shift().trim();
-					temp.innerHTML = innerHTML;
+					var parent = nodes[i].parentNode;
+					var nextSibling = nodes[i].nextSibling;
+
+					var addressStart = null;
+					if(temp.indexes.length !== 0 && nodes[i].textContent.length !== 0)
+						addressStart = $.getSelector(nodes[i], true);
+						// parent.insertBefore(document.createComment('sf_parse_start'), nextSibling);
+
+					var commentFlag = [];
+					for(var a = 0; a < temp.indexes.length; a++){
+						var flag = document.createComment('');
+						parent.insertBefore(flag, nextSibling);
+						commentFlag.push({
+							nodeType:-1,
+							parse_index:temp.indexes[a],
+							startFlag:addressStart,
+							address:$.getSelector(flag, true)
+						});
+
+						if(innerHTML[a]){
+							var textNode = document.createTextNode(innerHTML[a]);
+							parent.insertBefore(textNode, nextSibling);
+
+							// Get new start flag
+							if(a + 1 < temp.indexes.length)
+								addressStart = $.getSelector(textNode, true);
+								// if(nodes[i].previousSibling.nodeType !== 8 || nodes[i].previousSibling.textContent.indexOf('sf_parse_') === -1)
+									// parent.insertBefore(document.createComment('sf_parse_start'), nextSibling);
+						}
+					}
+
+					addressed = addressed.concat(commentFlag);
+					if(nodes[i].textContent === ''){
+						nodes[i].remove();
+						for (var a = 0; a < commentFlag.length; a++) {
+							var ref = commentFlag[a].address;
+							ref[ref.length - 1]--;
+						}
+						continue;
+					}
+					else if(nodes[i].textContent.search(/{{%=[0-9]+/) === -1)
+						continue;
+
+					temp.address = $.getSelector(nodes[i], true);
+					addressed.push(temp);
 				}
 				else{
 					delete temp.indexes;
@@ -1337,6 +1408,7 @@ sf.model = function(scope){
 
 					if(innerHTML[0] === '' && innerHTML.length === 2)
 						temp.direct = Number(innerHTML[1]) || false;
+					temp.address = $.getSelector(nodes[i], true);
 				}
 			}
 
