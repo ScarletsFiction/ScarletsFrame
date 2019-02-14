@@ -22,23 +22,23 @@ gulp.task('js', function(){
       'sf-z_end.js'
     ]))
     .pipe(concat('scarletsframe.js'))
-    .pipe(gulp.dest('dist'))
-
-    .pipe(rename('scarletsframe.min.js'))
     .pipe(babel({
-      "presets": [
+      presets: [
         [
           "@babel/preset-env",
           {
-            "targets": {
-              "ie": "9"
+            targets: {
+              ie: 10
             },
-            "loose":true,
-            "modules": false
+            loose:true,
+            modules: false
           }
         ]
       ]
     }))
+    .pipe(gulp.dest('dist'))
+
+    .pipe(rename('scarletsframe.min.js'))
     .on('error', swallowError)
     .pipe(uglify())
     .on('error', swallowError)
