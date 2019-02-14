@@ -15,7 +15,7 @@ var sf = function(){
 sf.internal = {};
 sf.regex = {
 	// ToDo: Need help to skip escaped quote
-	getQuotes:/((?<![\\])['"])((?:.(?!(?<![\\])\1))*.?)\1/gm,
+	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,
 	avoidQuotes:'(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)',
 	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )'
 };

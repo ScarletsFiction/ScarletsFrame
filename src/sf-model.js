@@ -23,6 +23,7 @@ sf.model = function(scope){
 			indent = indent[1];
 		else indent = indent[0];
 
+		if(indent === undefined) return text;
 		indent = indent.length - indent.trim().length;
 		if(indent === 0) return text;
 		return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
@@ -988,7 +989,7 @@ sf.model = function(scope){
 	}
 
 	var alreadyInitialized = false;
-	self.init = function(targetNode, queued = false){
+	self.init = function(targetNode, queued){
 		if(alreadyInitialized && !targetNode) return;
 		alreadyInitialized = true;
 		setTimeout(function(){
@@ -1004,7 +1005,7 @@ sf.model = function(scope){
 			var element = temp[i];
 			var parent = element.parentElement;
 
-			if(queued !== false)
+			if(queued !== undefined)
 				element.classList.remove('sf-dom-queued');
 
 			if(element.parentNode.classList.contains('sf-virtual-list')){
@@ -1230,8 +1231,10 @@ sf.model = function(scope){
 		var html = element.outerHTML;
 
 		// Check if the child element was already bound to prevent vulnerability
-		if(/sf-bind-key|sf-bind-list/.test(html))
-			throw "Can't parse element that already bound";
+		if(/sf-bind-key|sf-bind-list/.test(html)){
+			console.error("Can't parse element that already bound");
+			return;
+		}
 
 		if(which === 'attr')
 			html = html.replace(element.innerHTML, '');
@@ -1264,7 +1267,6 @@ sf.model = function(scope){
 		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
 		var preParsed = copy[1];
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
-		console.log(copy[0]);
 
 		// Build element and start addressing
 		copy = $.parseElement(copy)[0];
@@ -1299,8 +1301,8 @@ sf.model = function(scope){
 				attributes:currentElement
 			});
 
-					console.log(nodes);
 		for (var i = 0; i < nodes.length; i++) {
+			console.log(nodes[i].parentNode);
 			var temp = {
 				nodeType:nodes[i].nodeType,
 				address:$.getSelector(nodes[i], true)
@@ -1312,9 +1314,13 @@ sf.model = function(scope){
 			else if(temp.nodeType === 3){ // Text node
 				var innerHTML = nodes[i].textContent;
 				temp.direct = false;
+				temp.indexes = [];
 
-				temp.indexes = innerHTML.match(/(?<={{%%=)[0-9]+/gm);
-				if(temp.indexes !== null){
+				innerHTML.replace(/{{%%=([0-9]+)/gm, function(full, match){
+					temp.indexes.push(match);
+				});
+
+				if(temp.indexes.length !== 0){
 					temp.indexes = temp.indexes.map(Number);
 
 					innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
@@ -1345,14 +1351,14 @@ sf.model = function(scope){
 	}
 
 	var excludes = ['HTML','HEAD','STYLE','LINK','META','SCRIPT','OBJECT','IFRAME'];
-	self.queuePreprocess = function(targetNode, extracting = false){
+	self.queuePreprocess = function(targetNode, extracting){
 		var childNodes = (targetNode || document.body).childNodes;
 
 		var temp = [];
 		for (var i = childNodes.length - 1; i >= 0; i--) {
 			var currentNode = childNodes[i];
 
-			if(extracting === false && excludes.indexOf(currentNode.nodeName) !== -1)
+			if(extracting === undefined && excludes.indexOf(currentNode.nodeName) !== -1)
 				continue;
 
 			if(currentNode.nodeType === 1){ // Tag
@@ -1363,7 +1369,7 @@ sf.model = function(scope){
 
 				for (var a = 0; a < attrs.length; a++) {
 					if(attrs[a].value.indexOf('{{') !== -1){
-						if(extracting === false)
+						if(extracting === undefined)
 							currentNode.setAttribute('sf-preprocess', 'attronly');
 						temp.push(currentNode);
 					}
@@ -1381,7 +1387,7 @@ sf.model = function(scope){
 				}
 
 				if(currentNode.nodeValue.indexOf('{{') !== -1){
-					if(extracting === false){
+					if(extracting === undefined){
 						currentNode.parentNode.setAttribute('sf-preprocess', '');
 
 						// Reset Siblings
@@ -1409,7 +1415,7 @@ sf.model = function(scope){
 			var model = sf.controller.modelName(current);
 			current.removeAttribute('sf-preprocess');
 
-			if(queued !== false)
+			if(queued !== undefined)
 				current.classList.remove('sf-dom-queued');
 
 			if(!self.root[model])

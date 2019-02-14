@@ -27,7 +27,7 @@ var $ = sf.dom; // Shortcut
 			if(element[matches](selector) === true)
 				return element;
 
-			element = element.parentElement;
+			element = element.parentNode;
 		} while (element !== null);
 
 		return null;
@@ -213,20 +213,20 @@ var $ = sf.dom; // Shortcut
 		});
 	}, 1);
 
-	self.getSelector = function(element, childIndexes = false, untilElement = false){
+	self.getSelector = function(element, childIndexes, untilElement){
 		var names = [];
-		if(untilElement === false) untilElement = documentElement;
+		if(untilElement === undefined) untilElement = documentElement;
 
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
-		while(element.parentElement !== null){
+		while(element.parentNode !== null){
 			if(element.id){
 				names.unshift('#'+element.id);
 				break;
 			}
 			else{
 				if(element === untilElement){
-					if(childIndexes === false)
+					if(childIndexes === undefined)
 						names.unshift(element.tagName);
 					else names.unshift(0);
 				}
@@ -245,7 +245,9 @@ var $ = sf.dom; // Shortcut
 						names.unshift(":nth-child("+i+")");
 				}
 
-				element = element.parentElement;
+				element = element.parentNode;
+				if(element === null)
+					break;
 			}
 		}
 
