@@ -689,6 +689,6 @@ sf.internal.virtual_scroll = new function(){
             'background: none;'+
             'border: none;'+
             'box-shadow: none;'+
-         '}');
+         '}', style.sheet.cssRules.length);
 	}
 };
