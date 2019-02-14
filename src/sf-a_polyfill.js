@@ -22,27 +22,35 @@ if(typeof Object.assign != 'function'){
   });
 }
 
-if(!Array.prototype.forEach){
-  Array.prototype.forEach = function(callback) {
-    var T, k;
-    if (this == null)
-      throw new TypeError('this is null or not defined');
-    var O = Object(this);
-    var len = O.length >>> 0;
-    if (typeof callback !== 'function')
-      throw new TypeError(callback + ' is not a function');
-    if (arguments.length > 1)
-      T = arguments[1];
-    k = 0;
-    while (k < len) {
-      var kValue;
-      if (k in O) {
-        kValue = O[k];
-        callback.call(T, kValue, k, O);
+if(Element.prototype.remove === undefined || CharacterData.prototype.remove === undefined || DocumentType.prototype.remove === undefined){
+  (function (arr) {
+    arr.forEach(function (item) {
+      if (item.hasOwnProperty('remove')) {
+        return;
       }
-      k++;
-    }
-  };
+      Object.defineProperty(item, 'remove', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: function remove() {
+          if (this.parentNode !== null)
+            this.parentNode.removeChild(this);
+        }
+      });
+    });
+  })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
+}
+
+if(!Element.prototype.matches){
+  Element.prototype.matches = (Element.prototype).matchesSelector ||
+    (Element.prototype).mozMatchesSelector || (Element.prototype).msMatchesSelector ||
+    (Element.prototype).oMatchesSelector || (Element.prototype).webkitMatchesSelector ||
+    function (s) {
+      var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+      i = matches.length;
+      while (--i >= 0 && matches.item(i) !== this){}
+      return i > -1;
+    };
 }
 
 if(!NodeList.prototype.forEach){

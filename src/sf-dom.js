@@ -18,37 +18,37 @@ var $ = sf.dom; // Shortcut
 
 	self.parent = function(element, selector){
 		if(element.closest) return element.closest(selector);
-		var matches = 'matches';
-
-		if(!element.matches)
-			matches = element.msMatchesSelector ? 'msMatchesSelector' : 'webkitMatchesSelector';
 
 		do {
-			if(element[matches](selector) === true)
+			if(element.matches(selector) === true)
 				return element;
 
-			element = element.parentNode;
+			element = element.parentElement;
 		} while (element !== null);
 
 		return null;
 	}
 
 	self.prevAll = function(element, selector, isNext){
-		var matches = 'matches';
 		var result = [];
+		var findNodes = selector === null || selector.constructor !== String ? true : false;
 
-		if(!element.matches)
-			matches = element.msMatchesSelector ? 'msMatchesSelector' : 'webkitMatchesSelector';
-
-		do {
-			if(element[matches](selector) === true)
+		// Skip current element
+		element = isNext ? element.nextSibling : element.previousSibling;
+		while (element !== null) {
+			if(findNodes === false && element.matches(selector) === true)
 				result.push(element);
+			else{
+				if(element === selector)
+					break;
+				result.push(element);
+			}
 
 			if(isNext)
-				element = element.nextElementSibling;
+				element = element.nextSibling;
 			else
-				element = element.previousElementSibling;
-		} while (element !== null);
+				element = element.previousSibling;
+		}
 
 		return result;
 	}
