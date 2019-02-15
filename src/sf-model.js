@@ -160,11 +160,14 @@ sf.model = function(scope){
 	// ==== Template parser ====
 	var templateParser_regex = /{{%=([0-9]+)/gm;
 	var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
-	var templateExec = function(parse, item){
+	var templateExec = function(parse, item, atIndex){
 		var parsed = {};
 
 		// Get or evaluate static or dynamic data
 		for (var i = 0; i < parse.length; i++) {
+			if(atIndex !== undefined && atIndex.indexOf(i) === -1)
+				continue;
+
 			var ref = parse[i];
 			ref.data[1] = item;
 
@@ -210,9 +213,9 @@ sf.model = function(scope){
 			// Modify element attributes
 			if(ref.nodeType === 1){
 				var refA = ref.attributes;
-				for (var a = 0; a < refA.length; a++) {
+				for(var a = 0; a < refA.length; a++){
 					var refB = refA[a];
-					var cRef = {attribute:refB};
+					var cRef = {attribute:current.attributes[refB.name]};
 					changesReference.push(cRef);
 
 					if(refB.direct !== false){
@@ -223,7 +226,7 @@ sf.model = function(scope){
 
 					// Below is used for multiple data
 					refB = current.attributes[refB.name];
-					cRef.value = refB.value;
+					attrRef.value = refB.value;
 					cRef.parse_id = [];
 
 					refB.value = refB.value.replace(templateParser_regex, function(full, match){
@@ -274,7 +277,8 @@ sf.model = function(scope){
 		}
 
 		// Save reference to element
-		html.sf$changesReference = changesReference;
+		html.sf$elementReferences = changesReference;
+		// html.sf$modelParsed = parsed;
 
 		// Run the pending element
 		for (var i = 0; i < pendingInsert.length; i++) {
@@ -286,6 +290,80 @@ sf.model = function(scope){
 		}
 
 		return html;
+	}
+
+	function syntheticTemplate(element, template, property, item){
+		var changes = template.modelReference[property];
+		if(changes === undefined || changes.length === 0){
+			console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
+			return;
+		}
+
+		var parsed = templateExec(template.parse, item, changes);
+		function checkRelated(parseIndex){
+			var found = false;
+			for (var i = 0; i < parseIndex.length; i++) {
+				if(changes.indexOf(parseIndex[i]) !== -1){
+					found = true;
+					break;
+				}
+			}
+			if(found === false) return false;
+
+			// Prepare all required data
+			changes = [];
+			for (var i = 0; i < parseIndex.length; i++) {
+				if(parsed[parseIndex[i]] === undefined){
+					changes.push(parseIndex[i]);
+				}
+			}
+
+			Object.assign(parsed, templateExec(template.parse, item, changes));
+			return true;
+		}
+
+		var changesReference = element.sf$elementReferences;
+		for (var i = 0; i < changesReference.length; i++) {
+			var cRef = changesReference[i];
+
+			if(cRef.dynamicFlag !== undefined){ // Dynamic data
+				// Will only have single parse_index
+				if(parsed[cRef.parse_index] !== undefined){
+					var tDOM = $.parseElement(parsed[cRef.parse_index].data, true);
+					for (var a = 0; a < tDOM.length; a++) {
+						cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
+					}
+				}
+				continue;
+			}
+
+			if(cRef.textContent !== undefined){ // Text only
+				if(cRef.parse_index !== undefined){ // Multiple
+					if(checkRelated(cRef.parse_index) === true){
+						cRef.textContent.textContent = cRef.textContent.textContent.replace(templateParser_regex, function(full, match){
+							return parsed[match].data;
+						});
+					}
+					continue;
+				}
+
+				// Direct value
+				else cRef.textContent.textContent = parsed[cRef.direct].data;
+			}
+			else if(cRef.attribute !== undefined){ // Attributes
+				if(cRef.parse_index !== undefined){ // Multiple
+					if(checkRelated(cRef.parse_index) === true){
+						cRef.attribute.value = cRef.attribute.value.replace(templateParser_regex, function(full, match){
+							return parsed[match].data;
+						});
+					}
+					continue;
+				}
+
+				// Direct value
+				else cRef.attribute.value = parsed[cRef.direct].data;
+			}
+		}
 	}
 
 	// For contributor of this library
@@ -898,6 +976,14 @@ sf.model = function(scope){
 			propertyProxy(list, editProperty[i]);
 		}
 
+		Object.defineProperty(list, 'refresh', {
+			enumerable: false,
+			configurable: true,
+			value: function(property, index){
+				syntheticTemplate(list.getElement(index), template, property, list[index]);
+			}
+		});
+
 		Object.defineProperty(list, 'getElement', {
 			enumerable: false,
 			configurable: true,
@@ -1295,6 +1381,40 @@ sf.model = function(scope){
 		var preParsed = copy[1];
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
 
+		function findModelProperty(){
+			var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.]+)\\b', 'g');
+			var found = {};
+			for (var i = 0; i < preParsed.length; i++) {
+				var current = preParsed[i];
+
+				if(current.type === 0 || current.type === 2){
+					current.data[0].replace(extract, function(full, match){
+						if(found[match] === undefined) found[match] = [i];
+						else if(found[match].indexOf(i) === -1)
+							found[match].push(i);
+					});
+				}
+
+				else if(current.type === 1){
+					var checkList = current.if.join(';');
+
+					if(current.elseValue !== null)
+						checkList += ';' + current.elseValue;
+
+					for (var a = 0; a < current.elseIf.length; a++) {
+						checkList += current.elseIf[a].join(';');
+					}
+
+					checkList.replace(extract, function(full, match){
+						if(found[match] === undefined) found[match] = [i];
+						else if(found[match].indexOf(i) === -1)
+							found[match].push(i);
+					});
+				}
+			}
+			return found;
+		}
+
 		// Build element and start addressing
 		copy = $.parseElement(copy)[0];
 		var nodes = self.queuePreprocess(copy, true).reverse();
@@ -1306,6 +1426,7 @@ sf.model = function(scope){
 			for (var a = 0; a < attrs.length; a++) {
 				var found = attrs[a].value.split('{{%=');
 				if(found.length !== 1){
+
 					var key = {
 						direct: false,
 						name:attrs[a].name
@@ -1313,6 +1434,12 @@ sf.model = function(scope){
 
 					if(found[0] === '' && found.length === 2)
 						key.direct = Number(found[1]) || false;
+					else{
+						key.parse_index = [];
+						key.parse_index.replace(/{{%=([0-9]+)/g, function(full, match){
+							key.parse_index.push(Number(match));
+						});
+					}
 
 					keys.push(key);
 				}
@@ -1341,14 +1468,15 @@ sf.model = function(scope){
 			else if(temp.nodeType === 3){ // Text node
 				var innerHTML = nodes[i].textContent;
 				temp.direct = false;
-				temp.indexes = [];
+				var indexes = [];
 
 				innerHTML.replace(/{{%%=([0-9]+)/gm, function(full, match){
-					temp.indexes.push(match);
+					indexes.push(match);
 				});
 
-				if(temp.indexes.length !== 0){
-					temp.indexes = temp.indexes.map(Number);
+				// Check for dynamic mode
+				if(indexes.length !== 0){
+					indexes = indexes.map(Number);
 
 					innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
 					for (var a = 0; a < innerHTML.length; a++) {
@@ -1359,18 +1487,19 @@ sf.model = function(scope){
 					var parent = nodes[i].parentNode;
 					var nextSibling = nodes[i].nextSibling;
 
+					// Dynamic boundary start
 					var addressStart = null;
-					if(temp.indexes.length !== 0 && nodes[i].textContent.length !== 0)
+					if(indexes.length !== 0 && nodes[i].textContent.length !== 0)
 						addressStart = $.getSelector(nodes[i], true);
-						// parent.insertBefore(document.createComment('sf_parse_start'), nextSibling);
 
+					// Find boundary ends
 					var commentFlag = [];
-					for(var a = 0; a < temp.indexes.length; a++){
+					for(var a = 0; a < indexes.length; a++){
 						var flag = document.createComment('');
 						parent.insertBefore(flag, nextSibling);
 						commentFlag.push({
 							nodeType:-1,
-							parse_index:temp.indexes[a],
+							parse_index:indexes[a],
 							startFlag:addressStart,
 							address:$.getSelector(flag, true)
 						});
@@ -1380,13 +1509,12 @@ sf.model = function(scope){
 							parent.insertBefore(textNode, nextSibling);
 
 							// Get new start flag
-							if(a + 1 < temp.indexes.length)
+							if(a + 1 < indexes.length)
 								addressStart = $.getSelector(textNode, true);
-								// if(nodes[i].previousSibling.nodeType !== 8 || nodes[i].previousSibling.textContent.indexOf('sf_parse_') === -1)
-									// parent.insertBefore(document.createComment('sf_parse_start'), nextSibling);
 						}
 					}
 
+					// Merge boundary address
 					addressed = addressed.concat(commentFlag);
 					if(nodes[i].textContent === ''){
 						nodes[i].remove();
@@ -1398,18 +1526,14 @@ sf.model = function(scope){
 					}
 					else if(nodes[i].textContent.search(/{{%=[0-9]+/) === -1)
 						continue;
-
-					temp.address = $.getSelector(nodes[i], true);
-					addressed.push(temp);
 				}
-				else{
-					delete temp.indexes;
-					innerHTML = nodes[i].parentNode.innerHTML.split('{{%=');
 
-					if(innerHTML[0] === '' && innerHTML.length === 2)
-						temp.direct = Number(innerHTML[1]) || false;
-					temp.address = $.getSelector(nodes[i], true);
-				}
+				// Check if it's only model value
+				innerHTML = nodes[i].textContent.split('{{%=');
+
+				if(innerHTML[0] === '' && innerHTML.length === 2)
+					temp.direct = Number(innerHTML[1]) || false;
+				temp.address = $.getSelector(nodes[i], true);
 			}
 
 			addressed.push(temp);
@@ -1418,7 +1542,8 @@ sf.model = function(scope){
 		return {
 			html:copy,
 			parse:preParsed,
-			addresses:addressed
+			addresses:addressed,
+			modelReference:findModelProperty()
 		}
 	}
 
