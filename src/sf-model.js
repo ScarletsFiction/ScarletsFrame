@@ -330,8 +330,31 @@ sf.model = function(scope){
 				// Will only have single parse_index
 				if(parsed[cRef.parse_index] !== undefined){
 					var tDOM = $.parseElement(parsed[cRef.parse_index].data, true);
+					var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
+					var notExist = false;
+
+					// Replace if exist, skip if similar
 					for (var a = 0; a < tDOM.length; a++) {
-						cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
+						if(currentDOM[a] === undefined){
+							notExist = true;
+							break;
+						}
+						if(currentDOM[a].isEqualNode(tDOM[a]) === false)
+							cRef.parentNode.replaceChild(tDOM[a], currentDOM[a]);
+					}
+
+					// Add if not exist
+					if(notExist){
+						for (var a = 0; a < tDOM.length; a++) {
+							cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
+						}
+					}
+
+					// Remove if over index
+					else{
+						for (var a = tDOM.length; a < currentDOM.length; a++) {
+							currentDOM.remove();
+						}
 					}
 				}
 				continue;
@@ -340,28 +363,42 @@ sf.model = function(scope){
 			if(cRef.textContent !== undefined){ // Text only
 				if(cRef.parse_index !== undefined){ // Multiple
 					if(checkRelated(cRef.parse_index) === true){
-						cRef.textContent.textContent = cRef.textContent.textContent.replace(templateParser_regex, function(full, match){
+						var temp = cRef.textContent.textContent.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
 						});
+
+						if(cRef.textContent.textContent === temp) continue;
+						cRef.textContent.textContent = temp;
 					}
 					continue;
 				}
 
 				// Direct value
-				else cRef.textContent.textContent = parsed[cRef.direct].data;
+				else{
+					var value = parsed[cRef.direct].data;
+					if(cRef.textContent.textContent === value) continue;
+					cRef.textContent.textContent = value;
+				}
 			}
 			else if(cRef.attribute !== undefined){ // Attributes
 				if(cRef.parse_index !== undefined){ // Multiple
 					if(checkRelated(cRef.parse_index) === true){
-						cRef.attribute.value = cRef.attribute.value.replace(templateParser_regex, function(full, match){
+						var temp = cRef.attribute.value.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
 						});
+
+						if(cRef.attribute.value === temp) continue;
+						cRef.attribute.value = temp;
 					}
 					continue;
 				}
 
 				// Direct value
-				else cRef.attribute.value = parsed[cRef.direct].data;
+				else{
+					var value = parsed[cRef.direct].data;
+					if(cRef.attribute.value === value) continue;
+					cRef.attribute.value = value;
+				}
 			}
 		}
 	}
@@ -644,7 +681,7 @@ sf.model = function(scope){
 			// Clear memory before return
 			_modelScope = runEval = scopeMask = itemMask = html = null;
 			setTimeout(function(){prepared = null}, 1);
-			return [prepared, preParsedReference];
+			return [prepared, preParsedReference, _content_];
 		}
 
 		return prepared;
@@ -1379,23 +1416,28 @@ sf.model = function(scope){
 		// Extract data to be parsed
 		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
 		var preParsed = copy[1];
+		var _content_ = copy[2];
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
 
 		function findModelProperty(){
 			var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.]+)\\b', 'g');
 			var found = {};
+
 			for (var i = 0; i < preParsed.length; i++) {
 				var current = preParsed[i];
 
-				if(current.type === 0 || current.type === 2){
+				// Text or attribute
+				if(current.type === 0){
 					current.data[0].replace(extract, function(full, match){
 						if(found[match] === undefined) found[match] = [i];
 						else if(found[match].indexOf(i) === -1)
 							found[match].push(i);
 					});
+					continue;
 				}
 
-				else if(current.type === 1){
+				// Dynamic data
+				if(current.type === 1){
 					var checkList = current.if.join(';');
 
 					if(current.elseValue !== null)
@@ -1404,14 +1446,21 @@ sf.model = function(scope){
 					for (var a = 0; a < current.elseIf.length; a++) {
 						checkList += current.elseIf[a].join(';');
 					}
-
-					checkList.replace(extract, function(full, match){
-						if(found[match] === undefined) found[match] = [i];
-						else if(found[match].indexOf(i) === -1)
-							found[match].push(i);
-					});
 				}
+				else if(current.type === 2)
+					var checkList = current.data[0];
+
+				checkList = checkList.replace(/_result_ \+= _content_\.take\(.*?, ([0-9]+)\);/g, function(full, match){
+					return _content_[match];
+				});
+
+				checkList.replace(extract, function(full, match){
+					if(found[match] === undefined) found[match] = [i];
+					else if(found[match].indexOf(i) === -1)
+						found[match].push(i);
+				});
 			}
+
 			return found;
 		}
 
