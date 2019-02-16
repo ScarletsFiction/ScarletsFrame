@@ -764,7 +764,7 @@ sf.model = function(scope){
 					else
 						parentNode.appendChild(temp);
 
-					syntheticCache(temp, template, items[i]);
+					syntheticCache(temp, template, item[i]);
 				}
 
 				if(list.$virtual) list.$virtual.refresh();
