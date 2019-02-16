@@ -14,7 +14,7 @@ sf(function(){
     myList.list[0].i++;
 
     // Refresh the element for the first index
-    myList.list.softRefresh(0);
+    myList.list.refresh(0);
   }, 1000);
 
   setInterval(function(){
@@ -24,8 +24,9 @@ sf(function(){
       type:"Hello"
     });
 
-    // Refresh index 1 until (last index - 2)
-    myList.list.softRefresh(1, -1); // (from, length)
+    // Refresh index 2 until last index - 1
+    // And force refresh any element related with 'last' property
+    myList.list.refresh(1, -1, 'last'); // (index, length, property)
 
     if(i > 3)
       myList.list.splice(1, 1);
