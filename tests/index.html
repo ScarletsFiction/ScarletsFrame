@@ -96,6 +96,7 @@
             <ul class="sf-virtual-list" scroll-parent-index="1">
                <li sf-repeat-this="x in list1" data-id="{{x.id}}">
                   <label>{{ x.id }}</label>
+
                   {{@if #x === list1[0]:
                      x.first = true;
                      {[<span> - Am I the ({{ one }}) one?</span>]}
@@ -117,7 +118,10 @@
          </ul>
 
          <script type="text/javascript">
+            var test = null;
             sf.model.for('virtual-scroll', function(self, root){
+               test = self;
+
                self.list1 = [];
                self.one = 'first';
 
@@ -160,6 +164,21 @@
                      list.list1.swap(3, 4); // swap / up one more time
                   }, 4000);
                   list.list1.$virtual.refresh();
+
+                  // Save dummy data to element
+                  list.list1.getElement(7).dummy = true;
+                  list.list1.getElement(8).dummy = true;
+
+                  list.list1[7].id = 'Partial refresh';
+                  list.list1.refresh(7);
+
+                  setTimeout(function(){
+                     list.list1[8].id = 'Element refresh';
+                     list.list1.softRefresh(8);
+
+                     if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing");
+                     if(list.list1.getElement(8).dummy) console.error("Data on element refresh was exist");
+                  }, 1000);
 
                   console.log("I got the last index", list.list1.getElement(list.list1.length-1));
                }, 2000);

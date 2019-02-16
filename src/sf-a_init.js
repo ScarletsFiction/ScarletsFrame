@@ -37,3 +37,19 @@ function compareObject(obj1, obj2){
 	}
 	return true;
 }
+
+function hiddenProperty(obj, property, value){
+	Object.defineProperty(obj, property, {
+		enumerable: false,
+		configurable: true,
+		value: value
+	});
+}
+
+function deepProperty(obj, path){
+  for(var i = 0; i < path.length; i++){
+    obj = obj[path[i]];
+    if(obj === undefined) return obj;
+  }
+  return obj;
+}

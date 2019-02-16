@@ -226,7 +226,7 @@ sf.model = function(scope){
 
 					// Below is used for multiple data
 					refB = current.attributes[refB.name];
-					attrRef.value = refB.value;
+					cRef.attribute.value = refB.value;
 					cRef.parse_id = [];
 
 					refB.value = refB.value.replace(templateParser_regex, function(full, match){
@@ -292,11 +292,44 @@ sf.model = function(scope){
 		return html;
 	}
 
+	function syntheticCache(element, template, item){
+		if(element.sf$cache === undefined)
+			element.sf$cache = {};
+
+		var cache = element.sf$cache;
+		var modelRef_array = template.modelRef_array;
+
+		for (var i = 0; i < modelRef_array.length; i++) {
+			var ref = modelRef_array[i];
+			cache[ref[0]] = deepProperty(item, ref[1]);
+		}
+	}
+
 	function syntheticTemplate(element, template, property, item){
-		var changes = template.modelReference[property];
-		if(changes === undefined || changes.length === 0){
-			console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
-			return;
+		if(property !== undefined){
+			var changes = template.modelReference[property];
+			if(changes === undefined || changes.length === 0){
+				console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
+				return false;
+			}
+		}
+		else{
+			var changes = [];
+			var cache = element.sf$cache;
+			var modelRef_array = template.modelRef_array;
+
+			for (var i = 0; i < modelRef_array.length; i++) {
+				var ref = modelRef_array[i];
+				var newData = deepProperty(item, ref[1]);
+
+				// Check if data was different
+				if(cache[ref[0]] !== newData){
+					changes = changes.concat(template.modelReference[ref[0]]);
+					cache[ref[0]] = newData;
+				}
+			}
+
+			if(changes.length === 0) return false;
 		}
 
 		var parsed = templateExec(template.parse, item, changes);
@@ -323,6 +356,7 @@ sf.model = function(scope){
 		}
 
 		var changesReference = element.sf$elementReferences;
+		var haveChanges = false;
 		for (var i = 0; i < changesReference.length; i++) {
 			var cRef = changesReference[i];
 
@@ -345,17 +379,18 @@ sf.model = function(scope){
 
 					// Add if not exist
 					if(notExist){
-						for (var a = 0; a < tDOM.length; a++) {
+						for (var a = 0; a < tDOM.length; a++)
 							cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
-						}
 					}
 
 					// Remove if over index
 					else{
 						for (var a = tDOM.length; a < currentDOM.length; a++) {
-							currentDOM.remove();
+							currentDOM[a].remove();
 						}
 					}
+
+					haveChanges = true;
 				}
 				continue;
 			}
@@ -369,15 +404,19 @@ sf.model = function(scope){
 
 						if(cRef.textContent.textContent === temp) continue;
 						cRef.textContent.textContent = temp;
+
+						haveChanges = true;
 					}
 					continue;
 				}
 
 				// Direct value
-				else{
+				else if(parsed[cRef.direct]){
 					var value = parsed[cRef.direct].data;
 					if(cRef.textContent.textContent === value) continue;
 					cRef.textContent.textContent = value;
+						
+					haveChanges = true;
 				}
 			}
 			else if(cRef.attribute !== undefined){ // Attributes
@@ -389,18 +428,24 @@ sf.model = function(scope){
 
 						if(cRef.attribute.value === temp) continue;
 						cRef.attribute.value = temp;
+						
+						haveChanges = true;
 					}
 					continue;
 				}
 
 				// Direct value
-				else{
+				else if(parsed[cRef.direct]){
 					var value = parsed[cRef.direct].data;
 					if(cRef.attribute.value === value) continue;
 					cRef.attribute.value = value;
+						
+					haveChanges = true;
 				}
 			}
 		}
+
+		return haveChanges;
 	}
 
 	// For contributor of this library
@@ -690,6 +735,11 @@ sf.model = function(scope){
 	var bindArray = function(template, list, mask, modelName, propertyName, targetNode, parentNode, tempDOM){
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', '$replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
+		var parentChilds = parentNode.children;
+
+		// Update callback
+		var callback = self.root[modelName]['on$'+propertyName];
+
 		var processElement = function(index, options, other, count){
 			if(options === 'clear'){
 				if(list.$virtual)
@@ -708,20 +758,21 @@ sf.model = function(scope){
 			if(options === 'hardRefresh'){
 				var item = list;
 				for (var i = index; i < item.length; i++) {
+					var temp = templateParser(template, item[i]);
 					if(list.$virtual)
-						parentNode.insertBefore(templateParser(template, item[i]), parentNode.lastElementChild);
+						parentNode.insertBefore(temp, parentNode.lastElementChild);
 					else
-						parentNode.appendChild(templateParser(template, item[i]));
+						parentNode.appendChild(temp);
+
+					syntheticCache(temp, template, items[i]);
 				}
 
 				if(list.$virtual) list.$virtual.refresh();
 				return;
 			}
 
-			var callback = self.root[modelName]['on$'+propertyName];
-
 			if(options === 'swap' || options === 'move'){
-				var ref = parentNode.children;
+				var ref = parentChilds;
 				if(list.$virtual){
 					index++;
 					other++;
@@ -776,7 +827,7 @@ sf.model = function(scope){
 					list.$virtual.refresh(true);
 				}, 100);
 			}
-			else exist = parentNode.children;
+			else exist = parentChilds;
 
 			// Remove
 			if(options === 'remove'){
@@ -804,9 +855,17 @@ sf.model = function(scope){
 
 			// Update
 			else if(options === 'update'){
-				if(!other) other = index + 1;
+				if(index === undefined){
+					index = 0;
+					other = list.length;
+				}
+				else if(other === undefined) other = index + 1;
 				else if(other < 0) other = list.length + other;
-				else other = index - other;
+				else other += index;
+
+				// Trim length
+				var overflow = list.length - other;
+				if(overflow < 0) other = other + overflow;
 
 				for (var i = index; i < other; i++) {
 					var oldChild = exist[i];
@@ -814,6 +873,7 @@ sf.model = function(scope){
 						break;
 
 					var temp = templateParser(template, list[i]);
+					syntheticCache(temp, template, list[i]);
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
@@ -830,6 +890,8 @@ sf.model = function(scope){
 			if(item === undefined) return;
 
 			var temp = templateParser(template, item);
+			syntheticCache(temp, template, item);
+
 			var referenceNode = exist[index];
 
 			// Create
@@ -1004,7 +1066,7 @@ sf.model = function(scope){
 			// Transfer virtual DOM
 			list.$virtual.dom = tempDOM;
 
-			parentNode.replaceChild(template.html, parentNode.children[1]);
+			parentNode.replaceChild(template.html, parentChilds[1]);
 			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
 			template.html.remove();
 		}
@@ -1013,32 +1075,57 @@ sf.model = function(scope){
 			propertyProxy(list, editProperty[i]);
 		}
 
-		Object.defineProperty(list, 'refresh', {
-			enumerable: false,
-			configurable: true,
-			value: function(property, index){
-				syntheticTemplate(list.getElement(index), template, property, list[index]);
+		// Todo: Enable auto item binding
+		if(false && list.auto !== false){
+			// for (var i = 0; i < list.length; i++) {
+			// 	list[i]
+			// }
+		}
+
+		hiddenProperty(list, 'refresh', function(index, length, property){
+			if(index === undefined || index.constructor === String){
+				property = index;
+				index = 0;
+				length = list.length;
+			}
+			else if(length === undefined) length = index + 1;
+			else if(length.constructor === String){
+				property = length;
+				length = 1;
+			}
+			else if(length < 0) length = list.length + length;
+			else length += index;
+
+			// Trim length
+			var overflow = list.length - length;
+			if(overflow < 0) length = length + overflow;
+
+			for (var i = index; i < length; i++) {
+				var elem = list.getElement(i);
+
+				if(syntheticTemplate(elem, template, property, list[i]) === false)
+					continue; // Continue if no update
+
+				if(callback !== undefined && callback.update)
+					callback.update(elem, 'replace');
 			}
 		});
 
-		Object.defineProperty(list, 'getElement', {
-			enumerable: false,
-			configurable: true,
-			value: function(index){
-				if(list.$virtual){
-					if(index < list.$virtual.DOMCursor)
-						return list.$virtual.dom.children[index];
+		var virtualChilds = list.$virtual ? list.$virtual.dom.children : null;
+		hiddenProperty(list, 'getElement', function(index){
+			if(virtualChilds !== null){
+				if(index < list.$virtual.DOMCursor)
+					return virtualChilds[index];
 
-					index -= list.$virtual.DOMCursor;
-					var childElement = parentNode.childElementCount - 2;
-					if(index <= childElement)
-						return parentNode.children[index + 1];
+				index -= list.$virtual.DOMCursor;
+				var childElement = parentNode.childElementCount - 2;
+				if(index <= childElement)
+					return parentChilds[index + 1];
 
-					return list.$virtual.dom.children[index - childElement + list.$virtual.DOMCursor];
-				}
-
-				return parentNode.children[index];
+				return virtualChilds[index - childElement + list.$virtual.DOMCursor];
 			}
+
+			return parentChilds[index];
 		});
 	}
 
@@ -1065,8 +1152,10 @@ sf.model = function(scope){
 			var tempDOM = document.createElement('div');
 			var modelRef = self.root[name];
 			
-			for(var i in items){
-				tempDOM.appendChild(templateParser(template, items[i]));
+			for (var i = 0; i < items.length; i++) {
+				var elem = templateParser(template, items[i]);
+				tempDOM.appendChild(elem);
+				syntheticCache(elem, template, items[i]);
 			}
 
 			// Enable element binding
@@ -1420,7 +1509,7 @@ sf.model = function(scope){
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
 
 		function findModelProperty(){
-			var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.]+)\\b', 'g');
+			var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
 			var found = {};
 
 			for (var i = 0; i < preParsed.length; i++) {
@@ -1428,7 +1517,11 @@ sf.model = function(scope){
 
 				// Text or attribute
 				if(current.type === 0){
-					current.data[0].replace(extract, function(full, match){
+					current.data[0].split('"').join("'").replace(extract, function(full, match){
+						match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
+							return '.'+match_;
+						});
+
 						if(found[match] === undefined) found[match] = [i];
 						else if(found[match].indexOf(i) === -1)
 							found[match].push(i);
@@ -1454,7 +1547,11 @@ sf.model = function(scope){
 					return _content_[match];
 				});
 
-				checkList.replace(extract, function(full, match){
+				checkList.split('"').join("'").replace(extract, function(full, match){
+					match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
+						return '.'+match_;
+					});
+
 					if(found[match] === undefined) found[match] = [i];
 					else if(found[match].indexOf(i) === -1)
 						found[match].push(i);
@@ -1540,6 +1637,8 @@ sf.model = function(scope){
 					var addressStart = null;
 					if(indexes.length !== 0 && nodes[i].textContent.length !== 0)
 						addressStart = $.getSelector(nodes[i], true);
+					else if(nodes[i].previousSibling !== null)
+						addressStart = $.getSelector(nodes[i].previousSibling, true);
 
 					// Find boundary ends
 					var commentFlag = [];
@@ -1588,11 +1687,19 @@ sf.model = function(scope){
 			addressed.push(temp);
 		}
 
+		var modelReference = findModelProperty();
+		var keys = Object.keys(modelReference);
+		var asArray = [];
+		for (var i = 0; i < keys.length; i++) {
+			asArray.push([keys[i], keys[i].split('.')]);
+		}
+
 		return {
 			html:copy,
 			parse:preParsed,
 			addresses:addressed,
-			modelReference:findModelProperty()
+			modelReference:modelReference,
+			modelRef_array:asArray
 		}
 	}
 
