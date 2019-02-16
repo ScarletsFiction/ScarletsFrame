@@ -274,16 +274,28 @@ sf.model.for('another-thing', function(self, other){
 Any element with `sf-repeat-this` will be binded with the array condition on the model. If you `push` or `splice` the array data, then the element will also being modified.
 
 These addional feature can be used after DOM element was binded.
-#### hardRefresh
-Redraw all element at once
+#### refresh
+Redraw small changes to an element. The `length` can be passed with negative number to select from the last index. If `index` or `length` was not defined, it will check any changes of the model.
 ```js
-myArray.hardRefresh();
+myArray.refresh(index = 0, length = 1);
+```
+```html
+<li sf-repeat-this="x in list">
+  {{ x.cartID }} - {{ x.item + ' (' + list.shopName + ')' }}
+</li>
+```
+
+When you make changes into `x.cartID`, `x.item`, and call the refresh function it the related element will be updated. But if you make changes to different scope like `list.shopName`, you need to provide which `itemProperty` that related with the key. For the example above `list.shopName` was related with `x.item`, so we can call the refresh like below.
+```js
+// myArray.refresh('item');
+// myArray.refresh(index, 'item');
+myArray.refresh(index, length, 'item');
 ```
 
 #### softRefresh
-Redraw some element only. The length can be passed with negative number to select from the last index.
+Rebuild element for the model. If `index` or `length` was not defined, it will rebuild all element.
 ```js
-myArray.softRefresh(index, length);
+myArray.softRefresh(index = 0, length = 1);
 ```
 
 #### swap
