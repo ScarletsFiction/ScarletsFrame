@@ -324,7 +324,7 @@ sf.model = function(scope){
 
 				// Check if data was different
 				if(cache[ref[0]] !== newData){
-					changes = changes.concat(template.modelReference[ref[0]]);
+					Array.prototype.push.apply(changes, template.modelReference[ref[0]]);
 					cache[ref[0]] = newData;
 				}
 			}
@@ -415,7 +415,7 @@ sf.model = function(scope){
 					var value = parsed[cRef.direct].data;
 					if(cRef.textContent.textContent === value) continue;
 					cRef.textContent.textContent = value;
-						
+
 					haveChanges = true;
 				}
 			}
@@ -733,7 +733,7 @@ sf.model = function(scope){
 	}
 
 	var bindArray = function(template, list, mask, modelName, propertyName, targetNode, parentNode, tempDOM){
-		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', '$replace', 'softRefresh', 'hardRefresh'];
+		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
 		var parentChilds = parentNode.children;
 
@@ -757,6 +757,15 @@ sf.model = function(scope){
 			// Hard refresh
 			if(options === 'hardRefresh'){
 				var item = list;
+
+				// Clear childs if exist
+				var n = parentChilds.length;
+				if(parentChilds[n] !== undefined && parentChilds[n].classList.contains('virtual-spacer') === false){
+					while(parentChilds.length >= index){
+						parentChilds[n].remove();
+					}
+				}
+
 				for (var i = index; i < item.length; i++) {
 					var temp = templateParser(template, item[i]);
 					if(list.$virtual)
@@ -940,7 +949,6 @@ sf.model = function(scope){
 			}
 		}
 
-		var _single_zero = [0]; // For arguments
 		var _double_zero = [0,0]; // For arguments
 		var propertyProxy = function(subject, name){
 			Object.defineProperty(subject, name, {
@@ -958,7 +966,8 @@ sf.model = function(scope){
 						processElement(from, 'move', to, count);
 
 						var temp = Array.prototype.splice.apply(this, [from, count]);
-						Array.prototype.splice.apply(this, [to, 0].concat(temp));
+						temp.unshift(to, 0);
+						Array.prototype.splice.apply(this, temp);
 						return;
 					}
 
@@ -973,8 +982,8 @@ sf.model = function(scope){
 						return;
 					}
 
-					else if(name === '$replace'){
-						// Check if appending
+					else if(name === 'replace'){
+						// Check if item has same reference
 						if(arguments[0].length >= lastLength && lastLength !== 0){
 							var matchLeft = lastLength;
 							var ref = arguments[0];
@@ -987,21 +996,75 @@ sf.model = function(scope){
 								break;
 							}
 
+							// Add new element at the end
 							if(matchLeft === 0){
 								if(ref.length === lastLength) return;
 
-								Array.prototype.splice.apply(this, [lastLength, 0].concat(arguments[0].slice(lastLength)));
-								processElement(lastLength, 'hardRefresh');
+								var temp = arguments[0].slice(lastLength);
+								temp.unshift(lastLength, 0);
+								this.splice.apply(this, temp);
+
+								if(list.$virtual) list.$virtual.refresh();
+								return;
+							}
+
+							// Add new element at the middle
+							else if(matchLeft !== lastLength){
+								if(arguments[1] === true){
+									list.refresh(i, ref.length); // Reuse element if exist
+									return;
+								}
+
+								// Build new element
+								var temp = arguments[0].slice(i);
+								temp.unshift(i, 0);
+								this.splice.apply(this, temp);
+
+								if(list.$virtual) list.$virtual.refresh();
 								return;
 							}
 						}
 
-						if(lastLength !== 0){
-							Array.prototype.splice.apply(this, _single_zero);
-							processElement(0, 'clear');
+						// Build from zero
+						if(lastLength === 0){
+							Array.prototype.push.apply(this, arguments[0]);
+							processElement(0, 'hardRefresh');
+
+							return;
 						}
-						Array.prototype.splice.apply(this, _double_zero.concat(arguments[0]));
-						processElement(0, 'hardRefresh');
+
+						// Clear all items and merge the new one
+						var temp = [0, lastLength];
+						Array.prototype.push.apply(temp, arguments[0]);
+						Array.prototype.splice.apply(this, temp);
+
+						// Rebuild all element
+						if(arguments[1] !== true){
+							processElement(0, 'clear');
+							processElement(0, 'hardRefresh');
+						}
+
+						// Reuse some element
+						else{
+							// Clear unused element if current array < last array
+							if(this.length < lastLength){
+								var currentLength = this.length;
+								for (var i = currentLength; i < lastLength; i++) {
+									parentChilds[currentLength].remove();
+								}
+							}
+
+							// And start refreshing
+							list.refresh(0, currentLength);
+						}
+
+						// Reset virtual list
+						if(list.$virtual){
+							list.$virtual.reset();
+							list.$virtual.resetViewport();
+							list.$virtual.refresh();
+						}
+
 						return this;
 					}
 
@@ -1103,6 +1166,12 @@ sf.model = function(scope){
 			for (var i = index; i < length; i++) {
 				var elem = list.getElement(i);
 
+				// Create element if not exist
+				if(elem === undefined){
+					list.hardRefresh(i);
+					break;
+				}
+
 				if(syntheticTemplate(elem, template, property, list[i]) === false)
 					continue; // Continue if no update
 
@@ -1111,18 +1180,29 @@ sf.model = function(scope){
 			}
 		});
 
-		var virtualChilds = list.$virtual ? list.$virtual.dom.children : null;
+		var virtualChilds = null;
+		if(list.$virtual){
+			virtualChilds = list.$virtual.dom.children;
+			var floorBound = list.$virtual.dCursor.floor;
+		}
 		hiddenProperty(list, 'getElement', function(index){
 			if(virtualChilds !== null){
+				var ret = undefined;
 				if(index < list.$virtual.DOMCursor)
-					return virtualChilds[index];
+					ret = virtualChilds[index];
+				else {
+					index -= list.$virtual.DOMCursor;
+					var childElement = parentNode.childElementCount - 2;
 
-				index -= list.$virtual.DOMCursor;
-				var childElement = parentNode.childElementCount - 2;
-				if(index <= childElement)
-					return parentChilds[index + 1];
+					if(index <= childElement)
+						ret = parentChilds[index + 1];
+					else
+						ret = virtualChilds[index - childElement + list.$virtual.DOMCursor];
+				}
 
-				return virtualChilds[index - childElement + list.$virtual.DOMCursor];
+				if(ret !== floorBound)
+					return ret;
+				return undefined;
 			}
 
 			return parentChilds[index];
@@ -1174,7 +1254,7 @@ sf.model = function(scope){
 				set:function(val){
 					if(val.length === 0)
 						return items.splice(0);
-					return items.$replace(val);
+					return items.replace(val, true);
 				}
 			});
 
@@ -1582,7 +1662,7 @@ sf.model = function(scope){
 						key.direct = Number(found[1]) || false;
 					else{
 						key.parse_index = [];
-						key.parse_index.replace(/{{%=([0-9]+)/g, function(full, match){
+						attrs[a].value.replace(/{{%=([0-9]+)/g, function(full, match){
 							key.parse_index.push(Number(match));
 						});
 					}
@@ -1663,7 +1743,7 @@ sf.model = function(scope){
 					}
 
 					// Merge boundary address
-					addressed = addressed.concat(commentFlag);
+					Array.prototype.push.apply(addressed, commentFlag);
 					if(nodes[i].textContent === ''){
 						nodes[i].remove();
 						for (var a = 0; a < commentFlag.length; a++) {
@@ -1728,7 +1808,7 @@ sf.model = function(scope){
 					}
 				}
 
-				temp = temp.concat(self.queuePreprocess(currentNode, extracting));
+				Array.prototype.push.apply(temp, self.queuePreprocess(currentNode, extracting));
 			}
 
 			else if(currentNode.nodeType === 3){ // Text
