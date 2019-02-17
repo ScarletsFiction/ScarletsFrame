@@ -215,22 +215,21 @@ sf.model = function(scope){
 				var refA = ref.attributes;
 				for(var a = 0; a < refA.length; a++){
 					var refB = refA[a];
-					var cRef = {attribute:current.attributes[refB.name]};
-					changesReference.push(cRef);
 
-					if(refB.direct !== false){
-						cRef.direct = refB.direct;
+					changesReference.push({
+						attribute:current.attributes[refB.name],
+						ref:refB
+					});
+
+					if(refB.direct !== undefined){
 						current.setAttribute(refB.name, parsed[refB.direct].data);
 						continue;
 					}
 
 					// Below is used for multiple data
 					refB = current.attributes[refB.name];
-					cRef.attribute.value = refB.value;
-					cRef.parse_id = [];
 
 					refB.value = refB.value.replace(templateParser_regex, function(full, match){
-						cRef.parse_id.push(match);
 						return parsed[match].data;
 					});
 				}
@@ -240,23 +239,19 @@ sf.model = function(scope){
 			// Replace text node
 			if(ref.nodeType === 3){
 				var refA = current;
-				var cRef = {textContent:refA};
-				changesReference.push(cRef);
 
-				if(ref.direct !== false){
-					cRef.direct = ref.direct;
+				changesReference.push({
+					textContent:refA,
+					ref:ref
+				});
+
+				if(ref.direct !== undefined){
 					refA.textContent = parsed[ref.direct].data;
 					continue;
 				}
 
 				// Below is used for multiple/dynamic data
-				var haveDynamicData = false;
-				var parentNode = current.parentElement;
-				cRef.value = refA.textContent;
-				cRef.parse_id = [];
-
 				refA.textContent = refA.textContent.replace(templateParser_regex, function(full, match){
-					cRef.parse_id.push(match);
 					return parsed[match].data;
 				});
 			}
@@ -265,7 +260,7 @@ sf.model = function(scope){
 			if(ref.nodeType === -1){
 				var cRef = {
 					dynamicFlag:current,
-					parse_index:ref.parse_index,
+					direct:ref.parse_index,
 					parentNode:current.parentNode,
 					startFlag:ref.startFlag && $.childIndexes(ref.startFlag, html)
 				};
@@ -283,7 +278,7 @@ sf.model = function(scope){
 		// Run the pending element
 		for (var i = 0; i < pendingInsert.length; i++) {
 			var ref = pendingInsert[i];
-			var tDOM = $.parseElement(parsed[ref.parse_index].data, true);
+			var tDOM = $.parseElement(parsed[ref.direct].data, true);
 			for (var a = 0; a < tDOM.length; a++) {
 				ref.parentNode.insertBefore(tDOM[a], ref.dynamicFlag);
 			}
@@ -333,7 +328,7 @@ sf.model = function(scope){
 		}
 
 		var parsed = templateExec(template.parse, item, changes);
-		function checkRelated(parseIndex){
+		function checkRelatedChanges(parseIndex){
 			var found = false;
 			for (var i = 0; i < parseIndex.length; i++) {
 				if(changes.indexOf(parseIndex[i]) !== -1){
@@ -341,7 +336,8 @@ sf.model = function(scope){
 					break;
 				}
 			}
-			if(found === false) return false;
+			if(found === false)
+				return false;
 
 			// Prepare all required data
 			changes = [];
@@ -361,9 +357,8 @@ sf.model = function(scope){
 			var cRef = changesReference[i];
 
 			if(cRef.dynamicFlag !== undefined){ // Dynamic data
-				// Will only have single parse_index
-				if(parsed[cRef.parse_index] !== undefined){
-					var tDOM = $.parseElement(parsed[cRef.parse_index].data, true);
+				if(parsed[cRef.direct] !== undefined){
+					var tDOM = $.parseElement(parsed[cRef.direct].data, true);
 					var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 					var notExist = false;
 
@@ -396,9 +391,9 @@ sf.model = function(scope){
 			}
 
 			if(cRef.textContent !== undefined){ // Text only
-				if(cRef.parse_index !== undefined){ // Multiple
-					if(checkRelated(cRef.parse_index) === true){
-						var temp = cRef.textContent.textContent.replace(templateParser_regex, function(full, match){
+				if(cRef.ref.parse_index !== undefined){ // Multiple
+					if(checkRelatedChanges(cRef.ref.parse_index) === true){
+						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
 						});
 
@@ -411,8 +406,8 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.direct]){
-					var value = parsed[cRef.direct].data;
+				else if(parsed[cRef.ref.direct]){
+					var value = parsed[cRef.ref.direct].data;
 					if(cRef.textContent.textContent === value) continue;
 					cRef.textContent.textContent = value;
 
@@ -420,9 +415,9 @@ sf.model = function(scope){
 				}
 			}
 			else if(cRef.attribute !== undefined){ // Attributes
-				if(cRef.parse_index !== undefined){ // Multiple
-					if(checkRelated(cRef.parse_index) === true){
-						var temp = cRef.attribute.value.replace(templateParser_regex, function(full, match){
+				if(cRef.ref.parse_index !== undefined){ // Multiple
+					if(checkRelatedChanges(cRef.ref.parse_index) === true){
+						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
 						});
 
@@ -435,8 +430,8 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.direct]){
-					var value = parsed[cRef.direct].data;
+				else if(parsed[cRef.ref.direct]){
+					var value = parsed[cRef.ref.direct].data;
 					if(cRef.attribute.value === value) continue;
 					cRef.attribute.value = value;
 						
@@ -1011,16 +1006,12 @@ sf.model = function(scope){
 							// Add new element at the middle
 							else if(matchLeft !== lastLength){
 								if(arguments[1] === true){
-									list.refresh(i, ref.length); // Reuse element if exist
-									return;
+									var temp = arguments[0].slice(i);
+									temp.unshift(i, lastLength - i);
+									Array.prototype.splice.apply(this, temp);
+
+									list.refresh(i, lastLength); // Reuse element if exist
 								}
-
-								// Build new element
-								var temp = arguments[0].slice(i);
-								temp.unshift(i, 0);
-								this.splice.apply(this, temp);
-
-								if(list.$virtual) list.$virtual.refresh();
 								return;
 							}
 						}
@@ -1029,7 +1020,6 @@ sf.model = function(scope){
 						if(lastLength === 0){
 							Array.prototype.push.apply(this, arguments[0]);
 							processElement(0, 'hardRefresh');
-
 							return;
 						}
 
@@ -1046,9 +1036,10 @@ sf.model = function(scope){
 
 						// Reuse some element
 						else{
+							var currentLength = this.length;
+
 							// Clear unused element if current array < last array
 							if(this.length < lastLength){
-								var currentLength = this.length;
 								for (var i = currentLength; i < lastLength; i++) {
 									parentChilds[currentLength].remove();
 								}
@@ -1115,7 +1106,7 @@ sf.model = function(scope){
 						processElement(arguments[0], 'update', arguments[1]);
 
 					else if(name === 'hardRefresh')
-						processElement(0, 'hardRefresh');
+						processElement(arguments[0] || 0, 'hardRefresh');
 
 					return temp;
 				}
@@ -1649,23 +1640,25 @@ sf.model = function(scope){
 		function addressAttributes(currentNode){
 			var attrs = currentNode.attributes;
 			var keys = [];
+			var indexes = 0;
 			for (var a = 0; a < attrs.length; a++) {
 				var found = attrs[a].value.split('{{%=');
 				if(found.length !== 1){
-
 					var key = {
-						direct: false,
-						name:attrs[a].name
+						name:attrs[a].name,
+						value:attrs[a].value
 					};
 
-					if(found[0] === '' && found.length === 2)
-						key.direct = Number(found[1]) || false;
-					else{
-						key.parse_index = [];
-						attrs[a].value.replace(/{{%=([0-9]+)/g, function(full, match){
-							key.parse_index.push(Number(match));
-						});
-					}
+					indexes = [];
+					found = attrs[a].value.replace(/{{%=([0-9]+)/g, function(full, match){
+						indexes.push(Number(match));
+						return '';
+					});
+
+					if(found === '' && indexes.length === 1)
+						key.direct = indexes[0];
+					else
+						key.parse_index = indexes;
 
 					keys.push(key);
 				}
@@ -1693,17 +1686,14 @@ sf.model = function(scope){
 
 			else if(temp.nodeType === 3){ // Text node
 				var innerHTML = nodes[i].textContent;
-				temp.direct = false;
 				var indexes = [];
 
 				innerHTML.replace(/{{%%=([0-9]+)/gm, function(full, match){
-					indexes.push(match);
+					indexes.push(Number(match));
 				});
 
 				// Check for dynamic mode
 				if(indexes.length !== 0){
-					indexes = indexes.map(Number);
-
 					innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
 					for (var a = 0; a < innerHTML.length; a++) {
 						innerHTML[a] = trimIndentation(innerHTML[a]).trim();
@@ -1757,10 +1747,19 @@ sf.model = function(scope){
 				}
 
 				// Check if it's only model value
-				innerHTML = nodes[i].textContent.split('{{%=');
+				indexes = [];
+				innerHTML = nodes[i].textContent.replace(/{{%=([0-9]+)/gm, function(full, match){
+					indexes.push(Number(match));
+					return '';
+				});
 
-				if(innerHTML[0] === '' && innerHTML.length === 2)
-					temp.direct = Number(innerHTML[1]) || false;
+				if(innerHTML === '' && indexes.length === 1)
+					temp.direct = indexes[0];
+				else{
+					temp.value = nodes[i].textContent;
+					temp.parse_index = indexes;
+				}
+
 				temp.address = $.getSelector(nodes[i], true);
 			}
 
