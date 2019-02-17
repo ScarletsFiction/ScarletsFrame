@@ -12,44 +12,52 @@ sf.internal.virtual_scroll = new function(){
 			styleInitialized = true;
 		}
 
-		list.$virtual.elements = function(){
+		var virtual = list.$virtual;
+		virtual.reset = function(){
+			virtual.DOMCursor = 0; // cursor of first element in DOM tree as a cursor
+
+			virtual.bounding = {
+				ceiling:-1,
+				floor:0
+			}
+
+			virtual.vCursor = { // Virtual Cursor
+				ceiling:null, // for forward direction
+				floor:null // for backward direction
+			}
+
+			refreshScrollBounding(0, virtual.bounding, list, parentNode);
+		}
+		virtual.reset();
+
+		virtual.elements = function(){
 			return obtainElements(list, parentNode);
 		}
 
-		list.$virtual.dCursor = { // DOM Cursor
+		virtual.dCursor = { // DOM Cursor
 			ceiling:parentNode.querySelector('.virtual-spacer.ceiling'),
 			floor:parentNode.querySelector('.virtual-spacer.floor')
 		};
 
-		list.$virtual.bounding = {
-			ceiling:-1,
-			floor:0
-		}
+		virtual.targetNode = parentNode;
 
-		list.$virtual.vCursor = { // Virtual Cursor
-			ceiling:null, // for forward direction
-			floor:null // for backward direction
-		}
-
-		list.$virtual.targetNode = parentNode;
-		list.$virtual.DOMCursor = 0; // cursor of first element in DOM tree as a cursor
-
-		list.$virtual.scrollHeight = 
-			list.$virtual.dCursor.floor.offsetTop - 
-			list.$virtual.dCursor.ceiling.offsetTop;
+		virtual.scrollHeight = 
+			virtual.dCursor.floor.offsetTop - 
+			virtual.dCursor.ceiling.offsetTop;
 
 		var scroller = null;
-		list.$virtual.destroy = function(){
+		virtual.destroy = function(){
 			$.off(scroller, 'scroll');
 			$.off(parentNode, 'mousedown mouseup');
-			list.$virtual.dom.innerHTML = '';
+			virtual.dom.innerHTML = '';
 			offElementResize(parentNode);
+
 			delete list.$virtual;
 		}
 
-		list.$virtual.resetViewport = function(){
-			list.$virtual.visibleLength = Math.floor(scroller.clientHeight / list.$virtual.scrollHeight);
-			list.$virtual.preparedLength = list.$virtual.visibleLength + self.prepareCount * 2;
+		virtual.resetViewport = function(){
+			virtual.visibleLength = Math.floor(scroller.clientHeight / virtual.scrollHeight);
+			virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
 		}
 
 		setTimeout(function(){
@@ -60,7 +68,7 @@ sf.internal.virtual_scroll = new function(){
 				scroller = scroller.parentElement;
 			}
 
-			list.$virtual.resetViewport();
+			virtual.resetViewport();
 
 			if(parentNode.classList.contains('sf-list-dynamic'))
 				dynamicHeight(list, targetNode, parentNode, scroller);
