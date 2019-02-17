@@ -23,7 +23,7 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.vCursor = { // Virtual Cursor
 				ceiling:null, // for forward direction
-				floor:null // for backward direction
+				floor:virtual.dom.firstElementChild // for backward direction
 			}
 
 			refreshScrollBounding(0, virtual.bounding, list, parentNode);
@@ -91,6 +91,7 @@ sf.internal.virtual_scroll = new function(){
 
 		virtual.refresh = function(force){
 			refresh(force, list, self.prepareCount, parentNode, scroller);
+			fillViewport();
 		}
 
 		// Insert some element until reach visible height
