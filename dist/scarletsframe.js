@@ -53,236 +53,6 @@ function deepProperty(obj, path){
   }
   return obj;
 }
-// ==== ES5 Polyfill ====
-if(typeof Object.assign != 'function'){
-  Object.defineProperty(Object, "assign", {
-    value: function assign(target, varArgs) {
-      'use strict';
-      if (target == null)
-        throw new TypeError('Cannot convert undefined or null to object');
-      var to = Object(target);
-      for (var index = 1; index < arguments.length; index++) {
-        var nextSource = arguments[index];
-        if (nextSource != null) {
-          for (var nextKey in nextSource) {
-            if (Object.prototype.hasOwnProperty.call(nextSource, nextKey))
-              to[nextKey] = nextSource[nextKey];
-          }
-        }
-      }
-      return to;
-    },
-    writable: true,
-    configurable: true
-  });
-}
-
-if(Element.prototype.remove === undefined || CharacterData.prototype.remove === undefined || DocumentType.prototype.remove === undefined){
-  (function (arr) {
-    arr.forEach(function (item) {
-      if (item.hasOwnProperty('remove')) {
-        return;
-      }
-      Object.defineProperty(item, 'remove', {
-        configurable: true,
-        enumerable: true,
-        writable: true,
-        value: function remove() {
-          if (this.parentNode !== null)
-            this.parentNode.removeChild(this);
-        }
-      });
-    });
-  })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
-}
-
-if(!Element.prototype.matches){
-  Element.prototype.matches = (Element.prototype).matchesSelector ||
-    (Element.prototype).mozMatchesSelector || (Element.prototype).msMatchesSelector ||
-    (Element.prototype).oMatchesSelector || (Element.prototype).webkitMatchesSelector ||
-    function (s) {
-      var matches = (this.document || this.ownerDocument).querySelectorAll(s),
-      i = matches.length;
-      while (--i >= 0 && matches.item(i) !== this){}
-      return i > -1;
-    };
-}
-
-if(!NodeList.prototype.forEach){
-    NodeList.prototype.forEach = function (callback, thisArg) {
-        thisArg = thisArg || window;
-        for (var i = 0; i < this.length; i++) {
-            callback.call(thisArg, this[i], i, this);
-        }
-    };
-}
-
-if(!window.location.origin){
-  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
-}
-// DOM Controller on loaded app
-sf.controller = new function(){
-	var self = this;
-	self.pending = {};
-	self.active = {};
-
-	self.for = function(name, func){
-		self.pending[name] = func;
-	}
-
-	self.modelScope = function(element, func){
-		var model = sf.controller.modelName(element);
-
-		if(!model)
-			throw 'model or controller was not found';
-
-		var bindedList = element.getAttribute('sf-bind-list');
-		if(!bindedList){
-			var parentEl = $.parent(element, '[sf-bind-list]');
-			if(parentEl !== null)
-				bindedList = parentEl.getAttribute('sf-bind-list');
-		}
-		else var parentEl = element;
-
-		if(!bindedList){
-			if(func) return func(sf.model.root[model], -1);
-			else return sf.model.root[model];
-		}
-
-		// Find index
-		var bindedListIndex = 0;
-		if(bindedList)
-			bindedListIndex = $.prevAll(parentEl, '[sf-bind-list]').length;
-
-		if(func) return func(sf.model.root[model][bindedList], bindedListIndex);
-		else return sf.model.root[model][bindedList][bindedListIndex];
-	}
-
-	self.modelName = function(element){
-		var name = undefined;
-		if(element.hasAttribute('sf-controller'))
-			name = element.getAttribute('sf-controller');
-		else
-			name = $.parent(element, '[sf-controller]').getAttribute('sf-controller');
-
-		// Initialize it first
-		if(name !== undefined && !self.active[name])
-			self.run(name);
-
-		return name;
-	}
-
-	var listenSFClick = function(e){
-		var element = e.target;
-		var script = element.getAttribute('sf-click');
-
-		if(!script){
-			element = $.parent(element, '[sf-click]');
-			script = element.getAttribute('sf-click');
-		}
-
-		var model = $.parent(element, '[sf-controller]').getAttribute('sf-controller');
-
-		if(!sf.model.root[model])
-			throw "Couldn't find model for "+model+" that was called from sf-click";
-
-		var _modelScope = sf.model.root[model];
-
-		var modelKeys = sf.model.modelKeys(_modelScope);
-		var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
-
-		script = script.replace(scopeMask, function(full, matched){
-			return '_modelScope.'+matched;
-		});
-
-		script = script.split('(');
-
-		var method = script[0];
-		var method_ = method;
-
-		// Get method reference
-		try{
-			method = eval(method);
-		} catch(e) {
-			method = false;
-		}
-
-		if(!method){
-			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element);
-			return;
-		}
-
-		// Take the argument list
-		script.shift();
-		script = script.join('(');
-		script = script.split(')');
-		script.pop();
-		script = script.join('(');
-
-		// Turn argument as array
-		if(script.length !== 0){
-			// Replace `this` to `element`
-			script = eval(('['+script+']').replace(/,this|\[this/g, function(found){
-				return found[0] + 'element';
-			}));
-		}
-		if(!script)
-			script = [];
-
-		try{
-			method.apply(element, script);
-			e.preventDefault();
-		} catch(e) {
-			console.error("Error on sf-click for model: " + model + '\n', element, '\n', e);
-		}
-	}
-
-	var root_ = function(scope){
-		if(!sf.model.root[scope])
-			sf.model.root[scope] = {};
-
-		if(!sf.model.root[scope])
-			sf.controller.run(scope);
-
-		return sf.model.root[scope];
-	}
-
-	self.run = function(name, func){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.run(name, func);
-			});
-
-		if(self.pending[name]){
-			if(!sf.model.root[name])
-				sf.model.root[name] = {};
-
-			self.pending[name](sf.model.root[name], root_);
-			self.active[name] = true;
-			delete self.pending[name];
-		}
-
-		if(func)
-			func(sf.model.root[name], root_);
-	}
-
-	self.init = function(parent){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.init(name);
-			});
-
-		var temp = $('[sf-controller]', parent || document.body);
-		for (var i = 0; i < temp.length; i++) {
-			self.run(temp[i].getAttribute('sf-controller'));
-		}
-	}
-
-	// Create listener for sf-click
-	document.addEventListener('DOMContentLoaded', function(){
-		$.on(document.body, 'click', '[sf-click]', listenSFClick);
-	}, {capture:true, once:true});
-}
 sf.dom = function(selector, context){
 	if(selector[0] === '<') return sf.dom.parseElement(selector);
 	if(selector.constructor !== String) return selector;
@@ -562,375 +332,6 @@ var $ = sf.dom; // Shortcut
 	}
 
 })();
-/*
-  Special Thanks to Vladimir Kharlampidi
-  https://github.com/nolimits4web/
-*/
-
-var globals = {};
-var jsonpRequests = 0;
-function Request(requestOptions) {
-    var globalsNoCallbacks = Object.assign({}, globals);
-    ('beforeCreate beforeOpen beforeSend error complete success statusCode').split(' ').forEach(function (callbackName) {
-        delete globalsNoCallbacks[callbackName];
-    });
-    var defaults = Object.assign({
-        url: window.location.toString(),
-        method: 'GET',
-        data: false,
-        async: true,
-        cache: true,
-        user: '',
-        password: '',
-        headers: {},
-        xhrFields: {},
-        statusCode: {},
-        processData: true,
-        dataType: 'text',
-        contentType: 'application/x-www-form-urlencoded',
-        timeout: 0,
-    }, globalsNoCallbacks);
-    var options = Object.assign({}, defaults, requestOptions);
-    var proceedRequest;
-    // Function to run XHR callbacks and events
-    function fireCallback(callbackName) {
-        var data = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            data[_i - 1] = arguments[_i];
-        }
-        /*
-          Callbacks:
-          beforeCreate (options),
-          beforeOpen (xhr, options),
-          beforeSend (xhr, options),
-          error (xhr, status),
-          complete (xhr, stautus),
-          success (response, status, xhr),
-          statusCode ()
-        */
-        var globalCallbackValue;
-        var optionCallbackValue;
-        if (globals[callbackName]) {
-            globalCallbackValue = globals[callbackName].apply(globals, data);
-        }
-        if (options[callbackName]) {
-            optionCallbackValue = options[callbackName].apply(options, data);
-        }
-        if (typeof globalCallbackValue !== 'boolean')
-            globalCallbackValue = true;
-        if (typeof optionCallbackValue !== 'boolean')
-            optionCallbackValue = true;
-        return (globalCallbackValue && optionCallbackValue);
-    }
-    // Before create callback
-    proceedRequest = fireCallback('beforeCreate', options);
-    if (proceedRequest === false)
-        return undefined;
-    // For jQuery guys
-    if (options.type)
-        options.method = options.type;
-    // Parameters Prefix
-    var paramsPrefix = options.url.indexOf('?') >= 0 ? '&' : '?';
-    // UC method
-    var method = options.method.toUpperCase();
-    // Data to modify GET URL
-    if ((method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE') && options.data) {
-        var stringData = void 0;
-        if (typeof options.data === 'string') {
-            // Should be key=value string
-            if (options.data.indexOf('?') >= 0)
-                stringData = options.data.split('?')[1];
-            else
-                stringData = options.data;
-        }
-        else {
-            // Should be key=value object
-            stringData = serializeQuery(options.data);
-        }
-        if (stringData.length) {
-            options.url += paramsPrefix + stringData;
-            if (paramsPrefix === '?')
-                paramsPrefix = '&';
-        }
-    }
-    // JSONP
-    if (options.dataType === 'json' && options.url.indexOf('callback=') >= 0) {
-        var callbackName_1 = "jsonp_" + (Date.now() + ((jsonpRequests += 1)));
-        var abortTimeout_1;
-        var callbackSplit = options.url.split('callback=');
-        var requestUrl = callbackSplit[0] + "callback=" + callbackName_1;
-        if (callbackSplit[1].indexOf('&') >= 0) {
-            var addVars = callbackSplit[1].split('&').filter(function (el) { return el.indexOf('=') > 0; }).join('&');
-            if (addVars.length > 0)
-                requestUrl += "&" + addVars;
-        }
-        // Create script
-        var script_1 = document.createElement('script');
-        script_1.type = 'text/javascript';
-        script_1.onerror = function onerror() {
-            clearTimeout(abortTimeout_1);
-            fireCallback('error', null, 'scripterror');
-            fireCallback('complete', null, 'scripterror');
-        };
-        script_1.src = requestUrl;
-        // Handler
-        window[callbackName_1] = function jsonpCallback(data) {
-            clearTimeout(abortTimeout_1);
-            fireCallback('success', data);
-            script_1.parentNode.removeChild(script_1);
-            script_1 = null;
-            delete window[callbackName_1];
-        };
-        document.querySelector('head').appendChild(script_1);
-        if (options.timeout > 0) {
-            abortTimeout_1 = setTimeout(function () {
-                script_1.parentNode.removeChild(script_1);
-                script_1 = null;
-                fireCallback('error', null, 'timeout');
-            }, options.timeout);
-        }
-        return undefined;
-    }
-    // Cache for GET/HEAD requests
-    if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE') {
-        if (options.cache === false) {
-            options.url += paramsPrefix + "_nocache" + Date.now();
-        }
-    }
-    // Create XHR
-    var xhr = new XMLHttpRequest();
-    // Save Request URL
-    xhr.requestUrl = options.url;
-    xhr.requestParameters = options;
-    // Before open callback
-    proceedRequest = fireCallback('beforeOpen', xhr, options);
-    if (proceedRequest === false)
-        return xhr;
-    // Open XHR
-    xhr.open(method, options.url, options.async, options.user, options.password);
-    // Create POST Data
-    var postData = null;
-    if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && options.data) {
-        if (options.processData) {
-            var postDataInstances = [ArrayBuffer, Blob, Document, FormData];
-            // Post Data
-            if (postDataInstances.indexOf(options.data.constructor) >= 0) {
-                postData = options.data;
-            }
-            else {
-                // POST Headers
-                var boundary = "---------------------------" + Date.now().toString(16);
-                if (options.contentType === 'multipart/form-data') {
-                    xhr.setRequestHeader('Content-Type', "multipart/form-data; boundary=" + boundary);
-                }
-                else {
-                    xhr.setRequestHeader('Content-Type', options.contentType);
-                }
-                postData = '';
-                var data = serializeQuery(options.data);
-                if (options.contentType === 'multipart/form-data') {
-                    data = data.split('&');
-                    var newData = [];
-                    for (var i = 0; i < data.length; i += 1) {
-                        newData.push("Content-Disposition: form-data; name=\"" + data[i].split('=')[0] + "\"\r\n\r\n" + data[i].split('=')[1] + "\r\n");
-                    }
-                    postData = "--" + boundary + "\r\n" + newData.join("--" + boundary + "\r\n") + "--" + boundary + "--\r\n";
-                }
-                else if (options.contentType === 'application/json') {
-                    postData = JSON.stringify(options.data);
-                }
-                else {
-                    postData = data;
-                }
-            }
-        }
-        else {
-            postData = options.data;
-            xhr.setRequestHeader('Content-Type', options.contentType);
-        }
-    }
-    // Additional headers
-    if (options.headers) {
-        Object.keys(options.headers).forEach(function (headerName) {
-            xhr.setRequestHeader(headerName, options.headers[headerName]);
-        });
-    }
-    // Check for crossDomain
-    if (typeof options.crossDomain === 'undefined') {
-        // eslint-disable-next-line
-        options.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(options.url) && RegExp.$2 !== window.location.host;
-    }
-    if (!options.crossDomain) {
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    }
-    if (options.xhrFields) {
-        Object.assign(xhr, options.xhrFields);
-    }
-    var xhrTimeout;
-    // Handle XHR
-    xhr.onload = function onload() {
-        if (xhrTimeout)
-            clearTimeout(xhrTimeout);
-        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0) {
-            var responseData = void 0;
-            if (options.dataType === 'json') {
-                var parseError = void 0;
-                try {
-                    responseData = JSON.parse(xhr.responseText);
-                }
-                catch (err) {
-                    parseError = true;
-                }
-                if (!parseError) {
-                    fireCallback('success', responseData, xhr.status, xhr);
-                }
-                else {
-                    fireCallback('error', xhr, 'parseerror');
-                }
-            }
-            else {
-                responseData = xhr.responseType === 'text' || xhr.responseType === '' ? xhr.responseText : xhr.response;
-                fireCallback('success', responseData, xhr.status, xhr);
-            }
-        }
-        else {
-            fireCallback('error', xhr, xhr.status);
-        }
-        if (options.statusCode) {
-            if (globals.statusCode && globals.statusCode[xhr.status])
-                globals.statusCode[xhr.status](xhr);
-            if (options.statusCode[xhr.status])
-                options.statusCode[xhr.status](xhr);
-        }
-        fireCallback('complete', xhr, xhr.status);
-    };
-    xhr.onerror = function onerror() {
-        if (xhrTimeout)
-            clearTimeout(xhrTimeout);
-        fireCallback('error', xhr, xhr.status);
-        fireCallback('complete', xhr, 'error');
-    };
-    // Timeout
-    if (options.timeout > 0) {
-        xhr.onabort = function onabort() {
-            if (xhrTimeout)
-                clearTimeout(xhrTimeout);
-        };
-        xhrTimeout = setTimeout(function () {
-            xhr.abort();
-            fireCallback('error', xhr, 'timeout');
-            fireCallback('complete', xhr, 'timeout');
-        }, options.timeout);
-    }
-    // Ajax start callback
-    proceedRequest = fireCallback('beforeSend', xhr, options);
-    if (proceedRequest === false)
-        return xhr;
-    // Send XHR
-    xhr.send(postData);
-    // Return XHR object
-    return xhr;
-}
-function RequestShortcut(method) {
-    var args = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        args[_i - 1] = arguments[_i];
-    }
-    var _a = [], url = _a[0], data = _a[1], success = _a[2], error = _a[3], dataType = _a[4];
-    if (typeof args[1] === 'function') {
-        url = args[0], success = args[1], error = args[2], dataType = args[3];
-    }
-    else {
-        url = args[0], data = args[1], success = args[2], error = args[3], dataType = args[4];
-    }
-    [success, error].forEach(function (callback) {
-        if (typeof callback === 'string') {
-            dataType = callback;
-            if (callback === success)
-                success = undefined;
-            else
-                error = undefined;
-        }
-    });
-    dataType = dataType || (method === 'json' || method === 'postJSON' ? 'json' : undefined);
-    var requestOptions = {
-        url: url,
-        method: method === 'post' || method === 'postJSON' ? 'POST' : 'GET',
-        data: data,
-        success: success,
-        error: error,
-        dataType: dataType,
-    };
-    if (method === 'postJSON') {
-        Object.assign(requestOptions, {
-            contentType: 'application/json',
-            processData: false,
-            crossDomain: true,
-            data: typeof data === 'string' ? data : JSON.stringify(data),
-        });
-    }
-    return Request(requestOptions);
-}
-Object.assign(Request, {
-    get: function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return RequestShortcut.apply(void 0, ['get'].concat(args));
-    },
-    post: function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return RequestShortcut.apply(void 0, ['post'].concat(args));
-    },
-    json: function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return RequestShortcut.apply(void 0, ['json'].concat(args));
-    },
-    getJSON: function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return RequestShortcut.apply(void 0, ['json'].concat(args));
-    },
-    postJSON: function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return RequestShortcut.apply(void 0, ['postJSON'].concat(args));
-    },
-});
-Request.setup = function setup(options) {
-    if (options.type && !options.method) {
-        Object.assign(options, { method: options.type });
-    }
-    Object.assign(globals, options);
-};
-function serializeQuery(params, prefix) {
-    var key = Object.keys(params);
-    for (var i = 0; i < key.length; i++) {
-      var value = params[key[i]];
-      if (params.constructor === Array)
-          key[i] += prefix + "[]";
-      else if (params.constructor === Object)
-          key[i] = (prefix ? prefix + "[" + key[i] + "]" : key[i]);
-
-      if (typeof value === 'object')
-          key[i] = serializeQuery(value, key[i]);
-      else
-          key[i] = key[i] + "=" + encodeURIComponent(value);
-    }
-    return key.join('&');
-}
-$.ajax = sf.ajax = Request;
 sf.loader = new function(){
 	var self = this;
 	self.loadedContent = 0;
@@ -1321,22 +722,21 @@ sf.model = function(scope){
 				var refA = ref.attributes;
 				for(var a = 0; a < refA.length; a++){
 					var refB = refA[a];
-					var cRef = {attribute:current.attributes[refB.name]};
-					changesReference.push(cRef);
 
-					if(refB.direct !== false){
-						cRef.direct = refB.direct;
+					changesReference.push({
+						attribute:current.attributes[refB.name],
+						ref:refB
+					});
+
+					if(refB.direct !== undefined){
 						current.setAttribute(refB.name, parsed[refB.direct].data);
 						continue;
 					}
 
 					// Below is used for multiple data
 					refB = current.attributes[refB.name];
-					cRef.attribute.value = refB.value;
-					cRef.parse_id = [];
 
 					refB.value = refB.value.replace(templateParser_regex, function(full, match){
-						cRef.parse_id.push(match);
 						return parsed[match].data;
 					});
 				}
@@ -1346,23 +746,19 @@ sf.model = function(scope){
 			// Replace text node
 			if(ref.nodeType === 3){
 				var refA = current;
-				var cRef = {textContent:refA};
-				changesReference.push(cRef);
 
-				if(ref.direct !== false){
-					cRef.direct = ref.direct;
+				changesReference.push({
+					textContent:refA,
+					ref:ref
+				});
+
+				if(ref.direct !== undefined){
 					refA.textContent = parsed[ref.direct].data;
 					continue;
 				}
 
 				// Below is used for multiple/dynamic data
-				var haveDynamicData = false;
-				var parentNode = current.parentElement;
-				cRef.value = refA.textContent;
-				cRef.parse_id = [];
-
 				refA.textContent = refA.textContent.replace(templateParser_regex, function(full, match){
-					cRef.parse_id.push(match);
 					return parsed[match].data;
 				});
 			}
@@ -1371,7 +767,7 @@ sf.model = function(scope){
 			if(ref.nodeType === -1){
 				var cRef = {
 					dynamicFlag:current,
-					parse_index:ref.parse_index,
+					direct:ref.parse_index,
 					parentNode:current.parentNode,
 					startFlag:ref.startFlag && $.childIndexes(ref.startFlag, html)
 				};
@@ -1389,7 +785,7 @@ sf.model = function(scope){
 		// Run the pending element
 		for (var i = 0; i < pendingInsert.length; i++) {
 			var ref = pendingInsert[i];
-			var tDOM = $.parseElement(parsed[ref.parse_index].data, true);
+			var tDOM = $.parseElement(parsed[ref.direct].data, true);
 			for (var a = 0; a < tDOM.length; a++) {
 				ref.parentNode.insertBefore(tDOM[a], ref.dynamicFlag);
 			}
@@ -1412,25 +808,36 @@ sf.model = function(scope){
 	}
 
 	function syntheticTemplate(element, template, property, item){
+		var cache = element.sf$cache;
+		var modelRef_array = template.modelRef_array;
+
 		if(property !== undefined){
 			var changes = template.modelReference[property];
 			if(changes === undefined || changes.length === 0){
 				console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 				return false;
 			}
+
+			for (var i = 0; i < modelRef_array.length; i++) {
+				var ref = modelRef_array[i];
+				if(ref[0] !== property) continue;
+
+				var newData = deepProperty(item, ref[1]);
+
+				// Check if data was different
+				if(cache[ref[0]] !== newData)
+					cache[ref[0]] = newData;
+			}
 		}
 		else{
 			var changes = [];
-			var cache = element.sf$cache;
-			var modelRef_array = template.modelRef_array;
-
 			for (var i = 0; i < modelRef_array.length; i++) {
 				var ref = modelRef_array[i];
 				var newData = deepProperty(item, ref[1]);
 
 				// Check if data was different
 				if(cache[ref[0]] !== newData){
-					changes = changes.concat(template.modelReference[ref[0]]);
+					Array.prototype.push.apply(changes, template.modelReference[ref[0]]);
 					cache[ref[0]] = newData;
 				}
 			}
@@ -1439,7 +846,7 @@ sf.model = function(scope){
 		}
 
 		var parsed = templateExec(template.parse, item, changes);
-		function checkRelated(parseIndex){
+		function checkRelatedChanges(parseIndex){
 			var found = false;
 			for (var i = 0; i < parseIndex.length; i++) {
 				if(changes.indexOf(parseIndex[i]) !== -1){
@@ -1447,7 +854,8 @@ sf.model = function(scope){
 					break;
 				}
 			}
-			if(found === false) return false;
+			if(found === false)
+				return false;
 
 			// Prepare all required data
 			changes = [];
@@ -1467,9 +875,8 @@ sf.model = function(scope){
 			var cRef = changesReference[i];
 
 			if(cRef.dynamicFlag !== undefined){ // Dynamic data
-				// Will only have single parse_index
-				if(parsed[cRef.parse_index] !== undefined){
-					var tDOM = $.parseElement(parsed[cRef.parse_index].data, true);
+				if(parsed[cRef.direct] !== undefined){
+					var tDOM = $.parseElement(parsed[cRef.direct].data, true);
 					var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 					var notExist = false;
 
@@ -1502,9 +909,9 @@ sf.model = function(scope){
 			}
 
 			if(cRef.textContent !== undefined){ // Text only
-				if(cRef.parse_index !== undefined){ // Multiple
-					if(checkRelated(cRef.parse_index) === true){
-						var temp = cRef.textContent.textContent.replace(templateParser_regex, function(full, match){
+				if(cRef.ref.parse_index !== undefined){ // Multiple
+					if(checkRelatedChanges(cRef.ref.parse_index) === true){
+						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
 						});
 
@@ -1517,18 +924,18 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.direct]){
-					var value = parsed[cRef.direct].data;
+				else if(parsed[cRef.ref.direct]){
+					var value = parsed[cRef.ref.direct].data;
 					if(cRef.textContent.textContent === value) continue;
 					cRef.textContent.textContent = value;
-						
+
 					haveChanges = true;
 				}
 			}
 			else if(cRef.attribute !== undefined){ // Attributes
-				if(cRef.parse_index !== undefined){ // Multiple
-					if(checkRelated(cRef.parse_index) === true){
-						var temp = cRef.attribute.value.replace(templateParser_regex, function(full, match){
+				if(cRef.ref.parse_index !== undefined){ // Multiple
+					if(checkRelatedChanges(cRef.ref.parse_index) === true){
+						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
 						});
 
@@ -1541,8 +948,8 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.direct]){
-					var value = parsed[cRef.direct].data;
+				else if(parsed[cRef.ref.direct]){
+					var value = parsed[cRef.ref.direct].data;
 					if(cRef.attribute.value === value) continue;
 					cRef.attribute.value = value;
 						
@@ -1839,7 +1246,7 @@ sf.model = function(scope){
 	}
 
 	var bindArray = function(template, list, mask, modelName, propertyName, targetNode, parentNode, tempDOM){
-		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', '$replace', 'softRefresh', 'hardRefresh'];
+		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
 		var parentChilds = parentNode.children;
 
@@ -1863,6 +1270,15 @@ sf.model = function(scope){
 			// Hard refresh
 			if(options === 'hardRefresh'){
 				var item = list;
+
+				// Clear childs if exist
+				var n = parentChilds.length;
+				if(parentChilds[n] !== undefined && parentChilds[n].classList.contains('virtual-spacer') === false){
+					while(parentChilds.length >= index){
+						parentChilds[n].remove();
+					}
+				}
+
 				for (var i = index; i < item.length; i++) {
 					var temp = templateParser(template, item[i]);
 					if(list.$virtual)
@@ -1870,7 +1286,7 @@ sf.model = function(scope){
 					else
 						parentNode.appendChild(temp);
 
-					syntheticCache(temp, template, items[i]);
+					syntheticCache(temp, template, item[i]);
 				}
 
 				if(list.$virtual) list.$virtual.refresh();
@@ -2046,7 +1462,6 @@ sf.model = function(scope){
 			}
 		}
 
-		var _single_zero = [0]; // For arguments
 		var _double_zero = [0,0]; // For arguments
 		var propertyProxy = function(subject, name){
 			Object.defineProperty(subject, name, {
@@ -2064,7 +1479,8 @@ sf.model = function(scope){
 						processElement(from, 'move', to, count);
 
 						var temp = Array.prototype.splice.apply(this, [from, count]);
-						Array.prototype.splice.apply(this, [to, 0].concat(temp));
+						temp.unshift(to, 0);
+						Array.prototype.splice.apply(this, temp);
 						return;
 					}
 
@@ -2079,8 +1495,8 @@ sf.model = function(scope){
 						return;
 					}
 
-					else if(name === '$replace'){
-						// Check if appending
+					else if(name === 'replace'){
+						// Check if item has same reference
 						if(arguments[0].length >= lastLength && lastLength !== 0){
 							var matchLeft = lastLength;
 							var ref = arguments[0];
@@ -2093,21 +1509,71 @@ sf.model = function(scope){
 								break;
 							}
 
+							// Add new element at the end
 							if(matchLeft === 0){
 								if(ref.length === lastLength) return;
 
-								Array.prototype.splice.apply(this, [lastLength, 0].concat(arguments[0].slice(lastLength)));
-								processElement(lastLength, 'hardRefresh');
+								var temp = arguments[0].slice(lastLength);
+								temp.unshift(lastLength, 0);
+								this.splice.apply(this, temp);
+
+								if(list.$virtual) list.$virtual.refresh();
+								return;
+							}
+
+							// Add new element at the middle
+							else if(matchLeft !== lastLength){
+								if(arguments[1] === true){
+									var temp = arguments[0].slice(i);
+									temp.unshift(i, lastLength - i);
+									Array.prototype.splice.apply(this, temp);
+
+									list.refresh(i, lastLength); // Reuse element if exist
+								}
 								return;
 							}
 						}
 
-						if(lastLength !== 0){
-							Array.prototype.splice.apply(this, _single_zero);
-							processElement(0, 'clear');
+						// Build from zero
+						if(lastLength === 0){
+							Array.prototype.push.apply(this, arguments[0]);
+							processElement(0, 'hardRefresh');
+							return;
 						}
-						Array.prototype.splice.apply(this, _double_zero.concat(arguments[0]));
-						processElement(0, 'hardRefresh');
+
+						// Clear all items and merge the new one
+						var temp = [0, lastLength];
+						Array.prototype.push.apply(temp, arguments[0]);
+						Array.prototype.splice.apply(this, temp);
+
+						// Rebuild all element
+						if(arguments[1] !== true){
+							processElement(0, 'clear');
+							processElement(0, 'hardRefresh');
+						}
+
+						// Reuse some element
+						else{
+							var currentLength = this.length;
+
+							// Clear unused element if current array < last array
+							if(this.length < lastLength){
+								for (var i = currentLength; i < lastLength; i++) {
+									parentChilds[currentLength].remove();
+								}
+							}
+
+							// And start refreshing
+							list.refresh(0, currentLength);
+						}
+
+						// Reset virtual list
+						if(list.$virtual){
+							list.$virtual.reset();
+							list.$virtual.resetViewport();
+							list.$virtual.refresh();
+						}
+
 						return this;
 					}
 
@@ -2158,7 +1624,7 @@ sf.model = function(scope){
 						processElement(arguments[0], 'update', arguments[1]);
 
 					else if(name === 'hardRefresh')
-						processElement(0, 'hardRefresh');
+						processElement(arguments[0] || 0, 'hardRefresh');
 
 					return temp;
 				}
@@ -2197,7 +1663,7 @@ sf.model = function(scope){
 			else if(length === undefined) length = index + 1;
 			else if(length.constructor === String){
 				property = length;
-				length = 1;
+				length = index + 1;
 			}
 			else if(length < 0) length = list.length + length;
 			else length += index;
@@ -2209,6 +1675,12 @@ sf.model = function(scope){
 			for (var i = index; i < length; i++) {
 				var elem = list.getElement(i);
 
+				// Create element if not exist
+				if(elem === undefined){
+					list.hardRefresh(i);
+					break;
+				}
+
 				if(syntheticTemplate(elem, template, property, list[i]) === false)
 					continue; // Continue if no update
 
@@ -2217,18 +1689,29 @@ sf.model = function(scope){
 			}
 		});
 
-		var virtualChilds = list.$virtual ? list.$virtual.dom.children : null;
+		var virtualChilds = null;
+		if(list.$virtual){
+			virtualChilds = list.$virtual.dom.children;
+			var floorBound = list.$virtual.dCursor.floor;
+		}
 		hiddenProperty(list, 'getElement', function(index){
 			if(virtualChilds !== null){
+				var ret = undefined;
 				if(index < list.$virtual.DOMCursor)
-					return virtualChilds[index];
+					ret = virtualChilds[index];
+				else {
+					index -= list.$virtual.DOMCursor;
+					var childElement = parentNode.childElementCount - 2;
 
-				index -= list.$virtual.DOMCursor;
-				var childElement = parentNode.childElementCount - 2;
-				if(index <= childElement)
-					return parentChilds[index + 1];
+					if(index <= childElement)
+						ret = parentChilds[index + 1];
+					else
+						ret = virtualChilds[index - childElement + list.$virtual.DOMCursor];
+				}
 
-				return virtualChilds[index - childElement + list.$virtual.DOMCursor];
+				if(ret !== floorBound)
+					return ret;
+				return undefined;
 			}
 
 			return parentChilds[index];
@@ -2280,7 +1763,7 @@ sf.model = function(scope){
 				set:function(val){
 					if(val.length === 0)
 						return items.splice(0);
-					return items.$replace(val);
+					return items.replace(val, true);
 				}
 			});
 
@@ -2675,23 +2158,25 @@ sf.model = function(scope){
 		function addressAttributes(currentNode){
 			var attrs = currentNode.attributes;
 			var keys = [];
+			var indexes = 0;
 			for (var a = 0; a < attrs.length; a++) {
 				var found = attrs[a].value.split('{{%=');
 				if(found.length !== 1){
-
 					var key = {
-						direct: false,
-						name:attrs[a].name
+						name:attrs[a].name,
+						value:attrs[a].value
 					};
 
-					if(found[0] === '' && found.length === 2)
-						key.direct = Number(found[1]) || false;
-					else{
-						key.parse_index = [];
-						key.parse_index.replace(/{{%=([0-9]+)/g, function(full, match){
-							key.parse_index.push(Number(match));
-						});
-					}
+					indexes = [];
+					found = attrs[a].value.replace(/{{%=([0-9]+)/g, function(full, match){
+						indexes.push(Number(match));
+						return '';
+					});
+
+					if(found === '' && indexes.length === 1)
+						key.direct = indexes[0];
+					else
+						key.parse_index = indexes;
 
 					keys.push(key);
 				}
@@ -2719,17 +2204,14 @@ sf.model = function(scope){
 
 			else if(temp.nodeType === 3){ // Text node
 				var innerHTML = nodes[i].textContent;
-				temp.direct = false;
 				var indexes = [];
 
 				innerHTML.replace(/{{%%=([0-9]+)/gm, function(full, match){
-					indexes.push(match);
+					indexes.push(Number(match));
 				});
 
 				// Check for dynamic mode
 				if(indexes.length !== 0){
-					indexes = indexes.map(Number);
-
 					innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
 					for (var a = 0; a < innerHTML.length; a++) {
 						innerHTML[a] = trimIndentation(innerHTML[a]).trim();
@@ -2769,7 +2251,7 @@ sf.model = function(scope){
 					}
 
 					// Merge boundary address
-					addressed = addressed.concat(commentFlag);
+					Array.prototype.push.apply(addressed, commentFlag);
 					if(nodes[i].textContent === ''){
 						nodes[i].remove();
 						for (var a = 0; a < commentFlag.length; a++) {
@@ -2783,10 +2265,19 @@ sf.model = function(scope){
 				}
 
 				// Check if it's only model value
-				innerHTML = nodes[i].textContent.split('{{%=');
+				indexes = [];
+				innerHTML = nodes[i].textContent.replace(/{{%=([0-9]+)/gm, function(full, match){
+					indexes.push(Number(match));
+					return '';
+				});
 
-				if(innerHTML[0] === '' && innerHTML.length === 2)
-					temp.direct = Number(innerHTML[1]) || false;
+				if(innerHTML === '' && indexes.length === 1)
+					temp.direct = indexes[0];
+				else{
+					temp.value = nodes[i].textContent;
+					temp.parse_index = indexes;
+				}
+
 				temp.address = $.getSelector(nodes[i], true);
 			}
 
@@ -2834,7 +2325,7 @@ sf.model = function(scope){
 					}
 				}
 
-				temp = temp.concat(self.queuePreprocess(currentNode, extracting));
+				Array.prototype.push.apply(temp, self.queuePreprocess(currentNode, extracting));
 			}
 
 			else if(currentNode.nodeType === 3){ // Text
@@ -2919,6 +2410,605 @@ sf.model = function(scope){
 		});
 	}
 })();
+// ==== ES5 Polyfill ====
+if(typeof Object.assign != 'function'){
+  Object.defineProperty(Object, "assign", {
+    value: function assign(target, varArgs) {
+      'use strict';
+      if (target == null)
+        throw new TypeError('Cannot convert undefined or null to object');
+      var to = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var nextSource = arguments[index];
+        if (nextSource != null) {
+          for (var nextKey in nextSource) {
+            if (Object.prototype.hasOwnProperty.call(nextSource, nextKey))
+              to[nextKey] = nextSource[nextKey];
+          }
+        }
+      }
+      return to;
+    },
+    writable: true,
+    configurable: true
+  });
+}
+
+if(Element.prototype.remove === undefined || CharacterData.prototype.remove === undefined || DocumentType.prototype.remove === undefined){
+  (function (arr) {
+    arr.forEach(function (item) {
+      if (item.hasOwnProperty('remove')) {
+        return;
+      }
+      Object.defineProperty(item, 'remove', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: function remove() {
+          if (this.parentNode !== null)
+            this.parentNode.removeChild(this);
+        }
+      });
+    });
+  })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
+}
+
+if(!Element.prototype.matches){
+  Element.prototype.matches = (Element.prototype).matchesSelector ||
+    (Element.prototype).mozMatchesSelector || (Element.prototype).msMatchesSelector ||
+    (Element.prototype).oMatchesSelector || (Element.prototype).webkitMatchesSelector ||
+    function (s) {
+      var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+      i = matches.length;
+      while (--i >= 0 && matches.item(i) !== this){}
+      return i > -1;
+    };
+}
+
+if(!NodeList.prototype.forEach){
+    NodeList.prototype.forEach = function (callback, thisArg) {
+        thisArg = thisArg || window;
+        for (var i = 0; i < this.length; i++) {
+            callback.call(thisArg, this[i], i, this);
+        }
+    };
+}
+
+if(!window.location.origin){
+  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+}
+// DOM Controller on loaded app
+sf.controller = new function(){
+	var self = this;
+	self.pending = {};
+	self.active = {};
+
+	self.for = function(name, func){
+		self.pending[name] = func;
+	}
+
+	self.modelScope = function(element, func){
+		var model = sf.controller.modelName(element);
+
+		if(!model)
+			throw 'model or controller was not found';
+
+		var bindedList = element.getAttribute('sf-bind-list');
+		if(!bindedList){
+			var parentEl = $.parent(element, '[sf-bind-list]');
+			if(parentEl !== null)
+				bindedList = parentEl.getAttribute('sf-bind-list');
+		}
+		else var parentEl = element;
+
+		if(!bindedList){
+			if(func) return func(sf.model.root[model], -1);
+			else return sf.model.root[model];
+		}
+
+		// Find index
+		var bindedListIndex = 0;
+		if(bindedList)
+			bindedListIndex = $.prevAll(parentEl, '[sf-bind-list]').length;
+
+		if(func) return func(sf.model.root[model][bindedList], bindedListIndex);
+		else return sf.model.root[model][bindedList][bindedListIndex];
+	}
+
+	self.modelName = function(element){
+		var name = undefined;
+		if(element.hasAttribute('sf-controller'))
+			name = element.getAttribute('sf-controller');
+		else
+			name = $.parent(element, '[sf-controller]').getAttribute('sf-controller');
+
+		// Initialize it first
+		if(name !== undefined && !self.active[name])
+			self.run(name);
+
+		return name;
+	}
+
+	var listenSFClick = function(e){
+		var element = e.target;
+		var script = element.getAttribute('sf-click');
+
+		if(!script){
+			element = $.parent(element, '[sf-click]');
+			script = element.getAttribute('sf-click');
+		}
+
+		var model = $.parent(element, '[sf-controller]').getAttribute('sf-controller');
+
+		if(!sf.model.root[model])
+			throw "Couldn't find model for "+model+" that was called from sf-click";
+
+		var _modelScope = sf.model.root[model];
+
+		var modelKeys = sf.model.modelKeys(_modelScope);
+		var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
+
+		script = script.replace(scopeMask, function(full, matched){
+			return '_modelScope.'+matched;
+		});
+
+		script = script.split('(');
+
+		var method = script[0];
+		var method_ = method;
+
+		// Get method reference
+		try{
+			method = eval(method);
+		} catch(e) {
+			method = false;
+		}
+
+		if(!method){
+			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element);
+			return;
+		}
+
+		// Take the argument list
+		script.shift();
+		script = script.join('(');
+		script = script.split(')');
+		script.pop();
+		script = script.join('(');
+
+		// Turn argument as array
+		if(script.length !== 0){
+			// Replace `this` to `element`
+			script = eval(('['+script+']').replace(/,this|\[this/g, function(found){
+				return found[0] + 'element';
+			}));
+		}
+		if(!script)
+			script = [];
+
+		try{
+			method.apply(element, script);
+			e.preventDefault();
+		} catch(e) {
+			console.error("Error on sf-click for model: " + model + '\n', element, '\n', e);
+		}
+	}
+
+	var root_ = function(scope){
+		if(!sf.model.root[scope])
+			sf.model.root[scope] = {};
+
+		if(!sf.model.root[scope])
+			sf.controller.run(scope);
+
+		return sf.model.root[scope];
+	}
+
+	self.run = function(name, func){
+		if(!sf.loader.DOMWasLoaded)
+			return sf(function(){
+				self.run(name, func);
+			});
+
+		if(self.pending[name]){
+			if(!sf.model.root[name])
+				sf.model.root[name] = {};
+
+			self.pending[name](sf.model.root[name], root_);
+			self.active[name] = true;
+			delete self.pending[name];
+		}
+
+		if(func)
+			func(sf.model.root[name], root_);
+	}
+
+	self.init = function(parent){
+		if(!sf.loader.DOMWasLoaded)
+			return sf(function(){
+				self.init(name);
+			});
+
+		var temp = $('[sf-controller]', parent || document.body);
+		for (var i = 0; i < temp.length; i++) {
+			self.run(temp[i].getAttribute('sf-controller'));
+		}
+	}
+
+	// Create listener for sf-click
+	document.addEventListener('DOMContentLoaded', function(){
+		$.on(document.body, 'click', '[sf-click]', listenSFClick);
+	}, {capture:true, once:true});
+}
+/*
+  Special Thanks to Vladimir Kharlampidi
+  https://github.com/nolimits4web/
+*/
+
+var globals = {};
+var jsonpRequests = 0;
+function Request(requestOptions) {
+    var globalsNoCallbacks = Object.assign({}, globals);
+    ('beforeCreate beforeOpen beforeSend error complete success statusCode').split(' ').forEach(function (callbackName) {
+        delete globalsNoCallbacks[callbackName];
+    });
+    var defaults = Object.assign({
+        url: window.location.toString(),
+        method: 'GET',
+        data: false,
+        async: true,
+        cache: true,
+        user: '',
+        password: '',
+        headers: {},
+        xhrFields: {},
+        statusCode: {},
+        processData: true,
+        dataType: 'text',
+        contentType: 'application/x-www-form-urlencoded',
+        timeout: 0,
+    }, globalsNoCallbacks);
+    var options = Object.assign({}, defaults, requestOptions);
+    var proceedRequest;
+    // Function to run XHR callbacks and events
+    function fireCallback(callbackName) {
+        var data = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            data[_i - 1] = arguments[_i];
+        }
+        /*
+          Callbacks:
+          beforeCreate (options),
+          beforeOpen (xhr, options),
+          beforeSend (xhr, options),
+          error (xhr, status),
+          complete (xhr, stautus),
+          success (response, status, xhr),
+          statusCode ()
+        */
+        var globalCallbackValue;
+        var optionCallbackValue;
+        if (globals[callbackName]) {
+            globalCallbackValue = globals[callbackName].apply(globals, data);
+        }
+        if (options[callbackName]) {
+            optionCallbackValue = options[callbackName].apply(options, data);
+        }
+        if (typeof globalCallbackValue !== 'boolean')
+            globalCallbackValue = true;
+        if (typeof optionCallbackValue !== 'boolean')
+            optionCallbackValue = true;
+        return (globalCallbackValue && optionCallbackValue);
+    }
+    // Before create callback
+    proceedRequest = fireCallback('beforeCreate', options);
+    if (proceedRequest === false)
+        return undefined;
+    // For jQuery guys
+    if (options.type)
+        options.method = options.type;
+    // Parameters Prefix
+    var paramsPrefix = options.url.indexOf('?') >= 0 ? '&' : '?';
+    // UC method
+    var method = options.method.toUpperCase();
+    // Data to modify GET URL
+    if ((method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE') && options.data) {
+        var stringData = void 0;
+        if (typeof options.data === 'string') {
+            // Should be key=value string
+            if (options.data.indexOf('?') >= 0)
+                stringData = options.data.split('?')[1];
+            else
+                stringData = options.data;
+        }
+        else {
+            // Should be key=value object
+            stringData = serializeQuery(options.data);
+        }
+        if (stringData.length) {
+            options.url += paramsPrefix + stringData;
+            if (paramsPrefix === '?')
+                paramsPrefix = '&';
+        }
+    }
+    // JSONP
+    if (options.dataType === 'json' && options.url.indexOf('callback=') >= 0) {
+        var callbackName_1 = "jsonp_" + (Date.now() + ((jsonpRequests += 1)));
+        var abortTimeout_1;
+        var callbackSplit = options.url.split('callback=');
+        var requestUrl = callbackSplit[0] + "callback=" + callbackName_1;
+        if (callbackSplit[1].indexOf('&') >= 0) {
+            var addVars = callbackSplit[1].split('&').filter(function (el) { return el.indexOf('=') > 0; }).join('&');
+            if (addVars.length > 0)
+                requestUrl += "&" + addVars;
+        }
+        // Create script
+        var script_1 = document.createElement('script');
+        script_1.type = 'text/javascript';
+        script_1.onerror = function onerror() {
+            clearTimeout(abortTimeout_1);
+            fireCallback('error', null, 'scripterror');
+            fireCallback('complete', null, 'scripterror');
+        };
+        script_1.src = requestUrl;
+        // Handler
+        window[callbackName_1] = function jsonpCallback(data) {
+            clearTimeout(abortTimeout_1);
+            fireCallback('success', data);
+            script_1.parentNode.removeChild(script_1);
+            script_1 = null;
+            delete window[callbackName_1];
+        };
+        document.querySelector('head').appendChild(script_1);
+        if (options.timeout > 0) {
+            abortTimeout_1 = setTimeout(function () {
+                script_1.parentNode.removeChild(script_1);
+                script_1 = null;
+                fireCallback('error', null, 'timeout');
+            }, options.timeout);
+        }
+        return undefined;
+    }
+    // Cache for GET/HEAD requests
+    if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE') {
+        if (options.cache === false) {
+            options.url += paramsPrefix + "_nocache" + Date.now();
+        }
+    }
+    // Create XHR
+    var xhr = new XMLHttpRequest();
+    // Save Request URL
+    xhr.requestUrl = options.url;
+    xhr.requestParameters = options;
+    // Before open callback
+    proceedRequest = fireCallback('beforeOpen', xhr, options);
+    if (proceedRequest === false)
+        return xhr;
+    // Open XHR
+    xhr.open(method, options.url, options.async, options.user, options.password);
+    // Create POST Data
+    var postData = null;
+    if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && options.data) {
+        if (options.processData) {
+            var postDataInstances = [ArrayBuffer, Blob, Document, FormData];
+            // Post Data
+            if (postDataInstances.indexOf(options.data.constructor) >= 0) {
+                postData = options.data;
+            }
+            else {
+                // POST Headers
+                var boundary = "---------------------------" + Date.now().toString(16);
+                if (options.contentType === 'multipart/form-data') {
+                    xhr.setRequestHeader('Content-Type', "multipart/form-data; boundary=" + boundary);
+                }
+                else {
+                    xhr.setRequestHeader('Content-Type', options.contentType);
+                }
+                postData = '';
+                var data = serializeQuery(options.data);
+                if (options.contentType === 'multipart/form-data') {
+                    data = data.split('&');
+                    var newData = [];
+                    for (var i = 0; i < data.length; i += 1) {
+                        newData.push("Content-Disposition: form-data; name=\"" + data[i].split('=')[0] + "\"\r\n\r\n" + data[i].split('=')[1] + "\r\n");
+                    }
+                    postData = "--" + boundary + "\r\n" + newData.join("--" + boundary + "\r\n") + "--" + boundary + "--\r\n";
+                }
+                else if (options.contentType === 'application/json') {
+                    postData = JSON.stringify(options.data);
+                }
+                else {
+                    postData = data;
+                }
+            }
+        }
+        else {
+            postData = options.data;
+            xhr.setRequestHeader('Content-Type', options.contentType);
+        }
+    }
+    // Additional headers
+    if (options.headers) {
+        Object.keys(options.headers).forEach(function (headerName) {
+            xhr.setRequestHeader(headerName, options.headers[headerName]);
+        });
+    }
+    // Check for crossDomain
+    if (typeof options.crossDomain === 'undefined') {
+        // eslint-disable-next-line
+        options.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(options.url) && RegExp.$2 !== window.location.host;
+    }
+    if (!options.crossDomain) {
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    }
+    if (options.xhrFields) {
+        Object.assign(xhr, options.xhrFields);
+    }
+    var xhrTimeout;
+    // Handle XHR
+    xhr.onload = function onload() {
+        if (xhrTimeout)
+            clearTimeout(xhrTimeout);
+        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0) {
+            var responseData = void 0;
+            if (options.dataType === 'json') {
+                var parseError = void 0;
+                try {
+                    responseData = JSON.parse(xhr.responseText);
+                }
+                catch (err) {
+                    parseError = true;
+                }
+                if (!parseError) {
+                    fireCallback('success', responseData, xhr.status, xhr);
+                }
+                else {
+                    fireCallback('error', xhr, 'parseerror');
+                }
+            }
+            else {
+                responseData = xhr.responseType === 'text' || xhr.responseType === '' ? xhr.responseText : xhr.response;
+                fireCallback('success', responseData, xhr.status, xhr);
+            }
+        }
+        else {
+            fireCallback('error', xhr, xhr.status);
+        }
+        if (options.statusCode) {
+            if (globals.statusCode && globals.statusCode[xhr.status])
+                globals.statusCode[xhr.status](xhr);
+            if (options.statusCode[xhr.status])
+                options.statusCode[xhr.status](xhr);
+        }
+        fireCallback('complete', xhr, xhr.status);
+    };
+    xhr.onerror = function onerror() {
+        if (xhrTimeout)
+            clearTimeout(xhrTimeout);
+        fireCallback('error', xhr, xhr.status);
+        fireCallback('complete', xhr, 'error');
+    };
+    // Timeout
+    if (options.timeout > 0) {
+        xhr.onabort = function onabort() {
+            if (xhrTimeout)
+                clearTimeout(xhrTimeout);
+        };
+        xhrTimeout = setTimeout(function () {
+            xhr.abort();
+            fireCallback('error', xhr, 'timeout');
+            fireCallback('complete', xhr, 'timeout');
+        }, options.timeout);
+    }
+    // Ajax start callback
+    proceedRequest = fireCallback('beforeSend', xhr, options);
+    if (proceedRequest === false)
+        return xhr;
+    // Send XHR
+    xhr.send(postData);
+    // Return XHR object
+    return xhr;
+}
+function RequestShortcut(method) {
+    var args = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        args[_i - 1] = arguments[_i];
+    }
+    var _a = [], url = _a[0], data = _a[1], success = _a[2], error = _a[3], dataType = _a[4];
+    if (typeof args[1] === 'function') {
+        url = args[0], success = args[1], error = args[2], dataType = args[3];
+    }
+    else {
+        url = args[0], data = args[1], success = args[2], error = args[3], dataType = args[4];
+    }
+    [success, error].forEach(function (callback) {
+        if (typeof callback === 'string') {
+            dataType = callback;
+            if (callback === success)
+                success = undefined;
+            else
+                error = undefined;
+        }
+    });
+    dataType = dataType || (method === 'json' || method === 'postJSON' ? 'json' : undefined);
+    var requestOptions = {
+        url: url,
+        method: method === 'post' || method === 'postJSON' ? 'POST' : 'GET',
+        data: data,
+        success: success,
+        error: error,
+        dataType: dataType,
+    };
+    if (method === 'postJSON') {
+        Object.assign(requestOptions, {
+            contentType: 'application/json',
+            processData: false,
+            crossDomain: true,
+            data: typeof data === 'string' ? data : JSON.stringify(data),
+        });
+    }
+    return Request(requestOptions);
+}
+Object.assign(Request, {
+    get: function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return RequestShortcut.apply(void 0, ['get'].concat(args));
+    },
+    post: function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return RequestShortcut.apply(void 0, ['post'].concat(args));
+    },
+    json: function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return RequestShortcut.apply(void 0, ['json'].concat(args));
+    },
+    getJSON: function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return RequestShortcut.apply(void 0, ['json'].concat(args));
+    },
+    postJSON: function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return RequestShortcut.apply(void 0, ['postJSON'].concat(args));
+    },
+});
+Request.setup = function setup(options) {
+    if (options.type && !options.method) {
+        Object.assign(options, { method: options.type });
+    }
+    Object.assign(globals, options);
+};
+function serializeQuery(params, prefix) {
+    var key = Object.keys(params);
+    for (var i = 0; i < key.length; i++) {
+      var value = params[key[i]];
+      if (params.constructor === Array)
+          key[i] += prefix + "[]";
+      else if (params.constructor === Object)
+          key[i] = (prefix ? prefix + "[" + key[i] + "]" : key[i]);
+
+      if (typeof value === 'object')
+          key[i] = serializeQuery(value, key[i]);
+      else
+          key[i] = key[i] + "=" + encodeURIComponent(value);
+    }
+    return key.join('&');
+}
+$.ajax = sf.ajax = Request;
 sf.router = new function(){
 	var self = this;
 	self.loading = false;
@@ -3235,44 +3325,52 @@ sf.internal.virtual_scroll = new function(){
 			styleInitialized = true;
 		}
 
-		list.$virtual.elements = function(){
+		var virtual = list.$virtual;
+		virtual.reset = function(){
+			virtual.DOMCursor = 0; // cursor of first element in DOM tree as a cursor
+
+			virtual.bounding = {
+				ceiling:-1,
+				floor:0
+			}
+
+			virtual.vCursor = { // Virtual Cursor
+				ceiling:null, // for forward direction
+				floor:virtual.dom.firstElementChild // for backward direction
+			}
+
+			refreshScrollBounding(0, virtual.bounding, list, parentNode);
+		}
+		virtual.reset();
+
+		virtual.elements = function(){
 			return obtainElements(list, parentNode);
 		}
 
-		list.$virtual.dCursor = { // DOM Cursor
+		virtual.dCursor = { // DOM Cursor
 			ceiling:parentNode.querySelector('.virtual-spacer.ceiling'),
 			floor:parentNode.querySelector('.virtual-spacer.floor')
 		};
 
-		list.$virtual.bounding = {
-			ceiling:-1,
-			floor:0
-		}
+		virtual.targetNode = parentNode;
 
-		list.$virtual.vCursor = { // Virtual Cursor
-			ceiling:null, // for forward direction
-			floor:null // for backward direction
-		}
-
-		list.$virtual.targetNode = parentNode;
-		list.$virtual.DOMCursor = 0; // cursor of first element in DOM tree as a cursor
-
-		list.$virtual.scrollHeight = 
-			list.$virtual.dCursor.floor.offsetTop - 
-			list.$virtual.dCursor.ceiling.offsetTop;
+		virtual.scrollHeight = 
+			virtual.dCursor.floor.offsetTop - 
+			virtual.dCursor.ceiling.offsetTop;
 
 		var scroller = null;
-		list.$virtual.destroy = function(){
+		virtual.destroy = function(){
 			$.off(scroller, 'scroll');
 			$.off(parentNode, 'mousedown mouseup');
-			list.$virtual.dom.innerHTML = '';
+			virtual.dom.innerHTML = '';
 			offElementResize(parentNode);
+
 			delete list.$virtual;
 		}
 
-		list.$virtual.resetViewport = function(){
-			list.$virtual.visibleLength = Math.floor(scroller.clientHeight / list.$virtual.scrollHeight);
-			list.$virtual.preparedLength = list.$virtual.visibleLength + self.prepareCount * 2;
+		virtual.resetViewport = function(){
+			virtual.visibleLength = Math.floor(scroller.clientHeight / virtual.scrollHeight);
+			virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
 		}
 
 		setTimeout(function(){
@@ -3283,7 +3381,7 @@ sf.internal.virtual_scroll = new function(){
 				scroller = scroller.parentElement;
 			}
 
-			list.$virtual.resetViewport();
+			virtual.resetViewport();
 
 			if(parentNode.classList.contains('sf-list-dynamic'))
 				dynamicHeight(list, targetNode, parentNode, scroller);
@@ -3306,6 +3404,7 @@ sf.internal.virtual_scroll = new function(){
 
 		virtual.refresh = function(force){
 			refresh(force, list, self.prepareCount, parentNode, scroller);
+			fillViewport();
 		}
 
 		// Insert some element until reach visible height
