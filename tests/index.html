@@ -139,15 +139,27 @@
                setTimeout(function(){
                   var list = sf.model('virtual-scroll');
 
+                  // Hard Refreshed
+                  console.log("Item: 11-15");
                   list.list2 = list.list2b.slice(10, 15);
 
+                  // Add element at the end
                   setTimeout(function(){
+                     console.log("Item: 11-20");
                      list.list2 = list.list2.concat(list.list2b.slice(15, 20));
                   }, 2000);
 
+                  // Clear some element and refresh some element
                   setTimeout(function(){
+                     console.log("Item: 21-25");
                      list.list2 = list.list2b.slice(20, 25);
                   }, 5000);
+
+                  // Reuse element from the middle
+                  setTimeout(function(){
+                     console.log("Item: 21-23, 31-35");
+                     list.list2 = list.list2b.slice(20, 23).concat(list.list2b.slice(30, 35));
+                  }, 8000);
 
                   // Variable height for list2
                   setTimeout(function(){
@@ -160,9 +172,7 @@
 
                      list.list2.$virtual.refresh();
                      list.list2.$virtual.scrollTo(10);
-                  }, 8000);
-
-                  
+                  }, 12000);
 
                   var posY = list.list1.$virtual.offsetTo(20);
                   if(!posY)
@@ -188,11 +198,16 @@
                   list.list1.getElement(8).dummy = true;
 
                   list.list1[7].id = 'Partial refresh';
-                  list.list1.refresh(7);
+                  list.list1.refresh(7, 'id');
 
                   setTimeout(function(){
                      list.list1[8].id = 'Element refresh';
                      list.list1.softRefresh(8);
+
+                     if(list.list1.getElement(7).sf$cache.id !== list.list1[7].id)
+                        console.error("Partial refresh not working");
+                     if(list.list1.getElement(8).sf$cache.id !== list.list1[8].id)
+                        console.error("Element refresh not working");
 
                      if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing");
                      if(list.list1.getElement(8).dummy) console.error("Data on element refresh was exist");
