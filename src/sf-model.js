@@ -301,18 +301,29 @@ sf.model = function(scope){
 	}
 
 	function syntheticTemplate(element, template, property, item){
+		var cache = element.sf$cache;
+		var modelRef_array = template.modelRef_array;
+
 		if(property !== undefined){
 			var changes = template.modelReference[property];
 			if(changes === undefined || changes.length === 0){
 				console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 				return false;
 			}
+
+			for (var i = 0; i < modelRef_array.length; i++) {
+				var ref = modelRef_array[i];
+				if(ref[0] !== property) continue;
+
+				var newData = deepProperty(item, ref[1]);
+
+				// Check if data was different
+				if(cache[ref[0]] !== newData)
+					cache[ref[0]] = newData;
+			}
 		}
 		else{
 			var changes = [];
-			var cache = element.sf$cache;
-			var modelRef_array = template.modelRef_array;
-
 			for (var i = 0; i < modelRef_array.length; i++) {
 				var ref = modelRef_array[i];
 				var newData = deepProperty(item, ref[1]);
@@ -1145,7 +1156,7 @@ sf.model = function(scope){
 			else if(length === undefined) length = index + 1;
 			else if(length.constructor === String){
 				property = length;
-				length = 1;
+				length = index + 1;
 			}
 			else if(length < 0) length = list.length + length;
 			else length += index;
