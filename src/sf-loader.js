@@ -90,44 +90,11 @@ sf.loader = new function(){
 		}
 	}, 10000);
 
+
 	var isQueued = false;
-	document.addEventListener("DOMContentLoaded", function(event){
-		// Add processing class to queued element
-		if(isQueued === false && document.body){
-			isQueued = sf.model.queuePreprocess(document.body);
-			for (var i = 0; i < isQueued.length; i++) {
-				if(isQueued[i].nodeType === 1)
-					isQueued[i].classList.add('sf-dom-queued');
-			}
-
-			var repeatedList = $('[sf-repeat-this]', document.body);
-			for (var i = 0; i < repeatedList.length; i++) {
-				repeatedList[i].classList.add('sf-dom-queued');
-			}
-
-			// Find images
-			var temp = $('img:not(onload)[src]');
-			for (var i = 0; i < temp.length; i++) {
-				sf.loader.totalContent++;
-				temp[i].addEventListener('load', sf.loader.f, {once:true});
-				temp[i].addEventListener('error', sf.loader.f, {once:true});
-			}
-		}
-
-		function onReadyState(){
-			if(isQueued === null){
-				clearInterval(onReadyState_timer);
-				return;
-			}
-
-			if(self.turnedOff === false && self.loadedContent < self.totalContent)
-				return;
-
-			if(/loaded|complete/.test(document.readyState) === false)
-				return;
-
-			clearInterval(onReadyState_timer);
-
+	var lastState = '';
+	document.addEventListener("load", function domLoadEvent(event){
+		if(document.readyState === 'interactive'){
 			if(self.DOMReady === false){
 				self.DOMReady = true;
 				for (var i = 0; i < whenDOMReady.length; i++) {
@@ -139,35 +106,75 @@ sf.loader = new function(){
 				}
 			}
 
-			var listener = sf.dom('script, link, img');
-			for (var i = 0; i < listener.length; i++) {
-				listener[i].removeEventListener('error', sf.loader.f);
-				listener[i].removeEventListener('load', sf.loader.f);
-			}
+			if(isQueued === false)
+				isQueued = sf.model.queuePreprocess(document.body);
 
-			self.DOMWasLoaded = true;
-			for (var i = 0; i < whenDOMLoaded.length; i++) {
-				try{
-					whenDOMLoaded[i]();
-				} catch(e){
-					console.error(e);
-				}
-			}
-			whenProgress.splice(0);
-			whenDOMReady.splice(0);
-			whenDOMLoaded.splice(0);
-			whenDOMReady = whenDOMLoaded = null;
-
-			// Last init
-			sf.controller.init();
-			sf.model.init(document.body, isQueued);
-			sf.router.init();
-
-			isQueued = null;
+			resourceWaitTimer = setInterval(waitResources, 100);
+			document.removeEventListener('load', domLoadEvent, true)
 		}
 
-		var onReadyState_timer = setInterval(onReadyState, 100);
-		onReadyState();
-	});
+		// Add processing class to queued element
+		if(isQueued === false && document.body){
+			if(lastState === document.readyState) return;
+			lastState = document.readyState;
+
+			isQueued = sf.model.queuePreprocess(document.body);
+
+			for (var i = 0; i < isQueued.length; i++) {
+				isQueued[i].classList.add('sf-dom-queued');
+			}
+
+			if(isQueued.length === 0) isQueued = false;
+
+			if(lastState === 'loading'){
+				var repeatedList = $('[sf-repeat-this]', document.body);
+				for (var i = 0; i < repeatedList.length; i++) {
+					repeatedList[i].classList.add('sf-dom-queued');
+				}
+
+				// Find images
+				var temp = $('img:not(onload)[src]');
+				for (var i = 0; i < temp.length; i++) {
+					sf.loader.totalContent++;
+					temp[i].addEventListener('load', sf.loader.f, {once:true});
+					temp[i].addEventListener('error', sf.loader.f, {once:true});
+				}
+			}
+		}
+	}, {capture:true});
+
+	var resourceWaitTimer = -1;
+	function waitResources(){
+		if(self.turnedOff === false && self.loadedContent < self.totalContent)
+			return;
+
+		clearInterval(resourceWaitTimer);
+
+		var listener = sf.dom('script, link, img');
+		for (var i = 0; i < listener.length; i++) {
+			listener[i].removeEventListener('error', sf.loader.f);
+			listener[i].removeEventListener('load', sf.loader.f);
+		}
+
+		self.DOMWasLoaded = true;
+		for (var i = 0; i < whenDOMLoaded.length; i++) {
+			try{
+				whenDOMLoaded[i]();
+			} catch(e){
+				console.error(e);
+			}
+		}
+		whenProgress.splice(0);
+		whenDOMReady.splice(0);
+		whenDOMLoaded.splice(0);
+		whenDOMReady = whenDOMLoaded = null;
+
+		// Last init
+		sf.controller.init();
+		sf.model.init(document.body, isQueued);
+		sf.router.init();
+
+		isQueued = null;
+	}
 }
 sf.prototype.constructor = sf.loader.onFinish;
