@@ -94,29 +94,9 @@ sf.loader = new function(){
 	var isQueued = false;
 	var lastState = '';
 	document.addEventListener("load", function domLoadEvent(event){
-		if(document.readyState === 'interactive'){
-			if(self.DOMReady === false){
-				self.DOMReady = true;
-				for (var i = 0; i < whenDOMReady.length; i++) {
-					try{
-						whenDOMReady[i]();
-					} catch(e) {
-						console.error(e);
-					}
-				}
-			}
-
-			if(isQueued === false)
-				isQueued = sf.model.queuePreprocess(document.body);
-
-			resourceWaitTimer = setInterval(waitResources, 100);
-			document.removeEventListener('load', domLoadEvent, true)
-		}
-
 		// Add processing class to queued element
 		if(isQueued === false && document.body){
-			if(lastState === document.readyState) return;
-			lastState = document.readyState;
+			document.removeEventListener('load', domLoadEvent, true);
 
 			isQueued = sf.model.queuePreprocess(document.body);
 
@@ -141,7 +121,28 @@ sf.loader = new function(){
 				}
 			}
 		}
-	}, {capture:true});
+	}, true);
+
+	document.addEventListener('readystatechange', function domStateEvent(){
+		if(document.readyState === 'interactive' || document.readyState === 'complete'){
+			if(self.DOMReady === false){
+				self.DOMReady = true;
+				for (var i = 0; i < whenDOMReady.length; i++) {
+					try{
+						whenDOMReady[i]();
+					} catch(e) {
+						console.error(e);
+					}
+				}
+			}
+
+			if(isQueued === false)
+				isQueued = sf.model.queuePreprocess(document.body);
+
+			resourceWaitTimer = setInterval(waitResources, 100);
+			document.removeEventListener('readystatechange', domStateEvent, true);
+		}
+	}, true);
 
 	var resourceWaitTimer = -1;
 	function waitResources(){
