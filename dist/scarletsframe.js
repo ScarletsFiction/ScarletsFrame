@@ -424,44 +424,41 @@ sf.loader = new function(){
 		}
 	}, 10000);
 
+
 	var isQueued = false;
-	document.addEventListener("DOMContentLoaded", function(event){
+	var lastState = '';
+	document.addEventListener("load", function domLoadEvent(event){
 		// Add processing class to queued element
 		if(isQueued === false && document.body){
+			document.removeEventListener('load', domLoadEvent, true);
+
 			isQueued = sf.model.queuePreprocess(document.body);
+
 			for (var i = 0; i < isQueued.length; i++) {
-				if(isQueued[i].nodeType === 1)
-					isQueued[i].classList.add('sf-dom-queued');
+				isQueued[i].classList.add('sf-dom-queued');
 			}
 
-			var repeatedList = $('[sf-repeat-this]', document.body);
-			for (var i = 0; i < repeatedList.length; i++) {
-				repeatedList[i].classList.add('sf-dom-queued');
-			}
+			if(isQueued.length === 0) isQueued = false;
 
-			// Find images
-			var temp = $('img:not(onload)[src]');
-			for (var i = 0; i < temp.length; i++) {
-				sf.loader.totalContent++;
-				temp[i].addEventListener('load', sf.loader.f, {once:true});
-				temp[i].addEventListener('error', sf.loader.f, {once:true});
+			if(lastState === 'loading'){
+				var repeatedList = $('[sf-repeat-this]', document.body);
+				for (var i = 0; i < repeatedList.length; i++) {
+					repeatedList[i].classList.add('sf-dom-queued');
+				}
+
+				// Find images
+				var temp = $('img:not(onload)[src]');
+				for (var i = 0; i < temp.length; i++) {
+					sf.loader.totalContent++;
+					temp[i].addEventListener('load', sf.loader.f, {once:true});
+					temp[i].addEventListener('error', sf.loader.f, {once:true});
+				}
 			}
 		}
+	}, true);
 
-		function onReadyState(){
-			if(isQueued === null){
-				clearInterval(onReadyState_timer);
-				return;
-			}
-
-			if(self.turnedOff === false && self.loadedContent < self.totalContent)
-				return;
-
-			if(/loaded|complete/.test(document.readyState) === false)
-				return;
-
-			clearInterval(onReadyState_timer);
-
+	document.addEventListener('readystatechange', function domStateEvent(){
+		if(document.readyState === 'interactive' || document.readyState === 'complete'){
 			if(self.DOMReady === false){
 				self.DOMReady = true;
 				for (var i = 0; i < whenDOMReady.length; i++) {
@@ -473,36 +470,47 @@ sf.loader = new function(){
 				}
 			}
 
-			var listener = sf.dom('script, link, img');
-			for (var i = 0; i < listener.length; i++) {
-				listener[i].removeEventListener('error', sf.loader.f);
-				listener[i].removeEventListener('load', sf.loader.f);
-			}
+			if(isQueued === false)
+				isQueued = sf.model.queuePreprocess(document.body);
 
-			self.DOMWasLoaded = true;
-			for (var i = 0; i < whenDOMLoaded.length; i++) {
-				try{
-					whenDOMLoaded[i]();
-				} catch(e){
-					console.error(e);
-				}
-			}
-			whenProgress.splice(0);
-			whenDOMReady.splice(0);
-			whenDOMLoaded.splice(0);
-			whenDOMReady = whenDOMLoaded = null;
+			resourceWaitTimer = setInterval(waitResources, 100);
+			document.removeEventListener('readystatechange', domStateEvent, true);
+		}
+	}, true);
 
-			// Last init
-			sf.controller.init();
-			sf.model.init(document.body, isQueued);
-			sf.router.init();
+	var resourceWaitTimer = -1;
+	function waitResources(){
+		if(self.turnedOff === false && self.loadedContent < self.totalContent)
+			return;
 
-			isQueued = null;
+		clearInterval(resourceWaitTimer);
+
+		var listener = sf.dom('script, link, img');
+		for (var i = 0; i < listener.length; i++) {
+			listener[i].removeEventListener('error', sf.loader.f);
+			listener[i].removeEventListener('load', sf.loader.f);
 		}
 
-		var onReadyState_timer = setInterval(onReadyState, 100);
-		onReadyState();
-	});
+		self.DOMWasLoaded = true;
+		for (var i = 0; i < whenDOMLoaded.length; i++) {
+			try{
+				whenDOMLoaded[i]();
+			} catch(e){
+				console.error(e);
+			}
+		}
+		whenProgress.splice(0);
+		whenDOMReady.splice(0);
+		whenDOMLoaded.splice(0);
+		whenDOMReady = whenDOMLoaded = null;
+
+		// Last init
+		sf.controller.init();
+		sf.model.init(document.body, isQueued);
+		sf.router.init();
+
+		isQueued = null;
+	}
 }
 sf.prototype.constructor = sf.loader.onFinish;
 // Data save and HTML content binding
@@ -1249,11 +1257,18 @@ sf.model = function(scope){
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
 		var parentChilds = parentNode.children;
+		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		// Update callback
 		var callback = self.root[modelName]['on$'+propertyName];
 
 		var processElement = function(index, options, other, count){
+			// Find boundary for inserting to virtual DOM
+			if(list.$virtual){
+				var vStartRange = list.$virtual.DOMCursor;
+				var vEndRange = vStartRange + list.$virtual.preparedLength;
+			}
+
 			if(options === 'clear'){
 				if(list.$virtual)
 					var spacer = [parentNode.firstElementChild, parentNode.lastElementChild];
@@ -1263,11 +1278,12 @@ sf.model = function(scope){
 				if(list.$virtual){
 					parentNode.appendChild(spacer[0]);
 					parentNode.appendChild(spacer[1]);
+					list.$virtual.dom.textContent = '';
 				}
 				return;
 			}
 
-			// Hard refresh
+			// Hard refresh - Append element
 			if(options === 'hardRefresh'){
 				var item = list;
 
@@ -1281,12 +1297,17 @@ sf.model = function(scope){
 
 				for (var i = index; i < item.length; i++) {
 					var temp = templateParser(template, item[i]);
-					if(list.$virtual)
-						parentNode.insertBefore(temp, parentNode.lastElementChild);
+					if(list.$virtual){
+						if(i >= vStartRange && i <= vEndRange)
+							parentNode.insertBefore(temp, parentNode.lastElementChild);
+						else
+							list.$virtual.dom.insertBefore(temp, list.$virtual.vCursor.floor);
+					}
 					else
 						parentNode.appendChild(temp);
 
-					syntheticCache(temp, template, item[i]);
+					if(isKeyed === false)
+						syntheticCache(temp, template, item[i]);
 				}
 
 				if(list.$virtual) list.$virtual.refresh();
@@ -1341,6 +1362,7 @@ sf.model = function(scope){
 				return;
 			}
 
+			// Avoid multiple refresh by set a timer
 			if(list.$virtual){
 				var exist = list.$virtual.elements();
 
@@ -1350,6 +1372,13 @@ sf.model = function(scope){
 				}, 100);
 			}
 			else exist = parentChilds;
+
+			// Clear unused element if current array < last array
+			if(options === 'removeRange'){
+				for (var i = index; i < other; i++) {
+					exist[index].remove();
+				}
+			}
 
 			// Remove
 			if(options === 'remove'){
@@ -1395,7 +1424,8 @@ sf.model = function(scope){
 						break;
 
 					var temp = templateParser(template, list[i]);
-					syntheticCache(temp, template, list[i]);
+					if(isKeyed === false)
+						syntheticCache(temp, template, list[i]);
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
@@ -1412,18 +1442,17 @@ sf.model = function(scope){
 			if(item === undefined) return;
 
 			var temp = templateParser(template, item);
-			syntheticCache(temp, template, item);
-
-			var referenceNode = exist[index];
+			if(isKeyed === false)
+				syntheticCache(temp, template, item);
 
 			// Create
 			if(options === 'insertAfter'){
 				var index = index !== 0 ? index - 1 : (exist.length - 1);
 				var referenceNode = exist[index];
 
-				if(!referenceNode){
+				if(referenceNode === undefined){
 					if(!list.$virtual || list.length === 0){
-						parentNode.insertAdjacentElement('afterBegin', temp);
+						parentNode.insertBefore(temp, parentNode.firstElementChild); // prepend
 						if(callback !== undefined && callback.create)
 							callback.create(temp);
 					}
@@ -1437,9 +1466,23 @@ sf.model = function(scope){
 				// Refresh virtual scroll
 				if(list.$virtual) list.$virtual.refresh();
 			}
-			else if(options === 'append'){
+			else if(options === 'prepend'){
+				var referenceNode = exist[0];
+				if(referenceNode !== undefined){
+					referenceNode.parentNode.insertBefore(temp, referenceNode);
+
+					if(callback !== undefined && callback.create)
+						callback.create(temp);
+
+					// Refresh virtual scroll
+					if(list.$virtual) list.$virtual.refresh();
+				}
+				else options = 'append';
+			}
+			if(options === 'append'){
 				if(list.$virtual && list.length !== 0){
 					exist[index-1].insertAdjacentElement('afterEnd', temp);
+
 					if(callback !== undefined && callback.create)
 						callback.create(temp);
 
@@ -1451,14 +1494,6 @@ sf.model = function(scope){
 				parentNode.appendChild(temp);
 				if(callback !== undefined && callback.create)
 					callback.create(temp);
-			}
-			else if(options === 'insertBefore'){
-				exist[0].insertAdjacentElement('beforeBegin', temp);
-				if(callback !== undefined && callback.create)
-					callback.create(temp);
-
-				// Refresh virtual scroll
-				if(list.$virtual) list.$virtual.refresh();
 			}
 		}
 
@@ -1496,6 +1531,9 @@ sf.model = function(scope){
 					}
 
 					else if(name === 'replace'){
+						if(list.$virtual)
+							list.$virtual.resetViewport();
+
 						// Check if item has same reference
 						if(arguments[0].length >= lastLength && lastLength !== 0){
 							var matchLeft = lastLength;
@@ -1528,7 +1566,10 @@ sf.model = function(scope){
 									temp.unshift(i, lastLength - i);
 									Array.prototype.splice.apply(this, temp);
 
-									list.refresh(i, lastLength); // Reuse element if exist
+									if(isKeyed)
+										list.softRefresh(i, lastLength); // Remove element if exist
+									else
+										list.refresh(i, lastLength); // Reuse element if exist
 								}
 								return;
 							}
@@ -1547,32 +1588,24 @@ sf.model = function(scope){
 						Array.prototype.splice.apply(this, temp);
 
 						// Rebuild all element
-						if(arguments[1] !== true){
+						if(arguments[1] !== true || isKeyed){
 							processElement(0, 'clear');
 							processElement(0, 'hardRefresh');
 						}
 
 						// Reuse some element
 						else{
-							var currentLength = this.length;
-
 							// Clear unused element if current array < last array
-							if(this.length < lastLength){
-								for (var i = currentLength; i < lastLength; i++) {
-									parentChilds[currentLength].remove();
-								}
-							}
+							if(this.length < lastLength)
+								processElement(this.length, 'removeRange', lastLength);
 
 							// And start refreshing
-							list.refresh(0, currentLength);
+							list.refresh(0, this.length);
 						}
 
 						// Reset virtual list
-						if(list.$virtual){
+						if(list.$virtual)
 							list.$virtual.reset();
-							list.$virtual.resetViewport();
-							list.$virtual.refresh();
-						}
 
 						return this;
 					}
@@ -1618,7 +1651,7 @@ sf.model = function(scope){
 					}
 
 					else if(name === 'unshift')
-						processElement(0, 'insertBefore');
+						processElement(0, 'prepend');
 
 					else if(name === 'softRefresh')
 						processElement(arguments[0], 'update', arguments[1]);
@@ -1676,13 +1709,14 @@ sf.model = function(scope){
 				var elem = list.getElement(i);
 
 				// Create element if not exist
-				if(elem === undefined){
+				if(elem === undefined)
 					list.hardRefresh(i);
-					break;
+				else{
+					if(isKeyed === true)
+						list.softRefresh(i);
+					else if(syntheticTemplate(elem, template, property, list[i]) === false)
+						continue; // Continue if no update
 				}
-
-				if(syntheticTemplate(elem, template, property, list[i]) === false)
-					continue; // Continue if no update
 
 				if(callback !== undefined && callback.update)
 					callback.update(elem, 'replace');
@@ -1721,6 +1755,7 @@ sf.model = function(scope){
 	var loopParser = function(name, template, script, targetNode, parentNode){
 		var method = script.split(' in ');
 		var mask = method[0];
+		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		if(!self.root[name])
 			return console.error("Can't parse element because model for '"+name+"' was not found", template);
@@ -1740,11 +1775,13 @@ sf.model = function(scope){
 		if(method.length === 2){
 			var tempDOM = document.createElement('div');
 			var modelRef = self.root[name];
-			
+
 			for (var i = 0; i < items.length; i++) {
 				var elem = templateParser(template, items[i]);
 				tempDOM.appendChild(elem);
-				syntheticCache(elem, template, items[i]);
+
+				if(isKeyed === false)
+					syntheticCache(elem, template, items[i]);
 			}
 
 			// Enable element binding
@@ -1772,8 +1809,8 @@ sf.model = function(scope){
 			// Output to real DOM if not being used for virtual list
 			if(items.$virtual === undefined){
 				var children = tempDOM.children;
-				for (var i = 0; i < children.length; i++) {
-					parentNode.appendChild(children[i]);
+				for (var i = 0, n = children.length; i < n; i++) {
+					parentNode.appendChild(children[0]);
 				}
 
 				tempDOM.remove();
@@ -2368,10 +2405,12 @@ sf.model = function(scope){
 			if(queued !== undefined)
 				current.classList.remove('sf-dom-queued');
 
-			if(!self.root[model])
-				return console.error("Can't parse element because model for '"+model+"' was not found", current);
-
 			var modelRef = self.root[model];
+
+			if(!modelRef){
+				modelRef = root_(model);
+				//return console.error("Can't parse element because model for '"+model+"' was not found", current);
+			}
 
 			// Double check if the child element already bound to prevent vulnerability
 			if(/sf-bind-key|sf-bind-list/.test(current.innerHTML)){
@@ -2384,14 +2423,14 @@ sf.model = function(scope){
 				self.bindElement(current, current.getAttribute('sf-bind'));
 
 			// Avoid editing the outerHTML because it will remove the bind
-			var temp = uniqueDataParser(current.innerHTML, self.root[model], false, model);
-			current.innerHTML = dataParser(temp, self.root[model], false, model);
+			var temp = uniqueDataParser(current.innerHTML, modelRef, false, model);
+			current.innerHTML = dataParser(temp, modelRef, false, model);
 
 			var attrs = nodes[a].attributes;
 			for (var i = 0; i < attrs.length; i++) {
 				if(attrs[i].value.indexOf('{{') !== -1){
 					var attr = attrs[i];
-					attr.value = dataParser(attr.value, self.root[model], false, model);
+					attr.value = dataParser(attr.value, modelRef, false, model);
 				}
 			}
 		}
@@ -2594,16 +2633,6 @@ sf.controller = new function(){
 		}
 	}
 
-	var root_ = function(scope){
-		if(!sf.model.root[scope])
-			sf.model.root[scope] = {};
-
-		if(!sf.model.root[scope])
-			sf.controller.run(scope);
-
-		return sf.model.root[scope];
-	}
-
 	self.run = function(name, func){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
@@ -2639,6 +2668,16 @@ sf.controller = new function(){
 	document.addEventListener('DOMContentLoaded', function(){
 		$.on(document.body, 'click', '[sf-click]', listenSFClick);
 	}, {capture:true, once:true});
+}
+
+var root_ = function(scope){
+	if(!sf.model.root[scope])
+		sf.model.root[scope] = {};
+
+	if(!sf.model.root[scope])
+		sf.controller.run(scope);
+
+	return sf.model.root[scope];
 }
 /*
   Special Thanks to Vladimir Kharlampidi
@@ -3970,7 +4009,7 @@ sf.internal.virtual_scroll = new function(){
 					clearInterval(_onElementResize_timer);
 					_onElementResize_timer = -1;
 				}
-			}, 200);
+			}, 1000);
 		}
 
 		_onElementResize.push({
