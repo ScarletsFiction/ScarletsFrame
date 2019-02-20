@@ -115,16 +115,6 @@ sf.controller = new function(){
 		}
 	}
 
-	var root_ = function(scope){
-		if(!sf.model.root[scope])
-			sf.model.root[scope] = {};
-
-		if(!sf.model.root[scope])
-			sf.controller.run(scope);
-
-		return sf.model.root[scope];
-	}
-
 	self.run = function(name, func){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
@@ -160,4 +150,14 @@ sf.controller = new function(){
 	document.addEventListener('DOMContentLoaded', function(){
 		$.on(document.body, 'click', '[sf-click]', listenSFClick);
 	}, {capture:true, once:true});
+}
+
+var root_ = function(scope){
+	if(!sf.model.root[scope])
+		sf.model.root[scope] = {};
+
+	if(!sf.model.root[scope])
+		sf.controller.run(scope);
+
+	return sf.model.root[scope];
 }

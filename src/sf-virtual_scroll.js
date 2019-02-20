@@ -657,7 +657,7 @@ sf.internal.virtual_scroll = new function(){
 					clearInterval(_onElementResize_timer);
 					_onElementResize_timer = -1;
 				}
-			}, 200);
+			}, 1000);
 		}
 
 		_onElementResize.push({
