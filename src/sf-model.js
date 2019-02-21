@@ -932,19 +932,13 @@ sf.model = function(scope){
 
 			// Create
 			if(options === 'insertAfter'){
-				var index = index !== 0 ? index - 1 : (exist.length - 1);
-				var referenceNode = exist[index];
-
-				if(referenceNode === undefined){
-					if(!list.$virtual || list.length === 0){
-						parentNode.insertBefore(temp, parentNode.firstElementChild); // prepend
-						if(callback !== undefined && callback.create)
-							callback.create(temp);
-					}
-					return;
+				if(exist.length === 0)
+					parentNode.insertBefore(temp, parentNode.lastElementChild);
+				else{
+					var referenceNode = exist[index - 1];
+					referenceNode.parentNode.insertBefore(temp, referenceNode.nextSibling);
 				}
-
-				referenceNode.insertAdjacentElement('afterEnd', temp);
+				
 				if(callback !== undefined && callback.create)
 					callback.create(temp);
 
