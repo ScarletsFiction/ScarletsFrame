@@ -85,6 +85,12 @@ sf.internal.virtual_scroll = new function(){
 		
 		virtual.scrollTo = function(index){
 			scrollTo(index, list, self.prepareCount, parentNode, scroller);
+
+			// Reset virtual spacer height
+			ceilingHeight = 0;
+			floorHeight = 0;
+			ceiling.style.height = ceilingHeight+'px';
+			floor.style.height = floorHeight+'px';
 		}
 
 		virtual.refresh = function(force){
