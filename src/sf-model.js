@@ -786,13 +786,15 @@ sf.model = function(scope){
 					exist[i].remove();
 				}
 
+				if(list.$virtual)
+					var vCursor = list.$virtual.vCursor;
+
 				for (var i = index; i < list.length; i++) {
 					var temp = templateParser(template, list[i]);
 					if(list.$virtual){
-						if(i >= vStartRange && i < vEndRange)
+						if(vCursor.floor === null)
 							parentNode.insertBefore(temp, parentNode.lastElementChild);
-						else
-							list.$virtual.dom.appendChild(temp);
+						else list.$virtual.dom.appendChild(temp);
 					}
 					else parentNode.appendChild(temp);
 
@@ -960,8 +962,11 @@ sf.model = function(scope){
 				else options = 'append';
 			}
 			if(options === 'append'){
-				if(list.$virtual && list.length !== 0){
-					exist[index-1].insertAdjacentElement('afterEnd', temp);
+				if(list.$virtual){
+					if(index === 0)
+						parentNode.insertBefore(temp, parentNode.lastElementChild);
+					else 
+						exist[index-1].insertAdjacentElement('afterEnd', temp);
 
 					if(callback !== undefined && callback.create)
 						callback.create(temp);
@@ -1124,6 +1129,11 @@ sf.model = function(scope){
 
 						if(arguments.length >= 3){ // Inserting data
 							limit = arguments.length - 2;
+
+							// Trim the index if more than length
+							if(real >= this.length)
+								real = this.length - 1;
+
 							for (var i = 0; i < limit; i++) {
 								processElement(real + i, 'insertAfter');
 							}
