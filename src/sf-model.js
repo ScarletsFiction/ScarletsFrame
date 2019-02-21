@@ -838,15 +838,18 @@ sf.model = function(scope){
 				}
 
 				if(index > other){
-					index = exist[other];
+					var index_a = exist[other];
 					other = exist[index];
+					index = index_a;
 				} else {
 					index = exist[index];
 					other = exist[other];
 				}
 
+				var other_sibling = other.nextSibling;
+				var other_parent = other.parentNode;
 	            index.parentNode.insertBefore(other, index.nextSibling);
-	            other.parentNode.insertBefore(index, other.nextSibling);
+	            other_parent.insertBefore(index, other_sibling);
 
 				if(callback !== undefined && callback.update){
 					callback.update(exist[other], 'swap');

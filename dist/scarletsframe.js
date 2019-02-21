@@ -170,7 +170,7 @@ var $ = sf.dom; // Shortcut
 		}
 
 		var events = event.split(' ');
-		if(events.length !== 0){
+		if(events.length !== 1){
 			for (var i = 0; i < events.length; i++) {
 				self.off(element, events[i]);
 			}
@@ -1283,85 +1283,6 @@ sf.model = function(scope){
 				return;
 			}
 
-			// Hard refresh - Append element
-			if(options === 'hardRefresh'){
-				var item = list;
-
-				// Clear childs if exist
-				var n = parentChilds.length;
-				if(parentChilds[n] !== undefined && parentChilds[n].classList.contains('virtual-spacer') === false){
-					while(parentChilds.length >= index){
-						parentChilds[n].remove();
-					}
-				}
-
-				for (var i = index; i < item.length; i++) {
-					var temp = templateParser(template, item[i]);
-					if(list.$virtual){
-						if(i >= vStartRange && i <= vEndRange)
-							parentNode.insertBefore(temp, parentNode.lastElementChild);
-						else
-							list.$virtual.dom.insertBefore(temp, list.$virtual.vCursor.floor);
-					}
-					else
-						parentNode.appendChild(temp);
-
-					if(isKeyed === false)
-						syntheticCache(temp, template, item[i]);
-				}
-
-				if(list.$virtual) list.$virtual.refresh();
-				return;
-			}
-
-			if(options === 'swap' || options === 'move'){
-				var ref = parentChilds;
-				if(list.$virtual){
-					index++;
-					other++;
-				}
-
-				if(options === 'move'){
-					var overflow = list.length - index - count;
-					if(overflow < 0)
-						count += overflow;
-
-					// Move to virtual DOM
-					var vDOM = document.createElement('div');
-					for (var i = 0; i < count; i++) {
-						vDOM.appendChild(ref[index]);
-					}
-
-					var nextSibling = ref[other] || null;
-
-					// Move to defined index
-					for (var i = 0; i < count; i++) {
-						parentNode.insertBefore(vDOM.firstElementChild, nextSibling);
-
-						if(callback !== undefined && callback.update)
-							callback.update(
-								(nextSibling !== null && nextSibling.previousElementSibling)
-								|| parentNode.lastElementChild, 'move');
-					}
-					return;
-				}
-
-				if(index >= other){
-					var temp = index;
-					index = other;
-					other = temp;
-				}
-
-				ref[index].insertAdjacentElement('afterEnd', ref[other]);
-				ref[other].insertAdjacentElement('afterEnd', ref[index]);
-
-				if(callback !== undefined && callback.update){
-					callback.update(ref[other], 'swap');
-					callback.update(ref[index], 'swap');
-				}
-				return;
-			}
-
 			// Avoid multiple refresh by set a timer
 			if(list.$virtual){
 				var exist = list.$virtual.elements();
@@ -1372,6 +1293,82 @@ sf.model = function(scope){
 				}, 100);
 			}
 			else exist = parentChilds;
+
+			// Hard refresh - Append element
+			if(options === 'hardRefresh'){
+				// Clear siblings after the index
+				for (var i = index; i < exist.length; i++) {
+					exist[i].remove();
+				}
+
+				if(list.$virtual)
+					var vCursor = list.$virtual.vCursor;
+
+				for (var i = index; i < list.length; i++) {
+					var temp = templateParser(template, list[i]);
+					if(list.$virtual){
+						if(vCursor.floor === null)
+							parentNode.insertBefore(temp, parentNode.lastElementChild);
+						else list.$virtual.dom.appendChild(temp);
+					}
+					else parentNode.appendChild(temp);
+
+					if(isKeyed === false)
+						syntheticCache(temp, template, list[i]);
+				}
+
+				if(list.$virtual) list.$virtual.refresh();
+				return;
+			}
+
+			if(options === 'swap' || options === 'move'){
+				if(options === 'move'){
+					var overflow = list.length - index - count;
+					if(overflow < 0)
+						count += overflow;
+
+					// Move to virtual DOM
+					var vDOM = document.createElement('div');
+					for (var i = 0; i < count; i++) {
+						vDOM.appendChild(exist[index + i]);
+					}
+
+					var nextSibling = exist[other] || null;
+					var theParent = nextSibling && nextSibling.parentNode;
+
+					if(theParent === false){
+						if(list.$virtual && list.length >= vEndRange)
+							theParent = list.$virtual.dom;
+						else theParent = parentNode;
+					}
+
+					// Move to defined index
+					for (var i = 0; i < count; i++) {
+						theParent.insertBefore(vDOM.firstElementChild, nextSibling);
+
+						if(callback !== undefined && callback.update)
+							callback.update(exist[index + i], 'move');
+					}
+					return;
+				}
+
+				if(index > other){
+					index = exist[other];
+					other = exist[index];
+				} else {
+					index = exist[index];
+					other = exist[other];
+				}
+
+	            index.parentNode.insertBefore(other, index.nextSibling);
+	            other.parentNode.insertBefore(index, other.nextSibling);
+
+				if(callback !== undefined && callback.update){
+					callback.update(exist[other], 'swap');
+					callback.update(exist[index], 'swap');
+				}
+				return;
+			}
 
 			// Clear unused element if current array < last array
 			if(options === 'removeRange'){
@@ -1429,7 +1426,7 @@ sf.model = function(scope){
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
-						return;
+						continue;
 					}
 
 					parentNode.replaceChild(temp, oldChild);
@@ -1480,8 +1477,11 @@ sf.model = function(scope){
 				else options = 'append';
 			}
 			if(options === 'append'){
-				if(list.$virtual && list.length !== 0){
-					exist[index-1].insertAdjacentElement('afterEnd', temp);
+				if(list.$virtual){
+					if(index === 0)
+						parentNode.insertBefore(temp, parentNode.lastElementChild);
+					else 
+						exist[index-1].insertAdjacentElement('afterEnd', temp);
 
 					if(callback !== undefined && callback.create)
 						callback.create(temp);
@@ -1566,10 +1566,7 @@ sf.model = function(scope){
 									temp.unshift(i, lastLength - i);
 									Array.prototype.splice.apply(this, temp);
 
-									if(isKeyed)
-										list.softRefresh(i, lastLength); // Remove element if exist
-									else
-										list.refresh(i, lastLength); // Reuse element if exist
+									list.refresh(i, lastLength);
 								}
 								return;
 							}
@@ -1644,6 +1641,11 @@ sf.model = function(scope){
 
 						if(arguments.length >= 3){ // Inserting data
 							limit = arguments.length - 2;
+
+							// Trim the index if more than length
+							if(real >= this.length)
+								real = this.length - 1;
+
 							for (var i = 0; i < limit; i++) {
 								processElement(real + i, 'insertAfter');
 							}
@@ -1709,8 +1711,10 @@ sf.model = function(scope){
 				var elem = list.getElement(i);
 
 				// Create element if not exist
-				if(elem === undefined)
+				if(elem === undefined){
 					list.hardRefresh(i);
+					break;
+				}
 				else{
 					if(isKeyed === true)
 						list.softRefresh(i);
