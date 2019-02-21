@@ -115,7 +115,7 @@ var $ = sf.dom; // Shortcut
 		}
 
 		var events = event.split(' ');
-		if(events.length !== 0){
+		if(events.length !== 1){
 			for (var i = 0; i < events.length; i++) {
 				self.off(element, events[i]);
 			}
