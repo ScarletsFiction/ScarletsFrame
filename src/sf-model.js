@@ -911,7 +911,7 @@ sf.model = function(scope){
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
-						return;
+						continue;
 					}
 
 					parentNode.replaceChild(temp, oldChild);
@@ -1051,10 +1051,7 @@ sf.model = function(scope){
 									temp.unshift(i, lastLength - i);
 									Array.prototype.splice.apply(this, temp);
 
-									if(isKeyed)
-										list.softRefresh(i, lastLength); // Remove element if exist
-									else
-										list.refresh(i, lastLength); // Reuse element if exist
+									list.refresh(i, lastLength);
 								}
 								return;
 							}
@@ -1199,8 +1196,10 @@ sf.model = function(scope){
 				var elem = list.getElement(i);
 
 				// Create element if not exist
-				if(elem === undefined)
+				if(elem === undefined){
 					list.hardRefresh(i);
+					break;
+				}
 				else{
 					if(isKeyed === true)
 						list.softRefresh(i);
