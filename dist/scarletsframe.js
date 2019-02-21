@@ -1447,19 +1447,13 @@ sf.model = function(scope){
 
 			// Create
 			if(options === 'insertAfter'){
-				var index = index !== 0 ? index - 1 : (exist.length - 1);
-				var referenceNode = exist[index];
-
-				if(referenceNode === undefined){
-					if(!list.$virtual || list.length === 0){
-						parentNode.insertBefore(temp, parentNode.firstElementChild); // prepend
-						if(callback !== undefined && callback.create)
-							callback.create(temp);
-					}
-					return;
+				if(exist.length === 0)
+					parentNode.insertBefore(temp, parentNode.lastElementChild);
+				else{
+					var referenceNode = exist[index - 1];
+					referenceNode.parentNode.insertBefore(temp, referenceNode.nextSibling);
 				}
-
-				referenceNode.insertAdjacentElement('afterEnd', temp);
+				
 				if(callback !== undefined && callback.create)
 					callback.create(temp);
 
@@ -3375,19 +3369,16 @@ sf.internal.virtual_scroll = new function(){
 		virtual.reset = function(){
 			virtual.DOMCursor = 0; // cursor of first element in DOM tree as a cursor
 
-			virtual.bounding = {
-				ceiling:-1,
-				floor:0
-			}
+			virtual.bounding.initial = 0;
+			virtual.bounding.ceiling = -1;
+			virtual.bounding.floor = 0;
 
-			virtual.vCursor = { // Virtual Cursor
-				ceiling:null, // for forward direction
-				floor:virtual.dom.firstElementChild // for backward direction
-			}
+			virtual.vCursor.ceiling = null; // for forward direction
+			virtual.vCursor.floor = virtual.dom.firstElementChild; // for backward direction
 
+			virtual.bounding.initial = virtual.dCursor.ceiling.offsetTop;
 			refreshScrollBounding(0, virtual.bounding, list, parentNode);
 		}
-		virtual.reset();
 
 		virtual.elements = function(){
 			return obtainElements(list, parentNode);
@@ -3398,11 +3389,12 @@ sf.internal.virtual_scroll = new function(){
 			floor:parentNode.querySelector('.virtual-spacer.floor')
 		};
 
-		virtual.targetNode = parentNode;
+		virtual.bounding = {};
+		virtual.vCursor = {};
 
-		virtual.scrollHeight = 
-			virtual.dCursor.floor.offsetTop - 
-			virtual.dCursor.ceiling.offsetTop;
+		virtual.reset();
+		virtual.targetNode = parentNode;
+		virtual.scrollHeight = virtual.dCursor.floor.offsetTop - virtual.bounding.initial;
 
 		var scroller = null;
 		virtual.destroy = function(){
@@ -3446,6 +3438,12 @@ sf.internal.virtual_scroll = new function(){
 		
 		virtual.scrollTo = function(index){
 			scrollTo(index, list, self.prepareCount, parentNode, scroller);
+
+			// Reset virtual spacer height
+			ceilingHeight = 0;
+			floorHeight = 0;
+			ceiling.style.height = ceilingHeight+'px';
+			floor.style.height = floorHeight+'px';
 		}
 
 		virtual.refresh = function(force){
@@ -3745,6 +3743,7 @@ sf.internal.virtual_scroll = new function(){
 				bounding.floor = bounding.floor.offsetTop;
 			else bounding.floor = parentNode.lastElementChild.offsetTop + 1000;
 
+			bounding.floor -= bounding.initial;
 			return;
 		}
 		else if(parentNode.children[temp + 1] !== undefined)
@@ -3760,6 +3759,9 @@ sf.internal.virtual_scroll = new function(){
 				bounding.ceiling -= parentNode.getAttribute('scroll-reduce-floor');
 			}
 		}
+
+		bounding.ceiling -= bounding.initial;
+		bounding.floor -= bounding.initial;
 	}
 
 	function moveElementCursor(changes, list){

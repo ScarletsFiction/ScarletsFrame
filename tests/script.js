@@ -5,25 +5,31 @@ sf.model.for('virtual-scroll', function(self, root){
    test = self;
 
    self.list1 = [];
+   self.list1b = [];
    self.one = 'first';
 
    for (var i = 1; i <= 50; i++) {
-      self.list1.push({
+      self.list1b.push({
          id: 'item-' + i,
       });
    }
 
    self.list2 = [];
-   self.list2b = JSON.parse(JSON.stringify(self.list1));
-   // self.list1 = [];
+   self.list2b = JSON.parse(JSON.stringify(self.list1b));
 });
 
 sf(function(){
+   var list = sf.model('virtual-scroll');
+
    setTimeout(function(){
-      var list = sf.model('virtual-scroll');
-      // list.list1.unshift({id:"I'm inserted on first index"});
-      // list.list1.push({id:"I'm inserted on last index"});
-      // list.list1.splice(1, 0, {id:"The removed item above is 'item-3'"}); // add as index 5
+      list.list1.splice(5, 0, {id:"I'm at pos 2"});
+      list.list1.unshift({id:"I'm inserted on first index"});
+      list.list1.push({id:"I'm inserted on last index"});
+      list.list1.splice(2, 0, {id:"I'm at pos 3"});
+   }, 1000);
+
+   setTimeout(function(){
+      list.list1 = list.list1b;
 
       // Hard Refreshed
       console.log("Item: 11-15");
@@ -51,19 +57,21 @@ sf(function(){
       // Variable height for list2
       setTimeout(function(){
          list.list2 = list.list2b;
+// return;
 
          var elements = list.list2.$virtual.elements();
          for (var i = 0; i < elements.length; i++) {
             elements[i].style.height = (40 + Math.round(Math.random()*3)*40) + 'px';
          }
 
-         list.list2.$virtual.refresh();
-         list.list2.$virtual.scrollTo(10);
+         setTimeout(function(){
+         	list.list2.$virtual.scrollTo(10);
+         }, 1000);
       }, 12000);
 
-      // var posY = list.list1.$virtual.offsetTo(20);
-      // if(!posY)
-      //    console.error("Can't get element offset for static height virtual scroll");
+      var posY = list.list1.$virtual.offsetTo(20);
+      if(!posY)
+         console.error("Can't get element offset for static height virtual scroll");
 
       list.list1.pop(); // remove item-50
       list.list1.unshift({id:"I'm inserted on first index"});
