@@ -768,85 +768,6 @@ sf.model = function(scope){
 				return;
 			}
 
-			// Hard refresh - Append element
-			if(options === 'hardRefresh'){
-				var item = list;
-
-				// Clear childs if exist
-				var n = parentChilds.length;
-				if(parentChilds[n] !== undefined && parentChilds[n].classList.contains('virtual-spacer') === false){
-					while(parentChilds.length >= index){
-						parentChilds[n].remove();
-					}
-				}
-
-				for (var i = index; i < item.length; i++) {
-					var temp = templateParser(template, item[i]);
-					if(list.$virtual){
-						if(i >= vStartRange && i <= vEndRange)
-							parentNode.insertBefore(temp, parentNode.lastElementChild);
-						else
-							list.$virtual.dom.insertBefore(temp, list.$virtual.vCursor.floor);
-					}
-					else
-						parentNode.appendChild(temp);
-
-					if(isKeyed === false)
-						syntheticCache(temp, template, item[i]);
-				}
-
-				if(list.$virtual) list.$virtual.refresh();
-				return;
-			}
-
-			if(options === 'swap' || options === 'move'){
-				var ref = parentChilds;
-				if(list.$virtual){
-					index++;
-					other++;
-				}
-
-				if(options === 'move'){
-					var overflow = list.length - index - count;
-					if(overflow < 0)
-						count += overflow;
-
-					// Move to virtual DOM
-					var vDOM = document.createElement('div');
-					for (var i = 0; i < count; i++) {
-						vDOM.appendChild(ref[index]);
-					}
-
-					var nextSibling = ref[other] || null;
-
-					// Move to defined index
-					for (var i = 0; i < count; i++) {
-						parentNode.insertBefore(vDOM.firstElementChild, nextSibling);
-
-						if(callback !== undefined && callback.update)
-							callback.update(
-								(nextSibling !== null && nextSibling.previousElementSibling)
-								|| parentNode.lastElementChild, 'move');
-					}
-					return;
-				}
-
-				if(index >= other){
-					var temp = index;
-					index = other;
-					other = temp;
-				}
-
-				ref[index].insertAdjacentElement('afterEnd', ref[other]);
-				ref[other].insertAdjacentElement('afterEnd', ref[index]);
-
-				if(callback !== undefined && callback.update){
-					callback.update(ref[other], 'swap');
-					callback.update(ref[index], 'swap');
-				}
-				return;
-			}
-
 			// Avoid multiple refresh by set a timer
 			if(list.$virtual){
 				var exist = list.$virtual.elements();
@@ -857,6 +778,80 @@ sf.model = function(scope){
 				}, 100);
 			}
 			else exist = parentChilds;
+
+			// Hard refresh - Append element
+			if(options === 'hardRefresh'){
+				// Clear siblings after the index
+				for (var i = index; i < exist.length; i++) {
+					exist[i].remove();
+				}
+
+				for (var i = index; i < list.length; i++) {
+					var temp = templateParser(template, list[i]);
+					if(list.$virtual){
+						if(i >= vStartRange && i < vEndRange)
+							parentNode.insertBefore(temp, parentNode.lastElementChild);
+						else
+							list.$virtual.dom.appendChild(temp);
+					}
+					else parentNode.appendChild(temp);
+
+					if(isKeyed === false)
+						syntheticCache(temp, template, list[i]);
+				}
+
+				if(list.$virtual) list.$virtual.refresh();
+				return;
+			}
+
+			if(options === 'swap' || options === 'move'){
+				if(options === 'move'){
+					var overflow = list.length - index - count;
+					if(overflow < 0)
+						count += overflow;
+
+					// Move to virtual DOM
+					var vDOM = document.createElement('div');
+					for (var i = 0; i < count; i++) {
+						vDOM.appendChild(exist[index + i]);
+					}
+
+					var nextSibling = exist[other] || null;
+					var theParent = nextSibling && nextSibling.parentNode;
+
+					if(theParent === false){
+						if(list.$virtual && list.length >= vEndRange)
+							theParent = list.$virtual.dom;
+						else theParent = parentNode;
+					}
+
+					// Move to defined index
+					for (var i = 0; i < count; i++) {
+						theParent.insertBefore(vDOM.firstElementChild, nextSibling);
+
+						if(callback !== undefined && callback.update)
+							callback.update(exist[index + i], 'move');
+					}
+					return;
+				}
+
+				if(index > other){
+					index = exist[other];
+					other = exist[index];
+				} else {
+					index = exist[index];
+					other = exist[other];
+				}
+
+	            index.parentNode.insertBefore(other, index.nextSibling);
+	            other.parentNode.insertBefore(index, other.nextSibling);
+
+				if(callback !== undefined && callback.update){
+					callback.update(exist[other], 'swap');
+					callback.update(exist[index], 'swap');
+				}
+				return;
+			}
 
 			// Clear unused element if current array < last array
 			if(options === 'removeRange'){
