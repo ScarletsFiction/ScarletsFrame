@@ -27,6 +27,10 @@ sf.internal.virtual_scroll = new function(){
 			refreshScrollBounding(0, virtual.bounding, list, parentNode);
 		}
 
+		virtual.reinitScroll = function(){
+			refreshScrollBounding(virtual.DOMCursor, virtual.bounding, list, parentNode);
+		}
+
 		virtual.elements = function(){
 			return obtainElements(list, parentNode);
 		}

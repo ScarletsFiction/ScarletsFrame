@@ -774,7 +774,7 @@ sf.model = function(scope){
 
 				clearTimeout(refreshTimer);
 				refreshTimer = setTimeout(function(){
-					list.$virtual.refresh(true);
+					list.$virtual.reinitScroll();
 				}, 100);
 			}
 			else exist = parentChilds;
@@ -801,8 +801,7 @@ sf.model = function(scope){
 					if(isKeyed === false)
 						syntheticCache(temp, template, list[i]);
 				}
-
-				if(list.$virtual) list.$virtual.refresh();
+				list.$virtual.refresh();
 				return;
 			}
 
@@ -874,7 +873,6 @@ sf.model = function(scope){
 						currentRemoved = true;
 
 						exist[index].remove();
-						if(list.$virtual) list.$virtual.refresh();
 					}
 
 					if(callback !== undefined && callback.remove){
@@ -938,12 +936,9 @@ sf.model = function(scope){
 					var referenceNode = exist[index - 1];
 					referenceNode.parentNode.insertBefore(temp, referenceNode.nextSibling);
 				}
-				
+
 				if(callback !== undefined && callback.create)
 					callback.create(temp);
-
-				// Refresh virtual scroll
-				if(list.$virtual) list.$virtual.refresh();
 			}
 			else if(options === 'prepend'){
 				var referenceNode = exist[0];
@@ -952,9 +947,6 @@ sf.model = function(scope){
 
 					if(callback !== undefined && callback.create)
 						callback.create(temp);
-
-					// Refresh virtual scroll
-					if(list.$virtual) list.$virtual.refresh();
 				}
 				else options = 'append';
 			}
@@ -967,9 +959,6 @@ sf.model = function(scope){
 
 					if(callback !== undefined && callback.create)
 						callback.create(temp);
-
-					// Refresh virtual scroll
-					list.$virtual.refresh();
 					return;
 				}
 
@@ -1036,8 +1025,6 @@ sf.model = function(scope){
 								var temp = arguments[0].slice(lastLength);
 								temp.unshift(lastLength, 0);
 								this.splice.apply(this, temp);
-
-								if(list.$virtual) list.$virtual.refresh();
 								return;
 							}
 
@@ -1100,8 +1087,15 @@ sf.model = function(scope){
 					if(name === 'pop')
 						processElement(this.length, 'remove');
 
-					else if(name === 'push')
-						processElement(lastLength, 'append');
+					else if(name === 'push'){
+						if(arguments.length === 1)
+							processElement(lastLength, 'append');
+						else{
+							for (var i = 0; i < arguments.length; i++) {
+								processElement(lastLength + i, 'append');
+							}
+						}
+					}
 
 					else if(name === 'shift')
 						processElement(0, 'remove');
@@ -1134,8 +1128,15 @@ sf.model = function(scope){
 						}
 					}
 
-					else if(name === 'unshift')
-						processElement(0, 'prepend');
+					else if(name === 'unshift'){
+						if(arguments.length === 1)
+							processElement(0, 'prepend');
+						else{
+							for (var i = arguments.length - 1; i >= 0; i--) {
+								processElement(i, 'prepend');
+							}
+						}
+					}
 
 					else if(name === 'softRefresh')
 						processElement(arguments[0], 'update', arguments[1]);
