@@ -107,7 +107,7 @@ var $ = sf.dom; // Shortcut
 	self.off = function(element, event, selector){
 		// Remove all event
 		if(event === undefined){
-			var events = getEventListeners(element);
+			var events = window.getEventListeners(element);
 			for (var i = 0; i < events.length; i++) {
 				self.off(element, events[i]);
 			}
@@ -123,7 +123,7 @@ var $ = sf.dom; // Shortcut
 		}
 
 		// Remove listener
-		var ref = getEventListeners(element);
+		var ref = window.getEventListeners(element);
 		if(ref !== undefined && ref[event] !== undefined){
 			for (var i = ref[event].length - 1; i >= 0; i--) {
 				if(selector && ref[event][i].selector !== selector)
@@ -213,6 +213,7 @@ var $ = sf.dom; // Shortcut
 		});
 	}, 1);
 
+	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
 		var names = [];
 		if(untilElement === undefined) untilElement = documentElement;
@@ -220,7 +221,7 @@ var $ = sf.dom; // Shortcut
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
 		while(element.parentNode !== null){
-			if(element.id){
+			if(element.id && !haveSymbol.test(element.id)){
 				names.unshift('#'+element.id);
 				break;
 			}
