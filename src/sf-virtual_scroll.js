@@ -52,7 +52,7 @@ sf.internal.virtual_scroll = new function(){
 		virtual.targetNode = parentNode;
 		virtual.scrollHeight = virtual.dCursor.floor.offsetTop - virtual.bounding.initial;
 
-		var scroller = null;
+		var scroller = parentNode;
 		virtual.destroy = function(){
 			$.off(scroller, 'scroll');
 			$.off(parentNode, 'mousedown mouseup');
@@ -81,8 +81,7 @@ sf.internal.virtual_scroll = new function(){
 				dynamicList = true;
 				dynamicHeight(list, targetNode, parentNode, scroller);
 			}
-			else
-				staticHeight(list, targetNode, parentNode, scroller);
+			else staticHeight(list, targetNode, parentNode, scroller);
 		}, 500);
 	}
 
@@ -198,19 +197,21 @@ sf.internal.virtual_scroll = new function(){
 			var temp = null;
 			fillViewport();
 
-			if(vCursor.ceiling === null)
-				vCursor.ceiling = vCursor.floor.previousElementSibling;
+			if(vCursor.floor !== null){
+				if(vCursor.ceiling === null)
+					vCursor.ceiling = vCursor.floor.previousElementSibling;
 
-			// Add extra element based on prepare count
-			for (var i = 0; i < self.prepareCount; i++) {
-				temp = vCursor.floor;
-				if(temp === null) break;
+				// Add extra element based on prepare count
+				for (var i = 0; i < self.prepareCount; i++) {
+					temp = vCursor.floor;
+					if(temp === null) break;
 
-				vCursor.floor = temp.nextElementSibling;
-				floor.insertAdjacentElement('beforeBegin', temp);
+					vCursor.floor = temp.nextElementSibling;
+					floor.insertAdjacentElement('beforeBegin', temp);
 
-				if(floorHeight > 0)
-					floorHeight -= getAbsoluteHeight(temp);
+					if(floorHeight > 0)
+						floorHeight -= getAbsoluteHeight(temp);
+				}
 			}
 
 			if(floorHeight < 0 || temp === null)
@@ -259,6 +260,15 @@ sf.internal.virtual_scroll = new function(){
 				nextFloor();
 				refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
 				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
+			}
+
+			if(list.on$scroll){
+				if(list.on$scroll.hitFloor && virtual.vCursor.floor === null && scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight){
+					list.on$scroll.hitFloor(virtual.DOMCursor);
+				}
+				else if(list.on$scroll.hitCeiling && virtual.vCursor.ceiling === null && scroller.scrollTop === 0){
+					list.on$scroll.hitCeiling(virtual.DOMCursor);
+				}
 			}
 
 			updating = false;
@@ -312,7 +322,7 @@ sf.internal.virtual_scroll = new function(){
 		var vCursor = virtual.vCursor;
 		vCursor.floor = virtual.dom.firstElementChild;
 		virtual.scrollTo = function(index){
-			scrollTo(index, list, self.prepareCount, parentNode, scroller, refreshVirtualSpacer);
+			scrollTo(index, list, self.prepareCount, parentNode, scroller);
 		}
 
 		virtual.refresh = function(force){
@@ -374,6 +384,15 @@ sf.internal.virtual_scroll = new function(){
 			refreshVirtualSpacer(cursor);
 			refreshScrollBounding(cursor, bounding, list, parentNode);
 			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
+
+			if(list.on$scroll){
+				if(list.on$scroll.hitFloor && virtual.vCursor.floor === null){
+					list.on$scroll.hitFloor(cursor);
+				}
+				else if(list.on$scroll.hitCeiling && virtual.vCursor.ceiling === null){
+					list.on$scroll.hitCeiling(cursor);
+				}
+			}
 
 			updating = false;
 		}
@@ -487,7 +506,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 	}
 
-	function scrollTo(index, list, prepareCount, parentNode, scroller, refreshVirtualSpacer){
+	function scrollTo(index, list, prepareCount, parentNode, scroller){
 		var virtual = list.$virtual;
 		var reduce = 0;
 
@@ -550,8 +569,8 @@ sf.internal.virtual_scroll = new function(){
 			vCursor.floor = virtual.dom.children[index] || null;
 			vCursor.ceiling = vCursor.floor ? vCursor.floor.previousElementSibling : null;
 
-			if(refreshVirtualSpacer)
-				refreshVirtualSpacer(index);
+			if(list.$virtual.refreshVirtualSpacer)
+				list.$virtual.refreshVirtualSpacer(index);
 
 			refreshScrollBounding(index, virtual.bounding, list, parentNode);
 
@@ -638,8 +657,7 @@ sf.internal.virtual_scroll = new function(){
 				list,
 				prepareCount,
 				parentNode,
-				scroller,
-				refreshVirtualSpacer
+				scroller
 			);
 
 			scroller.scrollTop += additionalScroll;
