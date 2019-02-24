@@ -764,6 +764,9 @@ sf.model = function(scope){
 					parentNode.appendChild(spacer[0]);
 					parentNode.appendChild(spacer[1]);
 					list.$virtual.dom.textContent = '';
+					spacer[1].style.height = 
+					spacer[0].style.height = 0;
+					list.$virtual.reset(true);
 				}
 				return;
 			}
@@ -801,7 +804,9 @@ sf.model = function(scope){
 					if(isKeyed === false)
 						syntheticCache(temp, template, list[i]);
 				}
-				list.$virtual.refresh();
+
+				if(list.$virtual)
+					list.$virtual.refresh();
 				return;
 			}
 
@@ -987,6 +992,10 @@ sf.model = function(scope){
 						var temp = Array.prototype.splice.apply(this, [from, count]);
 						temp.unshift(to, 0);
 						Array.prototype.splice.apply(this, temp);
+
+						// Reset virtual ceiling and floor
+						if(list.$virtual)
+							list.$virtual.reinitCursor();
 						return;
 					}
 
@@ -1097,8 +1106,14 @@ sf.model = function(scope){
 						}
 					}
 
-					else if(name === 'shift')
+					else if(name === 'shift'){
 						processElement(0, 'remove');
+
+						if(list.$virtual && list.$virtual.DOMCursor > 0){
+							list.$virtual.DOMCursor--;
+							list.$virtual.reinitCursor();
+						}
+					}
 
 					else if(name === 'splice'){
 						if(arguments[0] === 0 && arguments[1] === undefined)
@@ -1115,6 +1130,9 @@ sf.model = function(scope){
 							processElement(real + i, 'remove');
 						}
 
+						if(list.$virtual && list.$virtual.DOMCursor >= real)
+							list.$virtual.DOMCursor = real - limit;
+
 						if(arguments.length >= 3){ // Inserting data
 							limit = arguments.length - 2;
 
@@ -1125,6 +1143,9 @@ sf.model = function(scope){
 							for (var i = 0; i < limit; i++) {
 								processElement(real + i, 'insertAfter');
 							}
+
+							if(list.$virtual && list.$virtual.DOMCursor >= real)
+								list.$virtual.DOMCursor += limit;
 						}
 					}
 
@@ -1136,13 +1157,26 @@ sf.model = function(scope){
 								processElement(i, 'prepend');
 							}
 						}
+
+						if(list.$virtual && list.$virtual.DOMCursor !== 0){
+							list.$virtual.DOMCursor += arguments.length;
+							list.$virtual.reinitCursor();
+						}
 					}
 
-					else if(name === 'softRefresh')
+					else if(name === 'softRefresh'){
 						processElement(arguments[0], 'update', arguments[1]);
 
-					else if(name === 'hardRefresh')
+						if(list.$virtual.DOMCursor)
+							list.$virtual.reinitCursor();
+					}
+
+					else if(name === 'hardRefresh'){
 						processElement(arguments[0] || 0, 'hardRefresh');
+
+						if(list.$virtual)
+							list.$virtual.DOMCursor = arguments[0] || 0;
+					}
 
 					return temp;
 				}

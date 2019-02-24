@@ -12,11 +12,11 @@ sf.internal.virtual_scroll = new function(){
 			styleInitialized = true;
 		}
 
+		var dynamicList = false;
 		var virtual = list.$virtual;
-		virtual.reset = function(){
+		virtual.reset = function(reinitOnly){
 			virtual.DOMCursor = 0; // cursor of first element in DOM tree as a cursor
 
-			virtual.bounding.initial = 0;
 			virtual.bounding.ceiling = -1;
 			virtual.bounding.floor = 0;
 
@@ -25,6 +25,11 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.bounding.initial = virtual.dCursor.ceiling.offsetTop;
 			refreshScrollBounding(0, virtual.bounding, list, parentNode);
+		}
+
+		virtual.reinitCursor = function(){
+			virtual.vCursor.ceiling = virtual.dom.children[virtual.DOMCursor - 1] || null;
+			virtual.vCursor.floor = virtual.dom.children[virtual.DOMCursor] || null;
 		}
 
 		virtual.reinitScroll = function(){
@@ -72,8 +77,10 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.resetViewport();
 
-			if(parentNode.classList.contains('sf-list-dynamic'))
+			if(parentNode.classList.contains('sf-list-dynamic')){
+				dynamicList = true;
 				dynamicHeight(list, targetNode, parentNode, scroller);
+			}
 			else
 				staticHeight(list, targetNode, parentNode, scroller);
 		}, 500);
@@ -360,13 +367,11 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.DOMCursor = cursor;
 
-			//console.log(cursor, changes);
-
-			//console.log(cursor, changes, bounding.ceiling, bounding.floor, scroller.scrollTop);
+			// console.log(cursor, changes, bounding.ceiling, bounding.floor, scroller.scrollTop);
 			moveElementCursor(changes, list);
 			refreshVirtualSpacer(cursor);
 			refreshScrollBounding(cursor, bounding, list, parentNode);
-			//console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
+			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
 
 			updating = false;
 		}
@@ -429,6 +434,7 @@ sf.internal.virtual_scroll = new function(){
 					ref = vDOM.firstElementChild;
 
 				else ref = vCursor.ceiling.nextElementSibling;
+				if(ref === null) break;
 				dCursor.floor.insertAdjacentElement('beforeBegin', ref);
 			}
 
@@ -457,6 +463,7 @@ sf.internal.virtual_scroll = new function(){
 					ref = vDOM.lastElementChild;
 
 				else ref = vCursor.floor.previousElementSibling;
+				if(ref === null) break;
 				dCursor.ceiling.insertAdjacentElement('afterEnd', ref);
 			}
 
@@ -585,8 +592,11 @@ sf.internal.virtual_scroll = new function(){
 			if(temp === undefined) break;
 			exist.push(temp);
 		}
+		
+		// Get elements length
+		var elementLength = list.$virtual.dom.childElementCount + length;
 
-		length = list.length - length - list.$virtual.DOMCursor;
+		length = elementLength - length - list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
 			temp = list.$virtual.dom.children[list.$virtual.DOMCursor + i];
 			if(temp === undefined) break;
