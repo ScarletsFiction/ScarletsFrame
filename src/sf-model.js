@@ -795,7 +795,7 @@ sf.model = function(scope){
 				for (var i = index; i < list.length; i++) {
 					var temp = templateParser(template, list[i]);
 					if(list.$virtual){
-						if(vCursor.floor === null)
+						if(vCursor.floor === null && i < vEndRange)
 							parentNode.insertBefore(temp, parentNode.lastElementChild);
 						else list.$virtual.dom.appendChild(temp);
 					}
@@ -805,8 +805,8 @@ sf.model = function(scope){
 						syntheticCache(temp, template, list[i]);
 				}
 
-				if(list.$virtual)
-					list.$virtual.refresh();
+				if(list.$virtual && list.$virtual.refreshVirtualSpacer)
+					list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
 				return;
 			}
 

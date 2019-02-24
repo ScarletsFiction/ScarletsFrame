@@ -285,6 +285,8 @@ sf.internal.virtual_scroll = new function(){
 			floor.insertAdjacentElement('beforeBegin', virtual.dom.firstElementChild);
 		}
 
+		virtual.refreshVirtualSpacer = refreshVirtualSpacer;
+
 		function refreshVirtualSpacer(cursor){
 			if(cursor >= self.prepareCount){
 				ceiling.style.height = (cursor - self.prepareCount) * virtual.scrollHeight + 'px';
