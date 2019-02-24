@@ -89,7 +89,17 @@ var $ = sf.dom; // Shortcut
 		}
 
 		callback.selector = selector;
+		callback.once = once;
 		element.addEventListener(event, callback, {capture:true, once:once === true});
+
+		// Save event listener
+		if(element.sf$eventListener === undefined)
+			element.sf$eventListener = {};
+
+		if(element.sf$eventListener[event] === undefined)
+			element.sf$eventListener[event] = [];
+
+		element.sf$eventListener[event].push(callback);
 	}
 
 	// Shorcut
@@ -107,7 +117,10 @@ var $ = sf.dom; // Shortcut
 	self.off = function(element, event, selector){
 		// Remove all event
 		if(event === undefined){
-			var events = window.getEventListeners(element);
+			if(element.sf$eventListener === undefined)
+				return;
+
+			var events = element.sf$eventListener[event];
 			for (var i = 0; i < events.length; i++) {
 				self.off(element, events[i]);
 			}
@@ -123,7 +136,10 @@ var $ = sf.dom; // Shortcut
 		}
 
 		// Remove listener
-		var ref = window.getEventListeners(element);
+		if(element.sf$eventListener === undefined)
+			return;
+
+		var ref = element.sf$eventListener;
 		if(ref !== undefined && ref[event] !== undefined){
 			for (var i = ref[event].length - 1; i >= 0; i--) {
 				if(selector && ref[event][i].selector !== selector)
