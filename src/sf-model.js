@@ -957,9 +957,15 @@ sf.model = function(scope){
 			}
 			if(options === 'append'){
 				if(list.$virtual){
-					if(index === 0)
+					if(index === 0) // Add before virtual scroller
 						parentNode.insertBefore(temp, parentNode.lastElementChild);
-					else 
+					else if(index >= vEndRange){ // To virtual DOM
+						if(list.$virtual.vCursor.floor === null)
+							list.$virtual.vCursor.floor = temp;
+
+						list.$virtual.dom.appendChild(temp);
+					}
+					else // To real DOM
 						exist[index-1].insertAdjacentElement('afterEnd', temp);
 
 					if(callback !== undefined && callback.create)
