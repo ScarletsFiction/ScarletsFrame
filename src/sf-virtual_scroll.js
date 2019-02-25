@@ -65,6 +65,9 @@ sf.internal.virtual_scroll = new function(){
 		virtual.resetViewport = function(){
 			virtual.visibleLength = Math.floor(scroller.clientHeight / virtual.scrollHeight);
 			virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
+
+			if(virtual.preparedLength < 18)
+				virtual.preparedLength = 18;
 		}
 
 		setTimeout(function(){
@@ -458,7 +461,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 
 		bounding.ceiling -= bounding.initial;
-		bounding.floor -= bounding.initial;
+		bounding.floor -= bounding.initial;// scrollHeight - clientHeight
 	}
 
 	function moveElementCursor(changes, list){
