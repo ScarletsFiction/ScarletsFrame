@@ -745,7 +745,9 @@ sf.model = function(scope){
 		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		// Update callback
-		var callback = self.root[modelName]['on$'+propertyName];
+		var modelRef = self.root[modelName];
+		var eventVar = 'on$'+propertyName;
+		var callback = modelRef[eventVar];
 
 		var processElement = function(index, options, other, count){
 			// Find boundary for inserting to virtual DOM
@@ -809,6 +811,9 @@ sf.model = function(scope){
 					list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
 				return;
 			}
+
+			if(callback === undefined)
+				callback = modelRef[eventVar];
 
 			if(options === 'swap' || options === 'move'){
 				if(options === 'move'){
@@ -1195,6 +1200,9 @@ sf.model = function(scope){
 
 			// Transfer virtual DOM
 			list.$virtual.dom = tempDOM;
+			if(callback !== undefined)
+				list.$virtual.callback = callback;
+			else list.$virtual.callback_ = {ref:modelRef, var:eventVar};
 
 			parentNode.replaceChild(template.html, parentChilds[1]);
 			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);

@@ -243,6 +243,11 @@ sf.internal.virtual_scroll = new function(){
 		var bounding = virtual.bounding;
 		refreshScrollBounding(0, bounding, list, parentNode);
 
+		if(virtual.callback_ !== undefined){
+			var callback_ = virtual.callback_;
+			delete virtual.callback_;
+		}
+
 		var updating = false;
 		function checkCursorPosition(){
 			if(updating || scrollingByScript) return;
@@ -262,13 +267,19 @@ sf.internal.virtual_scroll = new function(){
 				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
 			}
 
-			if(list.on$scroll){
-				if(list.on$scroll.hitFloor && virtual.vCursor.floor === null && scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight){
-					list.on$scroll.hitFloor(virtual.DOMCursor);
+			if(virtual.callback !== undefined){
+				if(virtual.callback.hitFloor && virtual.vCursor.floor === null &&
+					scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight
+				){
+					virtual.callback.hitFloor(virtual.DOMCursor);
 				}
-				else if(list.on$scroll.hitCeiling && virtual.vCursor.ceiling === null && scroller.scrollTop === 0){
-					list.on$scroll.hitCeiling(virtual.DOMCursor);
+				else if(virtual.callback.hitCeiling && virtual.vCursor.ceiling === null && scroller.scrollTop === 0){
+					virtual.callback.hitCeiling(virtual.DOMCursor);
 				}
+			}
+			else if(callback_.ref[callback_.var]){
+				virtual.callback = callback_.ref[callback_.var];
+				callback_ = null;
 			}
 
 			updating = false;
@@ -329,6 +340,11 @@ sf.internal.virtual_scroll = new function(){
 			refresh(force, list, self.prepareCount, parentNode, scroller, checkCursorPosition, refreshVirtualSpacer);
 		}
 
+		if(virtual.callback_ !== undefined){
+			var callback_ = virtual.callback_;
+			delete virtual.callback_;
+		}
+
 		var updating = false;
 		var fromCeiling = true;
 		var scrollFocused = false;
@@ -385,13 +401,17 @@ sf.internal.virtual_scroll = new function(){
 			refreshScrollBounding(cursor, bounding, list, parentNode);
 			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
 
-			if(list.on$scroll){
-				if(list.on$scroll.hitFloor && virtual.vCursor.floor === null){
-					list.on$scroll.hitFloor(cursor);
+			if(virtual.callback !== undefined){
+				if(virtual.callback.hitFloor && virtual.vCursor.floor === null){
+					virtual.callback.hitFloor(cursor);
 				}
-				else if(list.on$scroll.hitCeiling && virtual.vCursor.ceiling === null){
-					list.on$scroll.hitCeiling(cursor);
+				else if(virtual.callback.hitCeiling && virtual.vCursor.ceiling === null){
+					virtual.callback.hitCeiling(cursor);
 				}
+			}
+			else if(callback_.ref[callback_.var]){
+				virtual.callback = callback_.ref[callback_.var];
+				callback_ = null;
 			}
 
 			updating = false;
