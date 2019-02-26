@@ -144,7 +144,17 @@ var $ = sf.dom; // Shortcut
 		}
 
 		callback.selector = selector;
+		callback.once = once;
 		element.addEventListener(event, callback, {capture:true, once:once === true});
+
+		// Save event listener
+		if(element.sf$eventListener === undefined)
+			element.sf$eventListener = {};
+
+		if(element.sf$eventListener[event] === undefined)
+			element.sf$eventListener[event] = [];
+
+		element.sf$eventListener[event].push(callback);
 	}
 
 	// Shorcut
@@ -162,7 +172,10 @@ var $ = sf.dom; // Shortcut
 	self.off = function(element, event, selector){
 		// Remove all event
 		if(event === undefined){
-			var events = getEventListeners(element);
+			if(element.sf$eventListener === undefined)
+				return;
+
+			var events = element.sf$eventListener[event];
 			for (var i = 0; i < events.length; i++) {
 				self.off(element, events[i]);
 			}
@@ -178,7 +191,10 @@ var $ = sf.dom; // Shortcut
 		}
 
 		// Remove listener
-		var ref = getEventListeners(element);
+		if(element.sf$eventListener === undefined)
+			return;
+
+		var ref = element.sf$eventListener;
 		if(ref !== undefined && ref[event] !== undefined){
 			for (var i = ref[event].length - 1; i >= 0; i--) {
 				if(selector && ref[event][i].selector !== selector)
@@ -268,6 +284,7 @@ var $ = sf.dom; // Shortcut
 		});
 	}, 1);
 
+	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
 		var names = [];
 		if(untilElement === undefined) untilElement = documentElement;
@@ -275,7 +292,7 @@ var $ = sf.dom; // Shortcut
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
 		while(element.parentNode !== null){
-			if(element.id){
+			if(element.id && !haveSymbol.test(element.id)){
 				names.unshift('#'+element.id);
 				break;
 			}
@@ -1260,7 +1277,9 @@ sf.model = function(scope){
 		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		// Update callback
-		var callback = self.root[modelName]['on$'+propertyName];
+		var modelRef = self.root[modelName];
+		var eventVar = 'on$'+propertyName;
+		var callback = modelRef[eventVar];
 
 		var processElement = function(index, options, other, count){
 			// Find boundary for inserting to virtual DOM
@@ -1279,6 +1298,9 @@ sf.model = function(scope){
 					parentNode.appendChild(spacer[0]);
 					parentNode.appendChild(spacer[1]);
 					list.$virtual.dom.textContent = '';
+					spacer[1].style.height = 
+					spacer[0].style.height = 0;
+					list.$virtual.reset(true);
 				}
 				return;
 			}
@@ -1289,7 +1311,7 @@ sf.model = function(scope){
 
 				clearTimeout(refreshTimer);
 				refreshTimer = setTimeout(function(){
-					list.$virtual.refresh(true);
+					list.$virtual.reinitScroll();
 				}, 100);
 			}
 			else exist = parentChilds;
@@ -1307,7 +1329,7 @@ sf.model = function(scope){
 				for (var i = index; i < list.length; i++) {
 					var temp = templateParser(template, list[i]);
 					if(list.$virtual){
-						if(vCursor.floor === null)
+						if(vCursor.floor === null && i < vEndRange)
 							parentNode.insertBefore(temp, parentNode.lastElementChild);
 						else list.$virtual.dom.appendChild(temp);
 					}
@@ -1317,9 +1339,13 @@ sf.model = function(scope){
 						syntheticCache(temp, template, list[i]);
 				}
 
-				if(list.$virtual) list.$virtual.refresh();
+				if(list.$virtual && list.$virtual.refreshVirtualSpacer)
+					list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
 				return;
 			}
+
+			if(callback === undefined)
+				callback = modelRef[eventVar];
 
 			if(options === 'swap' || options === 'move'){
 				if(options === 'move'){
@@ -1389,7 +1415,6 @@ sf.model = function(scope){
 						currentRemoved = true;
 
 						exist[index].remove();
-						if(list.$virtual) list.$virtual.refresh();
 					}
 
 					if(callback !== undefined && callback.remove){
@@ -1453,12 +1478,9 @@ sf.model = function(scope){
 					var referenceNode = exist[index - 1];
 					referenceNode.parentNode.insertBefore(temp, referenceNode.nextSibling);
 				}
-				
+
 				if(callback !== undefined && callback.create)
 					callback.create(temp);
-
-				// Refresh virtual scroll
-				if(list.$virtual) list.$virtual.refresh();
 			}
 			else if(options === 'prepend'){
 				var referenceNode = exist[0];
@@ -1467,24 +1489,24 @@ sf.model = function(scope){
 
 					if(callback !== undefined && callback.create)
 						callback.create(temp);
-
-					// Refresh virtual scroll
-					if(list.$virtual) list.$virtual.refresh();
 				}
 				else options = 'append';
 			}
 			if(options === 'append'){
 				if(list.$virtual){
-					if(index === 0)
+					if(index === 0) // Add before virtual scroller
 						parentNode.insertBefore(temp, parentNode.lastElementChild);
-					else 
+					else if(index >= vEndRange){ // To virtual DOM
+						if(list.$virtual.vCursor.floor === null)
+							list.$virtual.vCursor.floor = temp;
+
+						list.$virtual.dom.appendChild(temp);
+					}
+					else // To real DOM
 						exist[index-1].insertAdjacentElement('afterEnd', temp);
 
 					if(callback !== undefined && callback.create)
 						callback.create(temp);
-
-					// Refresh virtual scroll
-					list.$virtual.refresh();
 					return;
 				}
 
@@ -1513,6 +1535,10 @@ sf.model = function(scope){
 						var temp = Array.prototype.splice.apply(this, [from, count]);
 						temp.unshift(to, 0);
 						Array.prototype.splice.apply(this, temp);
+
+						// Reset virtual ceiling and floor
+						if(list.$virtual)
+							list.$virtual.reinitCursor();
 						return;
 					}
 
@@ -1551,8 +1577,6 @@ sf.model = function(scope){
 								var temp = arguments[0].slice(lastLength);
 								temp.unshift(lastLength, 0);
 								this.splice.apply(this, temp);
-
-								if(list.$virtual) list.$virtual.refresh();
 								return;
 							}
 
@@ -1615,11 +1639,24 @@ sf.model = function(scope){
 					if(name === 'pop')
 						processElement(this.length, 'remove');
 
-					else if(name === 'push')
-						processElement(lastLength, 'append');
+					else if(name === 'push'){
+						if(arguments.length === 1)
+							processElement(lastLength, 'append');
+						else{
+							for (var i = 0; i < arguments.length; i++) {
+								processElement(lastLength + i, 'append');
+							}
+						}
+					}
 
-					else if(name === 'shift')
+					else if(name === 'shift'){
 						processElement(0, 'remove');
+
+						if(list.$virtual && list.$virtual.DOMCursor > 0){
+							list.$virtual.DOMCursor--;
+							list.$virtual.reinitCursor();
+						}
+					}
 
 					else if(name === 'splice'){
 						if(arguments[0] === 0 && arguments[1] === undefined)
@@ -1636,6 +1673,9 @@ sf.model = function(scope){
 							processElement(real + i, 'remove');
 						}
 
+						if(list.$virtual && list.$virtual.DOMCursor >= real)
+							list.$virtual.DOMCursor = real - limit;
+
 						if(arguments.length >= 3){ // Inserting data
 							limit = arguments.length - 2;
 
@@ -1646,17 +1686,40 @@ sf.model = function(scope){
 							for (var i = 0; i < limit; i++) {
 								processElement(real + i, 'insertAfter');
 							}
+
+							if(list.$virtual && list.$virtual.DOMCursor >= real)
+								list.$virtual.DOMCursor += limit;
 						}
 					}
 
-					else if(name === 'unshift')
-						processElement(0, 'prepend');
+					else if(name === 'unshift'){
+						if(arguments.length === 1)
+							processElement(0, 'prepend');
+						else{
+							for (var i = arguments.length - 1; i >= 0; i--) {
+								processElement(i, 'prepend');
+							}
+						}
 
-					else if(name === 'softRefresh')
+						if(list.$virtual && list.$virtual.DOMCursor !== 0){
+							list.$virtual.DOMCursor += arguments.length;
+							list.$virtual.reinitCursor();
+						}
+					}
+
+					else if(name === 'softRefresh'){
 						processElement(arguments[0], 'update', arguments[1]);
 
-					else if(name === 'hardRefresh')
+						if(list.$virtual.DOMCursor)
+							list.$virtual.reinitCursor();
+					}
+
+					else if(name === 'hardRefresh'){
 						processElement(arguments[0] || 0, 'hardRefresh');
+
+						if(list.$virtual)
+							list.$virtual.DOMCursor = arguments[0] || 0;
+					}
 
 					return temp;
 				}
@@ -1669,6 +1732,9 @@ sf.model = function(scope){
 
 			// Transfer virtual DOM
 			list.$virtual.dom = tempDOM;
+			if(callback !== undefined)
+				list.$virtual.callback = callback;
+			else list.$virtual.callback_ = {ref:modelRef, var:eventVar};
 
 			parentNode.replaceChild(template.html, parentChilds[1]);
 			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
@@ -2514,9 +2580,8 @@ if(!NodeList.prototype.forEach){
     };
 }
 
-if(!window.location.origin){
+if(!window.location.origin)
   window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
-}
 // DOM Controller on loaded app
 sf.controller = new function(){
 	var self = this;
@@ -3365,11 +3430,11 @@ sf.internal.virtual_scroll = new function(){
 			styleInitialized = true;
 		}
 
+		var dynamicList = false;
 		var virtual = list.$virtual;
-		virtual.reset = function(){
+		virtual.reset = function(reinitOnly){
 			virtual.DOMCursor = 0; // cursor of first element in DOM tree as a cursor
 
-			virtual.bounding.initial = 0;
 			virtual.bounding.ceiling = -1;
 			virtual.bounding.floor = 0;
 
@@ -3378,6 +3443,15 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.bounding.initial = virtual.dCursor.ceiling.offsetTop;
 			refreshScrollBounding(0, virtual.bounding, list, parentNode);
+		}
+
+		virtual.reinitCursor = function(){
+			virtual.vCursor.ceiling = virtual.dom.children[virtual.DOMCursor - 1] || null;
+			virtual.vCursor.floor = virtual.dom.children[virtual.DOMCursor] || null;
+		}
+
+		virtual.reinitScroll = function(){
+			refreshScrollBounding(virtual.DOMCursor, virtual.bounding, list, parentNode);
 		}
 
 		virtual.elements = function(){
@@ -3396,7 +3470,7 @@ sf.internal.virtual_scroll = new function(){
 		virtual.targetNode = parentNode;
 		virtual.scrollHeight = virtual.dCursor.floor.offsetTop - virtual.bounding.initial;
 
-		var scroller = null;
+		var scroller = parentNode;
 		virtual.destroy = function(){
 			$.off(scroller, 'scroll');
 			$.off(parentNode, 'mousedown mouseup');
@@ -3409,6 +3483,9 @@ sf.internal.virtual_scroll = new function(){
 		virtual.resetViewport = function(){
 			virtual.visibleLength = Math.floor(scroller.clientHeight / virtual.scrollHeight);
 			virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
+
+			if(virtual.preparedLength < 18)
+				virtual.preparedLength = 18;
 		}
 
 		setTimeout(function(){
@@ -3421,10 +3498,11 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.resetViewport();
 
-			if(parentNode.classList.contains('sf-list-dynamic'))
+			if(parentNode.classList.contains('sf-list-dynamic')){
+				dynamicList = true;
 				dynamicHeight(list, targetNode, parentNode, scroller);
-			else
-				staticHeight(list, targetNode, parentNode, scroller);
+			}
+			else staticHeight(list, targetNode, parentNode, scroller);
 		}, 500);
 	}
 
@@ -3540,19 +3618,21 @@ sf.internal.virtual_scroll = new function(){
 			var temp = null;
 			fillViewport();
 
-			if(vCursor.ceiling === null)
-				vCursor.ceiling = vCursor.floor.previousElementSibling;
+			if(vCursor.floor !== null){
+				if(vCursor.ceiling === null)
+					vCursor.ceiling = vCursor.floor.previousElementSibling;
 
-			// Add extra element based on prepare count
-			for (var i = 0; i < self.prepareCount; i++) {
-				temp = vCursor.floor;
-				if(temp === null) break;
+				// Add extra element based on prepare count
+				for (var i = 0; i < self.prepareCount; i++) {
+					temp = vCursor.floor;
+					if(temp === null) break;
 
-				vCursor.floor = temp.nextElementSibling;
-				floor.insertAdjacentElement('beforeBegin', temp);
+					vCursor.floor = temp.nextElementSibling;
+					floor.insertAdjacentElement('beforeBegin', temp);
 
-				if(floorHeight > 0)
-					floorHeight -= getAbsoluteHeight(temp);
+					if(floorHeight > 0)
+						floorHeight -= getAbsoluteHeight(temp);
+				}
 			}
 
 			if(floorHeight < 0 || temp === null)
@@ -3584,6 +3664,11 @@ sf.internal.virtual_scroll = new function(){
 		var bounding = virtual.bounding;
 		refreshScrollBounding(0, bounding, list, parentNode);
 
+		if(virtual.callback_ !== undefined){
+			var callback_ = virtual.callback_;
+			delete virtual.callback_;
+		}
+
 		var updating = false;
 		function checkCursorPosition(){
 			if(updating || scrollingByScript) return;
@@ -3601,6 +3686,21 @@ sf.internal.virtual_scroll = new function(){
 				nextFloor();
 				refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
 				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
+			}
+
+			if(virtual.callback !== undefined){
+				if(virtual.callback.hitFloor && virtual.vCursor.floor === null &&
+					scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight
+				){
+					virtual.callback.hitFloor(virtual.DOMCursor);
+				}
+				else if(virtual.callback.hitCeiling && virtual.vCursor.ceiling === null && scroller.scrollTop === 0){
+					virtual.callback.hitCeiling(virtual.DOMCursor);
+				}
+			}
+			else if(callback_.ref[callback_.var]){
+				virtual.callback = callback_.ref[callback_.var];
+				callback_ = null;
 			}
 
 			updating = false;
@@ -3627,6 +3727,8 @@ sf.internal.virtual_scroll = new function(){
 			floor.insertAdjacentElement('beforeBegin', virtual.dom.firstElementChild);
 		}
 
+		virtual.refreshVirtualSpacer = refreshVirtualSpacer;
+
 		function refreshVirtualSpacer(cursor){
 			if(cursor >= self.prepareCount){
 				ceiling.style.height = (cursor - self.prepareCount) * virtual.scrollHeight + 'px';
@@ -3652,11 +3754,16 @@ sf.internal.virtual_scroll = new function(){
 		var vCursor = virtual.vCursor;
 		vCursor.floor = virtual.dom.firstElementChild;
 		virtual.scrollTo = function(index){
-			scrollTo(index, list, self.prepareCount, parentNode, scroller, refreshVirtualSpacer);
+			scrollTo(index, list, self.prepareCount, parentNode, scroller);
 		}
 
 		virtual.refresh = function(force){
 			refresh(force, list, self.prepareCount, parentNode, scroller, checkCursorPosition, refreshVirtualSpacer);
+		}
+
+		if(virtual.callback_ !== undefined){
+			var callback_ = virtual.callback_;
+			delete virtual.callback_;
 		}
 
 		var updating = false;
@@ -3709,13 +3816,24 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.DOMCursor = cursor;
 
-			//console.log(cursor, changes);
-
-			//console.log(cursor, changes, bounding.ceiling, bounding.floor, scroller.scrollTop);
+			// console.log(cursor, changes, bounding.ceiling, bounding.floor, scroller.scrollTop);
 			moveElementCursor(changes, list);
 			refreshVirtualSpacer(cursor);
 			refreshScrollBounding(cursor, bounding, list, parentNode);
-			//console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
+			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
+
+			if(virtual.callback !== undefined){
+				if(virtual.callback.hitFloor && virtual.vCursor.floor === null){
+					virtual.callback.hitFloor(cursor);
+				}
+				else if(virtual.callback.hitCeiling && virtual.vCursor.ceiling === null){
+					virtual.callback.hitCeiling(cursor);
+				}
+			}
+			else if(callback_.ref[callback_.var]){
+				virtual.callback = callback_.ref[callback_.var];
+				callback_ = null;
+			}
 
 			updating = false;
 		}
@@ -3761,7 +3879,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 
 		bounding.ceiling -= bounding.initial;
-		bounding.floor -= bounding.initial;
+		bounding.floor -= bounding.initial;// scrollHeight - clientHeight
 	}
 
 	function moveElementCursor(changes, list){
@@ -3778,6 +3896,7 @@ sf.internal.virtual_scroll = new function(){
 					ref = vDOM.firstElementChild;
 
 				else ref = vCursor.ceiling.nextElementSibling;
+				if(ref === null) break;
 				dCursor.floor.insertAdjacentElement('beforeBegin', ref);
 			}
 
@@ -3806,6 +3925,7 @@ sf.internal.virtual_scroll = new function(){
 					ref = vDOM.lastElementChild;
 
 				else ref = vCursor.floor.previousElementSibling;
+				if(ref === null) break;
 				dCursor.ceiling.insertAdjacentElement('afterEnd', ref);
 			}
 
@@ -3827,7 +3947,7 @@ sf.internal.virtual_scroll = new function(){
 		}
 	}
 
-	function scrollTo(index, list, prepareCount, parentNode, scroller, refreshVirtualSpacer){
+	function scrollTo(index, list, prepareCount, parentNode, scroller){
 		var virtual = list.$virtual;
 		var reduce = 0;
 
@@ -3890,8 +4010,8 @@ sf.internal.virtual_scroll = new function(){
 			vCursor.floor = virtual.dom.children[index] || null;
 			vCursor.ceiling = vCursor.floor ? vCursor.floor.previousElementSibling : null;
 
-			if(refreshVirtualSpacer)
-				refreshVirtualSpacer(index);
+			if(list.$virtual.refreshVirtualSpacer)
+				list.$virtual.refreshVirtualSpacer(index);
 
 			refreshScrollBounding(index, virtual.bounding, list, parentNode);
 
@@ -3934,8 +4054,11 @@ sf.internal.virtual_scroll = new function(){
 			if(temp === undefined) break;
 			exist.push(temp);
 		}
+		
+		// Get elements length
+		var elementLength = list.$virtual.dom.childElementCount + length;
 
-		length = list.length - length - list.$virtual.DOMCursor;
+		length = elementLength - length - list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
 			temp = list.$virtual.dom.children[list.$virtual.DOMCursor + i];
 			if(temp === undefined) break;
@@ -3975,8 +4098,7 @@ sf.internal.virtual_scroll = new function(){
 				list,
 				prepareCount,
 				parentNode,
-				scroller,
-				refreshVirtualSpacer
+				scroller
 			);
 
 			scroller.scrollTop += additionalScroll;
