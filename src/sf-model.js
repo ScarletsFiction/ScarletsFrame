@@ -1178,7 +1178,7 @@ sf.model = function(scope){
 					else if(name === 'softRefresh'){
 						processElement(arguments[0], 'update', arguments[1]);
 
-						if(list.$virtual.DOMCursor)
+						if(list.$virtual && list.$virtual.DOMCursor)
 							list.$virtual.reinitCursor();
 					}
 
