@@ -16,6 +16,22 @@ sf.model.for('virtual-scroll', function(self, root){
 
    self.list2 = [];
    self.list2b = JSON.parse(JSON.stringify(self.list1b));
+
+   var added = false;
+   self.on$list2 = self.on$list1 = {
+      hitFloor:function(){
+         console.log("Scroll hit floor");
+
+         // Test infinity load for static scroll
+         if(added === false){
+            added = true;
+            self.list1.push({id:"Added on scroll end - 1"}, {id:"Added on scroll end - 2"}, {id:"Added on scroll end - 3"});
+         }
+      },
+      hitCeiling:function(){
+         console.log("Scroll hit ceiling");
+      }
+   }
 });
 
 sf(function(){
@@ -74,7 +90,8 @@ sf(function(){
          console.error("Can't get element offset for static height virtual scroll");
 
       list.list1.pop(); // remove item-50
-      list.list1.unshift({id:"I'm inserted on first index"});
+      list.list1.unshift({id:"I'm should be deleted"}, {id:"I'm inserted on first index"});
+      list.list1.shift();
       list.list1.splice(3, 1); // remove index 3 (item-3)
       list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"}); // add as index 5
       list.list1.push({id:"I'm inserted on last index"});
