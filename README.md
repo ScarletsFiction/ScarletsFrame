@@ -415,26 +415,18 @@ self.list.$virtual.refresh();
 var offsetTop = self.list.$virtual.offsetTo(8);
 ```
 
-### Two-way data binding
-Bind the element for html, attr, or all
-```js
-sf.model.bindElement(elementNode, which = false)
+### Views and Model data binding
+Every element that built from a template will have one-way data binding. Even it's defined in attributes or innerHTML. To deactivate the feature you need to specify `sf-bind-ignore` on the parent attributes.
+```html
+<div sf-bind-ignore>{{ myStatic }}</div>
 ```
 
-You could also automatically bind element by using `sf-bind` attribute
+To enable two-way data binding with input element, you need to defined the variable in `sf-bound` attribute.
 ```html
-<!-- Bind Attributes only (model.id)-->
-<div sf-bind="attr" class='review' id='review{{id}}'></div>
-
-<!-- Bind Inner HTML only (model.content) -->
-<div sf-bind="html">{{ content }}</div>
-
-<!-- Bind Attribute and Inner HTML -->
-<div sf-bind="" id='review{{id}}'>{{ content }}</div>
-
 <!-- 'myInput' on the model will be updated if input detected -->
 <input sf-bound="myInput" type="text" />
 ```
+
 ```js
 // Model for the above example
 sf.model.for('example', function(self){
