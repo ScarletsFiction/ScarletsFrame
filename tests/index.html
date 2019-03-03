@@ -96,10 +96,10 @@
          <b>Conditional HTML</b><br>
          <div sf-bind-ignore>
             {{@if showHTML === true:
-               {[<span id="x4">This 1st must not be displayed {{ stuff }}</span>]}
+               {[<span>This 1st must not be displayed {{ stuff }}</span>]}
             }}
             {{@if showHTML === false:
-               {[<span id="x4">This 2th must be displayed {{ stuff }}</span>]}
+               {[<span>This 2th must be displayed {{ stuff }}</span>]}
             }}<br><br>
          </div>
 
@@ -107,11 +107,11 @@
          <div>
             {{@exec
                for(var i = 1; i <= 5; i++){
-                  {[<span id="x4">{{ prefix }}{{ i }}</span><br>]}
+                  {[<span>{{ prefix }}{{ i }}</span><br>]}
                }
 
                var calculate = (5+4);
-               {[<span id="x4">5 + 4 = {{ calculate }}</span><br>]}
+               {[<span>5 + 4 = {{ calculate }}</span><br>]}
 
                var escapeHTML = "<span>This must be HTML escaped (except the bold)</span>";
                var noEscapeHTML = "<br><span>This shouldn't be HTML escaped (but parsed)</span>";
@@ -119,7 +119,7 @@
                {[ <b>{{escapeHTML}}</b> ]}
                @return noEscapeHTML;
             }}
-            {{@exec {[ <br id="x4"><br>another exec ]} }}
+            {{@exec {[ <br><br>another exec ]} }}
          </div>
       </div><br><br>
 

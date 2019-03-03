@@ -10,17 +10,17 @@
    </head>
    <body class="body">
       <div sf-page="todo/index" class="container" sf-controller="todo-app" style="display:none;">
-         <div class="today" sf-bind="html">{{ todayMessage }}</div>
+         <div class="today">{{ todayMessage }}</div>
          <div class="row">
             <div class="col-md-4 col-md-offset-4 col-xs-6 col-xs-offset-3">
                <div class="add-control">
                   <div class="form-group has-feedback">
-                     <input sf-bound="itemInput" sf-bind='attr' value="{{ itemInput }}" type="text" class="form-control" placeholder="✍️ Add item..."/>
+                     <input sf-bound="itemInput" value="{{ itemInput }}" type="text" class="form-control" placeholder="✍️ Add item..."/>
                      <i class="fa fa-plus form-control-feedback add-btn" sf-click="addItem(itemInput)" title="Add item"></i>
                   </div>
                </div>
                <p class="err text-danger text-center {{class_error}}"><i class="fa fa-warning"></i>Please enter item name</p>
-               <p class="text-center" style="font-size:16px" sf-bind="html">You typed: {{itemInput}}</p>
+               <p class="text-center" style="font-size:16px">You typed: {{itemInput}}</p>
                <p class="no-items text-muted text-center {{class_no_item}}"><i class="fa fa-ban"></i></p>
 
                <ul class="todo-list">
