@@ -64,3 +64,14 @@ if(!NodeList.prototype.forEach){
 
 if(!window.location.origin)
   window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+
+if(!Object.values)
+  Object.values = function(obj){
+    var res = [];
+    for (var i in obj) {
+        if (obj.hasOwnProperty(i)) {
+            res.push(obj[i]);
+        }
+    }
+    return res;
+  }

@@ -277,7 +277,7 @@ var $ = sf.dom; // Shortcut
 		var element = context || documentElement;
 		var i = 1;
 
-		if(array[0].constructor === String)
+		if(array[0].constructor === String && element.id !== array[0].substr(1))
 			element = element.querySelector(array[0]);
 
 		else if(array.length === 1)

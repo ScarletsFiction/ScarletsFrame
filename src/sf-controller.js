@@ -66,7 +66,7 @@ sf.controller = new function(){
 
 		var _modelScope = sf.model.root[model];
 
-		var modelKeys = sf.model.modelKeys(_modelScope);
+		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
 		var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		script = script.replace(scopeMask, function(full, matched){
