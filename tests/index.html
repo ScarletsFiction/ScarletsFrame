@@ -41,7 +41,7 @@
 
          <b>Virtual Scroll - Static Height & Scroll on parent</b>
          <div data-simplebar style="height: 200px;">
-            <ul class="sf-virtual-list sf-keyed-list" scroll-parent-index="1">
+            <ul class="sf-virtual-list" scroll-parent-index="1">
                <li sf-repeat-this="x in list1" data-id="{{x.id}}">
                   <label>{{ x.id }}</label>
 
@@ -71,20 +71,35 @@
       <div sf-controller="model-binding">
 
          <b>Change variable on keyboard input</b><br>
-         <input type="text" sf-bound="inputBinding" sf-bind="attr" value="{{ inputBinding }}"><br>
-         <span id="test" sf-bind="html">Var Content: {{ inputBinding }}</span><br><br>
+         <input type="text" sf-bound="inputBinding" value="{{ inputBinding }}"><br>
+         <span id="test">Var Content: {{ inputBinding }}</span><br><br>
 
          <b>Another one</b><br>
          <input type="text" sf-bound="inputBinding2"><br>
-         <span sf-bind="html">Var Content: {{ inputBinding2 }}</span><br><br>
+         <span>Var Content: {{ inputBinding2 }}</span><br><br>
+
+         <input type="checkbox" value="check1" sf-bound="inputBinding3">Check 1
+         <input type="checkbox" value="check2" sf-bound="inputBinding3">Check 2<br>
+         <input type="radio" name="inputBinding4" value="radio1" sf-bound> Radio 1
+         <input type="radio" name="inputBinding4" value="radio2" sf-bound> Radio 2<br>
+         <select sf-bound="inputBinding5" multiple>
+            <option value="sel1">Select 1</option>
+            <option value="sel2">Select 2</option>
+            <option value="sel3">Select 3</option>
+         </select>
+         <select sf-bound="inputBinding6">
+            <option value="sel1">Select 1</option>
+            <option value="sel2">Select 2</option>
+            <option value="sel3">Select 3</option>
+         </select><br><br>
 
          <b>Conditional HTML</b><br>
-         <div>
+         <div sf-bind-ignore>
             {{@if showHTML === true:
-               {[<span>This 1st must not be displayed {{ stuff }}</span>]}
+               {[<span id="x4">This 1st must not be displayed {{ stuff }}</span>]}
             }}
             {{@if showHTML === false:
-               {[<span>This 2th must be displayed {{ stuff }}</span>]}
+               {[<span id="x4">This 2th must be displayed {{ stuff }}</span>]}
             }}<br><br>
          </div>
 
@@ -92,11 +107,11 @@
          <div>
             {{@exec
                for(var i = 1; i <= 5; i++){
-                  {[<span>{{ prefix }}{{ i }}</span><br>]}
+                  {[<span id="x4">{{ prefix }}{{ i }}</span><br>]}
                }
 
                var calculate = (5+4);
-               {[<span>5 + 4 = {{ calculate }}</span><br>]}
+               {[<span id="x4">5 + 4 = {{ calculate }}</span><br>]}
 
                var escapeHTML = "<span>This must be HTML escaped (except the bold)</span>";
                var noEscapeHTML = "<br><span>This shouldn't be HTML escaped (but parsed)</span>";
@@ -104,7 +119,7 @@
                {[ <b>{{escapeHTML}}</b> ]}
                @return noEscapeHTML;
             }}
-            {{@exec {[ <br><br>another exec ]} }}
+            {{@exec {[ <br id="x4"><br>another exec ]} }}
          </div>
       </div><br><br>
 

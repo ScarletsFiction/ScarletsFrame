@@ -122,7 +122,7 @@ sf.model = function(scope){
 			if(keys[i].indexOf('$') !== -1)
 				keys.splice(i, 1);
 		}
-		return keys.join('|');
+		return keys;
 	}
 
 	// Escape the escaped quote
@@ -194,8 +194,8 @@ sf.model = function(scope){
 		return parsed;
 	}
 
-	var templateParser = function(template, item){
-		var html = template.html.cloneNode(true);
+	var templateParser = function(template, item, original){
+		var html = original === true ? template.html : template.html.cloneNode(true);
 		var addresses = template.addresses;
 		var parsed = templateExec(template.parse, item);
 
@@ -217,9 +217,15 @@ sf.model = function(scope){
 					var refB = refA[a];
 
 					changesReference.push({
-						attribute:current.attributes[refB.name],
+						attribute:(refB.name === 'value' && current.tagName === 'INPUT' ? current : current.attributes[refB.name]),
 						ref:refB
 					});
+
+					if(refB.name === 'value' && current.tagName === 'INPUT'){
+						current.value = parsed[refB.direct].data;
+						current.removeAttribute('value');
+						continue;
+					}
 
 					if(refB.direct !== undefined){
 						current.setAttribute(refB.name, parsed[refB.direct].data);
@@ -311,21 +317,26 @@ sf.model = function(scope){
 				return false;
 			}
 
-			for (var i = 0; i < modelRef_array.length; i++) {
-				var ref = modelRef_array[i];
-				if(ref[0] !== property) continue;
+			if(cache)
+				for (var i = 0; i < modelRef_array.length; i++) {
+					var ref = modelRef_array[i];
+					if(ref[0] !== property) continue;
 
-				var newData = deepProperty(item, ref[1]);
+					var newData = deepProperty(item, ref[1]);
 
-				// Check if data was different
-				if(cache[ref[0]] !== newData)
-					cache[ref[0]] = newData;
-			}
+					// Check if data was different
+					if(cache[ref[0]] !== newData)
+						cache[ref[0]] = newData;
+				}
 		}
 		else{
 			var changes = [];
 			for (var i = 0; i < modelRef_array.length; i++) {
 				var ref = modelRef_array[i];
+				if(cache === undefined){
+					Array.prototype.push.apply(changes, template.modelReference[ref[0]]);
+					continue;
+				}
 				var newData = deepProperty(item, ref[1]);
 
 				// Check if data was different
@@ -369,7 +380,7 @@ sf.model = function(scope){
 
 			if(cRef.dynamicFlag !== undefined){ // Dynamic data
 				if(parsed[cRef.direct] !== undefined){
-					var tDOM = $.parseElement(parsed[cRef.direct].data, true);
+					var tDOM = $.parseElement(parsed[cRef.direct].data, true).reverse();
 					var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 					var notExist = false;
 
@@ -434,7 +445,7 @@ sf.model = function(scope){
 
 						if(cRef.attribute.value === temp) continue;
 						cRef.attribute.value = temp;
-						
+
 						haveChanges = true;
 					}
 					continue;
@@ -445,7 +456,7 @@ sf.model = function(scope){
 					var value = parsed[cRef.ref.direct].data;
 					if(cRef.attribute.value === value) continue;
 					cRef.attribute.value = value;
-						
+
 					haveChanges = true;
 				}
 			}
@@ -461,7 +472,7 @@ sf.model = function(scope){
 		if(!runEval) runEval = '';
 		
 		// Unmatch any function
-		var variableList = self.modelKeys(_modelScope);
+		var variableList = self.modelKeys(_modelScope).join('|');
 		for(var i = variableList.length - 1; i >= 0; i--){
 			if(_modelScope[variableList[i]] instanceof Function)
 				variableList.splice(i, 1);
@@ -582,7 +593,7 @@ sf.model = function(scope){
 		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope)+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		if(mask)
 			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
@@ -590,7 +601,7 @@ sf.model = function(scope){
 		if(runEval === '#noEval')
 			var preParsedReference = [];
 
-		var prepared = html.replace(/{{(@[\s\S]*?)}}/g, function(actual, temp){
+		var prepared = html.replace(/{{((@|#[\w])[\s\S]*?)}}/g, function(actual, temp){
 			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
 			temp = escapeEscapedQuote(temp); // ToDo: Escape
 
@@ -1295,14 +1306,9 @@ sf.model = function(scope){
 		var mask = method[0];
 		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
-		if(!self.root[name])
-			return console.error("Can't parse element because model for '"+name+"' was not found", template);
-
-		var items = self.root[name][method[1]];
-		if(items === undefined){
-			console.error("Can't bind array to `"+method[1]+"` because undefined property in model `"+name+"`");
-			return;
-		}
+		var items = root_(name)[method[1]];
+		if(items === undefined)
+			items = root_(name)[method[1]] = [];
 
 		template.setAttribute('sf-bind-list', method[1]);
 
@@ -1403,34 +1409,25 @@ sf.model = function(scope){
 		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
 		bindInput(targetNode);
 
+		// Find element for array binding
 		var temp = $('[sf-repeat-this]', targetNode);
-		for (var i = 0; i < temp.length; i++) {
-			var element = temp[i];
+		for (var a = 0; a < temp.length; a++) {
+			var element = temp[a];
 			var parent = element.parentElement;
 
 			if(queued !== undefined)
 				element.classList.remove('sf-dom-queued');
 
-			if(element.parentNode.classList.contains('sf-virtual-list')){
+			if(parent.classList.contains('sf-virtual-list')){
 				var ceiling = document.createElement(element.tagName);
 				ceiling.classList.add('virtual-spacer');
 				var floor = ceiling.cloneNode(true);
 
 				ceiling.classList.add('ceiling');
-				//ceiling.style.transform = 'scaleY(0)';
-				element.parentNode.insertAdjacentElement('afterBegin', ceiling); // prepend
+				parent.insertBefore(ceiling, parent.firstElementChild); // prepend
 
 				floor.classList.add('floor');
-				//floor.style.transform = 'scaleY(0)';
-				element.parentNode.insertAdjacentElement('beforeEnd', floor); // append
-
-				// His total scrollHeight
-				var styles = window.getComputedStyle(element);
-				var absHeight = parseFloat(styles['marginTop']) + parseFloat(styles['marginBottom']);
-				styles = null;
-
-				// Element height + margin
-				absHeight = Math.ceil(element.offsetHeight + absHeight);
+				parent.appendChild(floor); // append
 			}
 
 			var after = element.nextElementSibling;
@@ -1443,13 +1440,13 @@ sf.model = function(scope){
 
 			var script = element.getAttribute('sf-repeat-this');
 			element.removeAttribute('sf-repeat-this');
-			var controller = sf.controller.modelName(element);
 
 			// Check if the element was already bound to prevent vulnerability
 			if(/sf-bind-key|sf-bind-list/.test(element.outerHTML))
 				throw "Can't parse element that already bound";
 
-			loopParser(controller, element, script, targetNode, element.parentNode);
+			var controller = sf.controller.modelName(element);
+			loopParser(controller, element, script, targetNode, parent);
 			element.remove();
 		}
 	}
@@ -1457,22 +1454,23 @@ sf.model = function(scope){
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
 	function DOMNodeRemoved(element){
+		if(element.hasAttribute('sf-controller') !== false){
+			removeModelBinding(element.getAttribute('sf-controller'));
+			return;
+		}
+
 		var temp = $('[sf-controller]', element);
 		for (var i = 0; i < temp.length; i++) {
 			removeModelBinding(temp[i].getAttribute('sf-controller'));
 		}
-
-		if(element.hasAttribute('sf-controller') === false)
-			return;
-
-		removeModelBinding(element.getAttribute('sf-controller'));
 	}
 
 	sf(function(){
 		var everyRemovedNodes = function(nodes){
-			var tagName = nodes.nodeName;
-			if(tagName === 'TEXT' || tagName === '#text' || tagName === '#comment') return;
+			if(nodes.nodeType !== 1 || nodes.firstElementChild === null)
+				return;
 
+			if(nodes.sf$elementReferences !== undefined) return;
 			DOMNodeRemoved(nodes);
 		}
 
@@ -1496,7 +1494,7 @@ sf.model = function(scope){
 		}
 	});
 
-	var removeModelBinding = function(modelName){
+	var removeModelBinding = self.reset = function(modelName){
 		var ref = self.root[modelName];
 		if(ref === undefined)
 			return;
@@ -1537,126 +1535,59 @@ sf.model = function(scope){
 		}
 	}
 
-	var dcBracket = /{{[\s\S]*?}}/;
-	var bindObject = function(element, modelRef, propertyName, which){
-		if(!(element instanceof Node))
-			element = element[0];
-
-		// Get reference for debugging
-		processingElement = element;
-
-		// First initialization
-		element.setAttribute('sf-bind-key', propertyName);
-		var modelName = sf.controller.modelName(element);
-
-		// Cache attribute content
-		if(which === 'attr' || !which){
-			var attrs = {};
-
-			for (var i = 0; i < element.attributes.length; i++) {
-				var attr = element.attributes[i].name;
-
-				// Check if it has a bracket
-				if(dcBracket.test(element.getAttribute(attr)) === false)
-					continue;
-
-				attrs[attr] = element.getAttribute(attr);
-				element.removeAttribute(attr);
-			}
-		}
-
-		// Cache html content
-		if(which === 'html' || !which)
-			var htmlClone = element.cloneNode(true).innerHTML;
-
-		var onChanges = function(){
-			if(which === 'attr' || !which){
-				for(var name in attrs){
-					if(attrs[name].indexOf(propertyName) === -1)
-						continue;
-
-					var temp = dataParser(attrs[name], modelRef, false, modelName);
-					if(name === 'value')
-						element.value = temp;
-					else
-						element.setAttribute(name, temp);
-					break;
-				}
-			}
-
-			if(which === 'html' || !which){
-				var temp = uniqueDataParser(htmlClone, modelRef, false, modelName);
-				temp = dataParser(temp, modelRef, false, modelName);
-				element.textContent = '';
-				element.insertAdjacentHTML('afterBegin', temp);
-			}
-		};
-
-		if(modelRef[propertyName] === undefined)
-			throw "Property '"+propertyName+"' was not found on '"+modelName+"' model";
-
-		// Enable multiple element binding
-		if(modelRef.sf$bindedKey === undefined)
-			initBindingInformation(modelRef);
-
-		if(modelRef.sf$bindedKey[propertyName] !== undefined){
-			modelRef.sf$bindedKey[propertyName].push(onChanges);
-			return;
-		}
-
-		var objValue = modelRef[propertyName]; // Object value
-		Object.defineProperty(modelRef, propertyName, {
-			enumerable: true,
-			configurable: true,
-			get:function(){
-				return objValue;
-			},
-			set:function(val){
-				objValue = val;
-
-				var ref = modelRef.sf$bindedKey[propertyName];
-				for (var i = 0; i < ref.length; i++) {
-					ref[i]();
-				}
-
-				return objValue;
-			}
-		});
-
-		modelRef.sf$bindedKey[propertyName] = [onChanges];
-	}
-
-	self.bindElement = function(element, which){
+	var dcBracket = /{{[^#][\s\S]*?}}/;
+	self.bindElement = function(element){
 		var modelName = sf.controller.modelName(element);
 		var model = self.root[modelName];
 		if(!model) return console.error("Model for "+modelName+" was not found while binding:", element);
 
-		var html = element.outerHTML;
+		var data = self.extractPreprocess(element, null, modelName);
+		templateParser(data, model, true);
+		delete data.addresses;
+		element.parentNode.replaceChild(data.html, element);
+		element = data.html;
 
-		// Check if the child element was already bound to prevent vulnerability
-		if(/sf-bind-key|sf-bind-list/.test(html)){
-			console.error("Can't parse element that already bound");
-			return;
-		}
+		var onChanges = function(){
+			if(syntheticTemplate(element, data, undefined, model) === false)
+				0; //No update
+		};
 
-		if(which === 'attr')
-			html = html.replace(element.innerHTML, '');
+		var properties = data.modelRef_array;
+		for (var i = 0; i < properties.length; i++) {
+			var propertyName = properties[i][0];
 
-		var brackets = /{{([\s\S]*?)}}/g;
+			if(model[propertyName] === undefined)
+				model[propertyName] = '';
 
-		// Unmatch any function
-		var variableList = self.modelKeys(model);
-		for(var i = variableList.length - 1; i >= 0; i--){
-			if(model[variableList[i]] instanceof Function)
-				variableList.splice(i, 1);
-		}
+			// Enable multiple element binding
+			if(model.sf$bindedKey === undefined)
+				initBindingInformation(model);
 
-		var scopeMask = RegExp(sf.regex.strictVar+'('+variableList+')'+sf.regex.avoidQuotes+'\\b', 'g');
-		var s1, s2 = null;
-		while((s1 = brackets.exec(html)) !== null){
-			while ((s2 = scopeMask.exec(s1[1])) !== null) {
-				bindObject(element, model, s2[1], which);
+			if(model.sf$bindedKey[propertyName] !== undefined){
+				model.sf$bindedKey[propertyName].push(onChanges);
+				return;
 			}
+
+			var objValue = model[propertyName]; // Object value
+			Object.defineProperty(model, propertyName, {
+				enumerable: true,
+				configurable: true,
+				get:function(){
+					return objValue;
+				},
+				set:function(val){
+					objValue = val;
+
+					var ref = model.sf$bindedKey[propertyName];
+					for (var i = 0; i < ref.length; i++) {
+						ref[i]();
+					}
+
+					return objValue;
+				}
+			});
+
+			model.sf$bindedKey[propertyName] = [onChanges];
 		}
 	}
 
@@ -1664,7 +1595,8 @@ sf.model = function(scope){
 		var copy = targetNode.outerHTML;
 
 		// Mask the referenced item
-		copy = copy.split('#'+mask).join('_model_');
+		if(mask !== null)
+			copy = copy.split('#'+mask).join('_model_');
 
 		// Extract data to be parsed
 		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
@@ -1673,7 +1605,12 @@ sf.model = function(scope){
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
 
 		function findModelProperty(){
-			var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
+			if(mask === null){
+				// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
+				var extract = RegExp('('+self.modelKeys(self.root[name]).sort(function(a, b){return b.length - a.length}).join('|')+')', 'g');
+			}
+			else
+				var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
 			var found = {};
 
 			for (var i = 0; i < preParsed.length; i++) {
@@ -1872,9 +1809,10 @@ sf.model = function(scope){
 			addresses:addressed,
 			modelReference:modelReference,
 			modelRef_array:asArray
-		}
+		};
 	}
 
+	var enclosedHTMLParse = false;
 	var excludes = ['HTML','HEAD','STYLE','LINK','META','SCRIPT','OBJECT','IFRAME'];
 	self.queuePreprocess = function(targetNode, extracting){
 		var childNodes = (targetNode || document.body).childNodes;
@@ -1887,6 +1825,7 @@ sf.model = function(scope){
 				continue;
 
 			if(currentNode.nodeType === 1){ // Tag
+				if(enclosedHTMLParse === true) continue;
 				var attrs = currentNode.attributes;
 
 				// Skip element and it's childs that already bound to prevent vulnerability
@@ -1897,6 +1836,7 @@ sf.model = function(scope){
 						if(extracting === undefined)
 							currentNode.setAttribute('sf-preprocess', 'attronly');
 						temp.push(currentNode);
+						break;
 					}
 				}
 
@@ -1904,10 +1844,17 @@ sf.model = function(scope){
 			}
 
 			else if(currentNode.nodeType === 3){ // Text
-				currentNode.textContent = currentNode.textContent;
-
 				if(currentNode.textContent.length === 0){
 					currentNode.remove();
+					continue;
+				}
+
+				if(currentNode.textContent.indexOf('{[') !== -1)
+					enclosedHTMLParse = false;
+				else if(enclosedHTMLParse === true)
+					continue;
+				if(currentNode.textContent.indexOf(']}') === 0){
+					enclosedHTMLParse = true;
 					continue;
 				}
 
@@ -1943,12 +1890,7 @@ sf.model = function(scope){
 			if(queued !== undefined)
 				current.classList.remove('sf-dom-queued');
 
-			var modelRef = self.root[model];
-
-			if(!modelRef){
-				modelRef = root_(model);
-				//return console.error("Can't parse element because model for '"+model+"' was not found", current);
-			}
+			var modelRef = self.root[model] || root_(model);
 
 			// Double check if the child element already bound to prevent vulnerability
 			if(/sf-bind-key|sf-bind-list/.test(current.innerHTML)){
@@ -1957,18 +1899,17 @@ sf.model = function(scope){
 				return;
 			}
 
-			if(current.hasAttribute('sf-bind'))
-				self.bindElement(current, current.getAttribute('sf-bind'));
-
-			// Avoid editing the outerHTML because it will remove the bind
-			var temp = uniqueDataParser(current.innerHTML, modelRef, false, model);
-			current.innerHTML = dataParser(temp, modelRef, false, model);
-
-			var attrs = nodes[a].attributes;
-			for (var i = 0; i < attrs.length; i++) {
-				if(attrs[i].value.indexOf('{{') !== -1){
-					var attr = attrs[i];
-					attr.value = dataParser(attr.value, modelRef, false, model);
+			if(current.hasAttribute('sf-bind-ignore') === false)
+				self.bindElement(current);
+			else{
+				var temp = uniqueDataParser(current.innerHTML, modelRef, false, model);
+				current.innerHTML = dataParser(temp, modelRef, false, model);
+				var attrs = current.attributes;
+				for (var i = 0; i < attrs.length; i++) {
+					if(attrs[i].value.indexOf('{{') !== -1){
+						var attr = attrs[i];
+						attr.value = dataParser(attr.value, modelRef, false, model);
+					}
 				}
 			}
 		}
