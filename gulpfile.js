@@ -18,11 +18,15 @@ gulp.task('js', function(){
     .pipe(sourcemaps.init())
     .pipe(order([
       'sf-a_init.js',
+      'sf-polyfill.js',
+      'sf-dom.js',
+      'sf-loader.js',
+      'sf-model.js',
       '**/*.js',
       'sf-z_end.js'
     ]))
     .pipe(concat('scarletsframe.js'))
-    .pipe(babel({
+    /*.pipe(babel({
       presets: [
         [
           "@babel/preset-env",
@@ -35,7 +39,7 @@ gulp.task('js', function(){
           }
         ]
       ]
-    }))
+    }))*/
     .pipe(gulp.dest('dist'))
 
     .pipe(rename('scarletsframe.min.js'))
