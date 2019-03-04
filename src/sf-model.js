@@ -1585,12 +1585,12 @@ sf.model = function(scope){
 				initBindingInformation(model);
 
 			if(model.sf$bindedKey[propertyName] !== undefined){
-				model.sf$bindedKey[propertyName].push(onChanges);
+				if(model.sf$bindedKey[propertyName].indexOf(onChanges) === -1)
+					model.sf$bindedKey[propertyName].push(onChanges);
 				continue;
 			}
 
 			proxyProperty(propertyName);
-
 			model.sf$bindedKey[propertyName] = [onChanges];
 		}
 	}
