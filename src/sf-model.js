@@ -1547,27 +1547,7 @@ sf.model = function(scope){
 		element.parentNode.replaceChild(data.html, element);
 		element = data.html;
 
-		var onChanges = function(){
-			if(syntheticTemplate(element, data, undefined, model) === false)
-				0; //No update
-		};
-
-		var properties = data.modelRef_array;
-		for (var i = 0; i < properties.length; i++) {
-			var propertyName = properties[i][0];
-
-			if(model[propertyName] === undefined)
-				model[propertyName] = '';
-
-			// Enable multiple element binding
-			if(model.sf$bindedKey === undefined)
-				initBindingInformation(model);
-
-			if(model.sf$bindedKey[propertyName] !== undefined){
-				model.sf$bindedKey[propertyName].push(onChanges);
-				return;
-			}
-
+		function proxyProperty(propertyName){
 			var objValue = model[propertyName]; // Object value
 			Object.defineProperty(model, propertyName, {
 				enumerable: true,
@@ -1586,6 +1566,30 @@ sf.model = function(scope){
 					return objValue;
 				}
 			});
+		}
+
+		var onChanges = function(){
+			if(syntheticTemplate(element, data, undefined, model) === false)
+				0; //No update
+		};
+
+		var properties = data.modelRef_array;
+		for (var i = 0; i < properties.length; i++) {
+			var propertyName = properties[i][0];
+
+			if(model[propertyName] === undefined)
+				model[propertyName] = '';
+
+			// Enable multiple element binding
+			if(model.sf$bindedKey === undefined)
+				initBindingInformation(model);
+
+			if(model.sf$bindedKey[propertyName] !== undefined){
+				model.sf$bindedKey[propertyName].push(onChanges);
+				continue;
+			}
+
+			proxyProperty(propertyName);
 
 			model.sf$bindedKey[propertyName] = [onChanges];
 		}
@@ -1849,12 +1853,17 @@ sf.model = function(scope){
 					continue;
 				}
 
-				if(currentNode.textContent.indexOf('{[') !== -1)
+				// The scan is from bottom to first index
+				var enclosing = currentNode.textContent.indexOf('{[');
+				if(enclosing !== -1)
 					enclosedHTMLParse = false;
 				else if(enclosedHTMLParse === true)
 					continue;
-				if(currentNode.textContent.indexOf(']}') === 0){
-					enclosedHTMLParse = true;
+
+				// Start enclosed if closing pattern was found
+				var enclosed = currentNode.textContent.indexOf(']}');
+				if(enclosed !== -1 && (enclosing === -1 || enclosing > enclosed)){ // avoid {[ ... ]}
+					enclosedHTMLParse = true; // when ]} ... 
 					continue;
 				}
 
