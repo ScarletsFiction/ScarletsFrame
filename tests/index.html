@@ -94,12 +94,13 @@
          </select><br><br>
 
          <b>Conditional HTML</b><br>
-         <div sf-bind-ignore>
+         <div>
             {{@if showHTML === true:
                {[<span>This 1st must not be displayed {{ stuff }}</span>]}
             }}
+            <span sf-bind-ignore>Ignored bind: {{ stuff }}</span><br>
             {{@if showHTML === false:
-               {[<span>This 2th must be displayed {{ stuff }}</span>]}
+               {[<span>This 2th must be displayed {{ stuff }} {{ stuffes }}</span>]}
             }}<br><br>
          </div>
 
@@ -121,7 +122,7 @@
             }}
             {{@exec {[ <br><br>another exec ]} }}
          </div>
-      </div><br><br>
+      </div>
 
       <script type="text/javascript" src="/tests/script.js"></script>
    </body>

@@ -139,6 +139,7 @@ sf.model.for('model-binding', function(self, root){
    self.showHTML = false;
    self.prefix = 'i -> ';
    self.stuff = '(text from the model)';
+   self.stuffes = ' and stuff';
 });
 sf.controller.for('model-binding', function(self, root){
    var list = root('virtual-scroll');
