@@ -884,8 +884,9 @@ sf.model = function(scope){
 			// Clear unused element if current array < last array
 			if(options === 'removeRange'){
 				for (var i = index; i < other; i++) {
-					exist[index].remove();
+					exist[i].remove();
 				}
+				return;
 			}
 
 			// Remove
