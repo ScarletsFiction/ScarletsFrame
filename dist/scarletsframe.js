@@ -1416,8 +1416,9 @@ sf.model = function(scope){
 			// Clear unused element if current array < last array
 			if(options === 'removeRange'){
 				for (var i = index; i < other; i++) {
-					exist[index].remove();
+					exist[i].remove();
 				}
+				return;
 			}
 
 			// Remove
@@ -1634,7 +1635,7 @@ sf.model = function(scope){
 							// And start refreshing
 							list.refresh(0, this.length);
 
-							if(list.$virtual)
+							if(list.$virtual && list.$virtual.refreshVirtualSpacer)
 								list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
 						}
 
