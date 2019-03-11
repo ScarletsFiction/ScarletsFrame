@@ -1102,7 +1102,7 @@ sf.model = function(scope){
 							// And start refreshing
 							list.refresh(0, this.length);
 
-							if(list.$virtual)
+							if(list.$virtual && list.$virtual.refreshVirtualSpacer)
 								list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
 						}
 
