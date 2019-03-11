@@ -1194,14 +1194,17 @@ sf.model = function(scope){
 					text = text.join(':');
 					var else_ = null;
 
-					// Get else value
-					var text = text.split('@else' + (text.indexOf(':') !== -1 ? ':' : ' :'));
-					if(text.length === 2)
-						else_ = text.pop();
-					else text = text[0];
-
 					// Split elseIf
 					text = text.split('@elseif ');
+
+					// Get else value
+					var else_ = text[text.length - 1].split('@else');
+					if(else_.length === 2){
+						text[text.length - 1] = else_[0];
+						else_ = else_.pop();
+						else_ = else_.substr(else_.indexOf(':') + 1);
+					}
+					else else_ = null;
 
 					var obj = {
 						if:text.shift(),

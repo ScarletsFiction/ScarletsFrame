@@ -191,6 +191,10 @@ Conditional template
 ```html
 {{@if model.view === true :
     {[ <html_content> ]}
+  @elseif model.view === undefined:
+    model.data.splice(0);
+  @else:
+    {[ <html_content> ]}
 }}
 ```
 
