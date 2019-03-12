@@ -270,7 +270,7 @@ sf.internal.virtual_scroll = new function(){
 				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
 			}
 
-			if(virtual.callback !== undefined){
+			if(virtual.callback !== undefined && list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null &&
 					scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight
 				){
@@ -404,7 +404,7 @@ sf.internal.virtual_scroll = new function(){
 			refreshScrollBounding(cursor, bounding, list, parentNode);
 			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
 
-			if(virtual.callback !== undefined){
+			if(virtual.callback !== undefined && list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null){
 					virtual.callback.hitFloor(cursor);
 				}
