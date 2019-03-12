@@ -280,7 +280,7 @@ sf.internal.virtual_scroll = new function(){
 					virtual.callback.hitCeiling(virtual.DOMCursor);
 				}
 			}
-			else if(callback_.ref[callback_.var]){
+			else if(callback_ && callback_.ref[callback_.var]){
 				virtual.callback = callback_.ref[callback_.var];
 				callback_ = null;
 			}
@@ -412,7 +412,7 @@ sf.internal.virtual_scroll = new function(){
 					virtual.callback.hitCeiling(cursor);
 				}
 			}
-			else if(callback_.ref[callback_.var]){
+			else if(callback_ && callback_.ref[callback_.var]){
 				virtual.callback = callback_.ref[callback_.var];
 				callback_ = null;
 			}
