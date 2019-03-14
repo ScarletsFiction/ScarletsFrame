@@ -5,6 +5,7 @@
 if(typeof document === undefined)
 	document = window.document;
 // ===== Module Init =====
+var internal = {};
 
 var sf = function(){
 	if(arguments[0].constructor === Function){
@@ -530,8 +531,100 @@ sf.loader = new function(){
 	}
 }
 sf.prototype.constructor = sf.loader.onFinish;
+sf.component = new function(){
+	var self = this;
+	var scope = internal.component = {};
+	self.registered = {};
+	self.available = {};
+
+	var events = {};
+
+	self.for = function(name, func){
+		if(!sf.loader.DOMWasLoaded)
+			return sf(function(){
+				self.for(name, func);
+			});
+
+		if(self.registered[name] === undefined)
+			self.registered[name] = [func, sf.controller.pending[name], 0, false];
+		self.registered[name][0] = func;
+		delete sf.controller.pending[name];
+	}
+
+	self.event = function(name, func){
+		events[name] = func;
+	}
+
+	self.html = function(name, outerHTML){
+		if(!sf.loader.DOMWasLoaded)
+			return sf(function(){
+				self.for(name, func);
+			});
+
+		if(self.registered[name] === undefined)
+			self.registered[name] = [false, false, 0, false];
+		self.registered[name][3] = $.parseElement(outerHTML)[0];
+	}
+
+	scope.triggerEvent = function(name, event, obj){
+		if(events[name] === undefined || events[name][event] === undefined)
+			return;
+
+		events[name][event](obj, event);
+	}
+
+	var tempDOM = document.createElement('div');
+	self.new = function(name, element){
+		var newElement = element === undefined;
+		if(element === undefined){
+			if(self.registered[name][3] === false){
+				console.error("HTML content for '"+name+"' was not defined");
+				return;
+			}
+			element = self.registered[name][3].cloneNode(true);
+		}
+
+		var newID = name+'@'+(self.registered[name][2]++);
+		element.setAttribute('sf-controller', newID);
+		element.sf$component = true;
+		element.sf$componentFrom = name;
+
+		if(self.available[name] === undefined)
+			self.available[name] = [];
+
+		self.available[name].push(newID);
+
+		var newObj = sf.model.root[newID] = {};
+		self.registered[name][0](newObj, sf.model);
+
+		if(self.registered[name][1])
+			self.registered[name][1](newObj, sf.model);
+
+		scope.triggerEvent(name, 'created', newObj);
+
+		if(newElement){
+			// Wrap to temporary vDOM
+			tempDOM.appendChild(element);
+			sf.model.init(element);
+			element = tempDOM.firstElementChild;
+			element.remove();
+
+			element.model = sf.model.root[newID];
+			element.destroy = function(){
+				if(this.parentElement === null)
+					internal.model.DOMNodeRemoved(this);
+				else this.remove();
+			}
+			return element;
+		}
+		return newID;
+	}
+};
 // Data save and HTML content binding
 sf.model = function(scope){
+	if(sf.component.registered[scope] !== undefined)
+		return root_(scope);
+
 	if(!sf.model.root[scope])
 		sf.model.root[scope] = {};
 
@@ -543,6 +636,7 @@ sf.model = function(scope){
 
 (function(){
 	var self = sf.model;
+	var scope = internal.model = {};
 	var bindingEnabled = false;
 	self.root = {};
 
@@ -631,7 +725,7 @@ sf.model = function(scope){
 		var list = currentElement.getAttribute('sf-bind-list');
 		if(!list) return i;
 
-		var ref = sf.model.root[sf.controller.modelName(currentElement)][list];
+		var ref = self.root[sf.controller.modelName(currentElement)][list];
 		if(!ref.$virtual) return i;
 
 		return i + ref.$virtual.DOMCursor - 1;
@@ -1989,15 +2083,34 @@ sf.model = function(scope){
 
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
-	function DOMNodeRemoved(element){
+	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element){
 		if(element.hasAttribute('sf-controller') !== false){
-			removeModelBinding(element.getAttribute('sf-controller'));
+			var modelName = element.getAttribute('sf-controller');
+
+			removeModelBinding(modelName);
+			if(element.sf$component !== undefined){
+				var modelFrom = element.sf$componentFrom;
+				var components = sf.component.available[modelFrom];
+				components.splice(components.indexOf(modelName), 1);
+				internal.component.triggerEvent(modelFrom, 'removed', self.root[modelName]);
+				delete self.root[modelName];
+			}
 			return;
 		}
 
 		var temp = $('[sf-controller]', element);
 		for (var i = 0; i < temp.length; i++) {
-			removeModelBinding(temp[i].getAttribute('sf-controller'));
+			var modelName = temp[i].getAttribute('sf-controller');
+
+			removeModelBinding(modelName);
+			if(element.sf$component !== undefined){
+				modelName = element.sf$componentFor;
+				var modelFrom = element.sf$componentFrom;
+				var components = sf.component.available[modelName];
+				components.splice(components.indexOf(modelName), 1);
+				internal.component.triggerEvent(modelFrom, 'removed', self.root[modelName]);
+				delete self.root[modelName];
+			}
 		}
 	}
 
@@ -2429,11 +2542,16 @@ sf.model = function(scope){
 			// Get reference for debugging
 			var current = processingElement = nodes[a];
 
-			var model = sf.controller.modelName(current);
+			var modelElement = sf.controller.modelElement(current);
+			var model = modelElement.getAttribute('sf-controller');
 			current.removeAttribute('sf-preprocess');
 
 			if(queued !== undefined)
 				current.classList.remove('sf-dom-queued');
+
+			// Check if it's component
+			if(self.root[model] === undefined && sf.component.registered[model])
+				model = sf.component.new(model, modelElement);
 
 			var modelRef = self.root[model] || root_(model);
 
@@ -2557,6 +2675,10 @@ sf.controller = new function(){
 	self.active = {};
 
 	self.for = function(name, func){
+		if(sf.component.registered[name]){
+			sf.component.registered[name][1] = func;
+			return;
+		}
 		self.pending[name] = func;
 	}
 
@@ -2588,12 +2710,15 @@ sf.controller = new function(){
 		else return sf.model.root[model][bindedList][bindedListIndex];
 	}
 
-	self.modelName = function(element){
-		var name = undefined;
+	self.modelElement = function(element){
 		if(element.hasAttribute('sf-controller'))
-			name = element.getAttribute('sf-controller');
-		else
-			name = $.parent(element, '[sf-controller]').getAttribute('sf-controller');
+			return element;
+
+		return $.parent(element, '[sf-controller]');
+	}
+
+	self.modelName = function(element){
+		var name = self.modelElement(element).getAttribute('sf-controller');
 
 		// Initialize it first
 		if(name !== undefined && !self.active[name])
@@ -2673,6 +2798,9 @@ sf.controller = new function(){
 				self.run(name, func);
 			});
 
+		if(sf.component.registered[name])
+			return console.error("'"+name+"' is registered as a component");
+
 		if(self.pending[name]){
 			if(!sf.model.root[name])
 				sf.model.root[name] = {};
@@ -2681,6 +2809,9 @@ sf.controller = new function(){
 			self.active[name] = true;
 			delete self.pending[name];
 		}
+
+		if(sf.model.root[name] === undefined)
+			sf.model.root[name] = {};
 
 		if(func)
 			func(sf.model.root[name], root_);
@@ -2705,11 +2836,19 @@ sf.controller = new function(){
 }
 
 var root_ = function(scope){
-	if(!sf.model.root[scope])
-		sf.model.root[scope] = {};
+	if(sf.component.registered[scope]){
+		var available = [];
+		var component = sf.component.available[scope];
+		if(component !== undefined){
+			for (var i = 0; i < component.length; i++) {
+				available.push(sf.model.root[component[i]]);
+			}
+		}
+		return available;
+	}
 
 	if(!sf.model.root[scope])
-		sf.controller.run(scope);
+		sf.model.root[scope] = {};
 
 	return sf.model.root[scope];
 }
@@ -3172,16 +3311,6 @@ sf.router = new function(){
 			after[name][index] = func;
 	}
 
-	var root_ = function(scope){
-		if(!sf.model.root[scope])
-			sf.model.root[scope] = {};
-
-		if(!sf.model.root[scope])
-			sf.controller.run(scope);
-		
-		return sf.model.root[scope];
-	}
-
 	// Running 'before' new page going to be displayed
 	var beforeEvent = function(name){
 		if(self.currentPage.indexOf(name) === -1)
@@ -3189,7 +3318,7 @@ sf.router = new function(){
 
 		if(before[name]){
 			for (var i = 0; i < before[name].length; i++) {
-				before[name][i](root_);
+				before[name][i](sf.model);
 			}
 		}
 	}
@@ -3201,7 +3330,7 @@ sf.router = new function(){
 
 		if(after[name]){
 			for (var i = 0; i < after[name].length; i++) {
-				after[name][i](root_);
+				after[name][i](sf.model);
 			}
 		}
 	}
@@ -3656,7 +3785,7 @@ sf.internal.virtual_scroll = new function(){
 				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
 			}
 
-			if(virtual.callback !== undefined){
+			if(virtual.callback !== undefined && list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null &&
 					scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight
 				){
@@ -3666,7 +3795,7 @@ sf.internal.virtual_scroll = new function(){
 					virtual.callback.hitCeiling(virtual.DOMCursor);
 				}
 			}
-			else if(callback_.ref[callback_.var]){
+			else if(callback_ && callback_.ref[callback_.var]){
 				virtual.callback = callback_.ref[callback_.var];
 				callback_ = null;
 			}
@@ -3790,7 +3919,7 @@ sf.internal.virtual_scroll = new function(){
 			refreshScrollBounding(cursor, bounding, list, parentNode);
 			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
 
-			if(virtual.callback !== undefined){
+			if(virtual.callback !== undefined && list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null){
 					virtual.callback.hitFloor(cursor);
 				}
@@ -3798,7 +3927,7 @@ sf.internal.virtual_scroll = new function(){
 					virtual.callback.hitCeiling(cursor);
 				}
 			}
-			else if(callback_.ref[callback_.var]){
+			else if(callback_ && callback_.ref[callback_.var]){
 				virtual.callback = callback_.ref[callback_.var];
 				callback_ = null;
 			}

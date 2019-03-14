@@ -455,6 +455,46 @@ Process the template queue and bind the element if it's bindable.
 sf.model.parsePreprocess(targetNode = false)
 ```
 
+## Components
+Components feature is used when you have many element for one model. Each component will have same structure but with different value.
+
+```js
+sf.component.for('model-name', function(self, root){
+  self.data = "text";
+});
+```
+
+After it's executed, it will be registered as an model component. And any `controller` will running in different scope on every new component.
+
+If you already inserted the component to the DOM, you can create attach new component model for it.
+
+```js
+sf.component.new('model.name', element);
+```
+
+When new component are created to the element, it will trigger event that was registered.
+
+```js
+sf.component.event('model.name', function(scope, event){
+  // scope.data === 'text'
+  if(event === 'created');
+  if(event === 'removed');
+});
+```
+
+But if you want to create the element in the vDOM, you need to define the HTML content for the component and call `sf.component.new`.
+
+```js
+sf.component.html('model.name', `<div>{{ data }}</div>`);
+var myElement = sf.component.new('model.name');
+document.body.appendChild(myElement);
+// myElement.model.data === 'text'
+```
+
+When you called `sf.model('model-name')`, it will return every component model scope as an array. But if you want to count how many component are created on the DOM, you can get the length of `sf.component.available`.
+
+The model will be automatically removed after the element was deleted. Or you could also call `myElement.destroy()`.
+
 ## Contribution
 If you want to help in ScarletsFrame please fork this project and edit on your repository, then make a pull request to here. Otherwise, you can help with donation via [patreon](https://www.patreon.com/stefansarya).
 
