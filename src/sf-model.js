@@ -1281,27 +1281,23 @@ sf.model = function(scope){
 		});
 
 		var virtualChilds = null;
-		if(list.$virtual){
+		if(list.$virtual)
 			virtualChilds = list.$virtual.dom.children;
-			var floorBound = list.$virtual.dCursor.floor;
-		}
 		hiddenProperty(list, 'getElement', function(index){
 			if(virtualChilds !== null){
 				var ret = undefined;
 				if(index < list.$virtual.DOMCursor)
-					ret = virtualChilds[index];
+					return virtualChilds[index];
 				else {
 					index -= list.$virtual.DOMCursor;
 					var childElement = parentNode.childElementCount - 2;
 
-					if(index <= childElement)
-						ret = parentChilds[index + 1];
+					if(index < childElement)
+						return parentChilds[index + 1];
 					else
-						ret = virtualChilds[index - childElement + list.$virtual.DOMCursor];
+						return virtualChilds[index - childElement + list.$virtual.DOMCursor];
 				}
 
-				if(ret !== floorBound)
-					return ret;
 				return undefined;
 			}
 

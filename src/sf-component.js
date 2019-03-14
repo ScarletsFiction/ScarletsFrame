@@ -84,6 +84,8 @@ sf.component = new function(){
 			}
 			return element;
 		}
+
+		element.model = sf.model.root[newID];
 		return newID;
 	}
 };
