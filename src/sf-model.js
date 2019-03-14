@@ -1,5 +1,8 @@
 // Data save and HTML content binding
 sf.model = function(scope){
+	if(sf.component.registered[scope] !== undefined)
+		return root_(scope);
+
 	if(!sf.model.root[scope])
 		sf.model.root[scope] = {};
 
@@ -11,6 +14,7 @@ sf.model = function(scope){
 
 (function(){
 	var self = sf.model;
+	var scope = internal.model = {};
 	var bindingEnabled = false;
 	self.root = {};
 
@@ -99,7 +103,7 @@ sf.model = function(scope){
 		var list = currentElement.getAttribute('sf-bind-list');
 		if(!list) return i;
 
-		var ref = sf.model.root[sf.controller.modelName(currentElement)][list];
+		var ref = self.root[sf.controller.modelName(currentElement)][list];
 		if(!ref.$virtual) return i;
 
 		return i + ref.$virtual.DOMCursor - 1;
@@ -1457,15 +1461,34 @@ sf.model = function(scope){
 
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
-	function DOMNodeRemoved(element){
+	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element){
 		if(element.hasAttribute('sf-controller') !== false){
-			removeModelBinding(element.getAttribute('sf-controller'));
+			var modelName = element.getAttribute('sf-controller');
+
+			removeModelBinding(modelName);
+			if(element.sf$component !== undefined){
+				var modelFrom = element.sf$componentFrom;
+				var components = sf.component.available[modelFrom];
+				components.splice(components.indexOf(modelName), 1);
+				internal.component.triggerEvent(modelFrom, 'removed', self.root[modelName]);
+				delete self.root[modelName];
+			}
 			return;
 		}
 
 		var temp = $('[sf-controller]', element);
 		for (var i = 0; i < temp.length; i++) {
-			removeModelBinding(temp[i].getAttribute('sf-controller'));
+			var modelName = temp[i].getAttribute('sf-controller');
+
+			removeModelBinding(modelName);
+			if(element.sf$component !== undefined){
+				modelName = element.sf$componentFor;
+				var modelFrom = element.sf$componentFrom;
+				var components = sf.component.available[modelName];
+				components.splice(components.indexOf(modelName), 1);
+				internal.component.triggerEvent(modelFrom, 'removed', self.root[modelName]);
+				delete self.root[modelName];
+			}
 		}
 	}
 
@@ -1897,11 +1920,16 @@ sf.model = function(scope){
 			// Get reference for debugging
 			var current = processingElement = nodes[a];
 
-			var model = sf.controller.modelName(current);
+			var modelElement = sf.controller.modelElement(current);
+			var model = modelElement.getAttribute('sf-controller');
 			current.removeAttribute('sf-preprocess');
 
 			if(queued !== undefined)
 				current.classList.remove('sf-dom-queued');
+
+			// Check if it's component
+			if(self.root[model] === undefined && sf.component.registered[model])
+				model = sf.component.new(model, modelElement);
 
 			var modelRef = self.root[model] || root_(model);
 

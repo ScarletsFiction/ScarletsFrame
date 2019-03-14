@@ -5,6 +5,10 @@ sf.controller = new function(){
 	self.active = {};
 
 	self.for = function(name, func){
+		if(sf.component.registered[name]){
+			sf.component.registered[name][1] = func;
+			return;
+		}
 		self.pending[name] = func;
 	}
 
@@ -36,12 +40,15 @@ sf.controller = new function(){
 		else return sf.model.root[model][bindedList][bindedListIndex];
 	}
 
-	self.modelName = function(element){
-		var name = undefined;
+	self.modelElement = function(element){
 		if(element.hasAttribute('sf-controller'))
-			name = element.getAttribute('sf-controller');
-		else
-			name = $.parent(element, '[sf-controller]').getAttribute('sf-controller');
+			return element;
+
+		return $.parent(element, '[sf-controller]');
+	}
+
+	self.modelName = function(element){
+		var name = self.modelElement(element).getAttribute('sf-controller');
 
 		// Initialize it first
 		if(name !== undefined && !self.active[name])
@@ -121,6 +128,9 @@ sf.controller = new function(){
 				self.run(name, func);
 			});
 
+		if(sf.component.registered[name])
+			return console.error("'"+name+"' is registered as a component");
+
 		if(self.pending[name]){
 			if(!sf.model.root[name])
 				sf.model.root[name] = {};
@@ -129,6 +139,9 @@ sf.controller = new function(){
 			self.active[name] = true;
 			delete self.pending[name];
 		}
+
+		if(sf.model.root[name] === undefined)
+			sf.model.root[name] = {};
 
 		if(func)
 			func(sf.model.root[name], root_);
@@ -153,11 +166,19 @@ sf.controller = new function(){
 }
 
 var root_ = function(scope){
-	if(!sf.model.root[scope])
-		sf.model.root[scope] = {};
+	if(sf.component.registered[scope]){
+		var available = [];
+		var component = sf.component.available[scope];
+		if(component !== undefined){
+			for (var i = 0; i < component.length; i++) {
+				available.push(sf.model.root[component[i]]);
+			}
+		}
+		return available;
+	}
 
 	if(!sf.model.root[scope])
-		sf.controller.run(scope);
+		sf.model.root[scope] = {};
 
 	return sf.model.root[scope];
 }

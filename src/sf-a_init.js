@@ -5,6 +5,7 @@
 if(typeof document === undefined)
 	document = window.document;
 // ===== Module Init =====
+var internal = {};
 
 var sf = function(){
 	if(arguments[0].constructor === Function){

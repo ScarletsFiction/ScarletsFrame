@@ -88,16 +88,6 @@ sf.router = new function(){
 			after[name][index] = func;
 	}
 
-	var root_ = function(scope){
-		if(!sf.model.root[scope])
-			sf.model.root[scope] = {};
-
-		if(!sf.model.root[scope])
-			sf.controller.run(scope);
-		
-		return sf.model.root[scope];
-	}
-
 	// Running 'before' new page going to be displayed
 	var beforeEvent = function(name){
 		if(self.currentPage.indexOf(name) === -1)
@@ -105,7 +95,7 @@ sf.router = new function(){
 
 		if(before[name]){
 			for (var i = 0; i < before[name].length; i++) {
-				before[name][i](root_);
+				before[name][i](sf.model);
 			}
 		}
 	}
@@ -117,7 +107,7 @@ sf.router = new function(){
 
 		if(after[name]){
 			for (var i = 0; i < after[name].length; i++) {
-				after[name][i](root_);
+				after[name][i](sf.model);
 			}
 		}
 	}

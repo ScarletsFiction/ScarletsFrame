@@ -21,6 +21,7 @@ gulp.task('js', function(){
       'sf-polyfill.js',
       'sf-dom.js',
       'sf-loader.js',
+      'sf-component.js',
       'sf-model.js',
       '**/*.js',
       'sf-z_end.js'
