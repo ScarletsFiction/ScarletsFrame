@@ -558,7 +558,7 @@ sf.component = new function(){
 	self.html = function(name, outerHTML){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
-				self.for(name, func);
+				self.html(name, outerHTML);
 			});
 
 		if(self.registered[name] === undefined)

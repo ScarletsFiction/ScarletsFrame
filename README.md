@@ -10,7 +10,7 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 # Example
 - [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
 - [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
-- [Simple Component](https://jsbin.com/ruzazotubu/edit?js,console,output)
+- [Simple Component](https://jsbin.com/guwevis/edit?html,js,console,output)
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 
