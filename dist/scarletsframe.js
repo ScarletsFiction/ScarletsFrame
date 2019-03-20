@@ -537,22 +537,27 @@ sf.component = new function(){
 	self.registered = {};
 	self.available = {};
 
+	var bases = {};
 	var events = {};
 
-	self.for = function(name, func){
+	self.for = function(name, func, extend){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
 				self.for(name, func);
 			});
 
 		if(self.registered[name] === undefined)
-			self.registered[name] = [func, sf.controller.pending[name], 0, false];
+			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
 		self.registered[name][0] = func;
 		delete sf.controller.pending[name];
 	}
 
 	self.event = function(name, func){
 		events[name] = func;
+	}
+
+	self.base = function(name, func){
+		bases[name] = func;
 	}
 
 	self.html = function(name, outerHTML){
@@ -597,6 +602,22 @@ sf.component = new function(){
 		var newObj = sf.model.root[newID] = {};
 		self.registered[name][0](newObj, sf.model);
 
+		var extend = self.registered[name][4];
+		if(extend !== undefined){
+			if(extend.constructor === Array){
+				for (var i = 0; i < extend.length; i++) {
+					if(bases[extend[i]] === undefined)
+						return console.error("'"+extend[i]+"' base is not found");
+					bases[extend[i]](newObj, sf.model);
+				}
+			}
+			else{
+				if(bases[extend] === undefined)
+					return console.error("'"+extend+"' base is not found");
+				bases[extend](newObj, sf.model);
+			}
+		}
+
 		if(self.registered[name][1])
 			self.registered[name][1](newObj, sf.model);
 
@@ -617,6 +638,8 @@ sf.component = new function(){
 			}
 			return element;
 		}
+
+		element.model = sf.model.root[newID];
 		return newID;
 	}
 };
@@ -1903,27 +1926,23 @@ sf.model = function(scope){
 		});
 
 		var virtualChilds = null;
-		if(list.$virtual){
+		if(list.$virtual)
 			virtualChilds = list.$virtual.dom.children;
-			var floorBound = list.$virtual.dCursor.floor;
-		}
 		hiddenProperty(list, 'getElement', function(index){
 			if(virtualChilds !== null){
 				var ret = undefined;
 				if(index < list.$virtual.DOMCursor)
-					ret = virtualChilds[index];
+					return virtualChilds[index];
 				else {
 					index -= list.$virtual.DOMCursor;
 					var childElement = parentNode.childElementCount - 2;
 
-					if(index <= childElement)
-						ret = parentChilds[index + 1];
+					if(index < childElement)
+						return parentChilds[index + 1];
 					else
-						ret = virtualChilds[index - childElement + list.$virtual.DOMCursor];
+						return virtualChilds[index - childElement + list.$virtual.DOMCursor];
 				}
 
-				if(ret !== floorBound)
-					return ret;
 				return undefined;
 			}
 
@@ -2036,7 +2055,8 @@ sf.model = function(scope){
 		}, 50);
 
 		if(!targetNode) targetNode = document.body;
-		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
+
+		self.parsePreprocess(queued || self.queuePreprocess(targetNode).reverse(), queued);
 		bindInput(targetNode);
 
 		// Find element for array binding
@@ -2543,6 +2563,9 @@ sf.model = function(scope){
 			var current = processingElement = nodes[a];
 
 			var modelElement = sf.controller.modelElement(current);
+			if(modelElement === null)
+				continue;
+
 			var model = modelElement.getAttribute('sf-controller');
 			current.removeAttribute('sf-preprocess');
 
@@ -2711,7 +2734,7 @@ sf.controller = new function(){
 	}
 
 	self.modelElement = function(element){
-		if(element.hasAttribute('sf-controller'))
+		if(element.nodeType === 1 && element.hasAttribute('sf-controller'))
 			return element;
 
 		return $.parent(element, '[sf-controller]');
