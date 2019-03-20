@@ -4,22 +4,27 @@ sf.component = new function(){
 	self.registered = {};
 	self.available = {};
 
+	var bases = {};
 	var events = {};
 
-	self.for = function(name, func){
+	self.for = function(name, func, extend){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
 				self.for(name, func);
 			});
 
 		if(self.registered[name] === undefined)
-			self.registered[name] = [func, sf.controller.pending[name], 0, false];
+			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
 		self.registered[name][0] = func;
 		delete sf.controller.pending[name];
 	}
 
 	self.event = function(name, func){
 		events[name] = func;
+	}
+
+	self.base = function(name, func){
+		bases[name] = func;
 	}
 
 	self.html = function(name, outerHTML){
@@ -63,6 +68,22 @@ sf.component = new function(){
 
 		var newObj = sf.model.root[newID] = {};
 		self.registered[name][0](newObj, sf.model);
+
+		var extend = self.registered[name][4];
+		if(extend !== undefined){
+			if(extend.constructor === Array){
+				for (var i = 0; i < extend.length; i++) {
+					if(bases[extend[i]] === undefined)
+						return console.error("'"+extend[i]+"' base is not found");
+					bases[extend[i]](newObj, sf.model);
+				}
+			}
+			else{
+				if(bases[extend] === undefined)
+					return console.error("'"+extend+"' base is not found");
+				bases[extend](newObj, sf.model);
+			}
+		}
 
 		if(self.registered[name][1])
 			self.registered[name][1](newObj, sf.model);
