@@ -41,7 +41,7 @@ sf.controller = new function(){
 	}
 
 	self.modelElement = function(element){
-		if(element.hasAttribute('sf-controller'))
+		if(element.nodeType === 1 && element.hasAttribute('sf-controller'))
 			return element;
 
 		return $.parent(element, '[sf-controller]');

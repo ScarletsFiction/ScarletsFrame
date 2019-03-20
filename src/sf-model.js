@@ -1410,7 +1410,8 @@ sf.model = function(scope){
 		}, 50);
 
 		if(!targetNode) targetNode = document.body;
-		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
+
+		self.parsePreprocess(queued || self.queuePreprocess(targetNode).reverse(), queued);
 		bindInput(targetNode);
 
 		// Find element for array binding
@@ -1917,6 +1918,9 @@ sf.model = function(scope){
 			var current = processingElement = nodes[a];
 
 			var modelElement = sf.controller.modelElement(current);
+			if(modelElement === null)
+				continue;
+
 			var model = modelElement.getAttribute('sf-controller');
 			current.removeAttribute('sf-preprocess');
 
