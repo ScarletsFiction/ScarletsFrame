@@ -269,6 +269,12 @@ var $ = sf.dom; // Shortcut
 		return result;
 	}
 
+	self.escapeText = function(text){
+		var tempDOM = emptyDOM.div;
+		tempDOM.textContent = text;
+		return tempDOM.innerHTML;
+	}
+
 	self.remove = function(elements){
 		if(elements.remove !== undefined)
 			return elements.remove();
@@ -1080,8 +1086,16 @@ sf.model = function(scope){
 				else if(parsed[cRef.ref.direct]){
 					var value = parsed[cRef.ref.direct].data;
 					if(cRef.textContent.textContent === value) continue;
-					cRef.textContent.textContent = value;
 
+					var ref_ = cRef.textContent;
+					// Remove old element if exist
+					if(ref_.sf$haveChilds === true){
+						while(ref_.previousSibling && ref_.previousSibling.sf$childRoot === ref_){
+							ref_.previousSibling.remove();
+						}
+					}
+
+					ref_.textContent = value;
 					haveChanges = true;
 				}
 			}
@@ -1887,6 +1901,42 @@ sf.model = function(scope){
 			// }
 		}
 
+		hiddenProperty(list, '$replace', function(index, key, needle, func){
+			var elRef = list.getElement(index).sf$elementReferences;
+			var process = template.modelReference[key];
+			if(process === undefined){
+				console.error("Can't found binding for '"+key+"'");
+				return;
+			}
+
+			for (var i = 0; i < elRef.length; i++) {
+				if(elRef[i].textContent === undefined || elRef[i].ref.direct === undefined)
+					continue;
+
+				if(process.indexOf(elRef[i].ref.direct) !== -1){
+					var ref = elRef[i].textContent;
+					var content = $.escapeText(list[index][key]).replace(needle, func);
+
+					// Skip if nothing was changed
+					if(list[index][key] === content) continue;
+					ref.textContent = ''; // Let this empty for later referencing
+					ref.sf$haveChilds = true;
+					content = $.parseElement(content, true);
+
+					// Remove old element if exist
+					while(ref.previousSibling && ref.previousSibling.sf$childRoot === ref){
+						ref.previousSibling.remove();
+					}
+
+					var parentNode_ = ref.parentNode;
+					for (var i = 0; i < content.length; i++) {
+						content[i].sf$childRoot = ref;
+						parentNode_.insertBefore(content[i], ref);
+					}
+				}
+			}
+		});
+
 		hiddenProperty(list, 'refresh', function(index, length, property){
 			if(index === undefined || index.constructor === String){
 				property = index;
@@ -2056,7 +2106,7 @@ sf.model = function(scope){
 
 		if(!targetNode) targetNode = document.body;
 
-		self.parsePreprocess(queued || self.queuePreprocess(targetNode).reverse(), queued);
+		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
 		bindInput(targetNode);
 
 		// Find element for array binding
