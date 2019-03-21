@@ -213,6 +213,12 @@ var $ = sf.dom; // Shortcut
 		return result;
 	}
 
+	self.escapeText = function(text){
+		var tempDOM = emptyDOM.div;
+		tempDOM.textContent = text;
+		return tempDOM.innerHTML;
+	}
+
 	self.remove = function(elements){
 		if(elements.remove !== undefined)
 			return elements.remove();
