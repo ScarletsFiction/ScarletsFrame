@@ -1133,16 +1133,9 @@ sf.model = function(scope){
 	var dataParser = function(html, _model_, mask, scope, runEval, preParsedReference){
 		var _modelScope = self.root[scope];
 		if(!runEval) runEval = '';
-		
-		// Unmatch any function
-		var variableList = self.modelKeys(_modelScope).join('|');
-		for(var i = variableList.length - 1; i >= 0; i--){
-			if(_modelScope[variableList[i]] instanceof Function)
-				variableList.splice(i, 1);
-		}
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp(sf.regex.strictVar+'('+variableList+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')'+sf.regex.avoidQuotes+'\\b', 'g');
 
 		if(mask)
 			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
@@ -1169,6 +1162,7 @@ sf.model = function(scope){
 				return '_modelScope.'+matched;
 			});
 
+			temp = temp.split('_model_._modelScope.').join('_model_.');
 			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
 
 			// Unescape HTML
@@ -1198,7 +1192,7 @@ sf.model = function(scope){
 
 		if(runEval === '#noEval'){
 			// Clear memory before return
-			preParsed = variableList = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
+			preParsed = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
 			setTimeout(function(){prepared = null}, 1);
 		}
 		return prepared;
@@ -1278,6 +1272,8 @@ sf.model = function(scope){
 			temp = temp.replace(scopeMask, function(full, matched){
 				return '_modelScope.'+matched;
 			});
+
+			temp = temp.split('_model_._modelScope.').join('_model_.');
 			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
 
 			// Unescape HTML
@@ -1566,7 +1562,7 @@ sf.model = function(scope){
 					if(callback !== undefined && callback.remove){
 						// Auto remove if return false
 						if(!callback.remove(exist[index], startRemove))
-							setTimeout(startRemove, 800);
+							startRemove();
 					}
 
 					// Auto remove if no callback
@@ -2330,7 +2326,9 @@ sf.model = function(scope){
 		function findModelProperty(){
 			if(mask === null){
 				// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
-				var extract = RegExp('('+self.modelKeys(self.root[name]).sort(function(a, b){return b.length - a.length}).join('|')+')', 'g');
+				var extract = RegExp('('+self.modelKeys(self.root[name]).sort(function(a, b){
+					return b.length - a.length
+				}).join('|')+')', 'g');
 			}
 			else
 				var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
@@ -2556,8 +2554,6 @@ sf.model = function(scope){
 
 				for (var a = 0; a < attrs.length; a++) {
 					if(attrs[a].value.indexOf('{{') !== -1){
-						if(extracting === undefined)
-							currentNode.setAttribute('sf-preprocess', 'attronly');
 						temp.push(currentNode);
 						break;
 					}
@@ -2588,13 +2584,6 @@ sf.model = function(scope){
 
 				if(currentNode.nodeValue.indexOf('{{') !== -1){
 					if(extracting === undefined){
-						currentNode.parentNode.setAttribute('sf-preprocess', '');
-
-						// Reset Siblings
-						for (var a = 0; a < temp.length; a++) {
-							temp[a].removeAttribute('sf-preprocess');
-						}
-
 						temp.push(currentNode.parentNode);
 						break;
 					}
@@ -2617,7 +2606,6 @@ sf.model = function(scope){
 				continue;
 
 			var model = modelElement.getAttribute('sf-controller');
-			current.removeAttribute('sf-preprocess');
 
 			if(queued !== undefined)
 				current.classList.remove('sf-dom-queued');
