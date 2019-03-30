@@ -193,7 +193,7 @@ sf(function(){
 // Simulate model binding on dynamic page load
 sf.router.before('test/page2', function(root){
    var self = root('model-binding');
-   self.inputBinding = 'Two way binding';
+   self.inputBinding1 = 'Two way binding';
    self.inputBinding2 = 'One way binding';
 });
 
