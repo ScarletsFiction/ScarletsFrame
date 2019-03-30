@@ -358,6 +358,9 @@ sf.model.for('music.feedback', function(self, root){
           sf.dom.animateCSS(elem, 'bounceOutLeft', function(){
              remove(); // Remove the element
           });
+
+          // Avoid element remove before animation finished
+          return true;
        },
        update:function(elem){},
        create:function(elem){}
@@ -444,10 +447,42 @@ Every element that built from a template will have one-way data binding. Even it
 <div sf-bind-ignore>{{ myStatic }}</div>
 ```
 
-To enable two-way data binding with input element, you need to defined the variable in `sf-bound` attribute.
+To enable two-way data binding with input element, you need to set model property in `sf-bound` attribute. When you need to obtain multiple value for `checkbox` or `select`, your model property should be an **Array** type. But if you like to check if the checkbox is `checked` or not, you need to set the model property as **Boolean** type. Using **String** data type will only return the last selected data.  
+
+```html
+<!-- data on the model will be updated if input detected and vice versa -->
+<input sf-bound="myInput" type="text" />
+<textarea sf-bound="myText" type="text"></textarea>
+<input sf-bound="myFiles" type="file" />
+<input sf-bound="myRadio" type="radio" value="radio1" />
+<input sf-bound="myRadio" type="radio" value="radio2" />
+
+<!-- You can also set property in `name` attribute -->
+<input name="myCheckbox" type="checkbox" value="check1" sf-bound />
+<input name="myCheckbox" type="checkbox" value="check2" sf-bound />
+
+<select sf-bound="selectInput">
+   <option value="sel1">Select 1</option>
+   <option value="sel2">Select 2</option>
+   <option value="sel3">Select 3</option>
+</select>
+
+<select sf-bound="selectInput" multiple>
+   <option value="{{ x.val }}" sf-repeat-this="x in selectData">
+    {{ x.text }}
+   </option>
+</select>
+```
+
+To enable one-way data binding with input element, you need to define model property in `sf-bind` attribute.
 ```html
 <!-- 'myInput' on the model will be updated if input detected -->
-<input sf-bound="myInput" type="text" />
+<!-- (input -> model) -->
+<input sf-bind="myInput" type="text" />
+
+<!-- input will be updated if 'myInput' on the model was changed -->
+<!-- (model -> input) -->
+<input value="{{myInput}}" type="text" />
 ```
 
 ```js

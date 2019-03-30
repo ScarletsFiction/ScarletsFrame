@@ -2058,37 +2058,183 @@ sf.model = function(scope){
 		}
 	}
 
-	var inputBoundFunction = function(e){
-		self.root[e.target['sf-model']][e.target['sf-bounded']] = e.target.value;
-	};
+	var inputBoundRunning = false;
+	var inputTextBound = function(e){
+		inputBoundRunning = true;
+		var ref = e.target;
+		ref['sf-model'][ref['sf-bounded']] = ref.value;
+	}
+	var inputFilesBound = function(e){
+		var ref = e.target;
+		ref['sf-model'][ref['sf-bounded']] = ref.files;
+	}
+
+	var inputCheckBoxBound = function(e){
+		inputBoundRunning = true;
+		var ref = e.target;
+		var model = ref['sf-model'];
+		var constructor = model[ref['sf-bounded']].constructor;
+
+		if(constructor === Array){
+			var i = model[ref['sf-bounded']].indexOf(ref.value);
+
+			if(i === -1 && ref.checked === true)
+				model[ref['sf-bounded']].push(ref.value);
+			else if(i !== -1 && ref.checked === false)
+				model[ref['sf-bounded']].splice(i, 1);
+		}
+		else if(constructor === Boolean)
+			model[ref['sf-bounded']] = ref.checked;
+		else model[ref['sf-bounded']] = ref.value;
+	}
+
+
+	var inputSelectBound = function(e){
+		inputBoundRunning = true;
+		var ref = e.target;
+		if(ref.multiple === true){
+			var temp = ref.selectedOptions;
+			var value = [];
+			for (var i = 0; i < temp.length; i++) {
+				value.push(temp[i].value);
+			}
+		}
+		else value = ref.selectedOptions[0].value;
+
+		ref['sf-model'][ref['sf-bounded']] = value;
+		return;
+	}
+
+	var assignElementData = {
+		select:function(model, property, element){
+			var list = element.options;
+			var arrayValue = model[property].constructor === Array ? model[property] : false;
+			for (var i = 0, n = list.length; i < n; i++) {
+				if(arrayValue === false)
+					list[i].selected = list[i].value == model[property];
+				else
+					list[i].selected = arrayValue.indexOf(list[i].value) !== -1;
+			}
+		},
+		checkbox:function(model, property, element){
+			if(model[property].constructor === Array)
+				element.checked = model[property].indexOf(element.value) !== -1;
+			else if(model[property].constructor === Boolean)
+				element.checked = model[property];
+			else element.checked = model[property] == element.value;
+		}
+	}
+
+	var inputBoundRun = function(model, property, elements){
+		if(inputBoundRunning === true)
+			return; // Avoid multiple assigment
+
+		for (var i = 0; i < elements.length; i++) {
+			if(elements.type === 1) // text
+				elements[i].value = model[property];
+			else if(elements.type === 2) // select options
+				assignElementData.select(model, property, elements[i]);
+			else if(elements.type === 3) // radio
+				elements[i].checked = model[property] == elements[i].value;
+			else if(elements.type === 4) // checkbox
+				assignElementData.checkbox(model, property, elements[i]);
+		}
+
+	}
+
+	var elementBoundChanges = function(model, property, element, oneWay){
+		// Enable multiple element binding
+		if(model.sf$bindedKey === undefined)
+			initBindingInformation(model);
+
+		var type = 0;
+
+		// Bound value change
+		if(element.tagName === 'TEXTAREA'){
+			$.on(element, 'keyup', inputTextBound);
+			element.value = model[property];
+			type = 1;
+		}
+
+		else if(element.selectedOptions !== undefined){
+			$.on(element, 'input', inputSelectBound);
+			type = 2;
+
+			assignElementData.select(model, property, element);
+		}
+
+		else{
+			var type = element.type.toLowerCase();
+			if(type === 'radio'){
+				$.on(element, 'input', inputTextBound);
+				type = 3;
+
+				element.checked = model[property] == element.value;
+			}
+			else if(type === 'checkbox'){
+				$.on(element, 'input', inputCheckBoxBound);
+				type = 4;
+
+				assignElementData.checkbox(model, property, element);
+			}
+
+			else if(type === 'file'){
+				$.on(element, 'change', inputFilesBound);
+				return;
+			}
+
+			else{
+				$.on(element, 'keyup', inputTextBound);
+				element.value = model[property];
+				type = 1;
+			}
+		}
+
+		if(oneWay === true) return;
+		twoWayBinding(model, property, inputBoundRun, element, type);
+	}
 
 	var bindInput = function(targetNode){
-		var temp = $('input[sf-bound]', targetNode);
+		var temp = $('input[sf-bound], textarea[sf-bound], select[sf-bound], input[sf-bind], textarea[sf-bind], select[sf-bind]', targetNode);
 
 		for (var i = 0; i < temp.length; i++) {
 			var element = temp[i];
 			var model = sf.controller.modelName(element);
 			if(!model) return;
+			var modelScope = self.root[model];
 
-			var whichVar = element.getAttribute('sf-bound');
+			var oneWay = false;
+			var propertyName = element.getAttribute('sf-bound');
+			if(propertyName === null){
+				propertyName = element.getAttribute('sf-bind');
+				oneWay = true;
+			}
+			if(propertyName === "")
+				propertyName = element.getAttribute('name');
+
+			if(propertyName === null){
+				console.error("Property key to be bound wasn't be found", element);
+				continue;
+			}
 
 			// Get reference
-			if(typeof self.root[model][whichVar] === undefined){
-				console.error('Cannot get reference for self.root["' + model + '"]["' + whichVar+'"]');
+			if(modelScope[propertyName] === undefined){
+				console.error('Can\'t get property "'+propertyName+'" on model "' + model + '"');
 				return;
 			}
 
-			element['sf-bounded'] = whichVar;
-			element['sf-model'] = model;
-			element.setAttribute('sf-bounded', '');
-			element.removeAttribute('sf-bound');
+			element['sf-bounded'] = propertyName;
+			element['sf-model'] = modelScope;
+			if(oneWay === false){
+				element.setAttribute('sf-bounded', '');
+				element.removeAttribute('sf-bound');
+			}
+			else{
+				element.setAttribute('sf-binded', '');
+				element.removeAttribute('sf-bind');
+			}
 
-			// Bound value change
-			if(element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')
-				$.on(element, 'keyup', inputBoundFunction);
-
-			else
-				$.on(element, 'change', inputBoundFunction);
+			elementBoundChanges(modelScope, propertyName, element, oneWay);
 		}
 	}
 
@@ -2250,6 +2396,63 @@ sf.model = function(scope){
 		}
 	}
 
+	function twoWayBinding(model, propertyName, callback, elementBind, type){
+		// Enable multiple element binding
+		if(model.sf$bindedKey === undefined)
+			initBindingInformation(model);
+
+		if(model.sf$bindedKey[propertyName] !== undefined){
+			var ref = model.sf$bindedKey[propertyName];
+			if(ref.indexOf(callback) === -1)
+				ref.push(callback);
+
+			if(elementBind !== undefined){
+				if(ref.input === undefined){
+					ref.input = [elementBind];
+					ref.input.type = type;
+				}
+				else ref.input.push(elementBind);
+			}
+			return;
+		}
+
+		model.sf$bindedKey[propertyName] = [callback];
+
+		if(elementBind !== undefined){
+			model.sf$bindedKey[propertyName].input = [elementBind];
+			model.sf$bindedKey[propertyName].input.type = type;
+		}
+
+		// Proxy property
+		if(Object.getOwnPropertyDescriptor(model, propertyName).set !== undefined)
+			return;
+
+		var objValue = model[propertyName]; // Object value
+		Object.defineProperty(model, propertyName, {
+			enumerable: true,
+			configurable: true,
+			get:function(){
+				return objValue;
+			},
+			set:function(val){
+				objValue = val;
+
+				var ref = model.sf$bindedKey[propertyName];
+				for (var i = 0; i < ref.length; i++) {
+					if(inputBoundRun === ref[i]){
+						if(inputBoundRunning !== true) // Avoid multiple assigment
+							ref[i](model, propertyName, ref.input);
+						continue;
+					}
+					ref[i]();
+				}
+
+				inputBoundRunning = false;
+				return objValue;
+			}
+		});
+	}
+
 	var dcBracket = /{{[^#][\s\S]*?}}/;
 	self.bindElement = function(element){
 		var modelName = sf.controller.modelName(element);
@@ -2261,27 +2464,6 @@ sf.model = function(scope){
 		delete data.addresses;
 		element.parentNode.replaceChild(data.html, element);
 		element = data.html;
-
-		function proxyProperty(propertyName){
-			var objValue = model[propertyName]; // Object value
-			Object.defineProperty(model, propertyName, {
-				enumerable: true,
-				configurable: true,
-				get:function(){
-					return objValue;
-				},
-				set:function(val){
-					objValue = val;
-
-					var ref = model.sf$bindedKey[propertyName];
-					for (var i = 0; i < ref.length; i++) {
-						ref[i]();
-					}
-
-					return objValue;
-				}
-			});
-		}
 
 		var onChanges = function(){
 			if(syntheticTemplate(element, data, undefined, model) === false)
@@ -2295,18 +2477,7 @@ sf.model = function(scope){
 			if(model[propertyName] === undefined)
 				model[propertyName] = '';
 
-			// Enable multiple element binding
-			if(model.sf$bindedKey === undefined)
-				initBindingInformation(model);
-
-			if(model.sf$bindedKey[propertyName] !== undefined){
-				if(model.sf$bindedKey[propertyName].indexOf(onChanges) === -1)
-					model.sf$bindedKey[propertyName].push(onChanges);
-				continue;
-			}
-
-			proxyProperty(propertyName);
-			model.sf$bindedKey[propertyName] = [onChanges];
+			twoWayBinding(model, propertyName, onChanges);
 		}
 	}
 

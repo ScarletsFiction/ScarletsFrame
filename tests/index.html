@@ -71,11 +71,11 @@
       <div sf-controller="model-binding">
 
          <b>Change variable on keyboard input</b><br>
-         <input type="text" sf-bound="inputBinding" value="{{ inputBinding }}"><br>
-         <span id="test">Var Content: {{ inputBinding }}</span><br><br>
+         <input type="text" sf-bound="inputBinding1"><br>
+         <span id="test">Var Content: {{ inputBinding1 }}</span><br><br>
 
          <b>Another one</b><br>
-         <input type="text" sf-bound="inputBinding2"><br>
+         <textarea type="text" sf-bind="inputBinding2"></textarea><br>
          <span>Var Content: {{ inputBinding2 }}</span><br><br>
 
          <input type="checkbox" value="check1" sf-bound="inputBinding3">Check 1
@@ -92,6 +92,7 @@
             <option value="sel2">Select 2</option>
             <option value="sel3">Select 3</option>
          </select><br><br>
+         <input type="file" sf-bound="inputBinding7"><br>
 
          <b>Conditional HTML</b><br>
          <div>

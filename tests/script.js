@@ -134,8 +134,13 @@ sf(function(){
 // ===== Model Binding =====
 
 sf.model.for('model-binding', function(self, root){
-   self.inputBinding = '';
+   self.inputBinding1 = '';
    self.inputBinding2 = '';
+   self.inputBinding3 = false;
+   self.inputBinding4 = '';
+   self.inputBinding5 = [];
+   self.inputBinding6 = '';
+   self.inputBinding7 = '';
    self.showHTML = false;
    self.prefix = 'i -> ';
    self.stuff = '(text from the model)';
@@ -145,6 +150,24 @@ sf.controller.for('model-binding', function(self, root){
    var list = root('virtual-scroll');
    if(list.list1 === undefined)
       console.error("Can't get other model scope variable");
+
+   setTimeout(function(){
+      self.inputBinding3 = true;
+      self.inputBinding4 = 'radio1';
+      self.inputBinding5 = self.inputBinding6 = 'sel1';
+   }, 3000);
+
+   setTimeout(function(){
+      self.inputBinding3 = 'check1';
+      self.inputBinding4 = 'radio2';
+      self.inputBinding5 = self.inputBinding6 = 'sel3';
+   }, 6000);
+
+   setTimeout(function(){
+      self.inputBinding3 = ['check2'];
+      self.inputBinding4 = 'radio1';
+      self.inputBinding5 = ['sel1', 'sel2'];
+   }, 8000);
 
    self.addition = function(a, b){
       return a + b;
