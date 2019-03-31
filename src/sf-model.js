@@ -1406,20 +1406,17 @@ sf.model = function(scope){
 	var callInputListener = function(model, property, value){
 		var callback = model['on$'+property];
 		var v2m = model['v2m$'+property];
-		var newValue = false;
+		var newValue = undefined;
 		if(callback !== undefined || v2m !== undefined){
-			var assigner = Object.getOwnPropertyDescriptor(model, property);
-			assigner = assigner.get !== undefined ? assigner.get(true) : undefined;
-
 			var old = model[property];
 			if(old !== null && old !== undefined && old.constructor === Array)
 				old = old.slice(0);
 
 			if(callback !== undefined)
-				newValue = Boolean(callback(old, value, assigner));
+				newValue = callback(old, value);
 
 			if(v2m !== undefined)
-				newValue = Boolean(v2m(old, value, assigner));
+				newValue = v2m(old, value);
 		}
 		return newValue;
 	}
@@ -1432,7 +1429,7 @@ sf.model = function(scope){
 		var ref = e.target;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-		if(newValue === undefined)
+		if(newValue !== undefined)
 			ref.sfModel[ref.sfBounded] = newValue;
 		else ref.sfModel[ref.sfBounded] = value;
 	}
@@ -1855,6 +1852,7 @@ sf.model = function(scope){
 
 					if(newValue !== undefined)
 						objValue = newValue;
+					else objValue = val;
 				}
 				else objValue = val;
 
