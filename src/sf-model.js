@@ -500,8 +500,11 @@ sf.model = function(scope){
 			var lastParsedIndex = preParsedReference.length;
 		}
 
-		var prepared = html.replace(/{{([^@%][\s\S]*?)}}/g, function(actual, temp){
+		var prepared = html.replace(sf.regex.dataParser, function(actual, temp){
 			temp = avoidQuotes(temp, function(temp_){
+				// Unescape HTML
+				temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+
 				// Mask item variable
 				if(mask)
 					temp_ = temp_.replace(itemMask, function(matched){
@@ -512,13 +515,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			});
-
-
-			temp = temp.split('_model_._modelScope.').join('_model_.');
-
-			// Unescape HTML
-			// temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+			}).split('_model_._modelScope.').join('_model_.');
 
 			// Evaluate
 			if(runEval === '#noEval'){
@@ -537,7 +534,7 @@ sf.model = function(scope){
 
 			temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
 
-			return temp.replace(/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm, function(i) {
+			return temp.replace(sf.regex.escapeHTML, function(i) {
 		        return '&#'+i.charCodeAt(0)+';';
 		    });
 		});
@@ -610,11 +607,11 @@ sf.model = function(scope){
 		if(runEval === '#noEval')
 			var preParsedReference = [];
 
-		var prepared = html.replace(/{{((@|#[\w])[\s\S]*?)}}/g, function(actual, temp){
+		var prepared = html.replace(sf.regex.uniqueDataParser, function(actual, temp){
 			temp = avoidQuotes(temp, function(temp_){
 				// Unescape HTML
 				temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
-			
+
 				// Mask item variable
 				if(mask)
 					temp_ = temp_.replace(itemMask, function(matched){
@@ -625,9 +622,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			});
-
-			temp = temp.split('_model_._modelScope.').join('_model_.');
+			}).split('_model_._modelScope.').join('_model_.');
 
 			var result = '';
 			var check = false;
@@ -2007,13 +2002,20 @@ sf.model = function(scope){
 			for (var a = 0; a < attrs.length; a++) {
 				var found = attrs[a].value.split('{{%=');
 				if(found.length !== 1){
-					var key = {
+					if(attrs[a].name[0] === ':'){
+						var key = {
+							name:attrs[a].name.split(':').join(''),
+							value:attrs[a].value
+						};
+						currentNode.removeAttribute(attrs[a].name);
+					}
+					else var key = {
 						name:attrs[a].name,
 						value:attrs[a].value
 					};
 
 					indexes = [];
-					found = attrs[a].value.replace(/{{%=([0-9]+)/g, function(full, match){
+					found = key.value.replace(/{{%=([0-9]+)/g, function(full, match){
 						indexes.push(Number(match));
 						return '';
 					});

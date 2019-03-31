@@ -15,10 +15,13 @@ var sf = function(){
 
 sf.internal = {};
 sf.regex = {
-	// ToDo: Need help to skip escaped quote
 	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,
 	validFunctionCall:/[a-zA-Z0-9 \]\$\)]/,
-	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )'
+	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )',
+	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
+
+	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
+	dataParser:/{{([^@%][\s\S]*?)}}/g,
 };
 
 var allowedFunctionEval = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
