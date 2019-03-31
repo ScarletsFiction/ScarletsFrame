@@ -17,14 +17,20 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
-`<script type="text/javascript" src='https://unpkg.com/scarletsframe@latest/dist/scarletsframe.min.js'></script>`
+```html
+<script type="text/javascript" src='https://unpkg.com/scarletsframe@latest/dist/scarletsframe.min.js'></script>
+```
+
+If you have separated files for the model and controllers, you can use this library's `gulpfile.js` to combine and compile your js files. To obtain fast compilation in development environment, you can deactivate uglify/minify/babel in `gulpfile.js`.
 
 ## Install with NPM
-`npm i scarletsframe`
+```sh
+$ npm i scarletsframe
+```
 
-And include it on your project
+And include it on your project with webpack or browserify.
 ```js
-let sf = require('scarletsframe');
+const sf = require('scarletsframe');
 
 sf.model.for('things', (self, root) => {
   ...
@@ -49,7 +55,6 @@ If you run this on the html body, you will see style changes when loading. So it
 sf.loader.css([
    'css/animate.min.css'
 ]);
-
 ```
 
 When you load your script, make sure you loaded the controller first then the router or model.
@@ -58,7 +63,6 @@ sf.loader.js([
    'app/controller.js', // Load controller first
    'app/router.js',
 ], 'body');
-
 ```
 
 This function can help you track the total and loaded content. But sometime the content are cached by the browser and it couldn't be monitored as loaded content.
@@ -66,7 +70,6 @@ This function can help you track the total and loaded content. But sometime the 
 sf.loader.onProgress(function(loadedContent, totalContent){
    console.log(loadedContent+ ' of ' +totalContent+ ' was loaded');
 });
-
 ```
 
 After the loading complete, this function will be triggered before all `sf(function(){})` will be called.
@@ -74,7 +77,6 @@ After the loading complete, this function will be triggered before all `sf(funct
 sf.loader.onFinish(function(){
    console.log("All content was loaded from internet or cache");
 });
-
 ```
 
 Model and controller will be start after content loader was finished. But if you don't use this feature, you need to turn it off with
@@ -478,25 +480,44 @@ To enable two-way data binding with input element, you need to set model propert
 To enable one-way data binding with input element, you need to define model property in `sf-bind` attribute.
 ```html
 <!-- 'myInput' on the model will be updated if input detected -->
-<!-- (input -> model) -->
-<input sf-bind="myInput" type="text" />
+<!-- (View -> Model) -->
+<input sf-bind="myInput" type="text" typedata="number"/>
 
 <!-- input will be updated if 'myInput' on the model was changed -->
-<!-- (model -> input) -->
+<!-- (Model -> Input) -->
 <input value="{{myInput}}" type="text" />
+
+<!-- You can also add prefixed value -->
+<input value="It's {{myInput}}" type="text" />
 ```
 
 ```js
-// Model for the above example
+// Model for the above examples
 sf.model.for('example', function(self){
-  // Any changes to this variable will change the 1st and 3rd element
-  self.id = 2;
+  // Any input on element will update this content and the binded view
+  self.myInput = 0;
 
-  // Any changes to this variable will change the 2nd and 3rd element
-  self.content = 'Hello world';
+  // Listen any changes
+  self.on$myInput = function(oldValue, newValue, setValue){
+   /*  If you want to update myInput inside this listener
+    *  you must use `setValue(val)` to avoid infinity event call
+    * `setValue` will update elements and `self.myInput` state
+    */
+  }
 
-  // Any input on 4th element will update this variable content
-  self.myInput = '';
+  // Listen changes (Model -> View)
+  self.m2v$myInput = function(oldValue, newValue, setValue){
+    if(newValue > 100)
+      return true; // Cancel changes to elements or `self.myInput`
+  }
+
+  // Listen changes (View -> Model)
+  self.v2m$myInput = function(oldValue, newValue, setValue){
+    console.log("Value will be reverted in 3s to oldValue");
+    setTimeout(function(){
+      setValue(oldValue);
+    }, 3000);
+  }
 });
 ```
 

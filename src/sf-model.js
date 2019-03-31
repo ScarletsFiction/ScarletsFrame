@@ -221,23 +221,28 @@ sf.model = function(scope){
 					var refB = refA[a];
 
 					changesReference.push({
-						attribute:(refB.name === 'value' && current.tagName === 'INPUT' ? current : current.attributes[refB.name]),
+						attribute:(refB.name === 'value' ? current : current.attributes[refB.name]),
 						ref:refB
 					});
 
-					if(refB.name === 'value' && current.tagName === 'INPUT'){
-						current.value = parsed[refB.direct].data;
-						current.removeAttribute('value');
-						continue;
-					}
-
 					if(refB.direct !== undefined){
+						if(refB.name === 'value'){
+							current.value = parsed[refB.direct].data;
+							current.removeAttribute('value');
+							continue;
+						}
 						current.setAttribute(refB.name, parsed[refB.direct].data);
 						continue;
 					}
 
 					// Below is used for multiple data
-					refB = current.attributes[refB.name];
+					if(refB.name === 'value'){
+						var temp = current.value;
+						current.removeAttribute('value');
+						current.value = temp;
+						refB = current;
+					}
+					else refB = current.attributes[refB.name];
 
 					refB.value = refB.value.replace(templateParser_regex, function(full, match){
 						return parsed[match].data;
@@ -1407,39 +1412,73 @@ sf.model = function(scope){
 		}
 	}
 
-	var inputBoundRunning = false;
-	var inputTextBound = function(e){
-		inputBoundRunning = true;
-		var ref = e.target;
-		ref['sf-model'][ref['sf-bounded']] = ref.typeData === Number ? Number(ref.value) : ref.value;
-	}
-	var inputFilesBound = function(e){
-		var ref = e.target;
-		ref['sf-model'][ref['sf-bounded']] = ref.files;
+	var callInputListener = function(model, property, newValue){
+		var callback = model['on$'+property];
+		var v2m = model['v2m$'+property];
+		var pause = false;
+		if(callback !== undefined || v2m !== undefined){
+			var assigner = Object.getOwnPropertyDescriptor(model, property).get(true);
+			var old = model[property];
+			if(old !== null && old !== undefined && old.constructor === Array)
+				old = old.slice(0);
+
+			if(callback !== undefined)
+				pause = Boolean(callback(old, newValue, assigner));
+
+			if(v2m !== undefined)
+				pause = Boolean(v2m(old, newValue, assigner));
+		}
+		return pause;
 	}
 
-	var inputCheckBoxBound = function(e){
+	var inputBoundRunning = false;
+	var inputTextBound = function(e){
+		if(e.fromSFFramework === true) return;
+
 		inputBoundRunning = true;
 		var ref = e.target;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
-		var model = ref['sf-model'];
-		var constructor = model[ref['sf-bounded']].constructor;
+		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
+			return;
 
-		if(constructor === Array){
-			var i = model[ref['sf-bounded']].indexOf(value);
-
-			if(i === -1 && ref.checked === true)
-				model[ref['sf-bounded']].push(value);
-			else if(i !== -1 && ref.checked === false)
-				model[ref['sf-bounded']].splice(i, 1);
-		}
-		else if(constructor === Boolean || ref.typeData === Boolean)
-			model[ref['sf-bounded']] = ref.checked;
-		else model[ref['sf-bounded']] = value;
+		ref.sfModel[ref.sfBounded] = value;
+	}
+	var inputFilesBound = function(e){
+		if(e.fromSFFramework === true) return;
+		
+		var ref = e.target;
+		callInputListener(ref.sfModel, ref.sfBounded, ref.files);
+		ref.sfModel[ref.sfBounded] = ref.files;
 	}
 
+	var inputCheckBoxBound = function(e){
+		if(e.fromSFFramework === true) return;
+		
+		inputBoundRunning = true;
+		var ref = e.target;
+		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
+		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
+			return;
+
+		var model = ref.sfModel;
+		var constructor = model[ref.sfBounded];
+
+		if(constructor === Array){
+			var i = model[ref.sfBounded].indexOf(value);
+
+			if(i === -1 && ref.checked === true)
+				model[ref.sfBounded].push(value);
+			else if(i !== -1 && ref.checked === false)
+				model[ref.sfBounded].splice(i, 1);
+		}
+		else if(constructor === Boolean || ref.typeData === Boolean)
+			model[ref.sfBounded] = ref.checked;
+		else model[ref.sfBounded] = value;
+	}
 
 	var inputSelectBound = function(e){
+		if(e.fromSFFramework === true) return;
+		
 		inputBoundRunning = true;
 		var ref = e.target;
 		var typeData = ref.typeData;
@@ -1447,12 +1486,15 @@ sf.model = function(scope){
 			var temp = ref.selectedOptions;
 			var value = [];
 			for (var i = 0; i < temp.length; i++) {
-				value.push(asNumber === Number ? Number(temp[i].value) : temp[i].value);
+				value.push(typeData === Number ? Number(temp[i].value) : temp[i].value);
 			}
 		}
-		else value = asNumber === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
+		else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
-		ref['sf-model'][ref['sf-bounded']] = value;
+		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
+			return;
+
+		ref.sfModel[ref.sfBounded] = value;
 	}
 
 	var assignElementData = {
@@ -1487,6 +1529,9 @@ sf.model = function(scope){
 			return; // Avoid multiple assigment
 
 		for (var i = 0; i < elements.length; i++) {
+			var ev = new Event('change');
+			ev.fromSFFramework = true;
+
 			if(elements.type === 1) // text
 				elements[i].value = model[property];
 			else if(elements.type === 2) // select options
@@ -1495,6 +1540,8 @@ sf.model = function(scope){
 				elements[i].checked = model[property] == elements[i].value;
 			else if(elements.type === 4) // checkbox
 				assignElementData.checkbox(model, property, elements[i]);
+
+			elements[i].dispatchEvent(ev);
 		}
 	}
 
@@ -1588,8 +1635,8 @@ sf.model = function(scope){
 				return;
 			}
 
-			element['sf-bounded'] = propertyName;
-			element['sf-model'] = modelScope;
+			element.sfBounded = propertyName;
+			element.sfModel = modelScope;
 			if(oneWay === false){
 				element.setAttribute('sf-bounded', '');
 				element.removeAttribute('sf-bound');
@@ -1796,14 +1843,43 @@ sf.model = function(scope){
 		if(Object.getOwnPropertyDescriptor(model, propertyName).set !== undefined)
 			return;
 
+		var assigner = function(val){
+			objValue = val;
+
+			var ref = model.sf$bindedKey[propertyName];
+			for (var i = 0; i < ref.length; i++) {
+				if(inputBoundRun === ref[i]){
+					ref[i](model, propertyName, ref.input);
+					continue;
+				}
+				ref[i]();
+			}
+		}
+
 		var objValue = model[propertyName]; // Object value
 		Object.defineProperty(model, propertyName, {
 			enumerable: true,
 			configurable: true,
-			get:function(){
+			get:function(getAssigner){
+				if(getAssigner === true)
+					return assigner;
 				return objValue;
 			},
 			set:function(val){
+				var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
+				var m2v = model['m2v$'+propertyName];
+				if(callback !== undefined || m2v !== undefined){
+					var pause = false;
+					if(callback !== undefined)
+						pause = Boolean(callback(objValue, val, assigner));
+
+					if(m2v !== undefined)
+						pause = Boolean(m2v(objValue, val, assigner));
+
+					if(pause === true)
+						return objValue;
+				}
+
 				objValue = val;
 
 				var ref = model.sf$bindedKey[propertyName];
