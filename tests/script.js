@@ -132,14 +132,31 @@ sf(function(){
 });
 
 // ===== Model Binding =====
-
+var binding = null;
 sf.model.for('model-binding', function(self, root){
+   binding = self;
+
+   self.bold = true;
+   self.pink = false;
    self.inputBinding1 = '';
    self.inputBinding2 = '';
    self.inputBinding3 = false;
    self.inputBinding4 = '';
+   self.m2v$inputBinding4 = function(old, news, assign){
+      console.warn("inputBinding4 (Model -> View)", old, news);
+   };
+   self.v2m$inputBinding4 = function(old, news, assign){
+      console.log("inputBinding4 (View -> Model) will be revert from:", news, 'to', old);
+      setTimeout(function(){
+         assign(old);
+         console.log("Reverted");
+      }, 4000);
+   };
    self.inputBinding5 = [];
    self.inputBinding6 = '';
+   self.on$inputBinding6 = function(old, news, assign){
+      console.warn("inputBinding6 was updated from:", old, 'to', news);
+   };
    self.inputBinding7 = '';
    self.showHTML = false;
    self.prefix = 'i -> ';
@@ -155,6 +172,8 @@ sf.controller.for('model-binding', function(self, root){
       self.inputBinding3 = true;
       self.inputBinding4 = 'radio1';
       self.inputBinding5 = self.inputBinding6 = 'sel1';
+      self.bold = false;
+      self.pink = true;
    }, 3000);
 
    setTimeout(function(){
@@ -167,6 +186,8 @@ sf.controller.for('model-binding', function(self, root){
       self.inputBinding3 = ['check2'];
       self.inputBinding4 = 'radio1';
       self.inputBinding5 = ['sel1', 'sel2'];
+      self.bold = true;
+      self.pink = false;
    }, 8000);
 
    self.addition = function(a, b){

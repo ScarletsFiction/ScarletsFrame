@@ -12,6 +12,16 @@
           background-color: gainsboro;
           user-select: none;
         }
+        span.bold{
+         font-weight: bold;
+        }
+        span.transit{
+         transition: background-color 1s ease-in;
+         background-color: white;
+        }
+        span.transit.pink{
+         background-color: pink;
+        }
       </style>
    </head>
    <body class="body">
@@ -70,12 +80,17 @@
       <!-- Model and Controller -->
       <div sf-controller="model-binding">
 
-         <b>Change variable on keyboard input</b><br>
+         <span :class="transit {{ bold ? 'bold' : '' }} {{ pink ? 'pink' : '' }}">Change variable on keyboard input</span><br>
          <input type="text" sf-bound="inputBinding1"><br>
          <span id="test">Var Content: {{ inputBinding1 }}</span><br><br>
 
-         <b>Another one</b><br>
+         <span class="bold" style="
+            font-weight: {{ bold ? 'bold' : 'unset' }};
+            background-color: {{ pink ? 'pink' : '' }};
+         ">Another one</span><br>
+
          <textarea type="text" sf-bind="inputBinding2"></textarea><br>
+         <input type="text" value="It's {{inputBinding2}}" disabled><br>
          <span>Var Content: {{ inputBinding2 }}</span><br><br>
 
          <input type="checkbox" value="check1" sf-bound="inputBinding3">Check 1
@@ -116,7 +131,7 @@
                {[<span>5 + 4 = {{ calculate }}</span><br>]}
 
                var escapeHTML = "<span>This must be HTML escaped (except the bold)</span>";
-               var noEscapeHTML = "<br><span>This shouldn't be HTML escaped (but parsed)</span>";
+               var noEscapeHTML = "<br><span>This shouldn't be HTML escaped (no &lt;span&gt;)</span>";
 
                {[ <b>{{escapeHTML}}</b> ]}
                @return noEscapeHTML;
