@@ -13,6 +13,7 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 - [Simple Component](https://jsbin.com/guwevis/edit?html,js,console,output)
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
+- [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -447,7 +448,7 @@ Every element that built from a template will have one-way data binding. Even it
 <div sf-bind-ignore>{{ myStatic }}</div>
 ```
 
-To enable two-way data binding with input element, you need to set model property in `sf-bound` attribute. When you need to obtain multiple value for `checkbox` or `select`, your model property should be an **Array** type. But if you like to check if the checkbox is `checked` or not, you need to set the model property as **Boolean** type. Using **String** data type will only return the last selected data.  
+To enable two-way data binding with input element, you need to set model property in `sf-bound` attribute. When you need to obtain multiple value for `checkbox` or `select`, your model property should be an **Array** type. But if you like to check if the checkbox is `checked` or not, you need to set the model property as **Boolean** type. Using **String** data type will only return the last selected data.
 
 ```html
 <!-- data on the model will be updated if input detected and vice versa -->
@@ -461,10 +462,10 @@ To enable two-way data binding with input element, you need to set model propert
 <input name="myCheckbox" type="checkbox" value="check1" sf-bound />
 <input name="myCheckbox" type="checkbox" value="check2" sf-bound />
 
-<select sf-bound="selectInput">
-   <option value="sel1">Select 1</option>
-   <option value="sel2">Select 2</option>
-   <option value="sel3">Select 3</option>
+<select sf-bound="selectInput" typedata="number">
+   <option value="1">Select 1</option>
+   <option value="2">Select 2</option>
+   <option value="3">Select 3</option>
 </select>
 
 <select sf-bound="selectInput" multiple>
