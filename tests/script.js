@@ -142,19 +142,19 @@ sf.model.for('model-binding', function(self, root){
    self.inputBinding2 = '';
    self.inputBinding3 = false;
    self.inputBinding4 = '';
-   self.m2v$inputBinding4 = function(old, news, assign){
+   self.m2v$inputBinding4 = function(old, news){
       console.warn("inputBinding4 (Model -> View)", old, news);
    };
-   self.v2m$inputBinding4 = function(old, news, assign){
+   self.v2m$inputBinding4 = function(old, news){
       console.log("inputBinding4 (View -> Model) will be revert from:", news, 'to', old);
       setTimeout(function(){
-         assign(old);
+         self.inputBinding4 = old;
          console.log("Reverted");
       }, 4000);
    };
    self.inputBinding5 = [];
    self.inputBinding6 = '';
-   self.on$inputBinding6 = function(old, news, assign){
+   self.on$inputBinding6 = function(old, news){
       console.warn("inputBinding6 was updated from:", old, 'to', news);
    };
    self.inputBinding7 = '';
