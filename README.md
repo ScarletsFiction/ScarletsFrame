@@ -489,6 +489,9 @@ To enable one-way data binding with input element, you need to define model prop
 
 <!-- You can also add prefixed value -->
 <input value="It's {{myInput}}" type="text" />
+
+<!-- When binding to `class` attribute you need to use `:class` -->
+<span :class="icon-{{myInput || 'nothing'}}" style="font-size: {{myInput}}" />
 ```
 
 ```js
