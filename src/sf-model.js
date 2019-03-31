@@ -1408,7 +1408,9 @@ sf.model = function(scope){
 		var v2m = model['v2m$'+property];
 		var pause = false;
 		if(callback !== undefined || v2m !== undefined){
-			var assigner = Object.getOwnPropertyDescriptor(model, property).get(true);
+			var assigner = Object.getOwnPropertyDescriptor(model, property);
+			assigner = assigner.get !== undefined ? assigner.get(true) : undefined;
+
 			var old = model[property];
 			if(old !== null && old !== undefined && old.constructor === Array)
 				old = old.slice(0);
