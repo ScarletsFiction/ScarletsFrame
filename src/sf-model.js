@@ -1403,10 +1403,10 @@ sf.model = function(scope){
 		}
 	}
 
-	var callInputListener = function(model, property, newValue){
+	var callInputListener = function(model, property, value){
 		var callback = model['on$'+property];
 		var v2m = model['v2m$'+property];
-		var pause = false;
+		var newValue = false;
 		if(callback !== undefined || v2m !== undefined){
 			var assigner = Object.getOwnPropertyDescriptor(model, property);
 			assigner = assigner.get !== undefined ? assigner.get(true) : undefined;
@@ -1416,12 +1416,12 @@ sf.model = function(scope){
 				old = old.slice(0);
 
 			if(callback !== undefined)
-				pause = Boolean(callback(old, newValue, assigner));
+				newValue = Boolean(callback(old, value, assigner));
 
 			if(v2m !== undefined)
-				pause = Boolean(v2m(old, newValue, assigner));
+				newValue = Boolean(v2m(old, value, assigner));
 		}
-		return pause;
+		return newValue;
 	}
 
 	var inputBoundRunning = false;
@@ -1431,10 +1431,10 @@ sf.model = function(scope){
 		inputBoundRunning = true;
 		var ref = e.target;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
-		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
-			return;
-
-		ref.sfModel[ref.sfBounded] = value;
+		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
+		if(newValue === undefined)
+			ref.sfModel[ref.sfBounded] = newValue;
+		else ref.sfModel[ref.sfBounded] = value;
 	}
 	var inputFilesBound = function(e){
 		if(e.fromSFFramework === true) return;
@@ -1450,8 +1450,9 @@ sf.model = function(scope){
 		inputBoundRunning = true;
 		var ref = e.target;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
-		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
-			return;
+		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
+		if(newValue === undefined)
+			value = newValue;
 
 		var model = ref.sfModel;
 		var constructor = model[ref.sfBounded];
@@ -1484,10 +1485,10 @@ sf.model = function(scope){
 		}
 		else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
-		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
-			return;
-
-		ref.sfModel[ref.sfBounded] = value;
+		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
+		if(newValue === undefined)
+			ref.sfModel[ref.sfBounded] = newValue;
+		else ref.sfModel[ref.sfBounded] = value;
 	}
 
 	var assignElementData = {
@@ -1554,7 +1555,7 @@ sf.model = function(scope){
 
 		// Bound value change
 		if(element.tagName === 'TEXTAREA'){
-			$.on(element, 'keyup', inputTextBound);
+			$.on(element, 'change', inputTextBound);
 			element.value = model[property];
 			type = 1;
 		}
@@ -1587,9 +1588,7 @@ sf.model = function(scope){
 			}
 
 			else{
-				if(type === 'range')
-					$.on(element, 'change', inputTextBound);
-				else $.on(element, 'keyup', inputTextBound);
+				$.on(element, 'change', inputTextBound);
 				element.value = model[property];
 				type = 1;
 			}
@@ -1836,44 +1835,28 @@ sf.model = function(scope){
 		if(Object.getOwnPropertyDescriptor(model, propertyName).set !== undefined)
 			return;
 
-		var assigner = function(val){
-			objValue = val;
-
-			var ref = model.sf$bindedKey[propertyName];
-			for (var i = 0; i < ref.length; i++) {
-				if(inputBoundRun === ref[i]){
-					ref[i](model, propertyName, ref.input);
-					continue;
-				}
-				ref[i]();
-			}
-		}
-
 		var objValue = model[propertyName]; // Object value
 		Object.defineProperty(model, propertyName, {
 			enumerable: true,
 			configurable: true,
 			get:function(getAssigner){
-				if(getAssigner === true)
-					return assigner;
 				return objValue;
 			},
 			set:function(val){
 				var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
 				var m2v = model['m2v$'+propertyName];
 				if(callback !== undefined || m2v !== undefined){
-					var pause = false;
+					var newValue = false;
 					if(callback !== undefined)
-						pause = Boolean(callback(objValue, val, assigner));
+						newValue = callback(objValue, val);
 
 					if(m2v !== undefined)
-						pause = Boolean(m2v(objValue, val, assigner));
+						newValue = m2v(objValue, val);
 
-					if(pause === true)
-						return objValue;
+					if(newValue !== undefined)
+						objValue = newValue;
 				}
-
-				objValue = val;
+				else objValue = val;
 
 				var ref = model.sf$bindedKey[propertyName];
 				for (var i = 0; i < ref.length; i++) {
