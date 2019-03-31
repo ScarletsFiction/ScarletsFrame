@@ -1,7 +1,7 @@
 {
   "name": "scarletsframe",
   "description":"A frontend framework that can help you write a simple web structure",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
@@ -19,14 +19,11 @@
   ],
   "devDependencies": {
     "gulp": "*",
-    "gulp-autoprefixer": "*",
     "gulp-header": "*",
-    "gulp-csso": "*",
-    "browser-sync": "*",
     "gulp-concat": "*",
-    "gulp-order": "*",
     "gulp-rename": "*",
     "gulp-sourcemaps": "*",
+    "gulp-uglify-es":"*",
     "gulp-babel": "*",
     "node-notifier": "*"
   },

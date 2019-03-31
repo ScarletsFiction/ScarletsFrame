@@ -15,11 +15,30 @@ var sf = function(){
 
 sf.internal = {};
 sf.regex = {
-	// ToDo: Need help to skip escaped quote
 	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,
-	avoidQuotes:'(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)',
-	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )'
+	validFunctionCall:/[a-zA-Z0-9 \]\$\)]/,
+	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )',
+	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
+
+	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
+	dataParser:/{{([^@%][\s\S]*?)}}/g,
 };
+
+var allowedFunctionEval = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
+
+function avoidQuotes(str, func){
+	var temp = [];
+	var es = '<%$@>';
+	str = str.replace(sf.regex.getQuotes, function(full){
+		temp.push(full);
+		return es+(temp.length-1)+es;
+	});
+	str = func(str);
+	for (var i = 0; i < temp.length; i++) {
+		str = str.replace(es+i+es, temp[i]);
+	}
+	return str;
+}
 
 function isEmptyObject(obj){
 	for(var key in obj){
@@ -54,6 +73,83 @@ function deepProperty(obj, path){
   }
   return obj;
 }
+// ==== ES5 Polyfill ====
+if(typeof Object.assign != 'function'){
+  Object.defineProperty(Object, "assign", {
+    value: function assign(target, varArgs) {
+      'use strict';
+      if (target == null)
+        throw new TypeError('Cannot convert undefined or null to object');
+      var to = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var nextSource = arguments[index];
+        if (nextSource != null) {
+          for (var nextKey in nextSource) {
+            if (Object.prototype.hasOwnProperty.call(nextSource, nextKey))
+              to[nextKey] = nextSource[nextKey];
+          }
+        }
+      }
+      return to;
+    },
+    writable: true,
+    configurable: true
+  });
+}
+
+if(Element.prototype.remove === undefined || CharacterData.prototype.remove === undefined || DocumentType.prototype.remove === undefined){
+  (function (arr) {
+    arr.forEach(function (item) {
+      if (item.hasOwnProperty('remove')) {
+        return;
+      }
+      Object.defineProperty(item, 'remove', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: function remove() {
+          if (this.parentNode !== null)
+            this.parentNode.removeChild(this);
+        }
+      });
+    });
+  })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
+}
+
+if(!Element.prototype.matches){
+  Element.prototype.matches = (Element.prototype).matchesSelector ||
+    (Element.prototype).mozMatchesSelector || (Element.prototype).msMatchesSelector ||
+    (Element.prototype).oMatchesSelector || (Element.prototype).webkitMatchesSelector ||
+    function (s) {
+      var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+      i = matches.length;
+      while (--i >= 0 && matches.item(i) !== this){}
+      return i > -1;
+    };
+}
+
+if(!NodeList.prototype.forEach){
+    NodeList.prototype.forEach = function (callback, thisArg) {
+        thisArg = thisArg || window;
+        for (var i = 0; i < this.length; i++) {
+            callback.call(thisArg, this[i], i, this);
+        }
+    };
+}
+
+if(!window.location.origin)
+  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+
+if(!Object.values)
+  Object.values = function(obj){
+    var res = [];
+    for (var i in obj) {
+        if (obj.hasOwnProperty(i)) {
+            res.push(obj[i]);
+        }
+    }
+    return res;
+  }
 sf.dom = function(selector, context){
 	if(selector[0] === '<') return sf.dom.parseElement(selector);
 	if(selector.constructor !== String) return selector;
@@ -686,15 +782,14 @@ sf.model = function(scope){
 
 	// Secured evaluation
 	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+sf.regex.avoidQuotes, 'g');
-	var chackValidFunctionCall = /[a-zA-Z0-9 \]\$\)]/;
-	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
+	var chackValidFunctionCall = sf.regex.validFunctionCall;
 	var localEval = function(script, _model_, _modelScope, _content_){
 		"use strict";
 
 		// ==== Security check ====
 		var tempScript = script;
 
-		// Remove quotes
+		// Remove all inner quotes
 		tempScript = tempScript.replace(sf.regex.getQuotes, '"Quotes"');
 
 		// Prevent vulnerability by remove bracket to avoid a function call
@@ -703,7 +798,7 @@ sf.model = function(scope){
 		while((check_ = bracketMatch.exec(tempScript)) !== null){
 			check_[1] = check_[1].trim();
 
-			if(allowedFunction.indexOf(check_[1]) === -1 &&
+			if(allowedFunctionEval.indexOf(check_[1]) === -1 &&
 				check_[1].split('.')[0] !== '_modelScope' &&
 				chackValidFunctionCall.test(check_[1][check_[1].length-1])
 			){
@@ -872,23 +967,28 @@ sf.model = function(scope){
 					var refB = refA[a];
 
 					changesReference.push({
-						attribute:(refB.name === 'value' && current.tagName === 'INPUT' ? current : current.attributes[refB.name]),
+						attribute:(refB.name === 'value' ? current : current.attributes[refB.name]),
 						ref:refB
 					});
 
-					if(refB.name === 'value' && current.tagName === 'INPUT'){
-						current.value = parsed[refB.direct].data;
-						current.removeAttribute('value');
-						continue;
-					}
-
 					if(refB.direct !== undefined){
+						if(refB.name === 'value'){
+							current.value = parsed[refB.direct].data;
+							current.removeAttribute('value');
+							continue;
+						}
 						current.setAttribute(refB.name, parsed[refB.direct].data);
 						continue;
 					}
 
 					// Below is used for multiple data
-					refB = current.attributes[refB.name];
+					if(refB.name === 'value'){
+						var temp = current.value;
+						current.removeAttribute('value');
+						current.value = temp;
+						refB = current;
+					}
+					else refB = current.attributes[refB.name];
 
 					refB.value = refB.value.replace(templateParser_regex, function(full, match){
 						return parsed[match].data;
@@ -1135,10 +1235,10 @@ sf.model = function(scope){
 		if(!runEval) runEval = '';
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
+			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
 
 		bindingEnabled = true;
 
@@ -1147,26 +1247,22 @@ sf.model = function(scope){
 			var lastParsedIndex = preParsedReference.length;
 		}
 
-		var prepared = html.replace(/{{([^@%][\s\S]*?)}}/g, function(actual, temp){
-			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
-			temp = escapeEscapedQuote(temp); // ToDo: Escape
+		var prepared = html.replace(sf.regex.dataParser, function(actual, temp){
+			temp = avoidQuotes(temp, function(temp_){
+				// Unescape HTML
+				temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
-			// Mask item variable
-			if(mask)
-				temp = temp.replace(itemMask, function(matched){
-					return '_model_.'+matched[0].slice(1);
+				// Mask item variable
+				if(mask)
+					temp_ = temp_.replace(itemMask, function(matched){
+						return '_model_.'+matched[0].slice(1);
+					});
+
+				// Mask model for variable
+				return temp_.replace(scopeMask, function(full, matched){
+					return '_modelScope.'+matched;
 				});
-
-			// Mask model for variable
-			temp = temp.replace(scopeMask, function(full, matched){
-				return '_modelScope.'+matched;
-			});
-
-			temp = temp.split('_model_._modelScope.').join('_model_.');
-			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
-
-			// Unescape HTML
-			temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+			}).split('_model_._modelScope.').join('_model_.');
 
 			// Evaluate
 			if(runEval === '#noEval'){
@@ -1185,7 +1281,7 @@ sf.model = function(scope){
 
 			temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
 
-			return temp.replace(/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm, function(i) {
+			return temp.replace(sf.regex.escapeHTML, function(i) {
 		        return '&#'+i.charCodeAt(0)+';';
 		    });
 		});
@@ -1250,34 +1346,30 @@ sf.model = function(scope){
 		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
+			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
 
 		if(runEval === '#noEval')
 			var preParsedReference = [];
 
-		var prepared = html.replace(/{{((@|#[\w])[\s\S]*?)}}/g, function(actual, temp){
-			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
-			temp = escapeEscapedQuote(temp); // ToDo: Escape
+		var prepared = html.replace(sf.regex.uniqueDataParser, function(actual, temp){
+			temp = avoidQuotes(temp, function(temp_){
+				// Unescape HTML
+				temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
-			// Mask item variable
-			if(mask)
-				temp = temp.replace(itemMask, function(matched){
-					return '_model_.'+matched[0].slice(1);
+				// Mask item variable
+				if(mask)
+					temp_ = temp_.replace(itemMask, function(matched){
+						return '_model_.'+matched[0].slice(1);
+					});
+
+				// Mask model for variable
+				return temp_.replace(scopeMask, function(full, matched){
+					return '_modelScope.'+matched;
 				});
-
-			// Mask model for variable
-			temp = temp.replace(scopeMask, function(full, matched){
-				return '_modelScope.'+matched;
-			});
-
-			temp = temp.split('_model_._modelScope.').join('_model_.');
-			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
-
-			// Unescape HTML
-			temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+			}).split('_model_._modelScope.').join('_model_.');
 
 			var result = '';
 			var check = false;
@@ -2058,39 +2150,73 @@ sf.model = function(scope){
 		}
 	}
 
-	var inputBoundRunning = false;
-	var inputTextBound = function(e){
-		inputBoundRunning = true;
-		var ref = e.target;
-		ref['sf-model'][ref['sf-bounded']] = ref.typeData === Number ? Number(ref.value) : ref.value;
-	}
-	var inputFilesBound = function(e){
-		var ref = e.target;
-		ref['sf-model'][ref['sf-bounded']] = ref.files;
+	var callInputListener = function(model, property, newValue){
+		var callback = model['on$'+property];
+		var v2m = model['v2m$'+property];
+		var pause = false;
+		if(callback !== undefined || v2m !== undefined){
+			var assigner = Object.getOwnPropertyDescriptor(model, property).get(true);
+			var old = model[property];
+			if(old !== null && old !== undefined && old.constructor === Array)
+				old = old.slice(0);
+
+			if(callback !== undefined)
+				pause = Boolean(callback(old, newValue, assigner));
+
+			if(v2m !== undefined)
+				pause = Boolean(v2m(old, newValue, assigner));
+		}
+		return pause;
 	}
 
-	var inputCheckBoxBound = function(e){
+	var inputBoundRunning = false;
+	var inputTextBound = function(e){
+		if(e.fromSFFramework === true) return;
+
 		inputBoundRunning = true;
 		var ref = e.target;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
-		var model = ref['sf-model'];
-		var constructor = model[ref['sf-bounded']].constructor;
+		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
+			return;
 
-		if(constructor === Array){
-			var i = model[ref['sf-bounded']].indexOf(value);
-
-			if(i === -1 && ref.checked === true)
-				model[ref['sf-bounded']].push(value);
-			else if(i !== -1 && ref.checked === false)
-				model[ref['sf-bounded']].splice(i, 1);
-		}
-		else if(constructor === Boolean || ref.typeData === Boolean)
-			model[ref['sf-bounded']] = ref.checked;
-		else model[ref['sf-bounded']] = value;
+		ref.sfModel[ref.sfBounded] = value;
+	}
+	var inputFilesBound = function(e){
+		if(e.fromSFFramework === true) return;
+		
+		var ref = e.target;
+		callInputListener(ref.sfModel, ref.sfBounded, ref.files);
+		ref.sfModel[ref.sfBounded] = ref.files;
 	}
 
+	var inputCheckBoxBound = function(e){
+		if(e.fromSFFramework === true) return;
+		
+		inputBoundRunning = true;
+		var ref = e.target;
+		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
+		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
+			return;
+
+		var model = ref.sfModel;
+		var constructor = model[ref.sfBounded];
+
+		if(constructor === Array){
+			var i = model[ref.sfBounded].indexOf(value);
+
+			if(i === -1 && ref.checked === true)
+				model[ref.sfBounded].push(value);
+			else if(i !== -1 && ref.checked === false)
+				model[ref.sfBounded].splice(i, 1);
+		}
+		else if(constructor === Boolean || ref.typeData === Boolean)
+			model[ref.sfBounded] = ref.checked;
+		else model[ref.sfBounded] = value;
+	}
 
 	var inputSelectBound = function(e){
+		if(e.fromSFFramework === true) return;
+		
 		inputBoundRunning = true;
 		var ref = e.target;
 		var typeData = ref.typeData;
@@ -2098,12 +2224,15 @@ sf.model = function(scope){
 			var temp = ref.selectedOptions;
 			var value = [];
 			for (var i = 0; i < temp.length; i++) {
-				value.push(asNumber === Number ? Number(temp[i].value) : temp[i].value);
+				value.push(typeData === Number ? Number(temp[i].value) : temp[i].value);
 			}
 		}
-		else value = asNumber === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
+		else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
-		ref['sf-model'][ref['sf-bounded']] = value;
+		if(callInputListener(ref.sfModel, ref.sfBounded, value) === true)
+			return;
+
+		ref.sfModel[ref.sfBounded] = value;
 	}
 
 	var assignElementData = {
@@ -2138,6 +2267,9 @@ sf.model = function(scope){
 			return; // Avoid multiple assigment
 
 		for (var i = 0; i < elements.length; i++) {
+			var ev = new Event('change');
+			ev.fromSFFramework = true;
+
 			if(elements.type === 1) // text
 				elements[i].value = model[property];
 			else if(elements.type === 2) // select options
@@ -2146,6 +2278,8 @@ sf.model = function(scope){
 				elements[i].checked = model[property] == elements[i].value;
 			else if(elements.type === 4) // checkbox
 				assignElementData.checkbox(model, property, elements[i]);
+
+			elements[i].dispatchEvent(ev);
 		}
 	}
 
@@ -2239,8 +2373,8 @@ sf.model = function(scope){
 				return;
 			}
 
-			element['sf-bounded'] = propertyName;
-			element['sf-model'] = modelScope;
+			element.sfBounded = propertyName;
+			element.sfModel = modelScope;
 			if(oneWay === false){
 				element.setAttribute('sf-bounded', '');
 				element.removeAttribute('sf-bound');
@@ -2447,14 +2581,43 @@ sf.model = function(scope){
 		if(Object.getOwnPropertyDescriptor(model, propertyName).set !== undefined)
 			return;
 
+		var assigner = function(val){
+			objValue = val;
+
+			var ref = model.sf$bindedKey[propertyName];
+			for (var i = 0; i < ref.length; i++) {
+				if(inputBoundRun === ref[i]){
+					ref[i](model, propertyName, ref.input);
+					continue;
+				}
+				ref[i]();
+			}
+		}
+
 		var objValue = model[propertyName]; // Object value
 		Object.defineProperty(model, propertyName, {
 			enumerable: true,
 			configurable: true,
-			get:function(){
+			get:function(getAssigner){
+				if(getAssigner === true)
+					return assigner;
 				return objValue;
 			},
 			set:function(val){
+				var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
+				var m2v = model['m2v$'+propertyName];
+				if(callback !== undefined || m2v !== undefined){
+					var pause = false;
+					if(callback !== undefined)
+						pause = Boolean(callback(objValue, val, assigner));
+
+					if(m2v !== undefined)
+						pause = Boolean(m2v(objValue, val, assigner));
+
+					if(pause === true)
+						return objValue;
+				}
+
 				objValue = val;
 
 				var ref = model.sf$bindedKey[propertyName];
@@ -2586,13 +2749,20 @@ sf.model = function(scope){
 			for (var a = 0; a < attrs.length; a++) {
 				var found = attrs[a].value.split('{{%=');
 				if(found.length !== 1){
-					var key = {
+					if(attrs[a].name[0] === ':'){
+						var key = {
+							name:attrs[a].name.split(':').join(''),
+							value:attrs[a].value
+						};
+						currentNode.removeAttribute(attrs[a].name);
+					}
+					else var key = {
 						name:attrs[a].name,
 						value:attrs[a].value
 					};
 
 					indexes = [];
-					found = attrs[a].value.replace(/{{%=([0-9]+)/g, function(full, match){
+					found = key.value.replace(/{{%=([0-9]+)/g, function(full, match){
 						indexes.push(Number(match));
 						return '';
 					});
@@ -2843,83 +3013,6 @@ sf.model = function(scope){
 		});
 	}
 })();
-// ==== ES5 Polyfill ====
-if(typeof Object.assign != 'function'){
-  Object.defineProperty(Object, "assign", {
-    value: function assign(target, varArgs) {
-      'use strict';
-      if (target == null)
-        throw new TypeError('Cannot convert undefined or null to object');
-      var to = Object(target);
-      for (var index = 1; index < arguments.length; index++) {
-        var nextSource = arguments[index];
-        if (nextSource != null) {
-          for (var nextKey in nextSource) {
-            if (Object.prototype.hasOwnProperty.call(nextSource, nextKey))
-              to[nextKey] = nextSource[nextKey];
-          }
-        }
-      }
-      return to;
-    },
-    writable: true,
-    configurable: true
-  });
-}
-
-if(Element.prototype.remove === undefined || CharacterData.prototype.remove === undefined || DocumentType.prototype.remove === undefined){
-  (function (arr) {
-    arr.forEach(function (item) {
-      if (item.hasOwnProperty('remove')) {
-        return;
-      }
-      Object.defineProperty(item, 'remove', {
-        configurable: true,
-        enumerable: true,
-        writable: true,
-        value: function remove() {
-          if (this.parentNode !== null)
-            this.parentNode.removeChild(this);
-        }
-      });
-    });
-  })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
-}
-
-if(!Element.prototype.matches){
-  Element.prototype.matches = (Element.prototype).matchesSelector ||
-    (Element.prototype).mozMatchesSelector || (Element.prototype).msMatchesSelector ||
-    (Element.prototype).oMatchesSelector || (Element.prototype).webkitMatchesSelector ||
-    function (s) {
-      var matches = (this.document || this.ownerDocument).querySelectorAll(s),
-      i = matches.length;
-      while (--i >= 0 && matches.item(i) !== this){}
-      return i > -1;
-    };
-}
-
-if(!NodeList.prototype.forEach){
-    NodeList.prototype.forEach = function (callback, thisArg) {
-        thisArg = thisArg || window;
-        for (var i = 0; i < this.length; i++) {
-            callback.call(thisArg, this[i], i, this);
-        }
-    };
-}
-
-if(!window.location.origin)
-  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
-
-if(!Object.values)
-  Object.values = function(obj){
-    var res = [];
-    for (var i in obj) {
-        if (obj.hasOwnProperty(i)) {
-            res.push(obj[i]);
-        }
-    }
-    return res;
-  }
 // DOM Controller on loaded app
 sf.controller = new function(){
 	var self = this;
@@ -2998,13 +3091,11 @@ sf.controller = new function(){
 		if(!sf.model.root[model])
 			throw "Couldn't find model for "+model+" that was called from sf-click";
 
-		var _modelScope = sf.model.root[model];
-
-		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
-		var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
-
-		script = script.replace(scopeMask, function(full, matched){
-			return '_modelScope.'+matched;
+		var modelKeys = sf.model.modelKeys(sf.model.root[model]).join('|');
+		script = avoidQuotes(script, function(script_){
+			return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
+				return '_modelScope.'+matched;
+			});
 		});
 
 		script = script.split('(');
@@ -3660,7 +3751,7 @@ sf.router = new function(){
 				RouterLoading = false;
 
 				// Find special data
-				var regex = RegExp('<!-- SF-Special:(.*?)-->'+sf.regex.avoidQuotes, 'gm');
+				var regex = RegExp('<!-- SF-Special:(.*?)-->', 'gm');
 				var special = regex.exec(data);
 				if(special && special.length !== 1){
 					special = special[1].split('--|&>').join('-->');
