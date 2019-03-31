@@ -1411,7 +1411,7 @@ sf.model = function(scope){
 	var inputTextBound = function(e){
 		inputBoundRunning = true;
 		var ref = e.target;
-		ref['sf-model'][ref['sf-bounded']] = ref.value;
+		ref['sf-model'][ref['sf-bounded']] = ref.typeData === Number ? Number(ref.value) : ref.value;
 	}
 	var inputFilesBound = function(e){
 		var ref = e.target;
@@ -1421,56 +1421,64 @@ sf.model = function(scope){
 	var inputCheckBoxBound = function(e){
 		inputBoundRunning = true;
 		var ref = e.target;
+		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var model = ref['sf-model'];
 		var constructor = model[ref['sf-bounded']].constructor;
 
 		if(constructor === Array){
-			var i = model[ref['sf-bounded']].indexOf(ref.value);
+			var i = model[ref['sf-bounded']].indexOf(value);
 
 			if(i === -1 && ref.checked === true)
-				model[ref['sf-bounded']].push(ref.value);
+				model[ref['sf-bounded']].push(value);
 			else if(i !== -1 && ref.checked === false)
 				model[ref['sf-bounded']].splice(i, 1);
 		}
-		else if(constructor === Boolean)
+		else if(constructor === Boolean || ref.typeData === Boolean)
 			model[ref['sf-bounded']] = ref.checked;
-		else model[ref['sf-bounded']] = ref.value;
+		else model[ref['sf-bounded']] = value;
 	}
 
 
 	var inputSelectBound = function(e){
 		inputBoundRunning = true;
 		var ref = e.target;
+		var typeData = ref.typeData;
 		if(ref.multiple === true){
 			var temp = ref.selectedOptions;
 			var value = [];
 			for (var i = 0; i < temp.length; i++) {
-				value.push(temp[i].value);
+				value.push(asNumber === Number ? Number(temp[i].value) : temp[i].value);
 			}
 		}
-		else value = ref.selectedOptions[0].value;
+		else value = asNumber === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
 		ref['sf-model'][ref['sf-bounded']] = value;
-		return;
 	}
 
 	var assignElementData = {
 		select:function(model, property, element){
 			var list = element.options;
+			var typeData = element.typeData;
 			var arrayValue = model[property].constructor === Array ? model[property] : false;
 			for (var i = 0, n = list.length; i < n; i++) {
-				if(arrayValue === false)
-					list[i].selected = list[i].value == model[property];
-				else
-					list[i].selected = arrayValue.indexOf(list[i].value) !== -1;
+				if(arrayValue === false){
+					if(typeData === String)
+						list[i].selected = list[i].value === model[property];
+					else list[i].selected = list[i].value == model[property];
+				}
+				else list[i].selected = arrayValue.indexOf(typeData === Number ? Number(list[i].value) : list[i].value) !== -1;
 			}
 		},
 		checkbox:function(model, property, element){
 			if(model[property].constructor === Array)
-				element.checked = model[property].indexOf(element.value) !== -1;
+				element.checked = model[property].indexOf(element.typeData === Number ? Number(element.value) : element.value) !== -1;
 			else if(model[property].constructor === Boolean)
-				element.checked = model[property];
-			else element.checked = model[property] == element.value;
+				element.checked = Boolean(model[property]);
+			else{
+				if(element.typeData === String)
+					element.checked = element.value === model[property];
+				else element.checked = element.value == model[property];
+			}
 		}
 	}
 
@@ -1488,7 +1496,6 @@ sf.model = function(scope){
 			else if(elements.type === 4) // checkbox
 				assignElementData.checkbox(model, property, elements[i]);
 		}
-
 	}
 
 	var elementBoundChanges = function(model, property, element, oneWay){
@@ -1497,6 +1504,13 @@ sf.model = function(scope){
 			initBindingInformation(model);
 
 		var type = 0;
+		var typeData = null;
+		if(model[property] !== null && model[property] !== undefined)
+			typeData = model[property].constructor;
+
+		var assignedType = (element.getAttribute('typedata') || '').toLowerCase();
+		if(assignedType === 'number')
+			typeData = Number;
 
 		// Bound value change
 		if(element.tagName === 'TEXTAREA'){
@@ -1506,7 +1520,7 @@ sf.model = function(scope){
 		}
 
 		else if(element.selectedOptions !== undefined){
-			$.on(element, 'input', inputSelectBound);
+			$.on(element, 'change', inputSelectBound);
 			type = 2;
 
 			assignElementData.select(model, property, element);
@@ -1515,13 +1529,13 @@ sf.model = function(scope){
 		else{
 			var type = element.type.toLowerCase();
 			if(type === 'radio'){
-				$.on(element, 'input', inputTextBound);
+				$.on(element, 'change', inputTextBound);
 				type = 3;
 
 				element.checked = model[property] == element.value;
 			}
 			else if(type === 'checkbox'){
-				$.on(element, 'input', inputCheckBoxBound);
+				$.on(element, 'change', inputCheckBoxBound);
 				type = 4;
 
 				assignElementData.checkbox(model, property, element);
@@ -1533,14 +1547,16 @@ sf.model = function(scope){
 			}
 
 			else{
-				$.on(element, 'keyup', inputTextBound);
+				if(type === 'range')
+					$.on(element, 'change', inputTextBound);
+				else $.on(element, 'keyup', inputTextBound);
 				element.value = model[property];
 				type = 1;
 			}
 		}
 
 		if(oneWay === true) return;
-		twoWayBinding(model, property, inputBoundRun, element, type);
+		modelToViewBinding(model, property, inputBoundRun, element, type, typeData);
 	}
 
 	var bindInput = function(targetNode){
@@ -1745,10 +1761,13 @@ sf.model = function(scope){
 		}
 	}
 
-	function twoWayBinding(model, propertyName, callback, elementBind, type){
+	function modelToViewBinding(model, propertyName, callback, elementBind, type, typeData){
 		// Enable multiple element binding
 		if(model.sf$bindedKey === undefined)
 			initBindingInformation(model);
+
+		if(elementBind !== undefined)
+			elementBind.typeData = typeData;
 
 		if(model.sf$bindedKey[propertyName] !== undefined){
 			var ref = model.sf$bindedKey[propertyName];
@@ -1768,8 +1787,9 @@ sf.model = function(scope){
 		model.sf$bindedKey[propertyName] = [callback];
 
 		if(elementBind !== undefined){
-			model.sf$bindedKey[propertyName].input = [elementBind];
-			model.sf$bindedKey[propertyName].input.type = type;
+			var ref = model.sf$bindedKey[propertyName];
+			ref.input = [elementBind];
+			ref.input.type = type;
 		}
 
 		// Proxy property
@@ -1826,7 +1846,7 @@ sf.model = function(scope){
 			if(model[propertyName] === undefined)
 				model[propertyName] = '';
 
-			twoWayBinding(model, propertyName, onChanges);
+			modelToViewBinding(model, propertyName, onChanges);
 		}
 	}
 
