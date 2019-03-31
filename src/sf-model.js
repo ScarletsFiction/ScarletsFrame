@@ -35,15 +35,14 @@ sf.model = function(scope){
 
 	// Secured evaluation
 	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+sf.regex.avoidQuotes, 'g');
-	var chackValidFunctionCall = /[a-zA-Z0-9 \]\$\)]/;
-	var allowedFunction = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
+	var chackValidFunctionCall = sf.regex.validFunctionCall;
 	var localEval = function(script, _model_, _modelScope, _content_){
 		"use strict";
 
 		// ==== Security check ====
 		var tempScript = script;
 
-		// Remove quotes
+		// Remove all inner quotes
 		tempScript = tempScript.replace(sf.regex.getQuotes, '"Quotes"');
 
 		// Prevent vulnerability by remove bracket to avoid a function call
@@ -52,7 +51,7 @@ sf.model = function(scope){
 		while((check_ = bracketMatch.exec(tempScript)) !== null){
 			check_[1] = check_[1].trim();
 
-			if(allowedFunction.indexOf(check_[1]) === -1 &&
+			if(allowedFunctionEval.indexOf(check_[1]) === -1 &&
 				check_[1].split('.')[0] !== '_modelScope' &&
 				chackValidFunctionCall.test(check_[1][check_[1].length-1])
 			){
@@ -489,10 +488,10 @@ sf.model = function(scope){
 		if(!runEval) runEval = '';
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
+			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
 
 		bindingEnabled = true;
 
@@ -502,25 +501,24 @@ sf.model = function(scope){
 		}
 
 		var prepared = html.replace(/{{([^@%][\s\S]*?)}}/g, function(actual, temp){
-			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
-			temp = escapeEscapedQuote(temp); // ToDo: Escape
+			temp = avoidQuotes(temp, function(temp_){
+				// Mask item variable
+				if(mask)
+					temp_ = temp_.replace(itemMask, function(matched){
+						return '_model_.'+matched[0].slice(1);
+					});
 
-			// Mask item variable
-			if(mask)
-				temp = temp.replace(itemMask, function(matched){
-					return '_model_.'+matched[0].slice(1);
+				// Mask model for variable
+				return temp_.replace(scopeMask, function(full, matched){
+					return '_modelScope.'+matched;
 				});
-
-			// Mask model for variable
-			temp = temp.replace(scopeMask, function(full, matched){
-				return '_modelScope.'+matched;
 			});
 
+
 			temp = temp.split('_model_._modelScope.').join('_model_.');
-			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
 
 			// Unescape HTML
-			temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+			// temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 			// Evaluate
 			if(runEval === '#noEval'){
@@ -604,34 +602,32 @@ sf.model = function(scope){
 		var _modelScope = self.root[scope];
 
 		// Don't match text inside quote, or object keys
-		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')'+sf.regex.avoidQuotes+'\\b', 'g');
+		var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')\\b', 'g');
 
 		if(mask)
-			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.'+sf.regex.avoidQuotes+'\\b', 'g');
+			var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
 
 		if(runEval === '#noEval')
 			var preParsedReference = [];
 
 		var prepared = html.replace(/{{((@|#[\w])[\s\S]*?)}}/g, function(actual, temp){
-			// ToDo: The regex should be optimized to avoid match in a quote (but not escaped quote)
-			temp = escapeEscapedQuote(temp); // ToDo: Escape
+			temp = avoidQuotes(temp, function(temp_){
+				// Unescape HTML
+				temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+			
+				// Mask item variable
+				if(mask)
+					temp_ = temp_.replace(itemMask, function(matched){
+						return '_model_.'+matched[0].slice(1);
+					});
 
-			// Mask item variable
-			if(mask)
-				temp = temp.replace(itemMask, function(matched){
-					return '_model_.'+matched[0].slice(1);
+				// Mask model for variable
+				return temp_.replace(scopeMask, function(full, matched){
+					return '_modelScope.'+matched;
 				});
-
-			// Mask model for variable
-			temp = temp.replace(scopeMask, function(full, matched){
-				return '_modelScope.'+matched;
 			});
 
 			temp = temp.split('_model_._modelScope.').join('_model_.');
-			temp = unescapeEscapedQuote(temp); // ToDo: Unescape
-
-			// Unescape HTML
-			temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 			var result = '';
 			var check = false;

@@ -17,9 +17,25 @@ sf.internal = {};
 sf.regex = {
 	// ToDo: Need help to skip escaped quote
 	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,
-	avoidQuotes:'(?=(?:[^"\']*(?:\'|")[^"\']*(?:\'|"))*[^"\']*$)',
+	validFunctionCall:/[a-zA-Z0-9 \]\$\)]/,
 	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )'
 };
+
+var allowedFunctionEval = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
+
+function avoidQuotes(str, func){
+	var temp = [];
+	var es = '<%$@>';
+	str = str.replace(sf.regex.getQuotes, function(full){
+		temp.push(full);
+		return es+(temp.length-1)+es;
+	});
+	str = func(str);
+	for (var i = 0; i < temp.length; i++) {
+		str = str.replace(es+i+es, temp[i]);
+	}
+	return str;
+}
 
 function isEmptyObject(obj){
 	for(var key in obj){

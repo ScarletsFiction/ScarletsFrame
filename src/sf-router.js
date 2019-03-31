@@ -180,7 +180,7 @@ sf.router = new function(){
 				RouterLoading = false;
 
 				// Find special data
-				var regex = RegExp('<!-- SF-Special:(.*?)-->'+sf.regex.avoidQuotes, 'gm');
+				var regex = RegExp('<!-- SF-Special:(.*?)-->', 'gm');
 				var special = regex.exec(data);
 				if(special && special.length !== 1){
 					special = special[1].split('--|&>').join('-->');

@@ -76,13 +76,11 @@ sf.controller = new function(){
 		if(!sf.model.root[model])
 			throw "Couldn't find model for "+model+" that was called from sf-click";
 
-		var _modelScope = sf.model.root[model];
-
-		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
-		var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')'+sf.regex.avoidQuotes+'\\b', 'g');
-
-		script = script.replace(scopeMask, function(full, matched){
-			return '_modelScope.'+matched;
+		var modelKeys = sf.model.modelKeys(sf.model.root[model]).join('|');
+		script = avoidQuotes(script, function(script_){
+			return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
+				return '_modelScope.'+matched;
+			});
 		});
 
 		script = script.split('(');
