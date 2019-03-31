@@ -48,7 +48,12 @@ sf.controller = new function(){
 	}
 
 	self.modelName = function(element){
-		var name = self.modelElement(element).getAttribute('sf-controller');
+		var name = self.modelElement(element);
+		if(name === null){
+			console.error("Can't find any controller for", element);
+			return;
+		}
+		name = name.getAttribute('sf-controller');
 
 		// Initialize it first
 		if(name !== undefined && !self.active[name])
