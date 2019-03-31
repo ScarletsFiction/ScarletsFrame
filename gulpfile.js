@@ -1,31 +1,25 @@
 var gulp = require('gulp');
 var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
-var browserSync = require('browser-sync');
-var reload = browserSync.reload;
-var csso = require('gulp-csso');
 var uglify = require('gulp-uglify-es').default;
-var autoprefixer = require('gulp-autoprefixer');
 var header = require('gulp-header');
 var rename = require('gulp-rename');
 var babel = require('gulp-babel');
-var fs = require('fs');
 var notifier = require('node-notifier');
-var order = require("gulp-order");
 
 gulp.task('js', function(){
-  return gulp.src('src/**/*.js')
-    .pipe(sourcemaps.init())
-    .pipe(order([
-      'sf-a_init.js',
-      'sf-polyfill.js',
-      'sf-dom.js',
-      'sf-loader.js',
-      'sf-component.js',
-      'sf-model.js',
-      '**/*.js',
-      'sf-z_end.js'
-    ]))
+  // Set the order
+  return gulp.src([
+      'src/sf-a_init.js',
+      'src/sf-a_polyfill.js',
+      'src/sf-dom.js',
+      'src/sf-loader.js',
+      'src/sf-component.js',
+      'src/sf-model.js',
+      'src/**/*.js'
+    ]).pipe(sourcemaps.init())
+
+    // Save as combined script
     .pipe(concat('scarletsframe.js'))
     /*.pipe(babel({
       presets: [
@@ -43,10 +37,11 @@ gulp.task('js', function(){
     }))*/
     .pipe(gulp.dest('dist'))
 
-    .pipe(rename('scarletsframe.min.js'))
-    .on('error', swallowError)
-    .pipe(uglify())
-    .on('error', swallowError)
+    // Create minified file (This would be little slower)
+    .pipe(rename('scarletsframe.min.js')).on('error', swallowError)
+    .pipe(uglify()).on('error', swallowError)
+
+    // Add header so developer can know about this script
     .pipe(header(`/*
   ScarletsFrame
   A frontend library for Scarlets Framework that support
@@ -68,17 +63,7 @@ gulp.task('watch', function(){
   gulp.watch(['src/**/*.js'], gulp.series('js'));
 });
 
-gulp.task('serve', function(){
-  browserSync({
-    server: {
-      baseDir: 'example'
-    }
-  });
-
-  gulp.watch(['*.html', 'styles/**/*.css', 'scripts/**/*.js'], {cwd: 'example'}, reload);
-});
-
-gulp.task('default', gulp.series('js'));
+gulp.task('default', gulp.series('watch'));
 
 function swallowError(error){
   console.log(error.message)
