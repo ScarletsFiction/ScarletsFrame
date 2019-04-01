@@ -1412,11 +1412,13 @@ sf.model = function(scope){
 			if(old !== null && old !== undefined && old.constructor === Array)
 				old = old.slice(0);
 
-			if(callback !== undefined)
-				newValue = callback(old, value);
+			try{
+				if(callback !== undefined)
+					newValue = callback(old, value);
 
-			if(v2m !== undefined)
-				newValue = v2m(old, value);
+				if(v2m !== undefined)
+					newValue = v2m(old, value);
+			}catch(e){console.error(e)}
 		}
 		return newValue;
 	}
@@ -1859,11 +1861,13 @@ sf.model = function(scope){
 					var m2v = model['m2v$'+propertyName];
 					if(callback !== undefined || m2v !== undefined){
 						var newValue = false;
-						if(callback !== undefined)
-							newValue = callback(objValue, val);
+						try{
+							if(callback !== undefined)
+								newValue = callback(objValue, val);
 
-						if(m2v !== undefined)
-							newValue = m2v(objValue, val);
+							if(m2v !== undefined)
+								newValue = m2v(objValue, val);
+						}catch(e){console.error(e)}
 
 						if(newValue !== undefined)
 							objValue = newValue;
