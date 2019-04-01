@@ -1410,7 +1410,7 @@ sf.model = function(scope){
 	var callInputListener = function(model, property, value){
 		var callback = model['on$'+property];
 		var v2m = model['v2m$'+property];
-		var newValue = undefined;
+		var newValue1 = undefined; var newValue2 = undefined;
 		if(callback !== undefined || v2m !== undefined){
 			var old = model[property];
 			if(old !== null && old !== undefined && old.constructor === Array)
@@ -1418,13 +1418,13 @@ sf.model = function(scope){
 
 			try{
 				if(v2m !== undefined)
-					newValue = v2m(old, value);
+					newValue1 = v2m(old, value);
 
 				if(callback !== undefined)
-					newValue = callback(old, value);
+					newValue2 = callback(old, value);
 			}catch(e){console.error(e)}
 		}
-		return newValue;
+		return newValue2 !== undefined ? newValue2 : newValue1;
 	}
 
 	var inputBoundRunning = false;
@@ -1859,25 +1859,27 @@ sf.model = function(scope){
 			},
 			set:function(val){
 				if(objValue !== val){
-					var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
 					var m2v = model['m2v$'+propertyName];
-					var out = model['out$'+propertyName];
+					var out = inputBoundRunning === false ? model['out$'+propertyName] : undefined;
+					var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
+
 					if(callback !== undefined || m2v !== undefined || out !== undefined){
-						var newValue = undefined;
+						var newValue1 = undefined; var newValue2 = undefined; var newValue3 = undefined;
 						try{
 							if(m2v !== undefined)
-								newValue = m2v(objValue, val);
+								newValue1 = m2v(objValue, val);
 
-							if(out !== undefined && inputBoundRunning === false)
-								newValue = out(objValue, val);
+							if(out !== undefined)
+								newValue2 = out(objValue, val);
 
 							if(callback !== undefined)
-								newValue = callback(objValue, val);
+								newValue3 = callback(objValue, val);
 						}catch(e){console.error(e)}
 
-						if(newValue !== undefined)
-							objValue = newValue;
-						else objValue = val;
+						objValue = (newValue3 !== undefined ? newValue3 : 
+							(newValue2 !== undefined ? newValue2 : 
+							(newValue1 !== undefined ? newValue1 : val)
+						));
 					}
 					else objValue = val;
 
