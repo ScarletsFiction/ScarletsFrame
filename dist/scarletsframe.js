@@ -2160,11 +2160,11 @@ sf.model = function(scope){
 				old = old.slice(0);
 
 			try{
-				if(callback !== undefined)
-					newValue = callback(old, value);
-
 				if(v2m !== undefined)
 					newValue = v2m(old, value);
+
+				if(callback !== undefined)
+					newValue = callback(old, value);
 			}catch(e){console.error(e)}
 		}
 		return newValue;
@@ -2199,7 +2199,7 @@ sf.model = function(scope){
 		ref.viewInputted = true;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-		if(newValue === undefined)
+		if(newValue !== undefined)
 			value = newValue;
 
 		var model = ref.sfModel;
@@ -2235,7 +2235,7 @@ sf.model = function(scope){
 		else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-		if(newValue === undefined)
+		if(newValue !== undefined)
 			ref.sfModel[ref.sfBounded] = newValue;
 		else ref.sfModel[ref.sfBounded] = value;
 	}
@@ -2604,14 +2604,18 @@ sf.model = function(scope){
 				if(objValue !== val){
 					var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
 					var m2v = model['m2v$'+propertyName];
-					if(callback !== undefined || m2v !== undefined){
-						var newValue = false;
+					var out = model['out$'+propertyName];
+					if(callback !== undefined || m2v !== undefined || out !== undefined){
+						var newValue = undefined;
 						try{
-							if(callback !== undefined)
-								newValue = callback(objValue, val);
-
 							if(m2v !== undefined)
 								newValue = m2v(objValue, val);
+
+							if(out !== undefined && inputBoundRunning === false)
+								newValue = out(objValue, val);
+
+							if(callback !== undefined)
+								newValue = callback(objValue, val);
 						}catch(e){console.error(e)}
 
 						if(newValue !== undefined)
