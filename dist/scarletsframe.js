@@ -2159,11 +2159,13 @@ sf.model = function(scope){
 			if(old !== null && old !== undefined && old.constructor === Array)
 				old = old.slice(0);
 
-			if(callback !== undefined)
-				newValue = callback(old, value);
+			try{
+				if(callback !== undefined)
+					newValue = callback(old, value);
 
-			if(v2m !== undefined)
-				newValue = v2m(old, value);
+				if(v2m !== undefined)
+					newValue = v2m(old, value);
+			}catch(e){console.error(e)}
 		}
 		return newValue;
 	}
@@ -2309,6 +2311,7 @@ sf.model = function(scope){
 		if(assignedType === 'number')
 			typeData = Number;
 
+		element.typeData = typeData;
 		$.on(element, 'change', triggerInputEvent);
 
 		// Bound value change
@@ -2353,7 +2356,7 @@ sf.model = function(scope){
 		}
 
 		if(oneWay === true) return;
-		modelToViewBinding(model, property, inputBoundRun, element, type, typeData);
+		modelToViewBinding(model, property, inputBoundRun, element, type);
 	}
 
 	var bindInput = function(targetNode){
@@ -2558,13 +2561,10 @@ sf.model = function(scope){
 		}
 	}
 
-	function modelToViewBinding(model, propertyName, callback, elementBind, type, typeData){
+	function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		// Enable multiple element binding
 		if(model.sf$bindedKey === undefined)
 			initBindingInformation(model);
-
-		if(elementBind !== undefined)
-			elementBind.typeData = typeData;
 
 		if(model.sf$bindedKey[propertyName] !== undefined){
 			var ref = model.sf$bindedKey[propertyName];
@@ -2606,11 +2606,13 @@ sf.model = function(scope){
 					var m2v = model['m2v$'+propertyName];
 					if(callback !== undefined || m2v !== undefined){
 						var newValue = false;
-						if(callback !== undefined)
-							newValue = callback(objValue, val);
+						try{
+							if(callback !== undefined)
+								newValue = callback(objValue, val);
 
-						if(m2v !== undefined)
-							newValue = m2v(objValue, val);
+							if(m2v !== undefined)
+								newValue = m2v(objValue, val);
+						}catch(e){console.error(e)}
 
 						if(newValue !== undefined)
 							objValue = newValue;

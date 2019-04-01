@@ -1564,6 +1564,7 @@ sf.model = function(scope){
 		if(assignedType === 'number')
 			typeData = Number;
 
+		element.typeData = typeData;
 		$.on(element, 'change', triggerInputEvent);
 
 		// Bound value change
@@ -1608,7 +1609,7 @@ sf.model = function(scope){
 		}
 
 		if(oneWay === true) return;
-		modelToViewBinding(model, property, inputBoundRun, element, type, typeData);
+		modelToViewBinding(model, property, inputBoundRun, element, type);
 	}
 
 	var bindInput = function(targetNode){
@@ -1813,13 +1814,10 @@ sf.model = function(scope){
 		}
 	}
 
-	function modelToViewBinding(model, propertyName, callback, elementBind, type, typeData){
+	function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		// Enable multiple element binding
 		if(model.sf$bindedKey === undefined)
 			initBindingInformation(model);
-
-		if(elementBind !== undefined)
-			elementBind.typeData = typeData;
 
 		if(model.sf$bindedKey[propertyName] !== undefined){
 			var ref = model.sf$bindedKey[propertyName];
