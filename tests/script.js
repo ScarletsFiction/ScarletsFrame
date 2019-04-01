@@ -153,6 +153,9 @@ sf.model.for('model-binding', function(self, root){
       }, 4000);
    };
    self.inputBinding5 = [];
+   self.out$inputBinding5 = function(old, news){
+      console.warn("inputBinding5 was updated from:", old, 'to', news);
+   };
    self.inputBinding6 = '';
    self.on$inputBinding6 = function(old, news){
       console.warn("inputBinding6 was updated from:", old, 'to', news);
@@ -171,7 +174,7 @@ sf.controller.for('model-binding', function(self, root){
    setTimeout(function(){
       self.inputBinding3 = true;
       self.inputBinding4 = 'radio1';
-      self.inputBinding5 = self.inputBinding6 = 'sel1';
+      self.inputBinding5 = self.inputBinding6 = 1;
       self.bold = false;
       self.pink = true;
    }, 3000);
@@ -179,13 +182,13 @@ sf.controller.for('model-binding', function(self, root){
    setTimeout(function(){
       self.inputBinding3 = 'check1';
       self.inputBinding4 = 'radio2';
-      self.inputBinding5 = self.inputBinding6 = 'sel3';
+      self.inputBinding5 = self.inputBinding6 = 3;
    }, 6000);
 
    setTimeout(function(){
       self.inputBinding3 = ['check2'];
       self.inputBinding4 = 'radio1';
-      self.inputBinding5 = ['sel1', 'sel2'];
+      self.inputBinding5 = [1, 2];
       self.bold = true;
       self.pink = false;
    }, 8000);
