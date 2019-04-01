@@ -14,7 +14,7 @@ A frontend library for Scarlets Framework that support lazy page load and elemen
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 - [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
-- [State Listener](https://jsbin.com/qohifel/edit?html,js,console,output)
+- [State Listener](https://jsbin.com/qohifel/edit?html,js,output)
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -502,15 +502,22 @@ sf.model.for('example', function(self){
   self.myInput = 0;
 
   // Listen any changes before new value assigned to `myInput`
+  // Useful if you want to process any changes
   self.on$myInput = function(oldValue, newValue){}
 
   // Listen changes (Model -> View)
+  // Trigger only when the value is not being set from the View
+  self.out$myInput = function(oldValue, newValue){}
+
+  // Listen changes (Model -> View)
+  // This can also being triggered when (View -> [Model -> View])
   self.m2v$myInput = function(oldValue, newValue){
     if(newValue > 100)
       return 100; // Force value for myInput
   }
 
   // Listen changes (View -> Model)
+  // This will triggered on input/change event
   self.v2m$myInput = function(oldValue, newValue){
     console.log("Value will be reverted in 3s to oldValue");
     setTimeout(function(){
