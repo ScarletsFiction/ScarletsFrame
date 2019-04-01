@@ -2174,6 +2174,7 @@ sf.model = function(scope){
 
 		inputBoundRunning = true;
 		var ref = e.target;
+		ref.viewInputted = true;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
 		if(newValue !== undefined)
@@ -2193,6 +2194,7 @@ sf.model = function(scope){
 		
 		inputBoundRunning = true;
 		var ref = e.target;
+		ref.viewInputted = true;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
 		if(newValue === undefined)
@@ -2219,6 +2221,7 @@ sf.model = function(scope){
 		
 		inputBoundRunning = true;
 		var ref = e.target;
+		ref.viewInputted = true;
 		var typeData = ref.typeData;
 		if(ref.multiple === true){
 			var temp = ref.selectedOptions;
@@ -2283,6 +2286,15 @@ sf.model = function(scope){
 		}
 	}
 
+	var triggerInputEvent = function(e){
+		if(e.fromSFFramework === true) return;
+		if(e.target.viewInputted === true){
+			e.target.viewInputted = false;
+			return;
+		}
+		e.target.dispatchEvent(new Event('input'));
+	}
+
 	var elementBoundChanges = function(model, property, element, oneWay){
 		// Enable multiple element binding
 		if(model.sf$bindedKey === undefined)
@@ -2297,15 +2309,17 @@ sf.model = function(scope){
 		if(assignedType === 'number')
 			typeData = Number;
 
+		$.on(element, 'change', triggerInputEvent);
+
 		// Bound value change
 		if(element.tagName === 'TEXTAREA'){
-			$.on(element, 'change', inputTextBound);
+			$.on(element, 'input', inputTextBound);
 			element.value = model[property];
 			type = 1;
 		}
 
 		else if(element.selectedOptions !== undefined){
-			$.on(element, 'change', inputSelectBound);
+			$.on(element, 'input', inputSelectBound);
 			type = 2;
 
 			assignElementData.select(model, property, element);
@@ -2314,25 +2328,25 @@ sf.model = function(scope){
 		else{
 			var type = element.type.toLowerCase();
 			if(type === 'radio'){
-				$.on(element, 'change', inputTextBound);
+				$.on(element, 'input', inputTextBound);
 				type = 3;
 
 				element.checked = model[property] == element.value;
 			}
 			else if(type === 'checkbox'){
-				$.on(element, 'change', inputCheckBoxBound);
+				$.on(element, 'input', inputCheckBoxBound);
 				type = 4;
 
 				assignElementData.checkbox(model, property, element);
 			}
 
 			else if(type === 'file'){
-				$.on(element, 'change', inputFilesBound);
+				$.on(element, 'input', inputFilesBound);
 				return;
 			}
 
 			else{
-				$.on(element, 'change', inputTextBound);
+				$.on(element, 'input', inputTextBound);
 				element.value = model[property];
 				type = 1;
 			}
@@ -2587,30 +2601,32 @@ sf.model = function(scope){
 				return objValue;
 			},
 			set:function(val){
-				var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
-				var m2v = model['m2v$'+propertyName];
-				if(callback !== undefined || m2v !== undefined){
-					var newValue = false;
-					if(callback !== undefined)
-						newValue = callback(objValue, val);
+				if(objValue !== val){
+					var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
+					var m2v = model['m2v$'+propertyName];
+					if(callback !== undefined || m2v !== undefined){
+						var newValue = false;
+						if(callback !== undefined)
+							newValue = callback(objValue, val);
 
-					if(m2v !== undefined)
-						newValue = m2v(objValue, val);
+						if(m2v !== undefined)
+							newValue = m2v(objValue, val);
 
-					if(newValue !== undefined)
-						objValue = newValue;
-					else objValue = val;
-				}
-				else objValue = val;
-
-				var ref = model.sf$bindedKey[propertyName];
-				for (var i = 0; i < ref.length; i++) {
-					if(inputBoundRun === ref[i]){
-						if(inputBoundRunning !== true) // Avoid multiple assigment
-							ref[i](model, propertyName, ref.input);
-						continue;
+						if(newValue !== undefined)
+							objValue = newValue;
+						else objValue = val;
 					}
-					ref[i]();
+					else objValue = val;
+
+					var ref = model.sf$bindedKey[propertyName];
+					for (var i = 0; i < ref.length; i++) {
+						if(inputBoundRun === ref[i]){
+							if(inputBoundRunning !== true) // Avoid multiple assigment
+								ref[i](model, propertyName, ref.input);
+							continue;
+						}
+						ref[i]();
+					}
 				}
 
 				inputBoundRunning = false;
