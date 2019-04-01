@@ -966,13 +966,17 @@ sf.model = function(scope){
 				for(var a = 0; a < refA.length; a++){
 					var refB = refA[a];
 
+					var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
+						(current.tagName === 'INPUT' && /checkbox|radio|hidden/.test(current.type) === false)
+					));
+
 					changesReference.push({
-						attribute:(refB.name === 'value' ? current : current.attributes[refB.name]),
+						attribute:isValueInput === true ? current : current.attributes[refB.name],
 						ref:refB
 					});
 
 					if(refB.direct !== undefined){
-						if(refB.name === 'value'){
+						if(refB.name === 'value' && isValueInput === true){
 							current.value = parsed[refB.direct].data;
 							current.removeAttribute('value');
 							continue;
@@ -982,7 +986,7 @@ sf.model = function(scope){
 					}
 
 					// Below is used for multiple data
-					if(refB.name === 'value'){
+					if(refB.name === 'value' && isValueInput === true){
 						var temp = current.value;
 						current.removeAttribute('value');
 						current.value = temp;

@@ -156,6 +156,11 @@ sf.model.for('model-binding', function(self, root){
    self.out$inputBinding5 = function(old, news){
       console.warn("inputBinding5 was updated from:", old, 'to', news);
    };
+   self.inputBinding6a = [
+      {text:'Select 1', val:1},
+      {text:'Select 2', val:2},
+      {text:'Select 3', val:3},
+   ];
    self.inputBinding6 = '';
    self.on$inputBinding6 = function(old, news){
       console.warn("inputBinding6 was updated from:", old, 'to', news);

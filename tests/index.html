@@ -102,10 +102,8 @@
             <option value="2">Select 2</option>
             <option value="3">Select 3</option>
          </select>
-         <select sf-bound="inputBinding6">
-            <option value="1">Select 1</option>
-            <option value="2">Select 2</option>
-            <option value="3">Select 3</option>
+         <select sf-bound="inputBinding6" typedata="number">
+            <option value="{{x.val}}" sf-repeat-this="x in inputBinding6a">{{x.text}}</option>
          </select><br><br>
          <input type="file" sf-bound="inputBinding7"><br>
 
