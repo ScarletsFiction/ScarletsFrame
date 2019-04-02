@@ -73,3 +73,10 @@ function deepProperty(obj, path){
   }
   return obj;
 }
+
+function capitalizeLetters(name){
+	for (var i = 0; i < name.length; i++) {
+		name[i] = name[i][0].toUpperCase() + name[i].slice(1);
+	}
+	return name.join('');
+}

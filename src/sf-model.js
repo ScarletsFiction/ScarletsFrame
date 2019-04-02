@@ -198,6 +198,9 @@ sf.model = function(scope){
 	}
 
 	var templateParser = function(template, item, original){
+		if(template.component !== void 0)
+			return new window[template.component];
+
 		var html = original === true ? template.html : template.html.cloneNode(true);
 		var addresses = template.addresses;
 		var parsed = templateExec(template.parse, item);
@@ -1348,7 +1351,6 @@ sf.model = function(scope){
 	var loopParser = function(name, template, script, targetNode, parentNode){
 		var method = script.split(' in ');
 		var mask = method[0];
-		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		var items = root_(name)[method[1]];
 		if(items === void 0)
@@ -1361,6 +1363,7 @@ sf.model = function(scope){
 		template = self.extractPreprocess(template, mask, name);
 
 		if(method.length === 2){
+			var isKeyed = parentNode.classList.contains('sf-keyed-list');
 			var tempDOM = document.createElement('div');
 			var modelRef = self.root[name];
 
@@ -1919,6 +1922,15 @@ sf.model = function(scope){
 	}
 
 	self.extractPreprocess = function(targetNode, mask, name){
+		// Check if it's component
+		var tagName = targetNode.tagName.toLowerCase();
+		if(sf.component.registered[tagName] !== void 0){
+			targetNode.parentNode.classList.add('sf-keyed-list');
+			return {
+				component:'$'+capitalizeLetters(tagName.split('-'))
+			};
+		}
+
 		var copy = targetNode.outerHTML;
 
 		// Mask the referenced item
