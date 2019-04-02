@@ -558,6 +558,7 @@ When new component are created to the element, it will trigger event that was re
 sf.component.event('model-name', function(scope, event){
   // scope.data === 'text'
   if(event === 'created');
+  if(event === 'connected');
   if(event === 'removed');
 });
 ```
@@ -580,7 +581,7 @@ Or you can do it directly from DOM like below.
 <model-name></model-name>
 ```
 
-When you called `sf.model('model-name')`, it will return every component model scope as an array. But if you want to count how many component are created on the DOM, you can get the length of `sf.component.available`.
+When you called `sf.model('model-name')` or `sf(document.querySelector('model-name'))`, it will return every component model scope as an array. But if you want to count how many component are created on the DOM, you can get the length of `sf.component.available`.
 
 The model will be automatically removed after the element was deleted. Or you could also call `myElement.destroy()`.
 
