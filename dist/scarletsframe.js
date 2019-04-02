@@ -7,10 +7,13 @@ if(typeof document === void 0)
 // ===== Module Init =====
 var internal = {};
 
-var sf = function(){
-	if(arguments[0].constructor === Function){
+var sf = function(stuff){
+	if(stuff.constructor === Function)
 		return sf.loader.onFinish.apply(null, arguments);
-	}
+
+	// If it's Node type
+	if(stuff.tagName !== void 0)
+		return sf.model.root[sf.controller.modelName(stuff)];
 };
 
 sf.internal = {};
@@ -836,17 +839,20 @@ sf.component = new function(){
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;
 
-		// func.prototype.connectedCallback = function(){};
+		func.prototype.connectedCallback = function(){
+			scope.triggerEvent(name, 'connected', this);
+		};
 
 		try{
 		  customElements.define(tagName, func);
-		}catch(err){console.error(e)}
+		}catch(err){console.error(err)}
 
 		window['$'+name] = func;
 	}
 };
 // Data save and HTML content binding
 sf.model = function(scope){
+	// If it's component tag
 	if(sf.component.registered[scope] !== void 0)
 		return root_(scope);
 
