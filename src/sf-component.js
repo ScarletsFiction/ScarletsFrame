@@ -73,7 +73,7 @@ sf.component = new function(){
 		}
 
 		if(element === void 0)
-			return document.createElement(name);
+			return new window['$'+capitalizeLetters(name.split('-'))];
 
 		var newElement = element === void 0;
 		if(element === void 0){
@@ -120,7 +120,7 @@ sf.component = new function(){
 			element.model = sf.model.root[newID];
 			return newID;
 		}
-		
+
 		var temp = self.registered[name][3];
 		if(temp.tempDOM === true){
 			temp = temp.cloneNode(true).childNodes;
@@ -177,11 +177,7 @@ sf.component = new function(){
 		if(name.length === 1)
 			return console.error("Please use '-' when defining component tags");
 
-		for (var i = 0; i < name.length; i++) {
-			name[i] = name[i][0].toUpperCase() + name[i].slice(1);
-		}
-
-		name = name.join('');
+		name = capitalizeLetters(name);
 		var func = eval("function "+name+"(){var he = HTMLElement_wrap.call(this);self.new(tagName, he, true);return he}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;
@@ -194,5 +190,12 @@ sf.component = new function(){
 		}catch(err){console.error(e)}
 
 		window['$'+name] = func;
+	}
+
+	function capitalizeLetters(name){
+		for (var i = 0; i < name.length; i++) {
+			name[i] = name[i][0].toUpperCase() + name[i].slice(1);
+		}
+		return name.join('');
 	}
 };
