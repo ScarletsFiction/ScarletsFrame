@@ -203,6 +203,19 @@ sf.controller.for('model-binding', function(self, root){
    }
 });
 
+sf.component.for('comp-test', function(self){
+   self.data = 'zxc';
+});
+
+sf.component.html('comp-test', `<div>1. {{ data }}</div><div>2. {{ data }}</div>`);
+
+sf(function(){
+   var ID = sf.component.new('comp-test', compDefined);
+
+   elem2 = new $CompTest();
+   components.appendChild(elem2);
+});
+
 sf.controller.run('dummy', function(self, root){
    if(!root('model-binding').addition)
       console.error("Can't get other model scope function");

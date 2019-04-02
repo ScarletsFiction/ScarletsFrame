@@ -137,7 +137,6 @@ When you're using router, every click on an element with link or `href` will tri
 
 <a href="/todo/page">Go to todo page</a>
 <a href="/todo/page" sf-router-ignore>Default page load</a>
-
 ```
 
 ### Controller
@@ -527,18 +526,13 @@ sf.model.for('example', function(self){
 });
 ```
 
-Find processable template from DOM and mark them for preprocess queue. Followed by calling `parsePreprocess` to process the queued DOM.
+You can also initialize your DOM with `sf.model.init` if you added the DOM dynamically.
 ```js
-sf.model.queuePreprocess(targetNode = false)
-```
-
-Process the template queue and bind the element if it's bindable.
-```js
-sf.model.parsePreprocess(targetNode = false)
+sf.model.init(targetNode = false)
 ```
 
 ## Components
-Components feature is used when you have many element for one model. Each component will have same structure but with different value.
+Components feature is used when you have many element for one model. Each component will have same structure but with different value. When defining component name you must use `-` and word character.
 
 ```js
 sf.component.for('model-name', function(self, root){
@@ -551,26 +545,35 @@ After it's executed, it will be registered as an model component. And any `contr
 If you already inserted the component to the DOM, you can create attach new component model for it.
 
 ```js
-sf.component.new('model.name', element);
+sf.component.new('model-name', element = undefined);
 ```
 
 When new component are created to the element, it will trigger event that was registered.
 
 ```js
-sf.component.event('model.name', function(scope, event){
+sf.component.event('model-name', function(scope, event){
   // scope.data === 'text'
   if(event === 'created');
   if(event === 'removed');
 });
 ```
 
-But if you want to create the element in the vDOM, you need to define the HTML content for the component and call `sf.component.new`.
+If you want to create the component in the DOM, you need to define the HTML content for the component.
 
 ```js
-sf.component.html('model.name', `<div>{{ data }}</div>`);
-var myElement = sf.component.new('model.name');
+sf.component.html('model-name', `<div>{{ data }}</div>`);
+```
+
+Then you can create new component from javascript like below.
+```js
+var myElement = new $ModelName;
 document.body.appendChild(myElement);
 // myElement.model.data === 'text'
+```
+
+Or you can do it directly from DOM like below.
+```html
+<model-name></model-name>
 ```
 
 When you called `sf.model('model-name')`, it will return every component model scope as an array. But if you want to count how many component are created on the DOM, you can get the length of `sf.component.available`.
