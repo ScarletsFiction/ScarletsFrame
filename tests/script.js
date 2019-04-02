@@ -136,6 +136,8 @@ var binding = null;
 sf.model.for('model-binding', function(self, root){
    binding = self;
 
+   self.onKeyUp = console.warn;
+
    self.bold = true;
    self.pink = false;
    self.inputBinding1 = '';

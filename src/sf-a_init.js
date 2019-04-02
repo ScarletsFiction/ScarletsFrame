@@ -7,10 +7,13 @@ if(typeof document === void 0)
 // ===== Module Init =====
 var internal = {};
 
-var sf = function(){
-	if(arguments[0].constructor === Function){
+var sf = function(stuff){
+	if(stuff.constructor === Function)
 		return sf.loader.onFinish.apply(null, arguments);
-	}
+
+	// If it's Node type
+	if(stuff.tagName !== void 0)
+		return sf.model.root[sf.controller.modelName(stuff)];
 };
 
 sf.internal = {};

@@ -79,9 +79,9 @@
 
       <!-- Model and Controller -->
       <div sf-controller="model-binding">
-
          <span :class="transit {{ bold ? 'bold' : '' }} {{ pink ? 'pink' : '' }}">Change variable on keyboard input</span><br>
-         <input type="text" sf-bound="inputBinding1"><br>
+
+         <input type="text" sf-bound="inputBinding1" onkeyup="sf(this).onKeyUp(event)"><br>
          <span id="test">Var Content: {{ inputBinding1 }}</span><br><br>
 
          <span class="bold" style="

@@ -1,5 +1,6 @@
 // Data save and HTML content binding
 sf.model = function(scope){
+	// If it's component tag
 	if(sf.component.registered[scope] !== void 0)
 		return root_(scope);
 
