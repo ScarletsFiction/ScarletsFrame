@@ -61,7 +61,7 @@ function Request(requestOptions) {
     // Before create callback
     proceedRequest = fireCallback('beforeCreate', options);
     if (proceedRequest === false)
-        return undefined;
+        return void 0;
     // For jQuery guys
     if (options.type)
         options.method = options.type;
@@ -125,7 +125,7 @@ function Request(requestOptions) {
                 fireCallback('error', null, 'timeout');
             }, options.timeout);
         }
-        return undefined;
+        return void 0;
     }
     // Cache for GET/HEAD requests
     if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE') {
@@ -192,7 +192,7 @@ function Request(requestOptions) {
         });
     }
     // Check for crossDomain
-    if (typeof options.crossDomain === 'undefined') {
+    if (typeof options.crossDomain === 'void 0') {
         // eslint-disable-next-line
         options.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(options.url) && RegExp.$2 !== window.location.host;
     }
@@ -283,12 +283,12 @@ function RequestShortcut(method) {
         if (typeof callback === 'string') {
             dataType = callback;
             if (callback === success)
-                success = undefined;
+                success = void 0;
             else
-                error = undefined;
+                error = void 0;
         }
     });
-    dataType = dataType || (method === 'json' || method === 'postJSON' ? 'json' : undefined);
+    dataType = dataType || (method === 'json' || method === 'postJSON' ? 'json' : void 0);
     var requestOptions = {
         url: url,
         method: method === 'post' || method === 'postJSON' ? 'POST' : 'GET',

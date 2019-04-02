@@ -246,7 +246,7 @@ sf.internal.virtual_scroll = new function(){
 		var bounding = virtual.bounding;
 		refreshScrollBounding(0, bounding, list, parentNode);
 
-		if(virtual.callback_ !== undefined){
+		if(virtual.callback_ !== void 0){
 			var callback_ = virtual.callback_;
 			delete virtual.callback_;
 		}
@@ -270,7 +270,7 @@ sf.internal.virtual_scroll = new function(){
 				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
 			}
 
-			if(virtual.callback !== undefined && list.length !== 0){
+			if(virtual.callback !== void 0 && list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null &&
 					scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight
 				){
@@ -343,7 +343,7 @@ sf.internal.virtual_scroll = new function(){
 			refresh(force, list, self.prepareCount, parentNode, scroller, checkCursorPosition, refreshVirtualSpacer);
 		}
 
-		if(virtual.callback_ !== undefined){
+		if(virtual.callback_ !== void 0){
 			var callback_ = virtual.callback_;
 			delete virtual.callback_;
 		}
@@ -404,7 +404,7 @@ sf.internal.virtual_scroll = new function(){
 			refreshScrollBounding(cursor, bounding, list, parentNode);
 			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
 
-			if(virtual.callback !== undefined && list.length !== 0){
+			if(virtual.callback !== void 0 && list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null){
 					virtual.callback.hitFloor(cursor);
 				}
@@ -439,17 +439,17 @@ sf.internal.virtual_scroll = new function(){
 			bounding.ceiling = -1;
 			bounding.floor = parentNode.children[self.prepareCount * 2 + 1];
 
-			if(bounding.floor !== undefined)
+			if(bounding.floor !== void 0)
 				bounding.floor = bounding.floor.offsetTop;
 			else bounding.floor = parentNode.lastElementChild.offsetTop + 1000;
 
 			bounding.floor -= bounding.initial;
 			return;
 		}
-		else if(parentNode.children[temp + 1] !== undefined)
+		else if(parentNode.children[temp + 1] !== void 0)
 				bounding.ceiling = parentNode.children[temp + 1].offsetTop; // -2 element
 
-		if(list.$virtual.preparedLength !== undefined && cursor >= list.length - list.$virtual.preparedLength)
+		if(list.$virtual.preparedLength !== void 0 && cursor >= list.length - list.$virtual.preparedLength)
 			bounding.floor = list.$virtual.dCursor.floor.offsetTop + list.$virtual.scrollHeight*2;
 		else{
 			bounding.floor = parentNode.children[self.prepareCount + 3].offsetTop; // +2 element
@@ -583,7 +583,7 @@ sf.internal.virtual_scroll = new function(){
 			// Virtual DOM to DOM tree
 			for (var i = 0; i < insertCount; i++) {
 				temp = virtual.dom.children[index];
-				if(temp === undefined) break;
+				if(temp === void 0) break;
 
 				floor.insertAdjacentElement('beforeBegin', temp);
 			}
@@ -599,7 +599,7 @@ sf.internal.virtual_scroll = new function(){
 
 			temp = parentNode.children[prepareCount - reduce + 1];
 	
-			if(temp !== undefined)
+			if(temp !== void 0)
 				scroller.scrollTop = temp.offsetTop - scroller.offsetTop;
 		}
 
@@ -621,19 +621,19 @@ sf.internal.virtual_scroll = new function(){
 
 	function obtainElements(list, parentNode){
 		var exist = [];
-		var temp = undefined;
+		var temp = void 0;
 
 		var length = list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
 			temp = list.$virtual.dom.children[i];
-			if(temp === undefined) break;
+			if(temp === void 0) break;
 			exist.push(temp);
 		}
 
 		length = parentNode.childElementCount - 2;
 		for (var i = 1; i <= length; i++) {
 			temp = parentNode.children[i];
-			if(temp === undefined) break;
+			if(temp === void 0) break;
 			exist.push(temp);
 		}
 		
@@ -643,7 +643,7 @@ sf.internal.virtual_scroll = new function(){
 		length = elementLength - length - list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
 			temp = list.$virtual.dom.children[list.$virtual.DOMCursor + i];
-			if(temp === undefined) break;
+			if(temp === void 0) break;
 			exist.push(temp);
 		}
 

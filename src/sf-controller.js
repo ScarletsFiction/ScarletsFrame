@@ -41,7 +41,7 @@ sf.controller = new function(){
 	}
 
 	self.modelElement = function(element){
-		if(element.nodeType === 1 && element.hasAttribute('sf-controller'))
+		if(element.nodeType === 1 && element.hasAttribute('sf-controller') === true)
 			return element;
 
 		return $.parent(element, '[sf-controller]');
@@ -53,10 +53,11 @@ sf.controller = new function(){
 			console.error("Can't find any controller for", element);
 			return;
 		}
-		name = name.getAttribute('sf-controller');
+
+		name = name.sf$component === void 0 ? name.getAttribute('sf-controller') : name.sf$component;
 
 		// Initialize it first
-		if(name !== undefined && !self.active[name])
+		if(name !== void 0 && !self.active[name])
 			self.run(name);
 
 		return name;
@@ -71,7 +72,8 @@ sf.controller = new function(){
 			script = element.getAttribute('sf-click');
 		}
 
-		var model = $.parent(element, '[sf-controller]').getAttribute('sf-controller');
+		var model = $.parent(element, '[sf-controller]');
+		model = model.sf$component === void 0? model.getAttribute('sf-controller') : model;
 
 		if(!sf.model.root[model])
 			throw "Couldn't find model for "+model+" that was called from sf-click";
@@ -143,7 +145,7 @@ sf.controller = new function(){
 			delete self.pending[name];
 		}
 
-		if(sf.model.root[name] === undefined)
+		if(sf.model.root[name] === void 0)
 			sf.model.root[name] = {};
 
 		if(func)
@@ -158,7 +160,7 @@ sf.controller = new function(){
 
 		var temp = $('[sf-controller]', parent || document.body);
 		for (var i = 0; i < temp.length; i++) {
-			self.run(temp[i].getAttribute('sf-controller'));
+			self.run(temp[i].sf$component === void 0? temp[i].getAttribute('sf-controller') : temp[i].sf$component);
 		}
 	}
 
@@ -172,7 +174,7 @@ var root_ = function(scope){
 	if(sf.component.registered[scope]){
 		var available = [];
 		var component = sf.component.available[scope];
-		if(component !== undefined){
+		if(component !== void 0){
 			for (var i = 0; i < component.length; i++) {
 				available.push(sf.model.root[component[i]]);
 			}

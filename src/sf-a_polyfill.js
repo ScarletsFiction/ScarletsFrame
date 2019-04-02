@@ -4,7 +4,7 @@ if(typeof Object.assign != 'function'){
     value: function assign(target, varArgs) {
       'use strict';
       if (target == null)
-        throw new TypeError('Cannot convert undefined or null to object');
+        throw new TypeError('Cannot convert void 0 or null to object');
       var to = Object(target);
       for (var index = 1; index < arguments.length; index++) {
         var nextSource = arguments[index];
@@ -22,7 +22,7 @@ if(typeof Object.assign != 'function'){
   });
 }
 
-if(Element.prototype.remove === undefined || CharacterData.prototype.remove === undefined || DocumentType.prototype.remove === undefined){
+if(Element.prototype.remove === void 0 || CharacterData.prototype.remove === void 0 || DocumentType.prototype.remove === void 0){
   (function (arr) {
     arr.forEach(function (item) {
       if (item.hasOwnProperty('remove')) {
@@ -75,3 +75,14 @@ if(!Object.values)
     }
     return res;
   }
+
+if(Object.setPrototypeOf === void 0)
+  Object.setPrototypeOf = function(obj, proto) {
+    obj.__proto__ = proto;
+    return obj; 
+  }
+
+if(typeof Reflect === 'undefined'){
+  Reflect = {};
+  Reflect.construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };
+}

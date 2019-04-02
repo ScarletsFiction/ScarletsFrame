@@ -1,8 +1,8 @@
 (function(global, factory){
-  if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global);
+  if(typeof exports === 'object' && typeof module !== 'void 0') module.exports = factory(global);
   else global.sf = factory(global);
-}(typeof window !== "undefined" ? window : this, (function(window){'use strict';
-if(typeof document === undefined)
+}(typeof window !== "void 0" ? window : this, (function(window){'use strict';
+if(typeof document === void 0)
 	document = window.document;
 // ===== Module Init =====
 var internal = {};
@@ -69,7 +69,7 @@ function hiddenProperty(obj, property, value){
 function deepProperty(obj, path){
   for(var i = 0; i < path.length; i++){
     obj = obj[path[i]];
-    if(obj === undefined) return obj;
+    if(obj === void 0) return obj;
   }
   return obj;
 }

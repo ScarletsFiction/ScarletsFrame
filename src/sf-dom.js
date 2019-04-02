@@ -12,7 +12,7 @@ var $ = sf.dom; // Shortcut
 	var self = sf.dom;
 
 	self.findOne = function(selector, context){
-		if(context !== undefined) return context.querySelector(selector);
+		if(context !== void 0) return context.querySelector(selector);
 		return document.querySelector(selector);
 	}
 
@@ -93,10 +93,10 @@ var $ = sf.dom; // Shortcut
 		element.addEventListener(event, callback, {capture:true, once:once === true});
 
 		// Save event listener
-		if(element.sf$eventListener === undefined)
+		if(element.sf$eventListener === void 0)
 			element.sf$eventListener = {};
 
-		if(element.sf$eventListener[event] === undefined)
+		if(element.sf$eventListener[event] === void 0)
 			element.sf$eventListener[event] = [];
 
 		element.sf$eventListener[event].push(callback);
@@ -116,8 +116,8 @@ var $ = sf.dom; // Shortcut
 	 */
 	self.off = function(element, event, selector){
 		// Remove all event
-		if(event === undefined){
-			if(element.sf$eventListener === undefined)
+		if(event === void 0){
+			if(element.sf$eventListener === void 0)
 				return;
 
 			var events = element.sf$eventListener[event];
@@ -136,11 +136,11 @@ var $ = sf.dom; // Shortcut
 		}
 
 		// Remove listener
-		if(element.sf$eventListener === undefined)
+		if(element.sf$eventListener === void 0)
 			return;
 
 		var ref = element.sf$eventListener;
-		if(ref !== undefined && ref[event] !== undefined){
+		if(ref !== void 0 && ref[event] !== void 0){
 			for (var i = ref[event].length - 1; i >= 0; i--) {
 				if(selector && ref[event][i].selector !== selector)
 					continue;
@@ -159,7 +159,7 @@ var $ = sf.dom; // Shortcut
 		};
 
 		for (var t in animationEnd){
-			if(element.style[t] !== undefined){
+			if(element.style[t] !== void 0){
 				animationEnd = animationEnd[t];
 				break;
 			}
@@ -220,7 +220,7 @@ var $ = sf.dom; // Shortcut
 	}
 
 	self.remove = function(elements){
-		if(elements.remove !== undefined)
+		if(elements.remove !== void 0)
 			return elements.remove();
 
 		for (var i = 0; i < elements.length; i++) {
@@ -238,7 +238,7 @@ var $ = sf.dom; // Shortcut
 	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
 		var names = [];
-		if(untilElement === undefined) untilElement = documentElement;
+		if(untilElement === void 0) untilElement = documentElement;
 
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
@@ -249,7 +249,7 @@ var $ = sf.dom; // Shortcut
 			}
 			else{
 				if(element === untilElement){
-					if(childIndexes === undefined)
+					if(childIndexes === void 0)
 						names.unshift(element.tagName);
 					else names.unshift(0);
 				}

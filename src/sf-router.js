@@ -18,7 +18,7 @@ sf.router = new function(){
 		// Run 'before' event for new page view
 		var temp = $('[sf-controller], [sf-page]', targetNode);
 		for (var i = 0; i < temp.length; i++) {
-			if(temp[i].getAttribute('sf-controller'))
+			if(temp[i].hasAttribute('sf-controller') === true)
 				sf.controller.run(temp[i].getAttribute('sf-controller'));
 			
 			if(temp[i].getAttribute('sf-page')){
@@ -43,7 +43,7 @@ sf.router = new function(){
 	}
 
 	self.enable = function(status){
-		if(status === undefined) status = true;
+		if(status === void 0) status = true;
 		if(self.enabled === status) return;
 		self.enabled = status;
 
@@ -66,7 +66,7 @@ sf.router = new function(){
 		if(!before[name])
 			before[name] = [];
 
-		if(index === undefined){
+		if(index === void 0){
 			if(before[name].indexOf(func) === -1)
 				before[name].push(func);
 		}
@@ -80,7 +80,7 @@ sf.router = new function(){
 		if(!after[name])
 			after[name] = [];
 
-		if(index === undefined){
+		if(index === void 0){
 			if(after[name].indexOf(func) === -1)
 				after[name].push(func);
 		}

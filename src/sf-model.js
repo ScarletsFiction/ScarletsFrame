@@ -1,6 +1,6 @@
 // Data save and HTML content binding
 sf.model = function(scope){
-	if(sf.component.registered[scope] !== undefined)
+	if(sf.component.registered[scope] !== void 0)
 		return root_(scope);
 
 	if(!sf.model.root[scope])
@@ -27,7 +27,7 @@ sf.model = function(scope){
 			indent = indent[1];
 		else indent = indent[0];
 
-		if(indent === undefined) return text;
+		if(indent === void 0) return text;
 		indent = indent.length - indent.trim().length;
 		if(indent === 0) return text;
 		return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
@@ -168,7 +168,7 @@ sf.model = function(scope){
 
 		// Get or evaluate static or dynamic data
 		for (var i = 0; i < parse.length; i++) {
-			if(atIndex !== undefined && atIndex.indexOf(i) === -1)
+			if(atIndex !== void 0 && atIndex.indexOf(i) === -1)
 				continue;
 
 			var ref = parse[i];
@@ -228,7 +228,7 @@ sf.model = function(scope){
 						ref:refB
 					});
 
-					if(refB.direct !== undefined){
+					if(refB.direct !== void 0){
 						if(refB.name === 'value' && isValueInput === true){
 							current.value = parsed[refB.direct].data;
 							current.removeAttribute('value');
@@ -263,7 +263,7 @@ sf.model = function(scope){
 					ref:ref
 				});
 
-				if(ref.direct !== undefined){
+				if(ref.direct !== void 0){
 					refA.textContent = parsed[ref.direct].data;
 					continue;
 				}
@@ -306,7 +306,7 @@ sf.model = function(scope){
 	}
 
 	function syntheticCache(element, template, item){
-		if(element.sf$cache === undefined)
+		if(element.sf$cache === void 0)
 			element.sf$cache = {};
 
 		var cache = element.sf$cache;
@@ -322,9 +322,9 @@ sf.model = function(scope){
 		var cache = element.sf$cache;
 		var modelRef_array = template.modelRef_array;
 
-		if(property !== undefined){
+		if(property !== void 0){
 			var changes = template.modelReference[property];
-			if(changes === undefined || changes.length === 0){
+			if(changes === void 0 || changes.length === 0){
 				console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 				return false;
 			}
@@ -345,7 +345,7 @@ sf.model = function(scope){
 			var changes = [];
 			for (var i = 0; i < modelRef_array.length; i++) {
 				var ref = modelRef_array[i];
-				if(cache === undefined){
+				if(cache === void 0){
 					Array.prototype.push.apply(changes, template.modelReference[ref[0]]);
 					continue;
 				}
@@ -376,7 +376,7 @@ sf.model = function(scope){
 			// Prepare all required data
 			changes = [];
 			for (var i = 0; i < parseIndex.length; i++) {
-				if(parsed[parseIndex[i]] === undefined){
+				if(parsed[parseIndex[i]] === void 0){
 					changes.push(parseIndex[i]);
 				}
 			}
@@ -390,15 +390,15 @@ sf.model = function(scope){
 		for (var i = 0; i < changesReference.length; i++) {
 			var cRef = changesReference[i];
 
-			if(cRef.dynamicFlag !== undefined){ // Dynamic data
-				if(parsed[cRef.direct] !== undefined){
+			if(cRef.dynamicFlag !== void 0){ // Dynamic data
+				if(parsed[cRef.direct] !== void 0){
 					var tDOM = $.parseElement(parsed[cRef.direct].data, true).reverse();
 					var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 					var notExist = false;
 
 					// Replace if exist, skip if similar
 					for (var a = 0; a < tDOM.length; a++) {
-						if(currentDOM[a] === undefined){
+						if(currentDOM[a] === void 0){
 							notExist = true;
 							break;
 						}
@@ -424,8 +424,8 @@ sf.model = function(scope){
 				continue;
 			}
 
-			if(cRef.textContent !== undefined){ // Text only
-				if(cRef.ref.parse_index !== undefined){ // Multiple
+			if(cRef.textContent !== void 0){ // Text only
+				if(cRef.ref.parse_index !== void 0){ // Multiple
 					if(checkRelatedChanges(cRef.ref.parse_index) === true){
 						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
@@ -456,8 +456,8 @@ sf.model = function(scope){
 					haveChanges = true;
 				}
 			}
-			else if(cRef.attribute !== undefined){ // Attributes
-				if(cRef.ref.parse_index !== undefined){ // Multiple
+			else if(cRef.attribute !== void 0){ // Attributes
+				if(cRef.ref.parse_index !== void 0){ // Multiple
 					if(checkRelatedChanges(cRef.ref.parse_index) === true){
 						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
 							return parsed[match].data;
@@ -651,7 +651,7 @@ sf.model = function(scope){
 				};
 				VarPass = obtained;
 				for (var i = 0; i < VarPass.length; i++) {
-					VarPass[i] += ':(typeof '+VarPass[i]+'!=="undefined"?'+VarPass[i]+':undefined)';
+					VarPass[i] += ':(typeof '+VarPass[i]+'!=="void 0"?'+VarPass[i]+':void 0)';
 				}
 
 				if(VarPass.length === 0)
@@ -834,7 +834,7 @@ sf.model = function(scope){
 				return;
 			}
 
-			if(callback === undefined)
+			if(callback === void 0)
 				callback = modelRef[eventVar];
 
 			if(options === 'swap' || options === 'move'){
@@ -862,7 +862,7 @@ sf.model = function(scope){
 					for (var i = 0; i < count; i++) {
 						theParent.insertBefore(vDOM.firstElementChild, nextSibling);
 
-						if(callback !== undefined && callback.update)
+						if(callback !== void 0 && callback.update)
 							callback.update(exist[index + i], 'move');
 					}
 					return;
@@ -882,7 +882,7 @@ sf.model = function(scope){
 	            index.parentNode.insertBefore(other, index.nextSibling);
 	            other_parent.insertBefore(index, other_sibling);
 
-				if(callback !== undefined && callback.update){
+				if(callback !== void 0 && callback.update){
 					callback.update(exist[other], 'swap');
 					callback.update(exist[index], 'swap');
 				}
@@ -908,7 +908,7 @@ sf.model = function(scope){
 						exist[index].remove();
 					}
 
-					if(callback !== undefined && callback.remove){
+					if(callback !== void 0 && callback.remove){
 						// Auto remove if return false
 						if(!callback.remove(exist[index], startRemove))
 							startRemove();
@@ -922,11 +922,11 @@ sf.model = function(scope){
 
 			// Update
 			else if(options === 'update'){
-				if(index === undefined){
+				if(index === void 0){
 					index = 0;
 					other = list.length;
 				}
-				else if(other === undefined) other = index + 1;
+				else if(other === void 0) other = index + 1;
 				else if(other < 0) other = list.length + other;
 				else other += index;
 
@@ -936,7 +936,7 @@ sf.model = function(scope){
 
 				for (var i = index; i < other; i++) {
 					var oldChild = exist[i];
-					if(oldChild === undefined || list[i] === undefined)
+					if(oldChild === void 0 || list[i] === void 0)
 						break;
 
 					var temp = templateParser(template, list[i]);
@@ -949,13 +949,13 @@ sf.model = function(scope){
 					}
 
 					parentNode.replaceChild(temp, oldChild);
-					if(callback !== undefined && callback.update)
+					if(callback !== void 0 && callback.update)
 						callback.update(temp, 'replace');
 				}
 			}
 
 			var item = list[index];
-			if(item === undefined) return;
+			if(item === void 0) return;
 
 			var temp = templateParser(template, item);
 			if(isKeyed === false)
@@ -970,15 +970,15 @@ sf.model = function(scope){
 					referenceNode.parentNode.insertBefore(temp, referenceNode.nextSibling);
 				}
 
-				if(callback !== undefined && callback.create)
+				if(callback !== void 0 && callback.create)
 					callback.create(temp);
 			}
 			else if(options === 'prepend'){
 				var referenceNode = exist[0];
-				if(referenceNode !== undefined){
+				if(referenceNode !== void 0){
 					referenceNode.parentNode.insertBefore(temp, referenceNode);
 
-					if(callback !== undefined && callback.create)
+					if(callback !== void 0 && callback.create)
 						callback.create(temp);
 				}
 				else options = 'append';
@@ -996,13 +996,13 @@ sf.model = function(scope){
 					else // To real DOM
 						exist[index-1].insertAdjacentElement('afterEnd', temp);
 
-					if(callback !== undefined && callback.create)
+					if(callback !== void 0 && callback.create)
 						callback.create(temp);
 					return;
 				}
 
 				parentNode.appendChild(temp);
-				if(callback !== undefined && callback.create)
+				if(callback !== void 0 && callback.create)
 					callback.create(temp);
 			}
 		}
@@ -1013,7 +1013,7 @@ sf.model = function(scope){
 				enumerable: false,
 				configurable: true,
 				value: function(){
-					var temp = undefined;
+					var temp = void 0;
 					var lastLength = this.length;
 
 					if(name === 'move'){
@@ -1122,7 +1122,7 @@ sf.model = function(scope){
 						return this;
 					}
 
-					else if(name === 'splice' && arguments[0] === 0 && arguments[1] === undefined){
+					else if(name === 'splice' && arguments[0] === 0 && arguments[1] === void 0){
 						processElement(0, 'clear');
 						return Array.prototype.splice.apply(this, arguments);
 					}
@@ -1153,7 +1153,7 @@ sf.model = function(scope){
 					}
 
 					else if(name === 'splice'){
-						if(arguments[0] === 0 && arguments[1] === undefined)
+						if(arguments[0] === 0 && arguments[1] === void 0)
 							return temp;
 
 						// Removing data
@@ -1226,7 +1226,7 @@ sf.model = function(scope){
 
 			// Transfer virtual DOM
 			list.$virtual.dom = tempDOM;
-			if(callback !== undefined)
+			if(callback !== void 0)
 				list.$virtual.callback = callback;
 			else list.$virtual.callback_ = {ref:modelRef, var:eventVar};
 
@@ -1249,13 +1249,13 @@ sf.model = function(scope){
 		hiddenProperty(list, '$replace', function(index, key, needle, func){
 			var elRef = list.getElement(index).sf$elementReferences;
 			var process = template.modelReference[key];
-			if(process === undefined){
+			if(process === void 0){
 				console.error("Can't found binding for '"+key+"'");
 				return;
 			}
 
 			for (var i = 0; i < elRef.length; i++) {
-				if(elRef[i].textContent === undefined || elRef[i].ref.direct === undefined)
+				if(elRef[i].textContent === void 0 || elRef[i].ref.direct === void 0)
 					continue;
 
 				if(process.indexOf(elRef[i].ref.direct) !== -1){
@@ -1283,12 +1283,12 @@ sf.model = function(scope){
 		});
 
 		hiddenProperty(list, 'refresh', function(index, length, property){
-			if(index === undefined || index.constructor === String){
+			if(index === void 0 || index.constructor === String){
 				property = index;
 				index = 0;
 				length = list.length;
 			}
-			else if(length === undefined) length = index + 1;
+			else if(length === void 0) length = index + 1;
 			else if(length.constructor === String){
 				property = length;
 				length = index + 1;
@@ -1304,7 +1304,7 @@ sf.model = function(scope){
 				var elem = list.getElement(i);
 
 				// Create element if not exist
-				if(elem === undefined){
+				if(elem === void 0){
 					list.hardRefresh(i);
 					break;
 				}
@@ -1315,7 +1315,7 @@ sf.model = function(scope){
 						continue; // Continue if no update
 				}
 
-				if(callback !== undefined && callback.update)
+				if(callback !== void 0 && callback.update)
 					callback.update(elem, 'replace');
 			}
 		});
@@ -1325,7 +1325,7 @@ sf.model = function(scope){
 			virtualChilds = list.$virtual.dom.children;
 		hiddenProperty(list, 'getElement', function(index){
 			if(virtualChilds !== null){
-				var ret = undefined;
+				var ret = void 0;
 				if(index < list.$virtual.DOMCursor)
 					return virtualChilds[index];
 				else {
@@ -1338,7 +1338,7 @@ sf.model = function(scope){
 						return virtualChilds[index - childElement + list.$virtual.DOMCursor];
 				}
 
-				return undefined;
+				return void 0;
 			}
 
 			return parentChilds[index];
@@ -1351,7 +1351,7 @@ sf.model = function(scope){
 		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		var items = root_(name)[method[1]];
-		if(items === undefined)
+		if(items === void 0)
 			items = root_(name)[method[1]] = [];
 
 		template.setAttribute('sf-bind-list', method[1]);
@@ -1373,10 +1373,10 @@ sf.model = function(scope){
 			}
 
 			// Enable element binding
-			if(modelRef.sf$bindedKey === undefined)
+			if(modelRef.sf$bindedKey === void 0)
 				initBindingInformation(modelRef);
 
-			if(modelRef.sf$bindedKey[method[1]] === undefined)
+			if(modelRef.sf$bindedKey[method[1]] === void 0)
 				modelRef.sf$bindedKey[method[1]] = null;
 
 			Object.defineProperty(modelRef, method[1], {
@@ -1395,7 +1395,7 @@ sf.model = function(scope){
 			bindArray(template, items, mask, name, method[1], targetNode, parentNode, tempDOM);
 
 			// Output to real DOM if not being used for virtual list
-			if(items.$virtual === undefined){
+			if(items.$virtual === void 0){
 				var children = tempDOM.children;
 				for (var i = 0, n = children.length; i < n; i++) {
 					parentNode.appendChild(children[0]);
@@ -1410,21 +1410,21 @@ sf.model = function(scope){
 	var callInputListener = function(model, property, value){
 		var callback = model['on$'+property];
 		var v2m = model['v2m$'+property];
-		var newValue1 = undefined; var newValue2 = undefined;
-		if(callback !== undefined || v2m !== undefined){
+		var newValue1 = void 0; var newValue2 = void 0;
+		if(callback !== void 0 || v2m !== void 0){
 			var old = model[property];
-			if(old !== null && old !== undefined && old.constructor === Array)
+			if(old !== null && old !== void 0 && old.constructor === Array)
 				old = old.slice(0);
 
 			try{
-				if(v2m !== undefined)
+				if(v2m !== void 0)
 					newValue1 = v2m(old, value);
 
-				if(callback !== undefined)
+				if(callback !== void 0)
 					newValue2 = callback(old, value);
 			}catch(e){console.error(e)}
 		}
-		return newValue2 !== undefined ? newValue2 : newValue1;
+		return newValue2 !== void 0 ? newValue2 : newValue1;
 	}
 
 	var inputBoundRunning = false;
@@ -1436,7 +1436,7 @@ sf.model = function(scope){
 		ref.viewInputted = true;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-		if(newValue !== undefined)
+		if(newValue !== void 0)
 			ref.sfModel[ref.sfBounded] = newValue;
 		else ref.sfModel[ref.sfBounded] = value;
 	}
@@ -1456,7 +1456,7 @@ sf.model = function(scope){
 		ref.viewInputted = true;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-		if(newValue !== undefined)
+		if(newValue !== void 0)
 			value = newValue;
 
 		var model = ref.sfModel;
@@ -1492,7 +1492,7 @@ sf.model = function(scope){
 		else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-		if(newValue !== undefined)
+		if(newValue !== void 0)
 			ref.sfModel[ref.sfBounded] = newValue;
 		else ref.sfModel[ref.sfBounded] = value;
 	}
@@ -1556,12 +1556,12 @@ sf.model = function(scope){
 
 	var elementBoundChanges = function(model, property, element, oneWay){
 		// Enable multiple element binding
-		if(model.sf$bindedKey === undefined)
+		if(model.sf$bindedKey === void 0)
 			initBindingInformation(model);
 
 		var type = 0;
 		var typeData = null;
-		if(model[property] !== null && model[property] !== undefined)
+		if(model[property] !== null && model[property] !== void 0)
 			typeData = model[property].constructor;
 
 		var assignedType = (element.getAttribute('typedata') || '').toLowerCase();
@@ -1578,7 +1578,7 @@ sf.model = function(scope){
 			type = 1;
 		}
 
-		else if(element.selectedOptions !== undefined){
+		else if(element.selectedOptions !== void 0){
 			$.on(element, 'input', inputSelectBound);
 			type = 2;
 
@@ -1640,7 +1640,7 @@ sf.model = function(scope){
 			}
 
 			// Get reference
-			if(modelScope[propertyName] === undefined){
+			if(modelScope[propertyName] === void 0){
 				console.error('Can\'t get property "'+propertyName+'" on model "' + model + '"');
 				return;
 			}
@@ -1679,7 +1679,7 @@ sf.model = function(scope){
 			var element = temp[a];
 			var parent = element.parentElement;
 
-			if(queued !== undefined)
+			if(queued !== void 0)
 				element.classList.remove('sf-dom-queued');
 
 			if(parent.classList.contains('sf-virtual-list')){
@@ -1719,10 +1719,10 @@ sf.model = function(scope){
 	// Don't call if the removed element is TEXT or #comment
 	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element){
 		if(element.hasAttribute('sf-controller') !== false){
-			var modelName = element.getAttribute('sf-controller');
+			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
 
 			removeModelBinding(modelName);
-			if(element.sf$component !== undefined){
+			if(element.sf$component !== void 0){
 				var modelFrom = element.sf$componentFrom;
 				var components = sf.component.available[modelFrom];
 				components.splice(components.indexOf(modelName), 1);
@@ -1734,17 +1734,7 @@ sf.model = function(scope){
 
 		var temp = $('[sf-controller]', element);
 		for (var i = 0; i < temp.length; i++) {
-			var modelName = temp[i].getAttribute('sf-controller');
-
-			removeModelBinding(modelName);
-			if(element.sf$component !== undefined){
-				modelName = element.sf$componentFor;
-				var modelFrom = element.sf$componentFrom;
-				var components = sf.component.available[modelName];
-				components.splice(components.indexOf(modelName), 1);
-				internal.component.triggerEvent(modelFrom, 'removed', self.root[modelName]);
-				delete self.root[modelName];
-			}
+			DOMNodeRemoved(temp[i]);
 		}
 	}
 
@@ -1753,7 +1743,7 @@ sf.model = function(scope){
 			if(nodes.nodeType !== 1 || nodes.firstElementChild === null)
 				return;
 
-			if(nodes.sf$elementReferences !== undefined) return;
+			if(nodes.sf$elementReferences !== void 0) return;
 			DOMNodeRemoved(nodes);
 		}
 
@@ -1779,7 +1769,7 @@ sf.model = function(scope){
 
 	var removeModelBinding = self.reset = function(modelName){
 		var ref = self.root[modelName];
-		if(ref === undefined)
+		if(ref === void 0)
 			return;
 
 		var bindedKey = ref.sf$bindedKey;
@@ -1787,7 +1777,7 @@ sf.model = function(scope){
 		for(var key in bindedKey){
 			delete bindedKey[key];
 
-			if(ref[key] === undefined || ref[key] === null)
+			if(ref[key] === void 0 || ref[key] === null)
 				continue;
 
 			if(ref[key].constructor === String ||
@@ -1808,7 +1798,7 @@ sf.model = function(scope){
 			}
 			else continue;
 
-			if(Object.getOwnPropertyDescriptor(ref, key) === undefined)
+			if(Object.getOwnPropertyDescriptor(ref, key) === void 0)
 				continue;
 
 			// Reconfigure / Remove property descriptor
@@ -1820,16 +1810,16 @@ sf.model = function(scope){
 
 	function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		// Enable multiple element binding
-		if(model.sf$bindedKey === undefined)
+		if(model.sf$bindedKey === void 0)
 			initBindingInformation(model);
 
-		if(model.sf$bindedKey[propertyName] !== undefined){
+		if(model.sf$bindedKey[propertyName] !== void 0){
 			var ref = model.sf$bindedKey[propertyName];
 			if(ref.indexOf(callback) === -1)
 				ref.push(callback);
 
-			if(elementBind !== undefined){
-				if(ref.input === undefined){
+			if(elementBind !== void 0){
+				if(ref.input === void 0){
 					ref.input = [elementBind];
 					ref.input.type = type;
 				}
@@ -1840,14 +1830,14 @@ sf.model = function(scope){
 
 		model.sf$bindedKey[propertyName] = [callback];
 
-		if(elementBind !== undefined){
+		if(elementBind !== void 0){
 			var ref = model.sf$bindedKey[propertyName];
 			ref.input = [elementBind];
 			ref.input.type = type;
 		}
 
 		// Proxy property
-		if(Object.getOwnPropertyDescriptor(model, propertyName).set !== undefined)
+		if(Object.getOwnPropertyDescriptor(model, propertyName).set !== void 0)
 			return;
 
 		var objValue = model[propertyName]; // Object value
@@ -1860,25 +1850,25 @@ sf.model = function(scope){
 			set:function(val){
 				if(objValue !== val){
 					var m2v = model['m2v$'+propertyName];
-					var out = inputBoundRunning === false ? model['out$'+propertyName] : undefined;
-					var callback = inputBoundRunning === false ? model['on$'+propertyName] : undefined;
+					var out = inputBoundRunning === false ? model['out$'+propertyName] : void 0;
+					var callback = inputBoundRunning === false ? model['on$'+propertyName] : void 0;
 
-					if(callback !== undefined || m2v !== undefined || out !== undefined){
-						var newValue1 = undefined; var newValue2 = undefined; var newValue3 = undefined;
+					if(callback !== void 0 || m2v !== void 0 || out !== void 0){
+						var newValue1 = void 0; var newValue2 = void 0; var newValue3 = void 0;
 						try{
-							if(m2v !== undefined)
+							if(m2v !== void 0)
 								newValue1 = m2v(objValue, val);
 
-							if(out !== undefined)
+							if(out !== void 0)
 								newValue2 = out(objValue, val);
 
-							if(callback !== undefined)
+							if(callback !== void 0)
 								newValue3 = callback(objValue, val);
 						}catch(e){console.error(e)}
 
-						objValue = (newValue3 !== undefined ? newValue3 : 
-							(newValue2 !== undefined ? newValue2 : 
-							(newValue1 !== undefined ? newValue1 : val)
+						objValue = (newValue3 !== void 0 ? newValue3 : 
+							(newValue2 !== void 0 ? newValue2 : 
+							(newValue1 !== void 0 ? newValue1 : val)
 						));
 					}
 					else objValue = val;
@@ -1913,7 +1903,7 @@ sf.model = function(scope){
 		element = data.html;
 
 		var onChanges = function(){
-			if(syntheticTemplate(element, data, undefined, model) === false)
+			if(syntheticTemplate(element, data, void 0, model) === false)
 				0; //No update
 		};
 
@@ -1921,7 +1911,7 @@ sf.model = function(scope){
 		for (var i = 0; i < properties.length; i++) {
 			var propertyName = properties[i][0];
 
-			if(model[propertyName] === undefined)
+			if(model[propertyName] === void 0)
 				model[propertyName] = '';
 
 			modelToViewBinding(model, propertyName, onChanges);
@@ -1962,7 +1952,7 @@ sf.model = function(scope){
 							return '.'+match_;
 						});
 
-						if(found[match] === undefined) found[match] = [i];
+						if(found[match] === void 0) found[match] = [i];
 						else if(found[match].indexOf(i) === -1)
 							found[match].push(i);
 					});
@@ -1992,7 +1982,7 @@ sf.model = function(scope){
 						return '.'+match_;
 					});
 
-					if(found[match] === undefined) found[match] = [i];
+					if(found[match] === void 0) found[match] = [i];
 					else if(found[match].indexOf(i) === -1)
 						found[match].push(i);
 				});
@@ -2167,7 +2157,7 @@ sf.model = function(scope){
 		for (var i = childNodes.length - 1; i >= 0; i--) {
 			var currentNode = childNodes[i];
 
-			if(extracting === undefined && excludes.indexOf(currentNode.nodeName) !== -1)
+			if(extracting === void 0 && excludes.indexOf(currentNode.nodeName) !== -1)
 				continue;
 
 			if(currentNode.nodeType === 1){ // Tag
@@ -2208,7 +2198,7 @@ sf.model = function(scope){
 				}
 
 				if(currentNode.nodeValue.indexOf('{{') !== -1){
-					if(extracting === undefined){
+					if(extracting === void 0){
 						temp.push(currentNode.parentNode);
 						break;
 					}
@@ -2230,13 +2220,13 @@ sf.model = function(scope){
 			if(modelElement === null)
 				continue;
 
-			var model = modelElement.getAttribute('sf-controller');
+			var model = modelElement.sf$component === void 0 ? modelElement.getAttribute('sf-controller') : modelElement.sf$component;
 
-			if(queued !== undefined)
+			if(queued !== void 0)
 				current.classList.remove('sf-dom-queued');
 
 			// Check if it's component
-			if(self.root[model] === undefined && sf.component.registered[model])
+			if(self.root[model] === void 0 && sf.component.registered[model])
 				model = sf.component.new(model, modelElement);
 
 			var modelRef = self.root[model] || root_(model);
@@ -2265,7 +2255,7 @@ sf.model = function(scope){
 	}
 
 	function initBindingInformation(modelRef){
-		if(modelRef.sf$bindedKey !== undefined)
+		if(modelRef.sf$bindedKey !== void 0)
 			return;
 
 		// Element binding data
