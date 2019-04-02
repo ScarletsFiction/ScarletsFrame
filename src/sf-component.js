@@ -183,11 +183,13 @@ sf.component = new function(){
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;
 
-		// func.prototype.connectedCallback = function(){};
+		func.prototype.connectedCallback = function(){
+			scope.triggerEvent(name, 'connected', this);
+		};
 
 		try{
 		  customElements.define(tagName, func);
-		}catch(err){console.error(e)}
+		}catch(err){console.error(err)}
 
 		window['$'+name] = func;
 	}
