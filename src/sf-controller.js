@@ -73,7 +73,7 @@ sf.controller = new function(){
 		}
 
 		var model = $.parent(element, '[sf-controller]');
-		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model;
+		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model.sf$component;
 		var _modelScope = sf.model.root[model];
 
 		if(_modelScope === void 0)
