@@ -54,7 +54,7 @@ sf.controller = new function(){
 			return;
 		}
 
-		name = name.sf$component === void 0 ? name.getAttribute('sf-controller') : name.sf$component;
+		name = name.sf$component === void 0? name.getAttribute('sf-controller') : name.sf$component;
 
 		// Initialize it first
 		if(name !== void 0 && !self.active[name])
@@ -73,12 +73,13 @@ sf.controller = new function(){
 		}
 
 		var model = $.parent(element, '[sf-controller]');
-		model = model.sf$component === void 0? model.getAttribute('sf-controller') : model;
+		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model;
+		var _modelScope = sf.model.root[model];
 
-		if(!sf.model.root[model])
+		if(_modelScope === void 0)
 			throw "Couldn't find model for "+model+" that was called from sf-click";
 
-		var modelKeys = sf.model.modelKeys(sf.model.root[model]).join('|');
+		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
 		script = avoidQuotes(script, function(script_){
 			return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
 				return '_modelScope.'+matched;
