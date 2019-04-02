@@ -1467,7 +1467,7 @@ sf.model = function(scope){
 			value = newValue;
 
 		var model = ref.sfModel;
-		var constructor = model[ref.sfBounded];
+		var constructor = model[ref.sfBounded].constructor;
 
 		if(constructor === Array){
 			var i = model[ref.sfBounded].indexOf(value);
