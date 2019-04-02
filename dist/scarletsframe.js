@@ -2319,7 +2319,7 @@ sf.model = function(scope){
 			value = newValue;
 
 		var model = ref.sfModel;
-		var constructor = model[ref.sfBounded];
+		var constructor = model[ref.sfBounded].constructor;
 
 		if(constructor === Array){
 			var i = model[ref.sfBounded].indexOf(value);
@@ -3210,7 +3210,7 @@ sf.controller = new function(){
 		}
 
 		var model = $.parent(element, '[sf-controller]');
-		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model;
+		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model.sf$component;
 		var _modelScope = sf.model.root[model];
 
 		if(_modelScope === void 0)
