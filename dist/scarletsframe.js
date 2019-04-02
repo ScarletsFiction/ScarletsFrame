@@ -73,6 +73,13 @@ function deepProperty(obj, path){
   }
   return obj;
 }
+
+function capitalizeLetters(name){
+	for (var i = 0; i < name.length; i++) {
+		name[i] = name[i][0].toUpperCase() + name[i].slice(1);
+	}
+	return name.join('');
+}
 // ==== ES5 Polyfill ====
 if(typeof Object.assign != 'function'){
   Object.defineProperty(Object, "assign", {
@@ -837,13 +844,6 @@ sf.component = new function(){
 
 		window['$'+name] = func;
 	}
-
-	function capitalizeLetters(name){
-		for (var i = 0; i < name.length; i++) {
-			name[i] = name[i][0].toUpperCase() + name[i].slice(1);
-		}
-		return name.join('');
-	}
 };
 // Data save and HTML content binding
 sf.model = function(scope){
@@ -1045,6 +1045,12 @@ sf.model = function(scope){
 	}
 
 	var templateParser = function(template, item, original){
+		if(template.constructor !== Object){
+			var html = template.cloneNode(true);
+			html.model.$item = item;
+			return html;
+		}
+
 		var html = original === true ? template.html : template.html.cloneNode(true);
 		var addresses = template.addresses;
 		var parsed = templateExec(template.parse, item);
@@ -2195,7 +2201,6 @@ sf.model = function(scope){
 	var loopParser = function(name, template, script, targetNode, parentNode){
 		var method = script.split(' in ');
 		var mask = method[0];
-		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		var items = root_(name)[method[1]];
 		if(items === void 0)
@@ -2208,6 +2213,7 @@ sf.model = function(scope){
 		template = self.extractPreprocess(template, mask, name);
 
 		if(method.length === 2){
+			var isKeyed = parentNode.classList.contains('sf-keyed-list');
 			var tempDOM = document.createElement('div');
 			var modelRef = self.root[name];
 
@@ -2766,6 +2772,15 @@ sf.model = function(scope){
 	}
 
 	self.extractPreprocess = function(targetNode, mask, name){
+		// Check if it's component
+		var tagName = targetNode.tagName.toLowerCase();
+		if(sf.component.registered[tagName] !== void 0){
+			targetNode.parentNode.classList.add('sf-keyed-list');
+			targetNode.textContent = '';
+			targetNode.remove();
+			return targetNode;
+		}
+
 		var copy = targetNode.outerHTML;
 
 		// Mask the referenced item
@@ -3170,7 +3185,7 @@ sf.controller = new function(){
 			return;
 		}
 
-		name = name.sf$component === void 0 ? name.getAttribute('sf-controller') : name.sf$component;
+		name = name.sf$component === void 0? name.getAttribute('sf-controller') : name.sf$component;
 
 		// Initialize it first
 		if(name !== void 0 && !self.active[name])
@@ -3189,12 +3204,13 @@ sf.controller = new function(){
 		}
 
 		var model = $.parent(element, '[sf-controller]');
-		model = model.sf$component === void 0? model.getAttribute('sf-controller') : model;
+		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model;
+		var _modelScope = sf.model.root[model];
 
-		if(!sf.model.root[model])
+		if(_modelScope === void 0)
 			throw "Couldn't find model for "+model+" that was called from sf-click";
 
-		var modelKeys = sf.model.modelKeys(sf.model.root[model]).join('|');
+		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
 		script = avoidQuotes(script, function(script_){
 			return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
 				return '_modelScope.'+matched;

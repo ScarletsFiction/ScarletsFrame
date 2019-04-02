@@ -203,11 +203,18 @@ sf.controller.for('model-binding', function(self, root){
    }
 });
 
+sf.model.for('components', function(self){
+   self.items = [{id:1},{id:2},{id:3}];
+   self.clickOK = function(){
+      console.warn("Click OK!");
+   }
+});
+
 sf.component.for('comp-test', function(self){
    self.data = 'zxc';
 });
 
-sf.component.html('comp-test', `<div>1. {{ data }}</div><div>2. {{ data }}</div>`);
+sf.component.html('comp-test', `<div>1. {{ data }}</div><div>2. {{ data }}</div><br>`);
 
 sf(function(){
    var ID = sf.component.new('comp-test', compDefined);

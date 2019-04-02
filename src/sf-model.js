@@ -198,8 +198,11 @@ sf.model = function(scope){
 	}
 
 	var templateParser = function(template, item, original){
-		if(template.component !== void 0)
-			return new window[template.component];
+		if(template.constructor !== Object){
+			var html = template.cloneNode(true);
+			html.model.$item = item;
+			return html;
+		}
 
 		var html = original === true ? template.html : template.html.cloneNode(true);
 		var addresses = template.addresses;
@@ -1926,9 +1929,9 @@ sf.model = function(scope){
 		var tagName = targetNode.tagName.toLowerCase();
 		if(sf.component.registered[tagName] !== void 0){
 			targetNode.parentNode.classList.add('sf-keyed-list');
-			return {
-				component:'$'+capitalizeLetters(tagName.split('-'))
-			};
+			targetNode.textContent = '';
+			targetNode.remove();
+			return targetNode;
 		}
 
 		var copy = targetNode.outerHTML;

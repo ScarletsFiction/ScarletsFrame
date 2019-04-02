@@ -139,11 +139,12 @@
       </div>
 
       <!-- Components -->
-      <div id='components'>
+      <div id='components' sf-controller="components">
+         <a sf-click="clickOK()">test click</a>
          <div id="compDefined" sf-controller="comp-test">
             <div>1. {{ data }}</div><div>2. {{ data }}</div>
          </div>
-         <comp-test></comp-test>
+         <comp-test sf-repeat-this="item in items"></comp-test>
       </div>
 
       <script type="text/javascript" src="/tests/script.js"></script>

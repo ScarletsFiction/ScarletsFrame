@@ -537,6 +537,10 @@ Components feature is used when you have many element for one model. Each compon
 ```js
 sf.component.for('model-name', function(self, root){
   self.data = "text";
+
+  // If you're using sf-repeat-this for this component
+  // This variable will have your item value instead of undefined
+  self.$item = {};
 });
 ```
 
