@@ -206,7 +206,7 @@ sf.controller.for('model-binding', function(self, root){
 });
 
 sf.model.for('components', function(self){
-   self.items = [{id:1},{id:2},{id:3}];
+   self.items = [1,2,3];
    self.clickOK = function(){
       console.warn("Click OK!");
    }
@@ -218,10 +218,14 @@ sf.component.for('comp-test', function(self){
 
 sf.component.html('comp-test', `<div>1. {{ data }}</div><div>2. {{ data }}</div><br>`);
 
+sf.controller.for('comp-test', function(self, root, item, element){
+   console.warn('comp-test', item, element);
+});
+
 sf(function(){
    var ID = sf.component.new('comp-test', compDefined);
 
-   elem2 = new $CompTest();
+   elem2 = new $CompTest('from javascript');
    components.appendChild(elem2);
 });
 

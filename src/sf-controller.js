@@ -88,7 +88,7 @@ sf.controller = new function(){
 
 		script = script.split('(');
 
-		var method = script[0];
+		var method = script.shift();
 		var method_ = method;
 
 		// Get method reference
@@ -104,7 +104,6 @@ sf.controller = new function(){
 		}
 
 		// Take the argument list
-		script.shift();
 		script = script.join('(');
 		script = script.split(')');
 		script.pop();

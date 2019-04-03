@@ -5,7 +5,7 @@
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=ScarletsFrame%20is%20frontend%20library%20that%20can%20help%20simplify%20your%20code.&url=https://github.com/ScarletsFiction/ScarletsFrame&via=github&hashtags=scarletsframe,browser,framework,library,mvw)
 
 # ScarletsFrame
-A frontend library for Scarlets Framework that support lazy page load and element binding that can help simplify your code.
+A frontend framework that can help you write a simple web structure with complex feature. This framework have small memory allocation and allows you to directly write template in the HTML instead of creating different file and load it later. [Here](https://rawgit.com/krausest/js-framework-benchmark/master/webdriver-ts-results/table.html) you can see the benchmark.
 
 # Example
 - [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
@@ -535,12 +535,11 @@ sf.model.init(targetNode = false)
 Components feature is used when you have many element for one model. Each component will have same structure but with different value. When defining component name you must use `-` and word character.
 
 ```js
-sf.component.for('model-name', function(self, root){
+sf.component.for('model-name', function(self, root, $item, element){
   self.data = "text";
 
   // If you're using sf-repeat-this for this component
-  // This variable will have your item value instead of undefined
-  self.$item = {};
+  // `$item` will have your item value instead of undefined
 });
 ```
 
@@ -571,7 +570,7 @@ sf.component.html('model-name', `<div>{{ data }}</div>`);
 
 Then you can create new component from javascript like below.
 ```js
-var myElement = new $ModelName;
+var myElement = new $ModelName($item = undefined);
 document.body.appendChild(myElement);
 // myElement.model.data === 'text'
 ```
