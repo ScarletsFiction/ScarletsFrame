@@ -60,16 +60,19 @@ sf.component = new function(){
 	}
 
 	var tempDOM = document.createElement('div');
-	self.new = function(name, element, isCreated, retriggered){
+	self.new = function(name, element, $item, isCreated, retriggered){
 		if(isCreated === true){
 			if(sf.loader.DOMWasLoaded === false)
 				return sf(function(){
-					self.new(name, element, isCreated);
+					self.new(name, element, $item, isCreated, false);
 				});
 			if(self.registered[name][3] === false)
 				return setTimeout(function(){
-					self.new(name, element, isCreated, true);
+					self.new(name, element, $item, isCreated, true);
 				}, 0);
+
+			if(element.hasAttribute('sf-component-ignore') === true)
+				return;
 		}
 
 		if(element === void 0)
@@ -92,7 +95,7 @@ sf.component = new function(){
 		self.available[name].push(newID);
 
 		var newObj = sf.model.root[newID] = {};
-		self.registered[name][0](newObj, sf.model);
+		self.registered[name][0](newObj, sf.model, $item, element);
 
 		var extend = self.registered[name][4];
 		if(extend !== void 0){
@@ -100,18 +103,18 @@ sf.component = new function(){
 				for (var i = 0; i < extend.length; i++) {
 					if(bases[extend[i]] === void 0)
 						return console.error("'"+extend[i]+"' base is not found");
-					bases[extend[i]](newObj, sf.model);
+					bases[extend[i]](newObj, sf.model, $item, element);
 				}
 			}
 			else{
 				if(bases[extend] === void 0)
 					return console.error("'"+extend+"' base is not found");
-				bases[extend](newObj, sf.model);
+				bases[extend](newObj, sf.model, $item, element);
 			}
 		}
 
 		if(self.registered[name][1])
-			self.registered[name][1](newObj, sf.model);
+			self.registered[name][1](newObj, sf.model, $item, element);
 
 		scope.triggerEvent(name, 'created', newObj);
 
@@ -178,7 +181,7 @@ sf.component = new function(){
 			return console.error("Please use '-' when defining component tags");
 
 		name = capitalizeLetters(name);
-		var func = eval("function "+name+"(){var he = HTMLElement_wrap.call(this);self.new(tagName, he, true);return he}"+name);
+		var func = eval("function "+name+"($item){var he = HTMLElement_wrap.call(this);self.new(tagName, he, $item, true, false);return he}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;

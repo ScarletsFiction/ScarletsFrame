@@ -199,9 +199,9 @@ sf.model = function(scope){
 	}
 
 	var templateParser = function(template, item, original){
-		if(template.constructor !== Object){
-			var html = template.cloneNode(true);
-			html.model.$item = item;
+		if(template.component !== void 0){
+			var html = new template.component(item);
+			html.setAttribute('sf-bind-list', template.list);
 			return html;
 		}
 
@@ -1932,7 +1932,11 @@ sf.model = function(scope){
 			targetNode.parentNode.classList.add('sf-keyed-list');
 			targetNode.textContent = '';
 			targetNode.remove();
-			return targetNode;
+			targetNode.setAttribute('sf-component-ignore', '');
+			return {
+				component:window['$'+capitalizeLetters(tagName.split('-'))],
+				list:targetNode.getAttribute('sf-bind-list')
+			};
 		}
 
 		var copy = targetNode.outerHTML;
@@ -2240,10 +2244,6 @@ sf.model = function(scope){
 
 			if(queued !== void 0)
 				current.classList.remove('sf-dom-queued');
-
-			// Check if it's component
-			if(self.root[model] === void 0 && sf.component.registered[model])
-				model = sf.component.new(model, modelElement);
 
 			var modelRef = self.root[model] || root_(model);
 
