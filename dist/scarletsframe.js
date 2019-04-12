@@ -3835,6 +3835,12 @@ sf.router = new function(){
 
 		var elem = ev.target;
 		if(!elem.href) return;
+		if(elem.href[0] === '#') return;
+		if(elem.href[0] === '@'){
+			elem.setAttribute('sf-router-ignore', '');
+			elem.href = elem.href.slice(1);
+			return;
+		}
 
 		if(!history.pushState || elem.hasAttribute('sf-router-ignore'))
 			return;
