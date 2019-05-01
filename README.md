@@ -99,9 +99,16 @@ But you can also route by calling `sf.router.goto` function from the script.
 sf.router.goto('/user/home', data = {}, method = 'get');
 ```
 
-Define event listener when element with attributes `sf-page="todo/page"` was loaded to current DOM. The defined event will being called after all model and controller was finished.
+Define event listener when element with attributes `sf-page="todo/page"` was loaded to current DOM. The defined event will being called before all model and controller was finished.
 ```js
 sf.router.before('todo/page', function(root){
+    // Prepare stuff
+});
+```
+
+This event will being called after model and the view has been binded and initialized.
+```js
+sf.router.when('todo/page', function(root){
     // Data Re-initialization
     var self = root('todo.page'); // sf.model.root['todo.page']
 });

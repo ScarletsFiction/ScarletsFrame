@@ -18,13 +18,15 @@ sf.router = new function(){
 		// Run 'before' event for new page view
 		var temp = $('[sf-controller], [sf-page]', targetNode);
 		for (var i = 0; i < temp.length; i++) {
+			var name = temp[i].getAttribute('sf-page') || '';
+			if(name !== '')
+				runLocalEvent('before', name);
+
 			if(temp[i].hasAttribute('sf-controller') === true)
 				sf.controller.run(temp[i].getAttribute('sf-controller'));
-			
-			if(temp[i].getAttribute('sf-page')){
-				var name = temp[i].getAttribute('sf-page');
-				beforeEvent(name);
-			}
+
+			if(name !== '')
+				runLocalEvent('when', name);
 		}
 
 		initialized = true;
@@ -60,54 +62,40 @@ sf.router = new function(){
 		}
 	}
 
-	var before = {};
-	// Set index with number if you want to replace old function
-	self.before = function(name, func, index){
-		if(!before[name])
-			before[name] = [];
+	var localEvent = {before:{}, when:{}, after:{}};
+	function registerLocalEvent(which, name, func){
+		if(!localEvent[which][name])
+			localEvent[which][name] = [];
 
-		if(index === void 0){
-			if(before[name].indexOf(func) === -1)
-				before[name].push(func);
-		}
-		else
-			before[name][index] = func;
+		localEvent[which][name].push(func);
 	}
 
-	var after = {};
 	// Set index with number if you want to replace old function
-	self.after = function(name, func, index){
-		if(!after[name])
-			after[name] = [];
-
-		if(index === void 0){
-			if(after[name].indexOf(func) === -1)
-				after[name].push(func);
-		}
-		else
-			after[name][index] = func;
-	}
-
 	// Running 'before' new page going to be displayed
-	var beforeEvent = function(name){
-		if(self.currentPage.indexOf(name) === -1)
+	self.before = function(name, func){
+		registerLocalEvent('before', name, func);
+	}
+
+	// Running 'when' new page was been initialized
+	self.when = function(name, func){
+		registerLocalEvent('when', name, func);
+	}
+
+	// Running 'after' old page is going to be removed
+	self.after = function(name, func){
+		registerLocalEvent('after', name, func);
+	}
+
+	function runLocalEvent(which, name){
+		if(which === 'before' && self.currentPage.indexOf(name) === -1)
 			self.currentPage.push(name);
 
-		if(before[name]){
-			for (var i = 0; i < before[name].length; i++) {
-				before[name][i](sf.model);
-			}
-		}
-	}
-
-	// Running 'after' old page going to be removed
-	var afterEvent = function(name){
-		if(self.currentPage.indexOf(name) === -1)
+		if(which === 'after' && self.currentPage.indexOf(name) === -1)
 			self.currentPage.splice(self.currentPage.indexOf(name), 1);
 
-		if(after[name]){
-			for (var i = 0; i < after[name].length; i++) {
-				after[name][i](sf.model);
+		if(localEvent[which][name]){
+			for (var i = 0; i < localEvent[which][name].length; i++) {
+				localEvent[which][name][i](sf.model);
 			}
 		}
 	}
@@ -122,6 +110,12 @@ sf.router = new function(){
 		if(onEvent[event].indexOf(func) === -1)
 			onEvent[event].push(func);
 	}
+
+	// This will enable script evaluation before the model/controller/route
+	// being reinitialized after receiving template from the server.
+	// To be safe, make sure you're not directly outputing any user content
+	// like user's name, posts, modifiable data from user.
+	self.dynamicScript = false;
 
 	self.lazyViewPoint = {};
 	/*
@@ -207,7 +201,7 @@ sf.router = new function(){
 
 					// Run 'after' event for old page view
 					var last = $.findOne('[sf-page]', DOMReference);
-					afterEvent(last ? last.getAttribute('sf-page') : '/');
+					runLocalEvent('after', last ? last.getAttribute('sf-page') : '/');
 
 					// Redefine title if exist
 					if(special && special.title)
@@ -247,17 +241,39 @@ sf.router = new function(){
 				if(self.pauseRenderOnTransition)
 					self.pauseRenderOnTransition.css('display', 'none');
 
-				// Let page script running first, then update the data binding
+				// Let page script running first
 				DOMReference.innerHTML = data;
+				if(self.dynamicScript !== false){
+					var scripts = DOMReference.getElementsByTagName('script');
+						for (var i = 0; i < scripts.length; i++) {
+						    routerEval(scripts[i].text);
+						}
+				}
+
+				// Before model binding
+				var temp = $('[sf-page]', DOMReference);
+				var sfPage = [];
+				try{
+					for (var i = 0; i < temp.length; i++) {
+						var sfp = temp[i].getAttribute('sf-page');
+						sfPage.push(sfp);
+						runLocalEvent('before', sfp);
+					}
+				}catch(e){
+					console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
+				}
+
+				// When the model was binded with the view
+				sf.internal.afterModelBinding = function(){
+					for (var i = 0; i < sfPage.length; i++) {
+						runLocalEvent('when', temp[i]);
+					}
+
+					sf.internal.afterModelBinding = undefined;
+				}
 
 				// Parse the DOM data binding
 				sf.model.init(DOMReference);
-
-				// Init template to model binding
-				var temp = $('[sf-page]', DOMReference);
-				for (var i = 0; i < temp.length; i++) {
-					beforeEvent(temp[i].getAttribute('sf-page'));
-				}
 
 				if(self.pauseRenderOnTransition)
 					self.pauseRenderOnTransition.css('display', '');

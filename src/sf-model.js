@@ -65,7 +65,7 @@ sf.model = function(scope){
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			//console.log(tempScript);
-			return '#DOMError';
+			return '#TemplateError';
 		}
 		// ==== Security check ended ====
 	
@@ -80,7 +80,7 @@ sf.model = function(scope){
 			console.error(e);
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			//console.log(tempScript);
-			return '#DOMError';
+			return '#TemplateError';
 		}
 
 		if(_result_ !== '') return _result_;
@@ -808,7 +808,8 @@ sf.model = function(scope){
 
 				clearTimeout(refreshTimer);
 				refreshTimer = setTimeout(function(){
-					list.$virtual.reinitScroll();
+					if(list.$virtual) // Somewhat it's uninitialized
+						list.$virtual.reinitScroll();
 				}, 100);
 			}
 			else exist = parentChilds;
@@ -1720,6 +1721,10 @@ sf.model = function(scope){
 			loopParser(controller, element, script, targetNode, parent);
 			element.remove();
 		}
+
+		// Used by router
+		if(sf.internal.afterModelBinding !== undefined)
+			sf.internal.afterModelBinding();
 	}
 
 	// Reset model properties

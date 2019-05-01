@@ -70,7 +70,12 @@ sf.internal.virtual_scroll = new function(){
 				virtual.preparedLength = 18;
 		}
 
+		var pendingFunction = sf.internal.afterModelBinding;
+		sf.internal.afterModelBinding = undefined;
+
 		setTimeout(function(){
+			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
+
 			scroller = parentNode;
 
 			var length = parentNode.getAttribute('scroll-parent-index') || 0;
@@ -85,6 +90,9 @@ sf.internal.virtual_scroll = new function(){
 				dynamicHeight(list, targetNode, parentNode, scroller);
 			}
 			else staticHeight(list, targetNode, parentNode, scroller);
+
+			pendingFunction();
+			pendingFunction = null;
 		}, 500);
 	}
 
@@ -95,7 +103,7 @@ sf.internal.virtual_scroll = new function(){
 		var floor = virtual.dCursor.floor;
 		var vCursor = virtual.vCursor;
 		vCursor.floor = virtual.dom.firstElementChild;
-		
+
 		virtual.scrollTo = function(index){
 			scrollTo(index, list, self.prepareCount, parentNode, scroller);
 
@@ -116,6 +124,9 @@ sf.internal.virtual_scroll = new function(){
 
 		virtual.visibleLength = parentNode.childElementCount - 2;
 		virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
+
+		if(virtual.preparedLength < 18)
+			virtual.preparedLength = 18;
 
 		for (var i = 0; i < self.prepareCount; i++) {
 			var temp = vCursor.floor;
@@ -286,6 +297,8 @@ sf.internal.virtual_scroll = new function(){
 			}
 
 			updating = false;
+			if(scroller.scrollTop === 0 && ceiling.offsetHeight > 10)
+				virtual.scrollTo(0);
 		}
 
 		$.on(scroller, 'scroll', checkCursorPosition);

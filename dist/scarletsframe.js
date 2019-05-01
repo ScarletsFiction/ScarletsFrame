@@ -1,7 +1,11 @@
 (function(global, factory){
-  if(typeof exports === 'object' && typeof module !== 'void 0') module.exports = factory(global);
-  else global.sf = factory(global);
-}(typeof window !== "void 0" ? window : this, (function(window){'use strict';
+  // Dynamic script when using router to load template
+  // Feature is disabled by default
+  function routerEval(code){eval(code)}
+
+  if(typeof exports === 'object' && typeof module !== 'void 0') module.exports = factory(global, routerEval);
+  else global.sf = factory(global, routerEval);
+}(typeof window !== "void 0" ? window : this, (function(window, routerEval){'use strict';
 if(typeof document === void 0)
 	document = window.document;
 // ===== Module Init =====
@@ -15,6 +19,17 @@ var sf = function(stuff){
 	if(stuff.tagName !== void 0)
 		return sf.model.root[sf.controller.modelName(stuff)];
 };
+
+// Error handler
+window.addEventListener('error', function(e) {
+	var errorStack = '';
+	if(e.error && e.error.stack){
+		errorStack += '\n'+e.error.stack;
+	}
+    console.log(e.message, '\n', e.filename, ':', e.lineno, (e.colno ? ':' + e.colno : '')
+        , 
+    );
+}, false);
 
 sf.internal = {};
 sf.regex = {
@@ -168,7 +183,7 @@ if(Object.setPrototypeOf === void 0)
   }
 
 if(typeof Reflect === 'undefined'){
-  Reflect = {};
+  var Reflect = window.Reflect = {};
   Reflect.construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };
 }
 sf.dom = function(selector, context){
@@ -920,7 +935,7 @@ sf.model = function(scope){
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			//console.log(tempScript);
-			return '#DOMError';
+			return '#TemplateError';
 		}
 		// ==== Security check ended ====
 	
@@ -935,7 +950,7 @@ sf.model = function(scope){
 			console.error(e);
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			//console.log(tempScript);
-			return '#DOMError';
+			return '#TemplateError';
 		}
 
 		if(_result_ !== '') return _result_;
@@ -1663,7 +1678,8 @@ sf.model = function(scope){
 
 				clearTimeout(refreshTimer);
 				refreshTimer = setTimeout(function(){
-					list.$virtual.reinitScroll();
+					if(list.$virtual) // Somewhat it's uninitialized
+						list.$virtual.reinitScroll();
 				}, 100);
 			}
 			else exist = parentChilds;
@@ -2575,6 +2591,10 @@ sf.model = function(scope){
 			loopParser(controller, element, script, targetNode, parent);
 			element.remove();
 		}
+
+		// Used by router
+		if(sf.internal.afterModelBinding !== undefined)
+			sf.internal.afterModelBinding();
 	}
 
 	// Reset model properties
@@ -3138,6 +3158,53 @@ sf.model = function(scope){
 		});
 	}
 })();
+sf.API = function(method, url, data, success, complete, accessToken){
+	var req = {
+		url:url,
+		dataType:'json',
+		contentType:"application/json; charset=utf-8",
+		method:'POST',
+		success:function(obj){
+			if(!sf.API.onSuccess(obj) && success)
+				success(obj, url);
+
+			if(complete) complete(true);
+		},
+		error:function(xhr, status){
+			sf.API.onError(xhr, status)
+			if(complete) complete(false, status);
+		}
+	};
+
+	if(typeof data !== 'object')
+		data = {};
+
+	data._method = method.toUpperCase();
+
+	if(accessToken)
+		data.access_token = accessToken;
+	
+	req.data = JSON.stringify(data);
+	sf.ajax(req);
+}
+
+sf.API.onError = function(xhr, status){};
+sf.API.onSuccess = function(obj){};
+
+sf.API.url = 'http://anisics.sandbox/api';
+sf.API.accessToken = false;
+sf.API.get = function(url, data, success, complete){
+	return sf.API('get', this.url+url, data, success, complete, this.accessToken);
+}
+sf.API.post = function(url, data, success, complete){
+	return sf.API('post', this.url+url, data, success, complete, this.accessToken);
+}
+sf.API.delete = function(url, data, success, complete){
+	return sf.API('delete', this.url+url, data, success, complete, this.accessToken);
+}
+sf.API.put = function(url, data, success, complete){
+	return sf.API('put', this.url+url, data, success, complete, this.accessToken);
+}
 // DOM Controller on loaded app
 sf.controller = new function(){
 	var self = this;
@@ -3716,13 +3783,15 @@ sf.router = new function(){
 		// Run 'before' event for new page view
 		var temp = $('[sf-controller], [sf-page]', targetNode);
 		for (var i = 0; i < temp.length; i++) {
+			var name = temp[i].getAttribute('sf-page') || '';
+			if(name !== '')
+				runLocalEvent('before', name);
+
 			if(temp[i].hasAttribute('sf-controller') === true)
 				sf.controller.run(temp[i].getAttribute('sf-controller'));
-			
-			if(temp[i].getAttribute('sf-page')){
-				var name = temp[i].getAttribute('sf-page');
-				beforeEvent(name);
-			}
+
+			if(name !== '')
+				runLocalEvent('when', name);
 		}
 
 		initialized = true;
@@ -3758,54 +3827,40 @@ sf.router = new function(){
 		}
 	}
 
-	var before = {};
-	// Set index with number if you want to replace old function
-	self.before = function(name, func, index){
-		if(!before[name])
-			before[name] = [];
+	var localEvent = {before:{}, when:{}, after:{}};
+	function registerLocalEvent(which, name, func){
+		if(!localEvent[which][name])
+			localEvent[which][name] = [];
 
-		if(index === void 0){
-			if(before[name].indexOf(func) === -1)
-				before[name].push(func);
-		}
-		else
-			before[name][index] = func;
+		localEvent[which][name].push(func);
 	}
 
-	var after = {};
 	// Set index with number if you want to replace old function
-	self.after = function(name, func, index){
-		if(!after[name])
-			after[name] = [];
-
-		if(index === void 0){
-			if(after[name].indexOf(func) === -1)
-				after[name].push(func);
-		}
-		else
-			after[name][index] = func;
-	}
-
 	// Running 'before' new page going to be displayed
-	var beforeEvent = function(name){
-		if(self.currentPage.indexOf(name) === -1)
+	self.before = function(name, func){
+		registerLocalEvent('before', name, func);
+	}
+
+	// Running 'when' new page was been initialized
+	self.when = function(name, func){
+		registerLocalEvent('when', name, func);
+	}
+
+	// Running 'after' old page is going to be removed
+	self.after = function(name, func){
+		registerLocalEvent('after', name, func);
+	}
+
+	function runLocalEvent(which, name){
+		if(which === 'before' && self.currentPage.indexOf(name) === -1)
 			self.currentPage.push(name);
 
-		if(before[name]){
-			for (var i = 0; i < before[name].length; i++) {
-				before[name][i](sf.model);
-			}
-		}
-	}
-
-	// Running 'after' old page going to be removed
-	var afterEvent = function(name){
-		if(self.currentPage.indexOf(name) === -1)
+		if(which === 'after' && self.currentPage.indexOf(name) === -1)
 			self.currentPage.splice(self.currentPage.indexOf(name), 1);
 
-		if(after[name]){
-			for (var i = 0; i < after[name].length; i++) {
-				after[name][i](sf.model);
+		if(localEvent[which][name]){
+			for (var i = 0; i < localEvent[which][name].length; i++) {
+				localEvent[which][name][i](sf.model);
 			}
 		}
 	}
@@ -3821,6 +3876,12 @@ sf.router = new function(){
 			onEvent[event].push(func);
 	}
 
+	// This will enable script evaluation before the model/controller/route
+	// being reinitialized after receiving template from the server.
+	// To be safe, make sure you're not directly outputing any user content
+	// like user's name, posts, modifiable data from user.
+	self.dynamicScript = false;
+
 	self.lazyViewPoint = {};
 	/*
 		{
@@ -3835,10 +3896,12 @@ sf.router = new function(){
 
 		var elem = ev.target;
 		if(!elem.href) return;
-		if(elem.href[0] === '#') return;
-		if(elem.href[0] === '@'){
+
+		var attr = elem.getAttribute('href');
+		if(attr[0] === '#') return;
+		if(attr[0] === '@'){
 			elem.setAttribute('sf-router-ignore', '');
-			elem.href = elem.href.slice(1);
+			elem.setAttribute('href', attr.slice(1));
 			return;
 		}
 
@@ -3903,7 +3966,7 @@ sf.router = new function(){
 
 					// Run 'after' event for old page view
 					var last = $.findOne('[sf-page]', DOMReference);
-					afterEvent(last ? last.getAttribute('sf-page') : '/');
+					runLocalEvent('after', last ? last.getAttribute('sf-page') : '/');
 
 					// Redefine title if exist
 					if(special && special.title)
@@ -3943,17 +4006,39 @@ sf.router = new function(){
 				if(self.pauseRenderOnTransition)
 					self.pauseRenderOnTransition.css('display', 'none');
 
-				// Let page script running first, then update the data binding
+				// Let page script running first
 				DOMReference.innerHTML = data;
+				if(self.dynamicScript !== false){
+					var scripts = DOMReference.getElementsByTagName('script');
+						for (var i = 0; i < scripts.length; i++) {
+						    routerEval(scripts[i].text);
+						}
+				}
+
+				// Before model binding
+				var temp = $('[sf-page]', DOMReference);
+				var sfPage = [];
+				try{
+					for (var i = 0; i < temp.length; i++) {
+						var sfp = temp[i].getAttribute('sf-page');
+						sfPage.push(sfp);
+						runLocalEvent('before', sfp);
+					}
+				}catch(e){
+					console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
+				}
+
+				// When the model was binded with the view
+				sf.internal.afterModelBinding = function(){
+					for (var i = 0; i < sfPage.length; i++) {
+						runLocalEvent('when', temp[i]);
+					}
+
+					sf.internal.afterModelBinding = undefined;
+				}
 
 				// Parse the DOM data binding
 				sf.model.init(DOMReference);
-
-				// Init template to model binding
-				var temp = $('[sf-page]', DOMReference);
-				for (var i = 0; i < temp.length; i++) {
-					beforeEvent(temp[i].getAttribute('sf-page'));
-				}
 
 				if(self.pauseRenderOnTransition)
 					self.pauseRenderOnTransition.css('display', '');
@@ -4066,7 +4151,12 @@ sf.internal.virtual_scroll = new function(){
 				virtual.preparedLength = 18;
 		}
 
+		var pendingFunction = sf.internal.afterModelBinding;
+		sf.internal.afterModelBinding = undefined;
+
 		setTimeout(function(){
+			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
+
 			scroller = parentNode;
 
 			var length = parentNode.getAttribute('scroll-parent-index') || 0;
@@ -4081,6 +4171,9 @@ sf.internal.virtual_scroll = new function(){
 				dynamicHeight(list, targetNode, parentNode, scroller);
 			}
 			else staticHeight(list, targetNode, parentNode, scroller);
+
+			pendingFunction();
+			pendingFunction = null;
 		}, 500);
 	}
 
@@ -4091,7 +4184,7 @@ sf.internal.virtual_scroll = new function(){
 		var floor = virtual.dCursor.floor;
 		var vCursor = virtual.vCursor;
 		vCursor.floor = virtual.dom.firstElementChild;
-		
+
 		virtual.scrollTo = function(index){
 			scrollTo(index, list, self.prepareCount, parentNode, scroller);
 
@@ -4112,6 +4205,9 @@ sf.internal.virtual_scroll = new function(){
 
 		virtual.visibleLength = parentNode.childElementCount - 2;
 		virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
+
+		if(virtual.preparedLength < 18)
+			virtual.preparedLength = 18;
 
 		for (var i = 0; i < self.prepareCount; i++) {
 			var temp = vCursor.floor;
@@ -4282,6 +4378,8 @@ sf.internal.virtual_scroll = new function(){
 			}
 
 			updating = false;
+			if(scroller.scrollTop === 0 && ceiling.offsetHeight > 10)
+				virtual.scrollTo(0);
 		}
 
 		$.on(scroller, 'scroll', checkCursorPosition);

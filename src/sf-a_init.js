@@ -1,7 +1,11 @@
 (function(global, factory){
-  if(typeof exports === 'object' && typeof module !== 'void 0') module.exports = factory(global);
-  else global.sf = factory(global);
-}(typeof window !== "void 0" ? window : this, (function(window){'use strict';
+  // Dynamic script when using router to load template
+  // Feature is disabled by default
+  function routerEval(code){eval(code)}
+
+  if(typeof exports === 'object' && typeof module !== 'void 0') module.exports = factory(global, routerEval);
+  else global.sf = factory(global, routerEval);
+}(typeof window !== "void 0" ? window : this, (function(window, routerEval){'use strict';
 if(typeof document === void 0)
 	document = window.document;
 // ===== Module Init =====
@@ -15,6 +19,17 @@ var sf = function(stuff){
 	if(stuff.tagName !== void 0)
 		return sf.model.root[sf.controller.modelName(stuff)];
 };
+
+// Error handler
+window.addEventListener('error', function(e) {
+	var errorStack = '';
+	if(e.error && e.error.stack){
+		errorStack += '\n'+e.error.stack;
+	}
+    console.log(e.message, '\n', e.filename, ':', e.lineno, (e.colno ? ':' + e.colno : '')
+        , 
+    );
+}, false);
 
 sf.internal = {};
 sf.regex = {
