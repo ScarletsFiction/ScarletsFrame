@@ -82,7 +82,8 @@ if(Object.setPrototypeOf === void 0)
     return obj; 
   }
 
-if(typeof Reflect === 'undefined'){
-  var Reflect = window.Reflect = {};
-  Reflect.construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };
-}
+var Reflect_Construct = null;
+if(typeof Reflect !== 'undefined')
+  Reflect_Construct = Reflect.construct;
+else 
+  Reflect_Construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };

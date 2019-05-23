@@ -20,17 +20,6 @@ var sf = function(stuff){
 		return sf.model.root[sf.controller.modelName(stuff)];
 };
 
-// Error handler
-window.addEventListener('error', function(e) {
-	var errorStack = '';
-	if(e.error && e.error.stack){
-		errorStack += '\n'+e.error.stack;
-	}
-    console.log(e.message, '\n', e.filename, ':', e.lineno, (e.colno ? ':' + e.colno : '')
-        , 
-    );
-}, false);
-
 sf.internal = {};
 sf.regex = {
 	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,

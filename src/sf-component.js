@@ -166,7 +166,7 @@ sf.component = new function(){
 
 	var HTMLElement_wrap = (function(Class){
 		function Wrapper(){
-			return Reflect.construct(Class, arguments, Object.getPrototypeOf(this).constructor);
+			return Reflect_Construct(Class, arguments, Object.getPrototypeOf(this).constructor);
 		}
 		Wrapper.prototype = Object.create(Class.prototype, {constructor:{value: Wrapper, enumerable: false, writable: true, configurable: true}}); 
 		return Object.setPrototypeOf(Wrapper, Class);

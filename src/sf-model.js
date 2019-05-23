@@ -7,6 +7,16 @@ sf.model = function(scope){
 	if(!sf.model.root[scope])
 		sf.model.root[scope] = {};
 
+	// This usually being initialized after DOM Loaded
+	var pending = internal.modelPending[scope];
+	if(pending){
+		var temp = sf.model.root[scope];
+		for (var i = 0; i < pending.length; i++) {
+			pending[i](temp, sf.model);
+		}
+		pending = internal.modelPending[scope] = false;
+	}
+
 	if(sf.controller.pending[scope])
 		sf.controller.run(scope);
 
@@ -18,6 +28,7 @@ sf.model = function(scope){
 	var scope = internal.model = {};
 	var bindingEnabled = false;
 	self.root = {};
+	internal.modelPending = {};
 
 	var processingElement = null;
 
@@ -111,10 +122,16 @@ sf.model = function(scope){
 
 	// Declare model for the name with a function
 	self.for = function(name, func){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.for(name, func);
-			});
+		if(!sf.loader.DOMWasLoaded){
+			if(internal.modelPending[name] === undefined)
+				internal.modelPending[name] = [];
+
+			if(internal.modelPending[name] === false)
+				return func(self(name), self);
+
+			// Initialize when DOMLoaded
+			return internal.modelPending[name].push(func);
+		}
 		
 		func(self(name), self);
 	}
@@ -1678,6 +1695,32 @@ sf.model = function(scope){
 
 		if(!targetNode) targetNode = document.body;
 
+		// Handle Router Start ==>
+		if(sf.router.enabled === true){
+			// Before model binding
+			var temp = $('[sf-page]', targetNode);
+			var sfPage = [];
+			try{
+				for (var i = 0; i < temp.length; i++) {
+					var sfp = temp[i].getAttribute('sf-page');
+					sfPage.push(sfp);
+					internal.routerLocalEvent('before', sfp);
+				}
+			}catch(e){
+				console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
+			}
+
+			// When the model was binded with the view
+			internal.afterModelBinding = function(){
+				for (var i = 0; i < sfPage.length; i++) {
+					internal.routerLocalEvent('when', temp[i]);
+				}
+
+				internal.afterModelBinding = undefined;
+			}
+		}
+		// <== Handle Router End
+
 		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
 		bindInput(targetNode);
 
@@ -1718,13 +1761,14 @@ sf.model = function(scope){
 				throw "Can't parse element that already bound";
 
 			var controller = sf.controller.modelName(element);
+			if(controller === undefined) continue;
 			loopParser(controller, element, script, targetNode, parent);
 			element.remove();
 		}
 
 		// Used by router
-		if(sf.internal.afterModelBinding !== undefined)
-			sf.internal.afterModelBinding();
+		if(internal.afterModelBinding !== undefined)
+			internal.afterModelBinding();
 	}
 
 	// Reset model properties
@@ -2250,7 +2294,10 @@ sf.model = function(scope){
 			if(queued !== void 0)
 				current.classList.remove('sf-dom-queued');
 
-			var modelRef = self.root[model] || root_(model);
+			if(internal.modelPending[model] || self.root[model] === undefined)
+				self(model);
+
+			var modelRef = self.root[model];
 
 			// Double check if the child element already bound to prevent vulnerability
 			if(/sf-bind-key|sf-bind-list/.test(current.innerHTML)){

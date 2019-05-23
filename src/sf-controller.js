@@ -95,11 +95,7 @@ sf.controller = new function(){
 		try{
 			method = eval(method);
 		} catch(e) {
-			method = false;
-		}
-
-		if(!method){
-			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element);
+			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element, err);
 			return;
 		}
 
@@ -167,6 +163,7 @@ sf.controller = new function(){
 	// Create listener for sf-click
 	document.addEventListener('DOMContentLoaded', function(){
 		$.on(document.body, 'click', '[sf-click]', listenSFClick);
+		self.init();
 	}, {capture:true, once:true});
 }
 

@@ -20,17 +20,6 @@ var sf = function(stuff){
 		return sf.model.root[sf.controller.modelName(stuff)];
 };
 
-// Error handler
-window.addEventListener('error', function(e) {
-	var errorStack = '';
-	if(e.error && e.error.stack){
-		errorStack += '\n'+e.error.stack;
-	}
-    console.log(e.message, '\n', e.filename, ':', e.lineno, (e.colno ? ':' + e.colno : '')
-        , 
-    );
-}, false);
-
 sf.internal = {};
 sf.regex = {
 	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,
@@ -182,10 +171,11 @@ if(Object.setPrototypeOf === void 0)
     return obj; 
   }
 
-if(typeof Reflect === 'undefined'){
-  var Reflect = window.Reflect = {};
-  Reflect.construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };
-}
+var Reflect_Construct = null;
+if(typeof Reflect !== 'undefined')
+  Reflect_Construct = Reflect.construct;
+else 
+  Reflect_Construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };
 sf.dom = function(selector, context){
 	if(selector[0] === '<') return sf.dom.parseElement(selector);
 	if(selector.constructor !== String) return selector;
@@ -648,6 +638,23 @@ sf.loader = new function(){
 		}
 
 		self.DOMWasLoaded = true;
+
+		// Initialize all pending model
+		var keys = Object.keys(internal.modelPending);
+		for (var i = 0; i < keys.length; i++) {
+			var ref = internal.modelPending[keys[i]];
+
+			if(sf.model.root[keys[i]] === undefined)
+				var scope = sf.model.root[keys[i]] = {};
+			else var scope = sf.model.root[keys[i]];
+
+			for (var a = 0; a < ref.length; a++) {
+				ref[a](scope, root_);
+			}
+
+			delete internal.modelPending[keys[i]];
+		}
+
 		for (var i = 0; i < whenDOMLoaded.length; i++) {
 			try{
 				whenDOMLoaded[i]();
@@ -655,6 +662,7 @@ sf.loader = new function(){
 				console.error(e);
 			}
 		}
+
 		whenProgress.splice(0);
 		whenDOMReady.splice(0);
 		whenDOMLoaded.splice(0);
@@ -837,7 +845,7 @@ sf.component = new function(){
 
 	var HTMLElement_wrap = (function(Class){
 		function Wrapper(){
-			return Reflect.construct(Class, arguments, Object.getPrototypeOf(this).constructor);
+			return Reflect_Construct(Class, arguments, Object.getPrototypeOf(this).constructor);
 		}
 		Wrapper.prototype = Object.create(Class.prototype, {constructor:{value: Wrapper, enumerable: false, writable: true, configurable: true}}); 
 		return Object.setPrototypeOf(Wrapper, Class);
@@ -877,6 +885,16 @@ sf.model = function(scope){
 	if(!sf.model.root[scope])
 		sf.model.root[scope] = {};
 
+	// This usually being initialized after DOM Loaded
+	var pending = internal.modelPending[scope];
+	if(pending){
+		var temp = sf.model.root[scope];
+		for (var i = 0; i < pending.length; i++) {
+			pending[i](temp, sf.model);
+		}
+		pending = internal.modelPending[scope] = false;
+	}
+
 	if(sf.controller.pending[scope])
 		sf.controller.run(scope);
 
@@ -888,6 +906,7 @@ sf.model = function(scope){
 	var scope = internal.model = {};
 	var bindingEnabled = false;
 	self.root = {};
+	internal.modelPending = {};
 
 	var processingElement = null;
 
@@ -981,10 +1000,16 @@ sf.model = function(scope){
 
 	// Declare model for the name with a function
 	self.for = function(name, func){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.for(name, func);
-			});
+		if(!sf.loader.DOMWasLoaded){
+			if(internal.modelPending[name] === undefined)
+				internal.modelPending[name] = [];
+
+			if(internal.modelPending[name] === false)
+				return func(self(name), self);
+
+			// Initialize when DOMLoaded
+			return internal.modelPending[name].push(func);
+		}
 		
 		func(self(name), self);
 	}
@@ -2548,6 +2573,32 @@ sf.model = function(scope){
 
 		if(!targetNode) targetNode = document.body;
 
+		// Handle Router Start ==>
+		if(sf.router.enabled === true){
+			// Before model binding
+			var temp = $('[sf-page]', targetNode);
+			var sfPage = [];
+			try{
+				for (var i = 0; i < temp.length; i++) {
+					var sfp = temp[i].getAttribute('sf-page');
+					sfPage.push(sfp);
+					internal.routerLocalEvent('before', sfp);
+				}
+			}catch(e){
+				console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
+			}
+
+			// When the model was binded with the view
+			internal.afterModelBinding = function(){
+				for (var i = 0; i < sfPage.length; i++) {
+					internal.routerLocalEvent('when', temp[i]);
+				}
+
+				internal.afterModelBinding = undefined;
+			}
+		}
+		// <== Handle Router End
+
 		self.parsePreprocess(queued || self.queuePreprocess(targetNode), queued);
 		bindInput(targetNode);
 
@@ -2588,13 +2639,14 @@ sf.model = function(scope){
 				throw "Can't parse element that already bound";
 
 			var controller = sf.controller.modelName(element);
+			if(controller === undefined) continue;
 			loopParser(controller, element, script, targetNode, parent);
 			element.remove();
 		}
 
 		// Used by router
-		if(sf.internal.afterModelBinding !== undefined)
-			sf.internal.afterModelBinding();
+		if(internal.afterModelBinding !== undefined)
+			internal.afterModelBinding();
 	}
 
 	// Reset model properties
@@ -3120,7 +3172,10 @@ sf.model = function(scope){
 			if(queued !== void 0)
 				current.classList.remove('sf-dom-queued');
 
-			var modelRef = self.root[model] || root_(model);
+			if(internal.modelPending[model] || self.root[model] === undefined)
+				self(model);
+
+			var modelRef = self.root[model];
 
 			// Double check if the child element already bound to prevent vulnerability
 			if(/sf-bind-key|sf-bind-list/.test(current.innerHTML)){
@@ -3162,7 +3217,7 @@ sf.API = function(method, url, data, success, complete, accessToken){
 	var req = {
 		url:url,
 		dataType:'json',
-		contentType:"application/json; charset=utf-8",
+		contentType:"application/json",
 		method:'POST',
 		success:function(obj){
 			if(!sf.API.onSuccess(obj) && success)
@@ -3184,7 +3239,7 @@ sf.API = function(method, url, data, success, complete, accessToken){
 	if(accessToken)
 		data.access_token = accessToken;
 	
-	req.data = JSON.stringify(data);
+	req.data = data;
 	sf.ajax(req);
 }
 
@@ -3302,11 +3357,7 @@ sf.controller = new function(){
 		try{
 			method = eval(method);
 		} catch(e) {
-			method = false;
-		}
-
-		if(!method){
-			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element);
+			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element, err);
 			return;
 		}
 
@@ -3374,6 +3425,7 @@ sf.controller = new function(){
 	// Create listener for sf-click
 	document.addEventListener('DOMContentLoaded', function(){
 		$.on(document.body, 'click', '[sf-click]', listenSFClick);
+		self.init();
 	}, {capture:true, once:true});
 }
 
@@ -3851,7 +3903,7 @@ sf.router = new function(){
 		registerLocalEvent('after', name, func);
 	}
 
-	function runLocalEvent(which, name){
+	var runLocalEvent = internal.routerLocalEvent = function(which, name){
 		if(which === 'before' && self.currentPage.indexOf(name) === -1)
 			self.currentPage.push(name);
 
@@ -3895,25 +3947,32 @@ sf.router = new function(){
 		if(self.enabled !== true) return;
 
 		var elem = ev.target;
-		if(!elem.href) return;
-
 		var attr = elem.getAttribute('href');
-		if(attr[0] === '#') return;
-		if(attr[0] === '@'){
-			elem.setAttribute('sf-router-ignore', '');
-			elem.setAttribute('href', attr.slice(1));
-			return;
+
+		if(!attr){
+			elem = $.parent(elem, '[href]');
+			attr = elem.getAttribute('href');
 		}
 
-		if(!history.pushState || elem.hasAttribute('sf-router-ignore'))
-			return;
+		if(!attr || attr[0] === '#') return;
 
 		// Make sure it's from current origin
 		var path = elem.href.replace(window.location.origin, '');
 		if(path.indexOf('//') !== -1)
 			return;
 
-		ev.preventDefault()
+		ev.preventDefault();
+		if(attr[0] === '@'){
+			var target = elem.getAttribute('target');
+			if(target)
+				window.open(attr.slice(1), target);
+			else window.location = attr.slice(1);
+			return;
+		}
+
+		if(!window.history.pushState || elem.hasAttribute('sf-router-ignore'))
+			return;
+
 		return !self.goto(path);
 	}
 
@@ -3933,7 +3992,7 @@ sf.router = new function(){
 		initialized = false;
 
 		if(RouterLoading) RouterLoading.abort();
-		RouterLoading = $.ajax({
+		RouterLoading = sf.ajax({
 			url:window.location.origin + path,
 			method:method,
             data:Object.assign(data, {
@@ -4010,31 +4069,9 @@ sf.router = new function(){
 				DOMReference.innerHTML = data;
 				if(self.dynamicScript !== false){
 					var scripts = DOMReference.getElementsByTagName('script');
-						for (var i = 0; i < scripts.length; i++) {
-						    routerEval(scripts[i].text);
-						}
-				}
-
-				// Before model binding
-				var temp = $('[sf-page]', DOMReference);
-				var sfPage = [];
-				try{
-					for (var i = 0; i < temp.length; i++) {
-						var sfp = temp[i].getAttribute('sf-page');
-						sfPage.push(sfp);
-						runLocalEvent('before', sfp);
+					for (var i = 0; i < scripts.length; i++) {
+					    routerEval(scripts[i].text);
 					}
-				}catch(e){
-					console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
-				}
-
-				// When the model was binded with the view
-				sf.internal.afterModelBinding = function(){
-					for (var i = 0; i < sfPage.length; i++) {
-						runLocalEvent('when', temp[i]);
-					}
-
-					sf.internal.afterModelBinding = undefined;
 				}
 
 				// Parse the DOM data binding
@@ -4151,8 +4188,8 @@ sf.internal.virtual_scroll = new function(){
 				virtual.preparedLength = 18;
 		}
 
-		var pendingFunction = sf.internal.afterModelBinding;
-		sf.internal.afterModelBinding = undefined;
+		var pendingFunction = internal.afterModelBinding;
+		internal.afterModelBinding = undefined;
 
 		setTimeout(function(){
 			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
@@ -4172,8 +4209,10 @@ sf.internal.virtual_scroll = new function(){
 			}
 			else staticHeight(list, targetNode, parentNode, scroller);
 
-			pendingFunction();
-			pendingFunction = null;
+			if(pendingFunction !== undefined){
+				pendingFunction();
+				pendingFunction = undefined;
+			}
 		}, 500);
 	}
 

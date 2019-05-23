@@ -2,7 +2,7 @@ sf.API = function(method, url, data, success, complete, accessToken){
 	var req = {
 		url:url,
 		dataType:'json',
-		contentType:"application/json; charset=utf-8",
+		contentType:"application/json",
 		method:'POST',
 		success:function(obj){
 			if(!sf.API.onSuccess(obj) && success)
@@ -24,7 +24,7 @@ sf.API = function(method, url, data, success, complete, accessToken){
 	if(accessToken)
 		data.access_token = accessToken;
 	
-	req.data = JSON.stringify(data);
+	req.data = data;
 	sf.ajax(req);
 }
 

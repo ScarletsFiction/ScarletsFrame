@@ -70,8 +70,8 @@ sf.internal.virtual_scroll = new function(){
 				virtual.preparedLength = 18;
 		}
 
-		var pendingFunction = sf.internal.afterModelBinding;
-		sf.internal.afterModelBinding = undefined;
+		var pendingFunction = internal.afterModelBinding;
+		internal.afterModelBinding = undefined;
 
 		setTimeout(function(){
 			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
@@ -91,8 +91,10 @@ sf.internal.virtual_scroll = new function(){
 			}
 			else staticHeight(list, targetNode, parentNode, scroller);
 
-			pendingFunction();
-			pendingFunction = null;
+			if(pendingFunction !== undefined){
+				pendingFunction();
+				pendingFunction = undefined;
+			}
 		}, 500);
 	}
 

@@ -86,7 +86,7 @@ sf.router = new function(){
 		registerLocalEvent('after', name, func);
 	}
 
-	function runLocalEvent(which, name){
+	var runLocalEvent = internal.routerLocalEvent = function(which, name){
 		if(which === 'before' && self.currentPage.indexOf(name) === -1)
 			self.currentPage.push(name);
 
@@ -130,25 +130,32 @@ sf.router = new function(){
 		if(self.enabled !== true) return;
 
 		var elem = ev.target;
-		if(!elem.href) return;
-
 		var attr = elem.getAttribute('href');
-		if(attr[0] === '#') return;
-		if(attr[0] === '@'){
-			elem.setAttribute('sf-router-ignore', '');
-			elem.setAttribute('href', attr.slice(1));
-			return;
+
+		if(!attr){
+			elem = $.parent(elem, '[href]');
+			attr = elem.getAttribute('href');
 		}
 
-		if(!history.pushState || elem.hasAttribute('sf-router-ignore'))
-			return;
+		if(!attr || attr[0] === '#') return;
 
 		// Make sure it's from current origin
 		var path = elem.href.replace(window.location.origin, '');
 		if(path.indexOf('//') !== -1)
 			return;
 
-		ev.preventDefault()
+		ev.preventDefault();
+		if(attr[0] === '@'){
+			var target = elem.getAttribute('target');
+			if(target)
+				window.open(attr.slice(1), target);
+			else window.location = attr.slice(1);
+			return;
+		}
+
+		if(!window.history.pushState || elem.hasAttribute('sf-router-ignore'))
+			return;
+
 		return !self.goto(path);
 	}
 
@@ -168,7 +175,7 @@ sf.router = new function(){
 		initialized = false;
 
 		if(RouterLoading) RouterLoading.abort();
-		RouterLoading = $.ajax({
+		RouterLoading = sf.ajax({
 			url:window.location.origin + path,
 			method:method,
             data:Object.assign(data, {
@@ -245,31 +252,9 @@ sf.router = new function(){
 				DOMReference.innerHTML = data;
 				if(self.dynamicScript !== false){
 					var scripts = DOMReference.getElementsByTagName('script');
-						for (var i = 0; i < scripts.length; i++) {
-						    routerEval(scripts[i].text);
-						}
-				}
-
-				// Before model binding
-				var temp = $('[sf-page]', DOMReference);
-				var sfPage = [];
-				try{
-					for (var i = 0; i < temp.length; i++) {
-						var sfp = temp[i].getAttribute('sf-page');
-						sfPage.push(sfp);
-						runLocalEvent('before', sfp);
+					for (var i = 0; i < scripts.length; i++) {
+					    routerEval(scripts[i].text);
 					}
-				}catch(e){
-					console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
-				}
-
-				// When the model was binded with the view
-				sf.internal.afterModelBinding = function(){
-					for (var i = 0; i < sfPage.length; i++) {
-						runLocalEvent('when', temp[i]);
-					}
-
-					sf.internal.afterModelBinding = undefined;
 				}
 
 				// Parse the DOM data binding
