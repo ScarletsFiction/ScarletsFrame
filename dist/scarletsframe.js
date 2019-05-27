@@ -111,6 +111,10 @@ if(typeof Object.assign != 'function'){
   });
 }
 
+if(console.group === void 0)
+  console.group = console.groupCollapsed = console.groupEnd = function(){};
+
+
 if(Element.prototype.remove === void 0 || CharacterData.prototype.remove === void 0 || DocumentType.prototype.remove === void 0){
   (function (arr) {
     arr.forEach(function (item) {
@@ -951,9 +955,12 @@ sf.model = function(scope){
 		}
 
 		if(preventExecution){
-			console.error("Trying to executing unrecognized function ("+preventExecution+")");
+			console.groupCollapsed("Template error:");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			//console.log(tempScript);
+			console.log(trimIndentation(tempScript).trim());
+			console.groupEnd();
+
+			console.error("Trying to executing unrecognized function ("+preventExecution+")");
 			return '#TemplateError';
 		}
 		// ==== Security check ended ====
@@ -962,13 +969,27 @@ sf.model = function(scope){
 		try{
 			if(/@return /.test(script) === true){
 				var _evaled_ = eval('(function(){'+script.split('@return ').join('return ')+'})()');
+
+				if(_evaled_ === void 0)
+					return _result_ + 'undefined';
+
+				if(_evaled_ === null)
+					return _result_ + 'null';
+
+				// Check if it's an HTMLElement
+				if(_evaled_.onclick !== void 0)
+					return _evaled_;
+
 				return _result_ + _evaled_;
 			}
 			else var _evaled_ = eval(script);
 		} catch(e){
-			console.error(e);
+			console.groupCollapsed("Template error:");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			//console.log(tempScript);
+			console.log(trimIndentation(tempScript).trim());
+			console.groupEnd();
+
+			console.error(e);
 			return '#TemplateError';
 		}
 
@@ -1100,6 +1121,8 @@ sf.model = function(scope){
 			return html;
 		}
 
+		processingElement = template.html;
+
 		var html = original === true ? template.html : template.html.cloneNode(true);
 		var addresses = template.addresses;
 		var parsed = templateExec(template.parse, item);
@@ -1198,7 +1221,15 @@ sf.model = function(scope){
 		// Run the pending element
 		for (var i = 0; i < pendingInsert.length; i++) {
 			var ref = pendingInsert[i];
-			var tDOM = $.parseElement(parsed[ref.direct].data, true);
+			var tDOM = parsed[ref.direct].data;
+
+			// Check if it's an HTMLElement
+			if(tDOM.onclick !== void 0){
+				ref.parentNode.insertBefore(tDOM, ref.dynamicFlag);
+				continue;
+			}
+
+			tDOM = $.parseElement(parsed[ref.direct].data, true);
 			for (var a = 0; a < tDOM.length; a++) {
 				ref.parentNode.insertBefore(tDOM[a], ref.dynamicFlag);
 			}
@@ -3356,7 +3387,7 @@ sf.controller = new function(){
 		// Get method reference
 		try{
 			method = eval(method);
-		} catch(e) {
+		} catch(err) {
 			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element, err);
 			return;
 		}

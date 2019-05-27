@@ -94,7 +94,7 @@ sf.controller = new function(){
 		// Get method reference
 		try{
 			method = eval(method);
-		} catch(e) {
+		} catch(err) {
 			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element, err);
 			return;
 		}

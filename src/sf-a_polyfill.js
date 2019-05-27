@@ -22,6 +22,10 @@ if(typeof Object.assign != 'function'){
   });
 }
 
+if(console.group === void 0)
+  console.group = console.groupCollapsed = console.groupEnd = function(){};
+
+
 if(Element.prototype.remove === void 0 || CharacterData.prototype.remove === void 0 || DocumentType.prototype.remove === void 0){
   (function (arr) {
     arr.forEach(function (item) {
