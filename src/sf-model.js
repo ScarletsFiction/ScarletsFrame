@@ -618,6 +618,10 @@ sf.model = function(scope){
 				for(var key in passVar){
 					if(typeof passVar[key] === 'string')
 						passVar[key] = '"'+passVar[key].split('"').join('\\"')+'"';
+					else if(key === '_model_'){
+						_model_ = passVar[key];
+						continue;
+					}
 					else if(typeof passVar[key] === 'object')
 						passVar[key] = JSON.stringify(passVar[key]);
 
@@ -951,22 +955,24 @@ sf.model = function(scope){
 			// Remove
 			if(options === 'remove'){
 				if(exist[index]){
-					var currentRemoved = false;
-					var startRemove = function(){
-						if(currentRemoved) return;
-						currentRemoved = true;
-
-						exist[index].remove();
-					}
+					var currentEl = exist[index];
 
 					if(callback !== void 0 && callback.remove){
+						var currentRemoved = false;
+						var startRemove = function(){
+							if(currentRemoved) return;
+							currentRemoved = true;
+
+							currentEl.remove();
+						};
+
 						// Auto remove if return false
 						if(!callback.remove(exist[index], startRemove))
 							startRemove();
 					}
 
 					// Auto remove if no callback
-					else startRemove();
+					else currentEl.remove();
 				}
 				return;
 			}
