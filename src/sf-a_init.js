@@ -22,7 +22,7 @@ var sf = function(stuff){
 
 sf.internal = {};
 sf.regex = {
-	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,
+	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	validFunctionCall:/[a-zA-Z0-9 \]\$\)]/,
 	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )',
 	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
@@ -33,14 +33,22 @@ sf.regex = {
 
 var allowedFunctionEval = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
 
-function avoidQuotes(str, func){
+function avoidQuotes(str, func, noReturn){
 	var temp = [];
 	var es = '<%$@>';
+
+	if(noReturn !== void 0){
+		func(str.replace(sf.regex.getQuotes, '<%$@>'));
+		return;
+	}
+
 	str = str.replace(sf.regex.getQuotes, function(full){
 		temp.push(full);
 		return es+(temp.length-1)+es;
 	});
+
 	str = func(str);
+
 	for (var i = 0; i < temp.length; i++) {
 		str = str.replace(es+i+es, temp[i]);
 	}
