@@ -547,6 +547,7 @@ sf.internal.virtual_scroll = new function(){
 	function scrollTo(index, list, prepareCount, parentNode, scroller){
 		var virtual = list.$virtual;
 		var reduce = 0;
+		var index_ = index;
 
 		if(index >= list.length - virtual.preparedLength){
 			reduce -= prepareCount;
@@ -561,7 +562,7 @@ sf.internal.virtual_scroll = new function(){
 		if((virtual.DOMCursor === 0 && index < prepareCount + prepareCount/2) ||
 			(virtual.DOMCursor + prepareCount/2 > index
 			&& virtual.DOMCursor + prepareCount < index))
-			scroller.scrollTop = parentNode.children[index - virtual.DOMCursor + 1].offsetTop;
+				scroller.scrollTop = list.getElement(index_).offsetTop;
 
 		// Move cursor
 		else {
