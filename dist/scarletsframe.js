@@ -22,7 +22,7 @@ var sf = function(stuff){
 
 sf.internal = {};
 sf.regex = {
-	getQuotes:/(['"])[\s\S]*?[^\\]\1/g,
+	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	validFunctionCall:/[a-zA-Z0-9 \]\$\)]/,
 	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )',
 	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
@@ -33,14 +33,22 @@ sf.regex = {
 
 var allowedFunctionEval = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
 
-function avoidQuotes(str, func){
+function avoidQuotes(str, func, noReturn){
 	var temp = [];
 	var es = '<%$@>';
+
+	if(noReturn !== void 0){
+		func(str.replace(sf.regex.getQuotes, '<%$@>'));
+		return;
+	}
+
 	str = str.replace(sf.regex.getQuotes, function(full){
 		temp.push(full);
 		return es+(temp.length-1)+es;
 	});
+
 	str = func(str);
+
 	for (var i = 0; i < temp.length; i++) {
 		str = str.replace(es+i+es, temp[i]);
 	}
@@ -934,30 +942,29 @@ sf.model = function(scope){
 		"use strict";
 
 		// ==== Security check ====
-		var tempScript = script;
+		var preventExecution = false;
 
 		// Remove all inner quotes
-		tempScript = tempScript.replace(sf.regex.getQuotes, '"Quotes"');
+		avoidQuotes(script, function(tempScript){
+			// Prevent vulnerability by remove bracket to avoid a function call
+			var check_ = null;
+			while((check_ = bracketMatch.exec(tempScript)) !== null){
+				check_[1] = check_[1].trim();
 
-		// Prevent vulnerability by remove bracket to avoid a function call
-		var preventExecution = false;
-		var check_ = null;
-		while((check_ = bracketMatch.exec(tempScript)) !== null){
-			check_[1] = check_[1].trim();
-
-			if(allowedFunctionEval.indexOf(check_[1]) === -1 &&
-				check_[1].split('.')[0] !== '_modelScope' &&
-				chackValidFunctionCall.test(check_[1][check_[1].length-1])
-			){
-				preventExecution = check_[1];
-				break;
+				if(allowedFunctionEval.indexOf(check_[1]) === -1 &&
+					check_[1].split('.')[0] !== '_modelScope' &&
+					chackValidFunctionCall.test(check_[1][check_[1].length-1])
+				){
+					preventExecution = check_[1];
+					break;
+				}
 			}
-		}
+		}, true);
 
 		if(preventExecution){
 			console.groupCollapsed("Template error:");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			console.log(trimIndentation(tempScript).trim());
+			console.log(trimIndentation(script).trim());
 			console.groupEnd();
 
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
@@ -986,7 +993,7 @@ sf.model = function(scope){
 		} catch(e){
 			console.groupCollapsed("Template error:");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			console.log(trimIndentation(tempScript).trim());
+			console.log(trimIndentation(script).trim());
 			console.groupEnd();
 
 			console.error(e);
@@ -1501,6 +1508,10 @@ sf.model = function(scope){
 				for(var key in passVar){
 					if(typeof passVar[key] === 'string')
 						passVar[key] = '"'+passVar[key].split('"').join('\\"')+'"';
+					else if(key === '_model_'){
+						_model_ = passVar[key];
+						continue;
+					}
 					else if(typeof passVar[key] === 'object')
 						passVar[key] = JSON.stringify(passVar[key]);
 
@@ -1834,22 +1845,24 @@ sf.model = function(scope){
 			// Remove
 			if(options === 'remove'){
 				if(exist[index]){
-					var currentRemoved = false;
-					var startRemove = function(){
-						if(currentRemoved) return;
-						currentRemoved = true;
-
-						exist[index].remove();
-					}
+					var currentEl = exist[index];
 
 					if(callback !== void 0 && callback.remove){
+						var currentRemoved = false;
+						var startRemove = function(){
+							if(currentRemoved) return;
+							currentRemoved = true;
+
+							currentEl.remove();
+						};
+
 						// Auto remove if return false
 						if(!callback.remove(exist[index], startRemove))
 							startRemove();
 					}
 
 					// Auto remove if no callback
-					else startRemove();
+					else currentEl.remove();
 				}
 				return;
 			}
@@ -2634,7 +2647,14 @@ sf.model = function(scope){
 		bindInput(targetNode);
 
 		// Find element for array binding
-		var temp = $('[sf-repeat-this]', targetNode);
+		repeatedListBinding($('[sf-repeat-this]', targetNode), targetNode, queued);
+
+		// Used by router
+		if(internal.afterModelBinding !== undefined)
+			internal.afterModelBinding();
+	}
+
+	function repeatedListBinding(temp, targetNode, queued, controller_){
 		for (var a = 0; a < temp.length; a++) {
 			var element = temp[a];
 			var parent = element.parentElement;
@@ -2669,15 +2689,16 @@ sf.model = function(scope){
 			if(/sf-bind-key|sf-bind-list/.test(element.outerHTML))
 				throw "Can't parse element that already bound";
 
-			var controller = sf.controller.modelName(element);
-			if(controller === undefined) continue;
+			if(controller_ !== void 0)
+				var controller = controller_;
+			else{
+				var controller = sf.controller.modelName(element);
+				if(controller === void 0) continue;
+			}
+
 			loopParser(controller, element, script, targetNode, parent);
 			element.remove();
 		}
-
-		// Used by router
-		if(internal.afterModelBinding !== undefined)
-			internal.afterModelBinding();
 	}
 
 	// Reset model properties
@@ -2865,6 +2886,7 @@ sf.model = function(scope){
 		templateParser(data, model, true);
 		delete data.addresses;
 		element.parentNode.replaceChild(data.html, element);
+
 		element = data.html;
 
 		var onChanges = function(){
@@ -2897,11 +2919,25 @@ sf.model = function(scope){
 			};
 		}
 
+		// Remove repeated list from further process
+		var backup = targetNode.querySelectorAll('[sf-repeat-this]');
+		for (var i = 0; i < backup.length; i++) {
+			var current = backup[i];
+			current.insertAdjacentHTML('afterEnd', '<sfrepeat-this id="'+i+'"></sfrepeat-this>');
+			current.remove();
+		}
+
 		var copy = targetNode.outerHTML;
 
 		// Mask the referenced item
 		if(mask !== null)
 			copy = copy.split('#'+mask).join('_model_');
+		else{ // Replace all masked item
+			copy.replace(/sf-repeat-this="(?:\W+|)(\w+)/g, function(full, match){
+				copy = copy.split('#'+match).join('_model_');
+				copy = copy.replace(RegExp(sf.regex.strictVar+"("+match+")\\b", 'g'), '_model_');
+			});
+		}
 
 		// Extract data to be parsed
 		copy = uniqueDataParser(copy, null, mask, name, '#noEval');
@@ -2969,8 +3005,17 @@ sf.model = function(scope){
 			return found;
 		}
 
-		// Build element and start addressing
+		// Rebuild element
 		copy = $.parseElement(copy)[0];
+
+		// Restore element repeated list
+		var restore = copy.querySelectorAll('sfrepeat-this');
+		for (var i = 0; i < restore.length; i++) {
+			var current = restore[i];
+			current.parentNode.replaceChild(backup[current.id], current);
+		}
+
+		// Start addressing
 		var nodes = self.queuePreprocess(copy, true).reverse();
 		var addressed = [];
 
