@@ -116,6 +116,9 @@ sf.model = function(scope){
 
 	// Find an index for the element on the list
 	self.index = function(element){
+		if(element.hasAttribute('sf-bind-list') === false)
+			element = sf.dom.parent(element, '[sf-bind-list]');
+
 		var i = -1;
 		var tagName = element.tagName;
 		var currentElement = element;
@@ -569,7 +572,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			}).split('_model_._modelScope.').join('_model_.');
+			}).split('_model_._modelScope.').join('_model_.').split('._modelScope.').join('.');
 
 			// Evaluate
 			if(runEval === '#noEval'){
