@@ -4,9 +4,13 @@ sf.router = new function(){
 	self.enabled = false;
 	self.pauseRenderOnTransition = false;
 	self.currentPage = [];
+	self.mode = 'server-side';
 	var initialized = false;
 	var lazyRouting = false;
 	var currentRouterURL = '';
+
+	var gEval = routerEval;
+	routerEval = void 0;
 
 	// Should be called if not using lazy page load
 	self.init = function(targetNode){
@@ -144,6 +148,9 @@ sf.router = new function(){
 		if(path.indexOf('//') !== -1)
 			return;
 
+		if(!window.history.pushState || elem.hasAttribute('sf-router-ignore'))
+			return;
+
 		ev.preventDefault();
 		if(attr[0] === '@'){
 			var target = elem.getAttribute('target');
@@ -152,9 +159,6 @@ sf.router = new function(){
 			else window.location = attr.slice(1);
 			return;
 		}
-
-		if(!window.history.pushState || elem.hasAttribute('sf-router-ignore'))
-			return;
 
 		return !self.goto(path);
 	}
@@ -253,7 +257,7 @@ sf.router = new function(){
 				if(self.dynamicScript !== false){
 					var scripts = DOMReference.getElementsByTagName('script');
 					for (var i = 0; i < scripts.length; i++) {
-					    routerEval(scripts[i].text);
+					    gEval(scripts[i].text);
 					}
 				}
 
