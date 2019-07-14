@@ -124,11 +124,6 @@ sf.controller = new function(){
 	}
 
 	self.run = function(name, func){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.run(name, func);
-			});
-
 		if(sf.component.registered[name])
 			return console.error("'"+name+"' is registered as a component");
 
