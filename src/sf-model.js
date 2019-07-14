@@ -46,7 +46,7 @@ sf.model = function(scope){
 	}
 
 	// Secured evaluation
-	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+sf.regex.avoidQuotes, 'g');
+	var bracketMatch = /([\w.]*?[\S\s])\(/g;
 	var chackValidFunctionCall = sf.regex.validFunctionCall;
 	var localEval = function(script, _model_, _modelScope, _content_){
 		"use strict";
@@ -61,13 +61,15 @@ sf.model = function(scope){
 			while((check_ = bracketMatch.exec(tempScript)) !== null){
 				check_[1] = check_[1].trim();
 
-				if(allowedFunctionEval.indexOf(check_[1]) === -1 &&
-					check_[1].split('.')[0] !== '_modelScope' &&
-					chackValidFunctionCall.test(check_[1][check_[1].length-1])
-				){
-					preventExecution = check_[1];
-					break;
-				}
+				if(allowedFunctionEval[check_[1]] || check_[1].split('.')[0] === '_modelScope')
+					continue;
+
+				if(tempScript.indexOf('var '+check_[1]) !== -1 || tempScript.indexOf('let '+check_[1]) !== -1)
+					continue;
+
+				bracketMatch.lastIndex = 0;
+				preventExecution = check_[1];
+				break;
 			}
 		}, true);
 
@@ -202,6 +204,7 @@ sf.model = function(scope){
 	var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 	var templateExec = function(parse, item, atIndex){
 		var parsed = {};
+		var temp = null;
 
 		// Get or evaluate static or dynamic data
 		for (var i = 0; i < parse.length; i++) {
@@ -212,11 +215,24 @@ sf.model = function(scope){
 			ref.data[1] = item;
 
 			// Direct evaluation type
-			if(ref.type === REF_DIRECT || ref.type === REF_EXEC)
+			if(ref.type === REF_DIRECT){
+				temp = localEval.apply(self.root, ref.data);
+				if(temp.constructor === Object)
+					temp = JSON.stringify(temp);
+				if(temp.constructor !== String)
+					temp = String(temp);
+
+				parsed[i] = {type:ref.type, data:temp};
+				continue;
+			}
+
+			if(ref.type === REF_EXEC){
 				parsed[i] = {type:ref.type, data:localEval.apply(self.root, ref.data)};
+				continue;
+			}
 
 			// Conditional type
-			else if(ref.type === REF_IF){
+			if(ref.type === REF_IF){
 				var scopes = ref.data;
 				parsed[i] = {type:ref.type, data:''};
 				scopes[0] = ref.if[0];
@@ -427,14 +443,13 @@ sf.model = function(scope){
 				return false;
 
 			// Prepare all required data
-			changes = [];
+			var changes_ = [];
 			for (var i = 0; i < parseIndex.length; i++) {
-				if(parsed[parseIndex[i]] === void 0){
-					changes.push(parseIndex[i]);
-				}
+				if(parsed[parseIndex[i]] === void 0)
+					changes_.push(parseIndex[i]);
 			}
 
-			Object.assign(parsed, templateExec(template.parse, item, changes));
+			Object.assign(parsed, templateExec(template.parse, item, changes_));
 			return true;
 		}
 
@@ -461,7 +476,7 @@ sf.model = function(scope){
 
 					// Add if not exist
 					if(notExist){
-						for (var a = 0; a < tDOM.length; a++)
+						for (var a = tDOM.length - 1; a >= 0; a--)
 							cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
 					}
 
@@ -493,7 +508,7 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.ref.direct]){
+				if(parsed[cRef.ref.direct]){
 					var value = parsed[cRef.ref.direct].data;
 					if(cRef.textContent.textContent === value) continue;
 
@@ -505,11 +520,13 @@ sf.model = function(scope){
 						}
 					}
 
+					// if(item['each$'+])
 					ref_.textContent = value;
-					haveChanges = true;
 				}
+				continue;
 			}
-			else if(cRef.attribute !== void 0){ // Attributes
+
+			if(cRef.attribute !== void 0){ // Attributes
 				if(cRef.ref.parse_index !== void 0){ // Multiple
 					if(checkRelatedChanges(cRef.ref.parse_index) === true){
 						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
@@ -525,9 +542,9 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.ref.direct]){
+				if(parsed[cRef.ref.direct]){
 					var value = parsed[cRef.ref.direct].data;
-					if(cRef.attribute.value === value) continue;
+					if(cRef.attribute.value == value) continue;
 					cRef.attribute.value = value;
 
 					haveChanges = true;
@@ -708,7 +725,7 @@ sf.model = function(scope){
 				};
 				VarPass = obtained;
 				for (var i = 0; i < VarPass.length; i++) {
-					VarPass[i] += ':(typeof '+VarPass[i]+'!=="void 0"?'+VarPass[i]+':void 0)';
+					VarPass[i] += ':typeof '+VarPass[i]+'!=="undefined"?'+VarPass[i]+':void 0';
 				}
 
 				if(VarPass.length === 0)
@@ -2061,7 +2078,7 @@ sf.model = function(scope){
 		function findModelProperty(){
 			if(mask === null){
 				// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
-				var extract = RegExp('('+self.modelKeys(self.root[name]).sort(function(a, b){
+				var extract = RegExp('_modelScope\\.('+self.modelKeys(self.root[name]).sort(function(a, b){
 					return b.length - a.length
 				}).join('|')+')', 'g');
 			}
@@ -2301,7 +2318,8 @@ sf.model = function(scope){
 				var attrs = currentNode.attributes;
 
 				// Skip element and it's childs that already bound to prevent vulnerability
-				if(attrs['sf-bind-key'] || attrs['sf-repeat-this'] || attrs['sf-bind-list']) continue;
+				if(attrs['sf-bind-key'] || attrs['sf-repeat-this'] || attrs['sf-bind-list'] || currentNode.sf$elementReferences !== void 0)
+					continue;
 
 				for (var a = 0; a < attrs.length; a++) {
 					if(attrs[a].value.indexOf('{{') !== -1){

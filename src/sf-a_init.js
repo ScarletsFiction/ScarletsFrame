@@ -31,7 +31,7 @@ sf.regex = {
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 };
 
-var allowedFunctionEval = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
+var allowedFunctionEval = {'for':true, 'if':true, 'while':true, '_content_.take':true, 'console.log':true};
 
 function avoidQuotes(str, func, noReturn){
 	var temp = [];
