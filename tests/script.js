@@ -4,6 +4,7 @@ var test = null;
 sf.model.for('virtual-scroll', function(self, root){
    test = self;
 
+   self.vul = "this shouldn't be visible";
    self.list1 = [];
    self.list1b = [];
    self.one = 'first';
@@ -55,6 +56,9 @@ sf(function(){
       setTimeout(function(){
          console.log("Item: 11-20");
          list.list2 = list.list2.concat(list.list2b.slice(15, 20));
+
+         list.list1.push({id:"{{self.vul}}{{@exec console.error('something not gud')}}"});
+         setTimeout(function(){sf.model.init(reinit)}, 1000);
       }, 2000);
 
       // Clear some element and refresh some element
@@ -172,6 +176,9 @@ sf.model.for('model-binding', function(self, root){
    self.prefix = 'i -> ';
    self.stuff = '(text from the model)';
    self.stuffes = ' and stuff';
+   self.vuln = "{{self.vul}}{{@exec console.error('something not gud')}}";
+   self.vul = "this shouldn't be visible";
+   setTimeout(function(){sf.model.init(reinit)}, 1000);
 });
 sf.controller.for('model-binding', function(self, root){
    var list = root('virtual-scroll');

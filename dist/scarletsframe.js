@@ -31,7 +31,7 @@ sf.regex = {
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 };
 
-var allowedFunctionEval = [':', 'for', 'if', 'while', '_content_.take', 'console.log'];
+var allowedFunctionEval = {'for':true, 'if':true, 'while':true, '_content_.take':true, 'console.log':true};
 
 function avoidQuotes(str, func, noReturn){
 	var temp = [];
@@ -936,7 +936,7 @@ sf.model = function(scope){
 	}
 
 	// Secured evaluation
-	var bracketMatch = RegExp('([\\w.]*?[\\S\\s])\\('+sf.regex.avoidQuotes, 'g');
+	var bracketMatch = /([\w.]*?[\S\s])\(/g;
 	var chackValidFunctionCall = sf.regex.validFunctionCall;
 	var localEval = function(script, _model_, _modelScope, _content_){
 		"use strict";
@@ -951,13 +951,15 @@ sf.model = function(scope){
 			while((check_ = bracketMatch.exec(tempScript)) !== null){
 				check_[1] = check_[1].trim();
 
-				if(allowedFunctionEval.indexOf(check_[1]) === -1 &&
-					check_[1].split('.')[0] !== '_modelScope' &&
-					chackValidFunctionCall.test(check_[1][check_[1].length-1])
-				){
-					preventExecution = check_[1];
-					break;
-				}
+				if(allowedFunctionEval[check_[1]] || check_[1].split('.')[0] === '_modelScope')
+					continue;
+
+				if(tempScript.indexOf('var '+check_[1]) !== -1 || tempScript.indexOf('let '+check_[1]) !== -1)
+					continue;
+
+				bracketMatch.lastIndex = 0;
+				preventExecution = check_[1];
+				break;
 			}
 		}, true);
 
@@ -1006,6 +1008,9 @@ sf.model = function(scope){
 
 	// Find an index for the element on the list
 	self.index = function(element){
+		if(element.hasAttribute('sf-bind-list') === false)
+			element = sf.dom.parent(element, '[sf-bind-list]');
+
 		var i = -1;
 		var tagName = element.tagName;
 		var currentElement = element;
@@ -1089,6 +1094,7 @@ sf.model = function(scope){
 	var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 	var templateExec = function(parse, item, atIndex){
 		var parsed = {};
+		var temp = null;
 
 		// Get or evaluate static or dynamic data
 		for (var i = 0; i < parse.length; i++) {
@@ -1099,11 +1105,24 @@ sf.model = function(scope){
 			ref.data[1] = item;
 
 			// Direct evaluation type
-			if(ref.type === REF_DIRECT || ref.type === REF_EXEC)
+			if(ref.type === REF_DIRECT){
+				temp = localEval.apply(self.root, ref.data);
+				if(temp.constructor === Object)
+					temp = JSON.stringify(temp);
+				if(temp.constructor !== String)
+					temp = String(temp);
+
+				parsed[i] = {type:ref.type, data:temp};
+				continue;
+			}
+
+			if(ref.type === REF_EXEC){
 				parsed[i] = {type:ref.type, data:localEval.apply(self.root, ref.data)};
+				continue;
+			}
 
 			// Conditional type
-			else if(ref.type === REF_IF){
+			if(ref.type === REF_IF){
 				var scopes = ref.data;
 				parsed[i] = {type:ref.type, data:''};
 				scopes[0] = ref.if[0];
@@ -1314,14 +1333,13 @@ sf.model = function(scope){
 				return false;
 
 			// Prepare all required data
-			changes = [];
+			var changes_ = [];
 			for (var i = 0; i < parseIndex.length; i++) {
-				if(parsed[parseIndex[i]] === void 0){
-					changes.push(parseIndex[i]);
-				}
+				if(parsed[parseIndex[i]] === void 0)
+					changes_.push(parseIndex[i]);
 			}
 
-			Object.assign(parsed, templateExec(template.parse, item, changes));
+			Object.assign(parsed, templateExec(template.parse, item, changes_));
 			return true;
 		}
 
@@ -1348,7 +1366,7 @@ sf.model = function(scope){
 
 					// Add if not exist
 					if(notExist){
-						for (var a = 0; a < tDOM.length; a++)
+						for (var a = tDOM.length - 1; a >= 0; a--)
 							cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
 					}
 
@@ -1380,7 +1398,7 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.ref.direct]){
+				if(parsed[cRef.ref.direct]){
 					var value = parsed[cRef.ref.direct].data;
 					if(cRef.textContent.textContent === value) continue;
 
@@ -1392,11 +1410,13 @@ sf.model = function(scope){
 						}
 					}
 
+					// if(item['each$'+])
 					ref_.textContent = value;
-					haveChanges = true;
 				}
+				continue;
 			}
-			else if(cRef.attribute !== void 0){ // Attributes
+
+			if(cRef.attribute !== void 0){ // Attributes
 				if(cRef.ref.parse_index !== void 0){ // Multiple
 					if(checkRelatedChanges(cRef.ref.parse_index) === true){
 						var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
@@ -1412,9 +1432,9 @@ sf.model = function(scope){
 				}
 
 				// Direct value
-				else if(parsed[cRef.ref.direct]){
+				if(parsed[cRef.ref.direct]){
 					var value = parsed[cRef.ref.direct].data;
-					if(cRef.attribute.value === value) continue;
+					if(cRef.attribute.value == value) continue;
 					cRef.attribute.value = value;
 
 					haveChanges = true;
@@ -1459,7 +1479,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			}).split('_model_._modelScope.').join('_model_.');
+			}).split('_model_._modelScope.').join('_model_.').split('._modelScope.').join('.');
 
 			// Evaluate
 			if(runEval === '#noEval'){
@@ -1595,7 +1615,7 @@ sf.model = function(scope){
 				};
 				VarPass = obtained;
 				for (var i = 0; i < VarPass.length; i++) {
-					VarPass[i] += ':(typeof '+VarPass[i]+'!=="void 0"?'+VarPass[i]+':void 0)';
+					VarPass[i] += ':typeof '+VarPass[i]+'!=="undefined"?'+VarPass[i]+':void 0';
 				}
 
 				if(VarPass.length === 0)
@@ -2948,7 +2968,7 @@ sf.model = function(scope){
 		function findModelProperty(){
 			if(mask === null){
 				// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
-				var extract = RegExp('('+self.modelKeys(self.root[name]).sort(function(a, b){
+				var extract = RegExp('_modelScope\\.('+self.modelKeys(self.root[name]).sort(function(a, b){
 					return b.length - a.length
 				}).join('|')+')', 'g');
 			}
@@ -3188,7 +3208,8 @@ sf.model = function(scope){
 				var attrs = currentNode.attributes;
 
 				// Skip element and it's childs that already bound to prevent vulnerability
-				if(attrs['sf-bind-key'] || attrs['sf-repeat-this'] || attrs['sf-bind-list']) continue;
+				if(attrs['sf-bind-key'] || attrs['sf-repeat-this'] || attrs['sf-bind-list'] || currentNode.sf$elementReferences !== void 0)
+					continue;
 
 				for (var a = 0; a < attrs.length; a++) {
 					if(attrs[a].value.indexOf('{{') !== -1){
@@ -3462,11 +3483,6 @@ sf.controller = new function(){
 	}
 
 	self.run = function(name, func){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.run(name, func);
-			});
-
 		if(sf.component.registered[name])
 			return console.error("'"+name+"' is registered as a component");
 
@@ -3897,9 +3913,13 @@ sf.router = new function(){
 	self.enabled = false;
 	self.pauseRenderOnTransition = false;
 	self.currentPage = [];
+	self.mode = 'server-side';
 	var initialized = false;
 	var lazyRouting = false;
 	var currentRouterURL = '';
+
+	var gEval = routerEval;
+	routerEval = void 0;
 
 	// Should be called if not using lazy page load
 	self.init = function(targetNode){
@@ -4037,6 +4057,9 @@ sf.router = new function(){
 		if(path.indexOf('//') !== -1)
 			return;
 
+		if(!window.history.pushState || elem.hasAttribute('sf-router-ignore'))
+			return;
+
 		ev.preventDefault();
 		if(attr[0] === '@'){
 			var target = elem.getAttribute('target');
@@ -4045,9 +4068,6 @@ sf.router = new function(){
 			else window.location = attr.slice(1);
 			return;
 		}
-
-		if(!window.history.pushState || elem.hasAttribute('sf-router-ignore'))
-			return;
 
 		return !self.goto(path);
 	}
@@ -4146,7 +4166,7 @@ sf.router = new function(){
 				if(self.dynamicScript !== false){
 					var scripts = DOMReference.getElementsByTagName('script');
 					for (var i = 0; i < scripts.length; i++) {
-					    routerEval(scripts[i].text);
+					    gEval(scripts[i].text);
 					}
 				}
 
@@ -4741,6 +4761,7 @@ sf.internal.virtual_scroll = new function(){
 	function scrollTo(index, list, prepareCount, parentNode, scroller){
 		var virtual = list.$virtual;
 		var reduce = 0;
+		var index_ = index;
 
 		if(index >= list.length - virtual.preparedLength){
 			reduce -= prepareCount;
@@ -4755,7 +4776,7 @@ sf.internal.virtual_scroll = new function(){
 		if((virtual.DOMCursor === 0 && index < prepareCount + prepareCount/2) ||
 			(virtual.DOMCursor + prepareCount/2 > index
 			&& virtual.DOMCursor + prepareCount < index))
-			scroller.scrollTop = parentNode.children[index - virtual.DOMCursor + 1].offsetTop;
+				scroller.scrollTop = list.getElement(index_).offsetTop;
 
 		// Move cursor
 		else {

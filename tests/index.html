@@ -51,7 +51,7 @@
 
          <b>Virtual Scroll - Static Height & Scroll on parent</b>
          <div data-simplebar style="height: 200px;">
-            <ul class="sf-virtual-list" scroll-parent-index="1">
+            <ul class="sf-virtual-list" scroll-parent-index="2">
                <li sf-repeat-this="x in list1" data-id="{{x.id}}">
                   <label>{{ x.id }}</label>
 
@@ -119,7 +119,8 @@
          </div>
 
          <b>Execution for the current model scope</b><br>
-         <div>
+         <div id="reinit">
+            <div>
             {{@exec
                for(var i = 1; i <= 5; i++){
                   {[<span>{{ prefix }}{{ i }}</span><br>]}
@@ -134,7 +135,12 @@
                {[ <b>{{escapeHTML}}</b> ]}
                @return noEscapeHTML;
             }}
-            {{@exec {[ <br><br>another exec ]} }}
+            {{@exec {[ <br><br>expected error{{vuln}} ]} }}
+            {{@exec 
+               // This must throw error
+               Object.keys({a:1});
+            }}
+            </div>
          </div>
       </div>
 
