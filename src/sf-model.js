@@ -2078,12 +2078,12 @@ sf.model = function(scope){
 		function findModelProperty(){
 			if(mask === null){
 				// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
-				var extract = RegExp('_modelScope\\.('+self.modelKeys(self.root[name]).sort(function(a, b){
+				var extract = RegExp('(?:{{.*?\\b|_modelScope\\.)('+self.modelKeys(self.root[name]).sort(function(a, b){
 					return b.length - a.length
-				}).join('|')+')', 'g');
+				}).join('|')+')(\\b.*?}}|)', 'g');
 			}
 			else
-				var extract = RegExp('\\b(?:_model_|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
+				var extract = RegExp('\\b(?:_modelScope|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
 			var found = {};
 
 			for (var i = 0; i < preParsed.length; i++) {
@@ -2121,6 +2121,7 @@ sf.model = function(scope){
 					return _content_[match];
 				});
 
+				// console.log(99, checkList);
 				checkList.split('"').join("'").replace(extract, function(full, match){
 					match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
 						return '.'+match_;
