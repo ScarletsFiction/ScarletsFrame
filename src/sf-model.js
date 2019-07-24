@@ -1837,7 +1837,14 @@ sf.model = function(scope){
 
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
-	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element){
+	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element, isScan){
+		if(isScan === void 0){
+			var temp = element.querySelectorAll('[sf-controller]');
+			for (var i = 0; i < temp.length; i++) {
+				DOMNodeRemoved(temp[i], true);
+			}
+		}
+
 		if(element.hasAttribute('sf-controller') !== false){
 			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
 
@@ -1850,11 +1857,6 @@ sf.model = function(scope){
 				delete self.root[modelName];
 			}
 			return;
-		}
-
-		var temp = $('[sf-controller]', element);
-		for (var i = 0; i < temp.length; i++) {
-			DOMNodeRemoved(temp[i]);
 		}
 	}
 
