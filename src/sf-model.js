@@ -217,10 +217,14 @@ sf.model = function(scope){
 			// Direct evaluation type
 			if(ref.type === REF_DIRECT){
 				temp = localEval.apply(self.root, ref.data);
-				if(temp.constructor === Object)
-					temp = JSON.stringify(temp);
-				if(temp.constructor !== String)
-					temp = String(temp);
+				if(temp === void 0)
+					console.error('`'+ref.data[0]+'` was not defined');
+				else{
+					if(temp.constructor === Object)
+						temp = JSON.stringify(temp);
+					if(temp.constructor !== String)
+						temp = String(temp);
+				}
 
 				parsed[i] = {type:ref.type, data:temp};
 				continue;
