@@ -1,17 +1,11 @@
 sf.internal.virtual_scroll = new function(){
 	var self = this;
-	var styleInitialized = false;
 	var scrollingByScript = false;
 
 	// before and after
 	self.prepareCount = 4; // 4, 8, 12, 16, ...
 
 	self.handle = function(list, targetNode, parentNode){
-		if(!styleInitialized){
-			initStyles();
-			styleInitialized = true;
-		}
-
 		var dynamicList = false;
 		var virtual = list.$virtual;
 		virtual.reset = function(reinitOnly){
@@ -50,7 +44,7 @@ sf.internal.virtual_scroll = new function(){
 
 		virtual.reset();
 		virtual.targetNode = parentNode;
-		virtual.scrollHeight = virtual.dCursor.floor.offsetTop - virtual.bounding.initial;
+		virtual.scrollHeight = virtual.dCursor.ceiling.nextElementSibling.offsetHeight;
 
 		var scroller = parentNode;
 		virtual.destroy = function(){
@@ -76,12 +70,9 @@ sf.internal.virtual_scroll = new function(){
 		setTimeout(function(){
 			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
 
-			scroller = parentNode;
-
-			var length = parentNode.getAttribute('scroll-parent-index') || 0;
-			for (var i = 0; i < length; i++) {
-				scroller = scroller.parentElement;
-			}
+			scroller = internal.findScrollerElement(parentNode);
+			scroller.classList.add('sf-scroll-element');
+			internal.addScrollerStyle();
 
 			virtual.resetViewport();
 
@@ -759,26 +750,49 @@ sf.internal.virtual_scroll = new function(){
 	}
 
 	function initStyles(){
-		var style = document.getElementById('sf-styles');
+	}
 
-		if(!style){
-			style = document.createElement('style');
-			style.id = 'sf-styles';
-        	document.head.appendChild(style);
+	var styleInitialized = false;
+	internal.addScrollerStyle = function(){
+		if(!styleInitialized){
+			var style = document.getElementById('sf-styles');
+
+			if(!style){
+				style = document.createElement('style');
+				style.id = 'sf-styles';
+				document.head.appendChild(style);
+			}
+
+			style.sheet.insertRule(
+			'.sf-virtual-list .virtual-spacer{'+
+			    'visibility: hidden !important;'+
+			    'position: relative !important;'+
+			    'transform-origin: 0 0 !important;'+
+			    'width: 0 !important;'+
+			    'margin: 0 !important;'+
+			    'padding: 0 !important;'+
+			    'background: none !important;'+
+			    'border: none !important;'+
+			    'box-shadow: none !important;'+
+			    'transition: none !important;'+
+			 '}', style.sheet.cssRules.length);
+
+			style.sheet.insertRule(
+			'.sf-scroll-element {'+
+			 	'backface-visibility: hidden;'+
+			 '}', style.sheet.cssRules.length);
+			styleInitialized = true;
 		}
+	}
 
-		style.sheet.insertRule(
-		'.sf-virtual-list .virtual-spacer{'+
-            'visibility: hidden;'+
-            'position: relative;'+
-            'height: 1px;'+
-            'transform-origin: 0 0;'+
-            'width: 1px;'+
-            'margin: 0;'+
-            'padding: 0;'+
-            'background: none;'+
-            'border: none;'+
-            'box-shadow: none;'+
-         '}', style.sheet.cssRules.length);
+	var isScroller = /auto|scroll|overlay|hidden/;
+	internal.findScrollerElement = function(el){
+		while(el !== null && isScroller.test(getComputedStyle(el).overflow) === false){
+			el = el.parentElement;
+			if(el === document.body)
+				return null;
+		};
+
+		return el;
 	}
 };
