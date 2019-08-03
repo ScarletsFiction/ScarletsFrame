@@ -29,6 +29,8 @@ sf.regex = {
 
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
+
+	arrayItemsObserve:/\b_model_\.([a-zA-Z0-9.['\]]+)(?:$|[^'\]])/g,
 };
 
 var allowedFunctionEval = {'for':true, 'if':true, 'while':true, '_content_.take':true, 'console.log':true};
@@ -1107,10 +1109,14 @@ sf.model = function(scope){
 			// Direct evaluation type
 			if(ref.type === REF_DIRECT){
 				temp = localEval.apply(self.root, ref.data);
-				if(temp.constructor === Object)
-					temp = JSON.stringify(temp);
-				if(temp.constructor !== String)
-					temp = String(temp);
+				if(temp === void 0)
+					console.error('`'+ref.data[0]+'` was not defined');
+				else{
+					if(temp.constructor === Object)
+						temp = JSON.stringify(temp);
+					if(temp.constructor !== String)
+						temp = String(temp);
+				}
 
 				parsed[i] = {type:ref.type, data:temp};
 				continue;
@@ -1194,13 +1200,15 @@ sf.model = function(scope){
 						var temp = current.value;
 						current.removeAttribute('value');
 						current.value = temp;
-						refB = current;
+						current.value = current.value.replace(templateParser_regex, function(full, match){
+							return parsed[match].data;
+						});
 					}
-					else refB = current.attributes[refB.name];
-
-					refB.value = refB.value.replace(templateParser_regex, function(full, match){
-						return parsed[match].data;
-					});
+					else{
+						current.setAttribute(refB.name, (refB.value || current.value).replace(templateParser_regex, function(full, match){
+							return parsed[match].data;
+						}));
+					}
 				}
 				continue;
 			}
@@ -1284,6 +1292,7 @@ sf.model = function(scope){
 		if(property !== void 0){
 			var changes = template.modelReference[property];
 			if(changes === void 0 || changes.length === 0){
+				console.log(element, template, property, item);
 				console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 				return false;
 			}
@@ -2201,6 +2210,14 @@ sf.model = function(scope){
 			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
 			template.html.remove();
 		}
+		else{
+			setTimeout(function(){
+				var scroller = internal.findScrollerElement(parentNode);
+				if(scroller === null) return;
+				scroller.classList.add('sf-scroll-element');
+				internal.addScrollerStyle();
+			}, 500);
+		}
 
 		for (var i = 0; i < editProperty.length; i++) {
 			propertyProxy(list, editProperty[i]);
@@ -2723,7 +2740,14 @@ sf.model = function(scope){
 
 	// Reset model properties
 	// Don't call if the removed element is TEXT or #comment
-	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element){
+	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element, isScan){
+		if(isScan === void 0){
+			var temp = element.querySelectorAll('[sf-controller]');
+			for (var i = 0; i < temp.length; i++) {
+				DOMNodeRemoved(temp[i], true);
+			}
+		}
+
 		if(element.hasAttribute('sf-controller') !== false){
 			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
 
@@ -2736,11 +2760,6 @@ sf.model = function(scope){
 				delete self.root[modelName];
 			}
 			return;
-		}
-
-		var temp = $('[sf-controller]', element);
-		for (var i = 0; i < temp.length; i++) {
-			DOMNodeRemoved(temp[i]);
 		}
 	}
 
@@ -2966,14 +2985,13 @@ sf.model = function(scope){
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
 
 		function findModelProperty(){
-			if(mask === null){
+			if(mask === null){ // For model items
 				// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
 				var extract = RegExp('(?:{{.*?\\b|_modelScope\\.)('+self.modelKeys(self.root[name]).sort(function(a, b){
 					return b.length - a.length
 				}).join('|')+')(\\b.*?}}|)', 'g');
 			}
-			else
-				var extract = RegExp('\\b(?:_modelScope|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
+			else var extract = sf.regex.arrayItemsObserve; // For array items
 			var found = {};
 
 			for (var i = 0; i < preParsed.length; i++) {
@@ -3534,8 +3552,18 @@ var root_ = function(scope){
 		return available;
 	}
 
-	if(!sf.model.root[scope])
-		sf.model.root[scope] = {};
+	if(!sf.model.root[scope]){
+		var scope_ = sf.model.root[scope] = {};
+
+		if(internal.modelPending[scope] !== void 0){
+			var ref = internal.modelPending[scope];
+			for (var a = 0; a < ref.length; a++) {
+				ref[a](scope_, root_);
+			}
+
+			delete internal.modelPending[scope];
+		}
+	}
 
 	return sf.model.root[scope];
 }
@@ -4215,18 +4243,12 @@ sf.router = new function(){
 };
 sf.internal.virtual_scroll = new function(){
 	var self = this;
-	var styleInitialized = false;
 	var scrollingByScript = false;
 
 	// before and after
 	self.prepareCount = 4; // 4, 8, 12, 16, ...
 
 	self.handle = function(list, targetNode, parentNode){
-		if(!styleInitialized){
-			initStyles();
-			styleInitialized = true;
-		}
-
 		var dynamicList = false;
 		var virtual = list.$virtual;
 		virtual.reset = function(reinitOnly){
@@ -4265,7 +4287,7 @@ sf.internal.virtual_scroll = new function(){
 
 		virtual.reset();
 		virtual.targetNode = parentNode;
-		virtual.scrollHeight = virtual.dCursor.floor.offsetTop - virtual.bounding.initial;
+		virtual.scrollHeight = virtual.dCursor.ceiling.nextElementSibling.offsetHeight;
 
 		var scroller = parentNode;
 		virtual.destroy = function(){
@@ -4291,12 +4313,9 @@ sf.internal.virtual_scroll = new function(){
 		setTimeout(function(){
 			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
 
-			scroller = parentNode;
-
-			var length = parentNode.getAttribute('scroll-parent-index') || 0;
-			for (var i = 0; i < length; i++) {
-				scroller = scroller.parentElement;
-			}
+			scroller = internal.findScrollerElement(parentNode);
+			scroller.classList.add('sf-scroll-element');
+			internal.addScrollerStyle();
 
 			virtual.resetViewport();
 
@@ -4974,27 +4993,50 @@ sf.internal.virtual_scroll = new function(){
 	}
 
 	function initStyles(){
-		var style = document.getElementById('sf-styles');
+	}
 
-		if(!style){
-			style = document.createElement('style');
-			style.id = 'sf-styles';
-        	document.head.appendChild(style);
+	var styleInitialized = false;
+	internal.addScrollerStyle = function(){
+		if(!styleInitialized){
+			var style = document.getElementById('sf-styles');
+
+			if(!style){
+				style = document.createElement('style');
+				style.id = 'sf-styles';
+				document.head.appendChild(style);
+			}
+
+			style.sheet.insertRule(
+			'.sf-virtual-list .virtual-spacer{'+
+			    'visibility: hidden !important;'+
+			    'position: relative !important;'+
+			    'transform-origin: 0 0 !important;'+
+			    'width: 0 !important;'+
+			    'margin: 0 !important;'+
+			    'padding: 0 !important;'+
+			    'background: none !important;'+
+			    'border: none !important;'+
+			    'box-shadow: none !important;'+
+			    'transition: none !important;'+
+			 '}', style.sheet.cssRules.length);
+
+			style.sheet.insertRule(
+			'.sf-scroll-element {'+
+			 	'backface-visibility: hidden;'+
+			 '}', style.sheet.cssRules.length);
+			styleInitialized = true;
 		}
+	}
 
-		style.sheet.insertRule(
-		'.sf-virtual-list .virtual-spacer{'+
-            'visibility: hidden;'+
-            'position: relative;'+
-            'height: 1px;'+
-            'transform-origin: 0 0;'+
-            'width: 1px;'+
-            'margin: 0;'+
-            'padding: 0;'+
-            'background: none;'+
-            'border: none;'+
-            'box-shadow: none;'+
-         '}', style.sheet.cssRules.length);
+	var isScroller = /auto|scroll|overlay|hidden/;
+	internal.findScrollerElement = function(el){
+		while(el !== null && isScroller.test(getComputedStyle(el).overflow) === false){
+			el = el.parentElement;
+			if(el === document.body)
+				return null;
+		};
+
+		return el;
 	}
 };
 return sf;
