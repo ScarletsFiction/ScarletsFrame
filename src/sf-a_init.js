@@ -29,6 +29,8 @@ sf.regex = {
 
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
+
+	arrayItemsObserve:/\b_model_\.([a-zA-Z0-9.['\]]+)(?:$|[^'\]])/g,
 };
 
 var allowedFunctionEval = {'for':true, 'if':true, 'while':true, '_content_.take':true, 'console.log':true};

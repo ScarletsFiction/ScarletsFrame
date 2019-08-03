@@ -174,8 +174,18 @@ var root_ = function(scope){
 		return available;
 	}
 
-	if(!sf.model.root[scope])
-		sf.model.root[scope] = {};
+	if(!sf.model.root[scope]){
+		var scope_ = sf.model.root[scope] = {};
+
+		if(internal.modelPending[scope] !== void 0){
+			var ref = internal.modelPending[scope];
+			for (var a = 0; a < ref.length; a++) {
+				ref[a](scope_, root_);
+			}
+
+			delete internal.modelPending[scope];
+		}
+	}
 
 	return sf.model.root[scope];
 }

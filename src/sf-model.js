@@ -308,13 +308,15 @@ sf.model = function(scope){
 						var temp = current.value;
 						current.removeAttribute('value');
 						current.value = temp;
-						refB = current;
+						current.value = current.value.replace(templateParser_regex, function(full, match){
+							return parsed[match].data;
+						});
 					}
-					else refB = current.attributes[refB.name];
-
-					refB.value = refB.value.replace(templateParser_regex, function(full, match){
-						return parsed[match].data;
-					});
+					else{
+						current.setAttribute(refB.name, (refB.value || current.value).replace(templateParser_regex, function(full, match){
+							return parsed[match].data;
+						}));
+					}
 				}
 				continue;
 			}
@@ -398,6 +400,7 @@ sf.model = function(scope){
 		if(property !== void 0){
 			var changes = template.modelReference[property];
 			if(changes === void 0 || changes.length === 0){
+				console.log(element, template, property, item);
 				console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 				return false;
 			}
@@ -1315,6 +1318,14 @@ sf.model = function(scope){
 			sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
 			template.html.remove();
 		}
+		else{
+			setTimeout(function(){
+				var scroller = internal.findScrollerElement(parentNode);
+				if(scroller === null) return;
+				scroller.classList.add('sf-scroll-element');
+				internal.addScrollerStyle();
+			}, 500);
+		}
 
 		for (var i = 0; i < editProperty.length; i++) {
 			propertyProxy(list, editProperty[i]);
@@ -2082,14 +2093,13 @@ sf.model = function(scope){
 		copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
 
 		function findModelProperty(){
-			if(mask === null){
+			if(mask === null){ // For model items
 				// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
 				var extract = RegExp('(?:{{.*?\\b|_modelScope\\.)('+self.modelKeys(self.root[name]).sort(function(a, b){
 					return b.length - a.length
 				}).join('|')+')(\\b.*?}}|)', 'g');
 			}
-			else
-				var extract = RegExp('\\b(?:_modelScope|'+mask+')\\.([a-zA-Z0-9.[\'\\]]+)(?:$|[^\'\\]])', 'g');
+			else var extract = sf.regex.arrayItemsObserve; // For array items
 			var found = {};
 
 			for (var i = 0; i < preParsed.length; i++) {
