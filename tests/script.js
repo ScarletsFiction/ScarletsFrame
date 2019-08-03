@@ -35,8 +35,9 @@ sf.model.for('virtual-scroll', function(self, root){
    }
 });
 
+var aList = null;
 sf(function(){
-   var list = sf.model('virtual-scroll');
+   var list = aList = sf.model('virtual-scroll');
 
    setTimeout(function(){
       list.list1.splice(5, 0, {id:"I'm at pos 2"});
@@ -56,9 +57,6 @@ sf(function(){
       setTimeout(function(){
          console.log("Item: 11-20");
          list.list2 = list.list2.concat(list.list2b.slice(15, 20));
-
-         list.list1.push({id:"{{self.vul}}{{@exec console.error('something not gud')}}"});
-         setTimeout(function(){sf.model.init(reinit)}, 1000);
       }, 2000);
 
       // Clear some element and refresh some element
@@ -99,6 +97,16 @@ sf(function(){
       list.list1.splice(3, 1); // remove index 3 (item-3)
       list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"}); // add as index 5
       list.list1.push({id:"I'm inserted on last index"});
+
+      list.list1.unshift({id:"{{self.vul}}{{@exec console.error('something not gud')}}"});
+      setTimeout(function(){
+         sf.model.init(reinit2);
+         setTimeout(function(){
+            if(list.list1.getElement(0).textContent.indexOf('{{self.vul}}') === -1)
+               return console.error("Vulnerability detected");
+            list.list1.shift();
+         }, 200);
+      }, 1000);
 
       setTimeout(function(){
          list.list1.move(5, 4); // move index 5 after index 4
@@ -234,11 +242,6 @@ sf(function(){
 
    elem2 = new $CompTest('from javascript');
    components.appendChild(elem2);
-});
-
-sf.controller.run('dummy', function(self, root){
-   if(!root('model-binding').addition)
-      console.error("Can't get other model scope function");
 });
 
 var testElement = document.getElementById('test');

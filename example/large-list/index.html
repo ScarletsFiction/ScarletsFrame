@@ -14,7 +14,7 @@
 
             <!-- I suggest to use simplebar to prevent scroll jump when using chrome -->
             <div data-simplebar class="col-md-4 col-md-offset-4 col-xs-6 col-xs-offset-3" style="height: 90vh; width: 280px;">
-               <ul class="todo-list sf-virtual-list" scroll-parent-index="1">
+               <ul class="todo-list sf-virtual-list" scroll-parent-index="2">
                   <li sf-repeat-this="x in list" data-id="{{x.id}}">
                      <div class="checkbox">
                         <label>
@@ -50,21 +50,25 @@
          // Define dynamic model data for current page
          sf.model.for('large-list', function(self){
             self.list = [];
-
-            // Dummy items array
-            addDummy(500);
          });
 
-         function addDummy(total){
-            var list = sf.model('large-list').list;
+         // Controller will be initialized once on page load
+         sf.controller.for('large-list', function(self, root){
+            self.itemFinished = function(id){
+               var li = $(this).parents('li');
+               li.toggleClass("danger");
+               sf.dom.animateCSS(li[0], 'flipInX');
+            }
 
-            for (var i = 1; i <= total; i++) {
-               list.push({
+            var dummy = 1000; // Total items
+
+            for (var i = 1; i <= dummy; i++) {
+               self.list.push({
                   id: 'item-' + i,
-                  text: 'List - ' + i
+                  text: 'Item - ' + i
                });
             }
-         }
+         });
       </script>
 
       <!-- Below can be used to create a progress bar -->
