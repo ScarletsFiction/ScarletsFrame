@@ -174,6 +174,9 @@ sf.component = new function(){
 
 	// name = 'tag-name'
 	function defineComponent(name){
+		if(customElements.get(name))
+			return;
+
 		name = name.replace(/[^\w-]+/g, '');
 		var tagName = name;
 		name = name.split('-');

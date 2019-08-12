@@ -4,6 +4,10 @@ sf.controller = new function(){
 	self.pending = {};
 	self.active = {};
 
+	internal.controller = {
+		pending:[]
+	};
+
 	self.for = function(name, func){
 		if(sf.component.registered[name]){
 			sf.component.registered[name][1] = func;

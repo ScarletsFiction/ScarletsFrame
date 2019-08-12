@@ -4,8 +4,10 @@ sf.model = function(scope){
 	if(sf.component.registered[scope] !== void 0)
 		return root_(scope);
 
-	if(!sf.model.root[scope])
+	if(!sf.model.root[scope]){
 		sf.model.root[scope] = {};
+		internal.controller.pending.push(scope);
+	}
 
 	// This usually being initialized after DOM Loaded
 	var pending = internal.modelPending[scope];
@@ -2175,7 +2177,7 @@ sf.model = function(scope){
 				if(found.length !== 1){
 					if(attrs[a].name[0] === ':'){
 						var key = {
-							name:attrs[a].name.split(':').join(''),
+							name:attrs[a].name.slice(1),
 							value:attrs[a].value
 						};
 						currentNode.removeAttribute(attrs[a].name);
