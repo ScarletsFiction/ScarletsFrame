@@ -669,6 +669,14 @@ sf.loader = new function(){
 			delete internal.modelPending[keys[i]];
 		}
 
+		for (var i = internal.controller.pending.length - 1; i >= 0; i--) {
+			var scope = sf.controller.pending[internal.controller.pending[i]];
+			if(scope !== void 0){
+				scope(root_(internal.controller.pending[i]), root_);
+				internal.controller.pending.splice(i, 1);
+			}
+		}
+
 		for (var i = 0; i < whenDOMLoaded.length; i++) {
 			try{
 				whenDOMLoaded[i]();
@@ -867,6 +875,9 @@ sf.component = new function(){
 
 	// name = 'tag-name'
 	function defineComponent(name){
+		if(customElements.get(name))
+			return;
+
 		name = name.replace(/[^\w-]+/g, '');
 		var tagName = name;
 		name = name.split('-');
@@ -896,8 +907,10 @@ sf.model = function(scope){
 	if(sf.component.registered[scope] !== void 0)
 		return root_(scope);
 
-	if(!sf.model.root[scope])
+	if(!sf.model.root[scope]){
 		sf.model.root[scope] = {};
+		internal.controller.pending.push(scope);
+	}
 
 	// This usually being initialized after DOM Loaded
 	var pending = internal.modelPending[scope];
@@ -907,6 +920,14 @@ sf.model = function(scope){
 			pending[i](temp, sf.model);
 		}
 		pending = internal.modelPending[scope] = false;
+	}
+
+	for (var i = internal.controller.pending.length - 1; i >= 0; i--) {
+		var scope = sf.controller.pending[internal.controller.pending[i]];
+		if(scope !== void 0){
+			scope(root_(internal.controller.pending[i]), root_);
+			internal.controller.pending.splice(i, 1);
+		}
 	}
 
 	if(sf.controller.pending[scope])
@@ -3067,7 +3088,7 @@ sf.model = function(scope){
 				if(found.length !== 1){
 					if(attrs[a].name[0] === ':'){
 						var key = {
-							name:attrs[a].name.split(':').join(''),
+							name:attrs[a].name.slice(1),
 							value:attrs[a].value
 						};
 						currentNode.removeAttribute(attrs[a].name);
@@ -3329,11 +3350,13 @@ sf.model = function(scope){
 		});
 	}
 })();
-sf.API = function(method, url, data, success, complete, accessToken){
+sf.API = function(method, url, data, success, complete, accessToken, getXHR){
+	if(typeof data !== 'object')
+		data = {};
+
 	var req = {
 		url:url,
 		dataType:'json',
-		contentType:"application/json",
 		method:'POST',
 		success:function(obj){
 			if(!sf.API.onSuccess(obj) && success)
@@ -3344,37 +3367,67 @@ sf.API = function(method, url, data, success, complete, accessToken){
 		error:function(xhr, status){
 			sf.API.onError(xhr, status)
 			if(complete) complete(false, status);
-		}
+		},
 	};
 
-	if(typeof data !== 'object')
-		data = {};
+	if(data.constructor !== FormData)
+		req.contentType = "application/json";
 
 	data._method = method.toUpperCase();
 
-	if(accessToken)
-		data.access_token = accessToken;
+	if(accessToken){
+		req.beforeSend = function(xhr){
+		    xhr.setRequestHeader('X-Authorization', 'Bearer '+accessToken);
+		    getXHR && getXHR(xhr);
+		}
+	}
+	else if(getXHR !== void 0)
+		req.beforeSend = getXHR;
 	
 	req.data = data;
-	sf.ajax(req);
+	return sf.ajax(req);
 }
 
 sf.API.onError = function(xhr, status){};
 sf.API.onSuccess = function(obj){};
 
-sf.API.url = 'http://anisics.sandbox/api';
-sf.API.accessToken = false;
-sf.API.get = function(url, data, success, complete){
-	return sf.API('get', this.url+url, data, success, complete, this.accessToken);
-}
-sf.API.post = function(url, data, success, complete){
-	return sf.API('post', this.url+url, data, success, complete, this.accessToken);
-}
-sf.API.delete = function(url, data, success, complete){
-	return sf.API('delete', this.url+url, data, success, complete, this.accessToken);
-}
-sf.API.put = function(url, data, success, complete){
-	return sf.API('put', this.url+url, data, success, complete, this.accessToken);
+var extendsAPI = {
+	get:function(url, data, success, complete){
+		return sf.API('get', this.url+url, data, success, complete, this.accessToken);
+	},
+	post:function(url, data, success, complete){
+		return sf.API('post', this.url+url, data, success, complete, this.accessToken);
+	},
+	delete:function(url, data, success, complete){
+		return sf.API('delete', this.url+url, data, success, complete, this.accessToken);
+	},
+	put:function(url, data, success, complete){
+		return sf.API('put', this.url+url, data, success, complete, this.accessToken);
+	},
+	upload:function(url, formData, success, complete, progress){
+		if(formData.constructor !== FormData)
+			return console.error("Parameter 2 must be a FormData");
+
+		var getXHR = void 0;
+		if(progress !== void 0){
+			getXHR = function(xhr){
+				xhr.upload.onprogress = function(ev){
+	            	if(ev.lengthComputable)
+	            	    progress(ev.loaded, ev.total);
+	            }
+			}
+		}
+
+		return sf.API('post', this.url+url, formData, success, complete, this.accessToken, getXHR);
+	},
+};
+
+sf.API.instance = function(url){
+	var self = this;
+	self.url = url;
+	self.accessToken = false;
+
+	Object.assign(this, extendsAPI);
 }
 // DOM Controller on loaded app
 sf.controller = new function(){
@@ -3382,11 +3435,19 @@ sf.controller = new function(){
 	self.pending = {};
 	self.active = {};
 
+	internal.controller = {
+		pending:[]
+	};
+
 	self.for = function(name, func){
 		if(sf.component.registered[name]){
 			sf.component.registered[name][1] = func;
 			return;
 		}
+		
+		if(self.active[name])
+			return func();
+
 		self.pending[name] = func;
 	}
 
@@ -3512,6 +3573,10 @@ sf.controller = new function(){
 			self.pending[name](sf.model.root[name], root_);
 			self.active[name] = true;
 			delete self.pending[name];
+
+			var i = internal.controller.pending.indexOf(name);
+			if(i !== -1)
+				internal.controller.pending.splice(i, 1);
 		}
 
 		if(sf.model.root[name] === void 0)

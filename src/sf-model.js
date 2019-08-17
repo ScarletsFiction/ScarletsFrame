@@ -19,6 +19,14 @@ sf.model = function(scope){
 		pending = internal.modelPending[scope] = false;
 	}
 
+	for (var i = internal.controller.pending.length - 1; i >= 0; i--) {
+		var scope = sf.controller.pending[internal.controller.pending[i]];
+		if(scope !== void 0){
+			scope(root_(internal.controller.pending[i]), root_);
+			internal.controller.pending.splice(i, 1);
+		}
+	}
+
 	if(sf.controller.pending[scope])
 		sf.controller.run(scope);
 

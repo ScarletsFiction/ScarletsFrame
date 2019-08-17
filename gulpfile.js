@@ -4,7 +4,7 @@ var sourcemaps = require('gulp-sourcemaps');
 var uglify = require('gulp-uglify-es').default;
 var header = require('gulp-header');
 var rename = require('gulp-rename');
-var babel = require('gulp-babel');
+// var babel = require('gulp-babel');
 var notifier = require('node-notifier');
 
 gulp.task('js', function(){

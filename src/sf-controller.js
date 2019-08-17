@@ -13,6 +13,10 @@ sf.controller = new function(){
 			sf.component.registered[name][1] = func;
 			return;
 		}
+		
+		if(self.active[name])
+			return func();
+
 		self.pending[name] = func;
 	}
 
@@ -138,6 +142,10 @@ sf.controller = new function(){
 			self.pending[name](sf.model.root[name], root_);
 			self.active[name] = true;
 			delete self.pending[name];
+
+			var i = internal.controller.pending.indexOf(name);
+			if(i !== -1)
+				internal.controller.pending.splice(i, 1);
 		}
 
 		if(sf.model.root[name] === void 0)
