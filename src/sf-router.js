@@ -26,8 +26,22 @@ sf.router = new function(){
 			if(name !== '')
 				runLocalEvent('before', name);
 
-			if(temp[i].hasAttribute('sf-controller') === true)
-				sf.controller.run(temp[i].getAttribute('sf-controller'));
+			var modelName = false;
+			if(sf.model.root[name] || sf.controller.pending[name])
+				modelName = name;
+
+			if(temp[i].hasAttribute('sf-controller'))
+				modelName = temp[i].getAttribute('sf-controller');
+
+			if(modelName !== false){
+				sf.controller.run(modelName);
+
+				var model = sf.model.root[modelName];
+				model.$page = temp[i];
+
+				if(model.init)
+					model.init();
+			}
 
 			if(name !== '')
 				runLocalEvent('when', name);
@@ -99,7 +113,7 @@ sf.router = new function(){
 
 		if(localEvent[which][name]){
 			for (var i = 0; i < localEvent[which][name].length; i++) {
-				localEvent[which][name][i](sf.model);
+				localEvent[which][name][i](sf.model.root[name], sf.model);
 			}
 		}
 	}

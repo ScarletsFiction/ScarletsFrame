@@ -84,7 +84,7 @@ sf.model = function(scope){
 		}, true);
 
 		if(preventExecution){
-			console.groupCollapsed("Template error:");
+			console.groupCollapsed("<-- Expand the template error");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			console.log(trimIndentation(script).trim());
 			console.groupEnd();
@@ -113,7 +113,7 @@ sf.model = function(scope){
 			}
 			else var _evaled_ = eval(script);
 		} catch(e){
-			console.groupCollapsed("Template error:");
+			console.groupCollapsed("<-- Expand the template error");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			console.log(trimIndentation(script).trim());
 			console.groupEnd();
@@ -594,7 +594,7 @@ sf.model = function(scope){
 		var prepared = html.replace(sf.regex.dataParser, function(actual, temp){
 			temp = avoidQuotes(temp, function(temp_){
 				// Unescape HTML
-				temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+				temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 				// Mask item variable
 				if(mask)
@@ -1868,6 +1868,12 @@ sf.model = function(scope){
 
 		if(element.hasAttribute('sf-controller') !== false){
 			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
+			var model = sf.model.root[modelName];
+
+			if(model.destroy){
+				model.destroy();
+				delete model.$page;
+			}
 
 			removeModelBinding(modelName);
 			if(element.sf$component !== void 0){
@@ -2188,7 +2194,9 @@ sf.model = function(scope){
 							name:attrs[a].name.slice(1),
 							value:attrs[a].value
 						};
+
 						currentNode.removeAttribute(attrs[a].name);
+						currentNode.setAttribute(key.name, '');
 					}
 					else var key = {
 						name:attrs[a].name,
