@@ -99,18 +99,10 @@ sf.loader = new function(){
 			document.removeEventListener('load', domLoadEvent, true);
 
 			isQueued = sf.model.queuePreprocess(document.body);
-
-			for (var i = 0; i < isQueued.length; i++) {
-				isQueued[i].classList.add('sf-dom-queued');
-			}
-
 			if(isQueued.length === 0) isQueued = false;
 
 			if(lastState === 'loading'){
 				var repeatedList = $('[sf-repeat-this]', document.body);
-				for (var i = 0; i < repeatedList.length; i++) {
-					repeatedList[i].classList.add('sf-dom-queued');
-				}
 
 				// Find images
 				var temp = $('img:not(onload)[src]');

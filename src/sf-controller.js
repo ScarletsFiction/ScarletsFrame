@@ -120,8 +120,7 @@ sf.controller = new function(){
 				return found[0] + 'element';
 			}));
 		}
-		if(!script)
-			script = [];
+		else script = [e];
 
 		try{
 			method.apply(element, script);
@@ -158,7 +157,7 @@ sf.controller = new function(){
 	self.init = function(parent){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
-				self.init(name);
+				self.init(parent);
 			});
 
 		var temp = $('[sf-controller]', parent || document.body);
