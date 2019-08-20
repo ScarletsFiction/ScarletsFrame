@@ -10,11 +10,15 @@ sf.API = function(method, url, data, success, complete, accessToken, getXHR){
 			if(!sf.API.onSuccess(obj) && success)
 				success(obj, url);
 
-			if(complete) complete(true);
+			if(complete) complete(200);
 		},
-		error:function(xhr, status){
-			sf.API.onError(xhr, status)
-			if(complete) complete(false, status);
+		error:function(data, status){
+			try{
+				data = JSON.parse(data.response);
+			}catch(e){}
+
+			sf.API.onError(status, data)
+			if(complete) complete(status, data);
 		},
 	};
 
@@ -36,7 +40,7 @@ sf.API = function(method, url, data, success, complete, accessToken, getXHR){
 	return sf.ajax(req);
 }
 
-sf.API.onError = function(xhr, status){};
+sf.API.onError = function(status, data){};
 sf.API.onSuccess = function(obj){};
 
 var extendsAPI = {
