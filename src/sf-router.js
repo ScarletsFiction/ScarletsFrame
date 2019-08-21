@@ -10,7 +10,6 @@ sf.router = new function(){
 	var currentRouterURL = '';
 
 	var gEval = routerEval;
-	routerEval = void 0;
 
 	// Should be called if not using lazy page load
 	self.init = function(targetNode){
@@ -37,10 +36,20 @@ sf.router = new function(){
 				sf.controller.run(modelName);
 
 				var model = sf.model.root[modelName];
-				model.$page = temp[i];
+				if(model.$page === void 0){
+					model.$page = window.$([]);
 
-				if(model.init)
-					model.init();
+					if(model.$page.push === void 0)
+						Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
+				}
+
+				model.$page.push(temp[i]);
+
+				if(sf.controller.pending[modelName] !== void 0)
+					sf.controller.run(modelName);
+
+				if(model.init !== void 0)
+					model.init(temp[i]);
 			}
 
 			if(name !== '')
@@ -66,6 +75,7 @@ sf.router = new function(){
 		if(status === void 0) status = true;
 		if(self.enabled === status) return;
 		self.enabled = status;
+		internal.router.enabled = status;
 
 		if(status === true){
 			// Create listener for link click

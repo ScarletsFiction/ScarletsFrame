@@ -491,6 +491,28 @@ var $ = sf.dom; // Shortcut
 		return element;
 	}
 
+	internal.dom = {};
+	internal.dom.extends_Dom7 = {
+		push:function(el){
+			this[this.length] = el;
+			this.length++;
+		},
+		indexOf:function(el){
+			var keys = Object.keys(this);
+			for (var i = 0; i < keys.length; i++) {
+				if(this[keys[i]] === el)
+					return i;
+			}
+			return -1;
+		},
+		splice:function(i){
+			for (var n = this.length - 1; i < n; i++) {
+				this[i] = this[i+1];
+			}
+			this.length--;
+		},
+	};
+
 })();
 sf.loader = new function(){
 	var self = this;
@@ -593,18 +615,10 @@ sf.loader = new function(){
 			document.removeEventListener('load', domLoadEvent, true);
 
 			isQueued = sf.model.queuePreprocess(document.body);
-
-			for (var i = 0; i < isQueued.length; i++) {
-				isQueued[i].classList.add('sf-dom-queued');
-			}
-
 			if(isQueued.length === 0) isQueued = false;
 
 			if(lastState === 'loading'){
 				var repeatedList = $('[sf-repeat-this]', document.body);
-				for (var i = 0; i < repeatedList.length; i++) {
-					repeatedList[i].classList.add('sf-dom-queued');
-				}
 
 				// Find images
 				var temp = $('img:not(onload)[src]');
@@ -987,7 +1001,7 @@ sf.model = function(scope){
 		}, true);
 
 		if(preventExecution){
-			console.groupCollapsed("Template error:");
+			console.groupCollapsed("<-- Expand the template error");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			console.log(trimIndentation(script).trim());
 			console.groupEnd();
@@ -1016,7 +1030,7 @@ sf.model = function(scope){
 			}
 			else var _evaled_ = eval(script);
 		} catch(e){
-			console.groupCollapsed("Template error:");
+			console.groupCollapsed("<-- Expand the template error");
 			console.log(trimIndentation(processingElement.outerHTML).trim());
 			console.log(trimIndentation(script).trim());
 			console.groupEnd();
@@ -1497,7 +1511,7 @@ sf.model = function(scope){
 		var prepared = html.replace(sf.regex.dataParser, function(actual, temp){
 			temp = avoidQuotes(temp, function(temp_){
 				// Unescape HTML
-				temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+				temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 				// Mask item variable
 				if(mask)
@@ -2676,15 +2690,35 @@ sf.model = function(scope){
 		if(!targetNode) targetNode = document.body;
 
 		// Handle Router Start ==>
-		if(sf.router.enabled === true){
+		if(internal.router.enabled === true){
 			// Before model binding
-			var temp = $('[sf-page]', targetNode);
+			var temp = $('[sf-controller], [sf-page]', targetNode);
 			var sfPage = [];
 			try{
 				for (var i = 0; i < temp.length; i++) {
-					var sfp = temp[i].getAttribute('sf-page');
-					sfPage.push(sfp);
-					internal.routerLocalEvent('before', sfp);
+					if(temp[i].hasAttribute('sf-page')){
+						var sfp = temp[i].getAttribute('sf-page');
+						sfPage.push(sfp);
+						internal.routerLocalEvent('before', sfp);
+					}
+					else{
+						var modelName = temp[i].getAttribute('sf-controller');
+						var model = sf.model.root[modelName];
+						if(model.$page === void 0){
+							model.$page = window.$([]);
+
+							if(model.$page.push === void 0)
+								Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
+						}
+
+						model.$page.push(temp[i]);
+
+						if(sf.controller.pending[modelName] !== void 0)
+							sf.controller.run(modelName);
+
+						if(model.init !== void 0)
+							model.init(temp[i]);
+					}
 				}
 			}catch(e){
 				console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
@@ -2771,6 +2805,16 @@ sf.model = function(scope){
 
 		if(element.hasAttribute('sf-controller') !== false){
 			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
+			var model = sf.model.root[modelName];
+
+			if(model.$page){
+				var i = model.$page.indexOf(element);
+				if(i !== -1)
+					model.$page.splice(i)
+			}
+
+			if(model.destroy)
+				model.destroy(element);
 
 			removeModelBinding(modelName);
 			if(element.sf$component !== void 0){
@@ -3091,7 +3135,9 @@ sf.model = function(scope){
 							name:attrs[a].name.slice(1),
 							value:attrs[a].value
 						};
+
 						currentNode.removeAttribute(attrs[a].name);
+						currentNode.setAttribute(key.name, '');
 					}
 					else var key = {
 						name:attrs[a].name,
@@ -3362,11 +3408,15 @@ sf.API = function(method, url, data, success, complete, accessToken, getXHR){
 			if(!sf.API.onSuccess(obj) && success)
 				success(obj, url);
 
-			if(complete) complete(true);
+			if(complete) complete(200);
 		},
-		error:function(xhr, status){
-			sf.API.onError(xhr, status)
-			if(complete) complete(false, status);
+		error:function(data, status){
+			try{
+				data = JSON.parse(data.response);
+			}catch(e){}
+
+			sf.API.onError(status, data)
+			if(complete) complete(status, data);
 		},
 	};
 
@@ -3388,7 +3438,7 @@ sf.API = function(method, url, data, success, complete, accessToken, getXHR){
 	return sf.ajax(req);
 }
 
-sf.API.onError = function(xhr, status){};
+sf.API.onError = function(status, data){};
 sf.API.onSuccess = function(obj){};
 
 var extendsAPI = {
@@ -3551,8 +3601,7 @@ sf.controller = new function(){
 				return found[0] + 'element';
 			}));
 		}
-		if(!script)
-			script = [];
+		else script = [e];
 
 		try{
 			method.apply(element, script);
@@ -3589,7 +3638,7 @@ sf.controller = new function(){
 	self.init = function(parent){
 		if(!sf.loader.DOMWasLoaded)
 			return sf(function(){
-				self.init(name);
+				self.init(parent);
 			});
 
 		var temp = $('[sf-controller]', parent || document.body);
@@ -4001,6 +4050,118 @@ function serializeQuery(params, prefix) {
     return key.join('&');
 }
 $.ajax = sf.ajax = Request;
+sf.events = (function(){
+	var callbacks = {};
+	var callbacksWhen = {};
+
+	function Events(name, run){
+		if(name.constructor === Array){
+			for (var i = 0; i < name.length; i++)
+				Events(name[i], run);
+
+			return;
+		}
+
+		if(Events[name] === void 0){
+			var active = void 0;
+
+			if(run !== undefined && run.constructor === Boolean)
+				active = run;
+
+			if(active !== void 0){
+				Object.defineProperty(Events, name, {
+					enumerable:false,
+					configurable:true,
+					get:function(){return active},
+					set:function(val){
+						if(active === val)
+							return;
+
+						var ref = callbacksWhen[name];
+						if(ref !== void 0){
+							for (var i = 0; i < ref.length; i++) {
+								try{
+									ref[i].apply(null, arguments);
+								} catch(e) {
+									console.error(e);
+								}
+							}
+
+							delete callbacksWhen[name];
+						}
+
+						// Reset to default
+						Object.defineProperty(Events, name, {
+							enumerable:false,
+							configurable:true,
+							writable:true,
+							value:val
+						});
+					}
+				});
+			}
+			else{
+				Events[name] = function(){
+					for (var i = 0; i < callback.length; i++) {
+						try{
+							callback[i].apply(null, arguments);
+							if(callback[i].once === true)
+								callback[i].splice(i--, 1);
+						} catch(e) {
+							console.error(e);
+						}
+					}
+				}
+
+				if(callbacks[name] === void 0)
+					callbacks[name] = [];
+
+				var callback = callbacks[name];
+			}
+		}
+
+		if(run && run.constructor === Function){
+			run(Events[name]);
+			run = null;
+		}
+	}
+
+	Events.when = function(name, callback){
+		if(Events[name] === true)
+			return callback();
+
+		if(callbacksWhen[name] === void 0)
+			callbacksWhen[name] = [];
+
+		callbacksWhen[name].push(callback);
+	}
+
+	Events.once = function(name, callback){
+		callback.once = true;
+		callbacks[name].push(callback);
+	}
+
+	Events.on = function(name, callback){
+		if(callbacks[name] === void 0)
+			callbacks[name] = [];
+
+		if(callbacks[name].length >= 10)
+			console.warn("Events have more than 10 callback, there may possible memory leak.");
+
+		callbacks[name].push(callback);
+	}
+
+	Events.off = function(name, callback){
+		if(callbacks[name] === void 0)
+			return callbacks[name].length = 0;
+
+		var i = callbacks[name].indexOf(callback);
+		if(i === -1) return;
+		callbacks[name].splice(i, 1);
+	}
+
+	return Events;
+})();
 sf.router = new function(){
 	var self = this;
 	self.loading = false;
@@ -4013,7 +4174,6 @@ sf.router = new function(){
 	var currentRouterURL = '';
 
 	var gEval = routerEval;
-	routerEval = void 0;
 
 	// Should be called if not using lazy page load
 	self.init = function(targetNode){
@@ -4029,8 +4189,32 @@ sf.router = new function(){
 			if(name !== '')
 				runLocalEvent('before', name);
 
-			if(temp[i].hasAttribute('sf-controller') === true)
-				sf.controller.run(temp[i].getAttribute('sf-controller'));
+			var modelName = false;
+			if(sf.model.root[name] || sf.controller.pending[name])
+				modelName = name;
+
+			if(temp[i].hasAttribute('sf-controller'))
+				modelName = temp[i].getAttribute('sf-controller');
+
+			if(modelName !== false){
+				sf.controller.run(modelName);
+
+				var model = sf.model.root[modelName];
+				if(model.$page === void 0){
+					model.$page = window.$([]);
+
+					if(model.$page.push === void 0)
+						Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
+				}
+
+				model.$page.push(temp[i]);
+
+				if(sf.controller.pending[modelName] !== void 0)
+					sf.controller.run(modelName);
+
+				if(model.init !== void 0)
+					model.init(temp[i]);
+			}
 
 			if(name !== '')
 				runLocalEvent('when', name);
@@ -4055,6 +4239,7 @@ sf.router = new function(){
 		if(status === void 0) status = true;
 		if(self.enabled === status) return;
 		self.enabled = status;
+		internal.router.enabled = status;
 
 		if(status === true){
 			// Create listener for link click
@@ -4102,7 +4287,7 @@ sf.router = new function(){
 
 		if(localEvent[which][name]){
 			for (var i = 0; i < localEvent[which][name].length; i++) {
-				localEvent[which][name][i](sf.model);
+				localEvent[which][name][i](sf.model.root[name], sf.model);
 			}
 		}
 	}
@@ -4306,6 +4491,171 @@ sf.router = new function(){
 		}
 	}
 };
+;(function(){
+var gEval = routerEval;
+routerEval = void 0;
+
+internal.router.toRegexp = function(obj_){
+	var routes = [];
+	var pattern = /\/:[^/]+/;
+
+	function addRoutes(obj, addition){
+		for(var i = 0; i < obj.length; i++){
+			var current = addition+obj[i].path;
+
+			if(obj[i].routes !== void 0){
+				addRoutes(obj[i].routes, current);
+				continue;
+			}
+
+			current = RegExp('^' + current.replace(pattern, '/(.*?)') + '$');
+			current.url = obj[i].url;
+			routes.push(current);
+		}
+	}
+
+	addRoutes(obj_, '');
+	return routes;
+}
+
+internal.router.findRoute = function(url){
+	for(var i=0; i<this.length; i++){
+		var found = url.match(this[i]);
+		if(found !== null){
+			this[i].data = found;
+			return this[i];
+		}
+	}
+
+	return false;
+}
+
+function View(DOMReference){
+	var self = this;
+	self.pageRemoveDelay = 300;
+	self.currentURL = '';
+
+	var routes = [];
+	routes.findRoute = internal.router.findRoute;
+
+	internal.router.enabled = true;
+
+	var onEvent = {
+		'routeStart':[],
+		'routeFinish':[],
+		'routeError':[]
+	};
+
+	self.on = function(event, func){
+		if(onEvent[event].indexOf(func) === -1)
+			onEvent[event].push(func);
+	}
+
+	self.addRoute = function(obj){
+		routes.push(...internal.router.toRegexp(obj));
+	}
+
+	// Create listener for link click
+	$.on(DOMReference, 'click', 'a[href]', function(ev){
+		var elem = ev.target;
+		var attr = elem.getAttribute('href');
+
+		if(attr[0] === '#') return;
+
+		// Make sure it's from current origin
+		var path = elem.href.replace(window.location.origin, '');
+		if(path.indexOf('//') !== -1)
+			return;
+
+		ev.preventDefault();
+		if(attr[0] === '@'){ // ignore
+			var target = elem.getAttribute('target');
+			if(target)
+				window.open(attr.slice(1), target);
+			else window.location = attr.slice(1);
+			return;
+		}
+
+		if(!self.goto(path))
+			console.error("Couldn't navigate to", path, "because path not found");
+	});
+
+	var sandboxDOM = document.createElement('sandbox-dom');
+	var RouterLoading = false; // xhr reference if the router still loading
+
+	self.goto = function(path, data, method){
+		if(!method) method = 'GET';
+		if(!data) data = {};
+
+		for (var i = 0; i < onEvent['routeStart'].length; i++) {
+			if(onEvent['routeStart'][i](path)) return;
+		}
+
+		var oldPath = window.location.pathname;
+
+		// Abort other router loading if exist
+		if(RouterLoading) RouterLoading.abort();
+		RouterLoading = sf.ajax({
+			url:window.location.origin + path,
+			method:method,
+            data:Object.assign(data, {
+                _scarlets:'.dynamic.'
+            }),
+			success:function(data){
+				sandboxDOM.innerHTML = data;
+
+				if(sandboxDOM.childElementCount !== 1){
+					var dom = document.createElement('div');
+					for (var i = 0, n = sandboxDOM.childElementCount; i < n; i++) {
+						dom.insertBefore(sandboxDOM.firstElementChild, null);
+					}
+				}
+				else var dom = sandboxDOM.firstElementChild;
+
+				dom.classList.add('page-prepare');
+
+				// Let page script running first
+				DOMReference.insertAdjacentElement('beforeend', dom);
+				if(self.dynamicScript !== false){
+					var scripts = dom.getElementsByTagName('script');
+					for (var i = 0; i < scripts.length; i++) {
+					    gEval(scripts[i].text);
+					}
+				}
+
+				// Parse the DOM data binding
+				sf.model.init(dom);
+
+				// Trigger loaded event
+				for (var i = 0; i < onEvent['routeFinish'].length; i++) {
+					if(onEvent['routeFinish'][i](self.currentURL, path, data)) return;
+				}
+
+				// Save current URL
+				self.currentURL = path;
+			},
+			error:function(xhr, data){
+				if(xhr.aborted) return;
+
+				RouterLoading = false;
+				for (var i = 0; i < onEvent['error'].length; i++) {
+					onEvent['error'][i](xhr.status, data);
+				}
+			}
+		});
+	}
+
+	return self;
+}
+
+sf.views = function(el){
+	if(el.constructor === String)
+		el = $(el);
+
+	return new View(el);
+};
+
+})();
 sf.internal.virtual_scroll = new function(){
 	var self = this;
 	var scrollingByScript = false;

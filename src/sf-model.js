@@ -1773,15 +1773,35 @@ sf.model = function(scope){
 		if(!targetNode) targetNode = document.body;
 
 		// Handle Router Start ==>
-		if(sf.router.enabled === true){
+		if(internal.router.enabled === true){
 			// Before model binding
-			var temp = $('[sf-page]', targetNode);
+			var temp = $('[sf-controller], [sf-page]', targetNode);
 			var sfPage = [];
 			try{
 				for (var i = 0; i < temp.length; i++) {
-					var sfp = temp[i].getAttribute('sf-page');
-					sfPage.push(sfp);
-					internal.routerLocalEvent('before', sfp);
+					if(temp[i].hasAttribute('sf-page')){
+						var sfp = temp[i].getAttribute('sf-page');
+						sfPage.push(sfp);
+						internal.routerLocalEvent('before', sfp);
+					}
+					else{
+						var modelName = temp[i].getAttribute('sf-controller');
+						var model = sf.model.root[modelName];
+						if(model.$page === void 0){
+							model.$page = window.$([]);
+
+							if(model.$page.push === void 0)
+								Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
+						}
+
+						model.$page.push(temp[i]);
+
+						if(sf.controller.pending[modelName] !== void 0)
+							sf.controller.run(modelName);
+
+						if(model.init !== void 0)
+							model.init(temp[i]);
+					}
 				}
 			}catch(e){
 				console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
@@ -1870,10 +1890,14 @@ sf.model = function(scope){
 			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
 			var model = sf.model.root[modelName];
 
-			if(model.destroy){
-				model.destroy();
-				delete model.$page;
+			if(model.$page){
+				var i = model.$page.indexOf(element);
+				if(i !== -1)
+					model.$page.splice(i)
 			}
+
+			if(model.destroy)
+				model.destroy(element);
 
 			removeModelBinding(modelName);
 			if(element.sf$component !== void 0){

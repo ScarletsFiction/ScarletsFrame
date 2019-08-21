@@ -299,4 +299,26 @@ var $ = sf.dom; // Shortcut
 		return element;
 	}
 
+	internal.dom = {};
+	internal.dom.extends_Dom7 = {
+		push:function(el){
+			this[this.length] = el;
+			this.length++;
+		},
+		indexOf:function(el){
+			var keys = Object.keys(this);
+			for (var i = 0; i < keys.length; i++) {
+				if(this[keys[i]] === el)
+					return i;
+			}
+			return -1;
+		},
+		splice:function(i){
+			for (var n = this.length - 1; i < n; i++) {
+				this[i] = this[i+1];
+			}
+			this.length--;
+		},
+	};
+
 })();

@@ -22,6 +22,8 @@ You can download minified js from this repository or use this CDN link
 <script type="text/javascript" src='https://unpkg.com/scarletsframe@latest/dist/scarletsframe.min.js'></script>
 ```
 
+This framework still being developed and may have breaking changes before the release, make sure you specify the version instead using `latest`. Please help the development of this framework >.<
+
 If you have separated files for the model and controllers, you can use this library's `gulpfile.js` to combine and compile your js files. To obtain fast compilation in development environment, you can deactivate uglify/minify/babel in `gulpfile.js`.
 
 ## Install with NPM
