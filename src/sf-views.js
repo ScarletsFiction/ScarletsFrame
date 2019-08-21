@@ -2,6 +2,8 @@
 var gEval = routerEval;
 routerEval = void 0;
 
+
+internal.router = {};
 internal.router.toRegexp = function(obj_){
 	var routes = [];
 	var pattern = /\/:[^/]+/;
