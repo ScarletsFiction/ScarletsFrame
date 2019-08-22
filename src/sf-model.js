@@ -1780,7 +1780,6 @@ sf.model = function(scope){
 
 			for (var i = 0; i < temp.length; i++) {
 				var modelName = temp[i].getAttribute('sf-controller');
-				console.log(87587, modelName);
 				var model = sf.model.root[modelName];
 				if(model.$page === void 0){
 					model.$page = window.$([]);

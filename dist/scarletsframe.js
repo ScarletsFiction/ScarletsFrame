@@ -2696,7 +2696,6 @@ sf.model = function(scope){
 
 			for (var i = 0; i < temp.length; i++) {
 				var modelName = temp[i].getAttribute('sf-controller');
-				console.log(87587, modelName);
 				var model = sf.model.root[modelName];
 				if(model.$page === void 0){
 					model.$page = window.$([]);
@@ -4159,28 +4158,28 @@ var self = sf.url = function(){
 	for(var keys in hashes)
 		hashes_ += '#'+keys+hashes[keys];
 
-			// Paths
-	return '/'+self.paths.join('/') + hashes_;
+	var data_ = '|'+self.data.join('|');
+
+	return self.paths + hashes_ + (data_.length !== 1 ? data_ : '');
 }
 
-self.index = 0;
-
 var hashes = self.hashes = {};
+self.data = {};
 self.paths = [];
 
 // Push into latest history
 self.push = function(){
-	window.history.pushState(self.index, '', self);
+	window.history.pushState(null, '', self());
 }
 
 // Remove next history and change current history
 self.replace = function(){
-	window.history.replaceState(self.index, '', self);
+	window.history.replaceState(null, '', self());
 }
 
 self.parse = function(){
-	// Hashes
-	var hashes_ = window.location.hash.split('#');
+	self.data = window.location.hash.slice(1).split('|');
+	var hashes_ = self.data.shift().split('#');
 
 	for (var i = 1; i < hashes_.length; i++) {
 		var temp = hashes_[i].split('/');
@@ -4188,7 +4187,7 @@ self.parse = function(){
 	}
 
 	// Paths
-	self.paths = window.location.pathname.slice(1).split('/');
+	self.paths = window.location.pathname;
 }
 
 self.parse();
@@ -4221,13 +4220,12 @@ window.addEventListener('popstate', function(ev){
 	// Every views only backup one old history
 
 	// For root path
-	var newSlash = slash+aPaths.join(slash);
 	var temp = list[slash];
 
-	if(temp.oldPath === newSlash)
+	if(temp.oldPath === aPaths)
 		temp.back();
-	else if(temp.currentPath !== newSlash)
-		temp.goto(newSlash);
+	else if(temp.currentPath !== aPaths)
+		temp.goto(aPaths);
 
 
 	// For hash path
@@ -4359,14 +4357,6 @@ var self = sf.views = function View(selector, name){
 		var elem = ev.target;
 		var attr = elem.getAttribute('href');
 
-		if(attr[0] === '#') return;
-
-		// Make sure it's from current origin
-		var path = elem.href.replace(window.location.origin, '');
-		if(path.indexOf('//') !== -1)
-			return;
-
-		ev.preventDefault();
 		if(attr[0] === '@'){ // ignore
 			var target = elem.getAttribute('target');
 			if(target)
@@ -4375,6 +4365,27 @@ var self = sf.views = function View(selector, name){
 			return;
 		}
 
+		if(attr[0] === '#'){
+			ev.preventDefault();
+			var keys = attr.slice(1).split('#');
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i].split(slash);
+				var ref = sf.views.list[key.shift()];
+
+				if(ref !== void 0){
+					key = key.join(slash);
+					if(ref.currentPath !== key)
+						ref.goto(key);
+				}
+			}
+		}
+
+		// Make sure it's from current origin
+		var path = elem.href.replace(window.location.origin, '');
+		if(path.indexOf('//') !== -1)
+			return;
+
+		ev.preventDefault();
 		if(!self.goto(path))
 			console.error("Couldn't navigate to", path, "because path not found");
 	}
@@ -4387,9 +4398,19 @@ var self = sf.views = function View(selector, name){
 	var currentDOM = null;
 
 	self.goto = function(path, data, method){
+		if(self.currentPath === path)
+			return;
+
 		// Get template URL
 		var url = routes.findRoute(path);
 		if(!url) return;
+
+		if(name === slash)
+			sf.url.paths = path;
+		else
+			aHashes[name] = path;
+
+		sf.url.push();
 
 		// Check if view was exist
 		if(!rootDOM.isConnected){
