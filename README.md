@@ -87,65 +87,58 @@ Model and controller will be start after content loader was finished. But if you
 sf.loader.off();
 ```
 
-### Router
+### Router / Views
 This currently unfinished yet, but you can still use it.
 
-Enable lazy router feature
 ```js
-sf.router.enable(status = true);
+var myView = new sf.views('.my-selector');
+myView.addRoute([
+  {
+    path:'/',
+    url:'/',
+    on:{
+      coming:function(){
+        console.log('henlo from route');
+      },
+      leaving:function(){
+        console.log('leaving from route');
+      },
+    },
+  },{
+    path:'/login',
+    url:'/login'
+  },{
+    path:'/:username',
+    url:'/home',
+
+    // Child element view
+    '.user-page-view':[{
+      path:'/gallery',
+      url:'/user/gallery'
+    }]
+  }
+]);
 ```
 
-After enabling the LazyRouter, normally all href attribute will be registered.
-But you can also route by calling `sf.router.goto` function from the script.
-```js
-sf.router.goto('/user/home', data = {}, method = 'get');
-```
+You can also enable script when routing by caling
 
-Define event listener when element with attributes `sf-page="todo/page"` was loaded to current DOM. The defined event will being called before all model and controller was finished.
+These route will valid for any href link inside of the view element.
+But you can also route by calling `myView.goto` function from the script.
 ```js
-sf.router.before('todo/page', function(root){
-    // Prepare stuff
-});
-```
-
-This event will being called after model and the view has been binded and initialized.
-```js
-sf.router.when('todo/page', function(root){
-    // Data Re-initialization
-    var self = root('todo.page'); // sf.model.root['todo.page']
-});
-```
-
-Define event listener when element with attributes `sf-page="todo/page"` is going to be removed from DOM.
-```js
-sf.router.after('todo/page', function(root){
-    // Data cleanup
-});
+myView.goto('/user/home', data = {}, method = 'get');
 ```
 
 Here you can listen if any page was loaded, loading, or load error
 ```js
-sf.router.on('loading', function(target) {
+myView.on('routeStart', function(current, target) {
     console.log("Loading path to " + target);
 });
-sf.router.on('loaded', function(current, target) {
+myView.on('routeFinish', function(current, target) {
     console.log("Navigated from " + current + " to " + target);
 });
-sf.router.on('error', function(e) {
-    console.log("Navigation failed", e);
+myView.on('routeError', function(statusCode) {
+    console.log("Navigation failed", statusCode);
 });
-```
-
-When you're using router, every click on an element with link or `href` will trigger the router feature. And the whole HTML `body` content will be changed. But if you only want to change specific content, you should define the default view point.
-
-```html
-<custom-view></custom-view>
-<script>
-  sf.router.lazyViewPoint["@default"] = 'custom-view';
-</script>
-
-<a href="/todo/page">Go to todo page</a>
-<a href="/todo/page" sf-router-ignore>Default page load</a>
 ```
 
 ### Controller

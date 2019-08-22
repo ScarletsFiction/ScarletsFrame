@@ -191,7 +191,6 @@ sf.loader = new function(){
 		// Last init
 		sf.controller.init();
 		sf.model.init(document.body, isQueued);
-		sf.router.init();
 
 		isQueued = null;
 	}

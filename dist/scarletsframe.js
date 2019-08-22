@@ -707,7 +707,6 @@ sf.loader = new function(){
 		// Last init
 		sf.controller.init();
 		sf.model.init(document.body, isQueued);
-		sf.router.init();
 
 		isQueued = null;
 	}
@@ -2692,36 +2691,27 @@ sf.model = function(scope){
 		// Handle Router Start ==>
 		if(internal.router.enabled === true){
 			// Before model binding
-			var temp = $('[sf-controller], [sf-page]', targetNode);
+			var temp = $('[sf-controller]', targetNode);
 			var sfPage = [];
-			try{
-				for (var i = 0; i < temp.length; i++) {
-					if(temp[i].hasAttribute('sf-page')){
-						var sfp = temp[i].getAttribute('sf-page');
-						sfPage.push(sfp);
-						internal.routerLocalEvent('before', sfp);
-					}
-					else{
-						var modelName = temp[i].getAttribute('sf-controller');
-						var model = sf.model.root[modelName];
-						if(model.$page === void 0){
-							model.$page = window.$([]);
 
-							if(model.$page.push === void 0)
-								Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
-						}
+			for (var i = 0; i < temp.length; i++) {
+				var modelName = temp[i].getAttribute('sf-controller');
+				console.log(87587, modelName);
+				var model = sf.model.root[modelName];
+				if(model.$page === void 0){
+					model.$page = window.$([]);
 
-						model.$page.push(temp[i]);
-
-						if(sf.controller.pending[modelName] !== void 0)
-							sf.controller.run(modelName);
-
-						if(model.init !== void 0)
-							model.init(temp[i]);
-					}
+					if(model.$page.push === void 0)
+						Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
 				}
-			}catch(e){
-				console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
+
+				model.$page.push(temp[i]);
+
+				if(sf.controller.pending[modelName] !== void 0)
+					sf.controller.run(modelName);
+
+				if(model.init !== void 0)
+					model.init(temp[i]);
 			}
 
 			// When the model was binded with the view
@@ -4162,359 +4152,149 @@ sf.events = (function(){
 
 	return Events;
 })();
-sf.router = new function(){
-	var self = this;
-	self.loading = false;
-	self.enabled = false;
-	self.pauseRenderOnTransition = false;
-	self.currentPage = [];
-	self.mode = 'server-side';
-	var initialized = false;
-	var lazyRouting = false;
-	var currentRouterURL = '';
+;(function(){
+var self = sf.url = function(){
+	// Hashes
+	var hashes_ = '';
+	for(var keys in hashes)
+		hashes_ += '#'+keys+hashes[keys];
 
-	var gEval = routerEval;
+			// Paths
+	return '/'+self.paths.join('/') + hashes_;
+}
 
-	// Should be called if not using lazy page load
-	self.init = function(targetNode){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.init();
-			});
+self.index = 0;
 
-		// Run 'before' event for new page view
-		var temp = $('[sf-controller], [sf-page]', targetNode);
-		for (var i = 0; i < temp.length; i++) {
-			var name = temp[i].getAttribute('sf-page') || '';
-			if(name !== '')
-				runLocalEvent('before', name);
+var hashes = self.hashes = {};
+self.paths = [];
 
-			var modelName = false;
-			if(sf.model.root[name] || sf.controller.pending[name])
-				modelName = name;
+// Push into latest history
+self.push = function(){
+	window.history.pushState(self.index, '', self);
+}
 
-			if(temp[i].hasAttribute('sf-controller'))
-				modelName = temp[i].getAttribute('sf-controller');
+// Remove next history and change current history
+self.replace = function(){
+	window.history.replaceState(self.index, '', self);
+}
 
-			if(modelName !== false){
-				sf.controller.run(modelName);
+self.parse = function(){
+	// Hashes
+	var hashes_ = window.location.hash.split('#');
 
-				var model = sf.model.root[modelName];
-				if(model.$page === void 0){
-					model.$page = window.$([]);
-
-					if(model.$page.push === void 0)
-						Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
-				}
-
-				model.$page.push(temp[i]);
-
-				if(sf.controller.pending[modelName] !== void 0)
-					sf.controller.run(modelName);
-
-				if(model.init !== void 0)
-					model.init(temp[i]);
-			}
-
-			if(name !== '')
-				runLocalEvent('when', name);
-		}
-
-		initialized = true;
-		currentRouterURL = window.location.pathname;
+	for (var i = 1; i < hashes_.length; i++) {
+		var temp = hashes_[i].split('/');
+		hashes[temp.shift()] = '/'+temp.join('/');
 	}
 
-	function popstateListener(event) {
-		// Don't continue if the last routing was error
-		if(routingError){
-			routingError = false;
-			return;
-		}
+	// Paths
+	self.paths = window.location.pathname.slice(1).split('/');
+}
 
-		routingBack = true;
-		self.goto(window.location.pathname);
-	}
+self.parse();
 
-	self.enable = function(status){
-		if(status === void 0) status = true;
-		if(self.enabled === status) return;
-		self.enabled = status;
-		internal.router.enabled = status;
-
-		if(status === true){
-			// Create listener for link click
-			$.on(document.body, 'click', 'a[href]', self.load);
-
-			// Create listener when navigate backward
-			window.addEventListener('popstate', popstateListener, false);
-		}
-		else{
-			$.off(document.body, 'click', 'a[href]', self.load);
-			window.removeEventListener('popstate', popstateListener, false);
-		}
-	}
-
-	var localEvent = {before:{}, when:{}, after:{}};
-	function registerLocalEvent(which, name, func){
-		if(!localEvent[which][name])
-			localEvent[which][name] = [];
-
-		localEvent[which][name].push(func);
-	}
-
-	// Set index with number if you want to replace old function
-	// Running 'before' new page going to be displayed
-	self.before = function(name, func){
-		registerLocalEvent('before', name, func);
-	}
-
-	// Running 'when' new page was been initialized
-	self.when = function(name, func){
-		registerLocalEvent('when', name, func);
-	}
-
-	// Running 'after' old page is going to be removed
-	self.after = function(name, func){
-		registerLocalEvent('after', name, func);
-	}
-
-	var runLocalEvent = internal.routerLocalEvent = function(which, name){
-		if(which === 'before' && self.currentPage.indexOf(name) === -1)
-			self.currentPage.push(name);
-
-		if(which === 'after' && self.currentPage.indexOf(name) === -1)
-			self.currentPage.splice(self.currentPage.indexOf(name), 1);
-
-		if(localEvent[which][name]){
-			for (var i = 0; i < localEvent[which][name].length; i++) {
-				localEvent[which][name][i](sf.model.root[name], sf.model);
-			}
-		}
-	}
-
-	var onEvent = {
-		'loading':[],
-		'loaded':[],
-		'special':[],
-		'error':[]
-	};
-	self.on = function(event, func){
-		if(onEvent[event].indexOf(func) === -1)
-			onEvent[event].push(func);
-	}
-
-	// This will enable script evaluation before the model/controller/route
-	// being reinitialized after receiving template from the server.
-	// To be safe, make sure you're not directly outputing any user content
-	// like user's name, posts, modifiable data from user.
-	self.dynamicScript = false;
-
-	self.lazyViewPoint = {};
-	/*
-		{
-			oldURlPattern:{
-				newURLPattern:'.viewPoint'
-			}
-		}
-	*/
-
-	self.load = function(ev){
-		if(self.enabled !== true) return;
-
-		var elem = ev.target;
-		var attr = elem.getAttribute('href');
-
-		if(!attr){
-			elem = $.parent(elem, '[href]');
-			attr = elem.getAttribute('href');
-		}
-
-		if(!attr || attr[0] === '#') return;
-
-		// Make sure it's from current origin
-		var path = elem.href.replace(window.location.origin, '');
-		if(path.indexOf('//') !== -1)
-			return;
-
-		if(!window.history.pushState || elem.hasAttribute('sf-router-ignore'))
-			return;
-
-		ev.preventDefault();
-		if(attr[0] === '@'){
-			var target = elem.getAttribute('target');
-			if(target)
-				window.open(attr.slice(1), target);
-			else window.location = attr.slice(1);
-			return;
-		}
-
-		return !self.goto(path);
-	}
-
-	var RouterLoading = false;
-	var routingBack = false;
-	var routingError = false;
-	self.goto = function(path, data, method){
-		if(!method) method = 'GET';
-        else method = method.toUpperCase();
-
-		if(!data) data = {};
-
-		for (var i = 0; i < onEvent['loading'].length; i++) {
-			if(onEvent['loading'][i](path)) return;
-		}
-		var oldPath = window.location.pathname;
-		initialized = false;
-
-		if(RouterLoading) RouterLoading.abort();
-		RouterLoading = sf.ajax({
-			url:window.location.origin + path,
-			method:method,
-            data:Object.assign(data, {
-                _scarlets:'.dynamic.'
-            }),
-			success:function(data){
-				if(initialized) return;
-				lazyRouting = true;
-
-				// Run 'loaded' event
-				RouterLoading = false;
-
-				// Find special data
-				var regex = RegExp('<!-- SF-Special:(.*?)-->', 'gm');
-				var special = regex.exec(data);
-				if(special && special.length !== 1){
-					special = special[1].split('--|&>').join('-->');
-					special = JSON.parse(special);
-
-					if(!isEmptyObject(special)){
-						for (var i = 0; i < onEvent['special'].length; i++) {
-							if(onEvent['special'][i](special)) return;
-						}
-					}
-				}
-
-				var DOMReference = false;
-				var foundAction = function(ref){
-					DOMReference = $.findOne(ref);
-
-					// Run 'after' event for old page view
-					var last = $.findOne('[sf-page]', DOMReference);
-					runLocalEvent('after', last ? last.getAttribute('sf-page') : '/');
-
-					// Redefine title if exist
-					if(special && special.title)
-						$('head > title').innerHTML = special.title;
-
-					found = true;
-				};
-
-				var found = false;
-				for(var oldURL in self.lazyViewPoint){
-					if(currentRouterURL.indexOf(oldURL) !== -1){
-						for(var newURL in self.lazyViewPoint[oldURL]){
-							if(currentRouterURL.indexOf(oldURL) !== -1){
-								foundAction(self.lazyViewPoint[oldURL][newURL]);
-								break;
-							}
-						}
-					}
-					if(found) break;
-				}
-
-				// When the view point was not found
-				if(!found){
-					// Use fallback if exist
-					if(sf.router.lazyViewPoint["@default"])
-						foundAction(sf.router.lazyViewPoint["@default"]);
-
-					if(!found){
-						for (var i = 0; i < onEvent['error'].length; i++) {
-							onEvent['error'][i]('sf.router.lazyViewPoint["'+oldURL+'"]["'+newURL+'"] was not found');
-						}
-					}
-				}
-
-				// Run 'before' event for new page view
-				if(!DOMReference) DOMReference = document.body;
-				if(self.pauseRenderOnTransition)
-					self.pauseRenderOnTransition.css('display', 'none');
-
-				// Let page script running first
-				DOMReference.innerHTML = data;
-				if(self.dynamicScript !== false){
-					var scripts = DOMReference.getElementsByTagName('script');
-					for (var i = 0; i < scripts.length; i++) {
-					    gEval(scripts[i].text);
-					}
-				}
-
-				// Parse the DOM data binding
-				sf.model.init(DOMReference);
-
-				if(self.pauseRenderOnTransition)
-					self.pauseRenderOnTransition.css('display', '');
-
-				routerLoaded(currentRouterURL, path, DOMReference);
-
-				initialized = true;
-				lazyRouting = false;
-
-				currentRouterURL = path;
-				routingError = false;
-			},
-			error:function(xhr, data){
-				routingError = true;
-				if(xhr.aborted) return;
-
-				RouterLoading = false;
-				for (var i = 0; i < onEvent['error'].length; i++) {
-					onEvent['error'][i](xhr.status, data);
-				}
-
-				// Back on error
-				window.history.back();
-			}
-		});
-
-		if(!routingBack)
-			window.history.pushState(null, "", path);
-
-		routingBack = false;
-		return true;
-	}
-
-	// Trigger loaded event
-	function routerLoaded(currentRouterURL, path, data){
-		for (var i = 0; i < onEvent['loaded'].length; i++) {
-			onEvent['loaded'][i](currentRouterURL, path, data);
-		}
-	}
-};
+})();
 ;(function(){
 var gEval = routerEval;
-routerEval = void 0;
+routerEval = void 0; // Avoid this function being invoked out of scope
 
-internal.router.toRegexp = function(obj_){
+// Save reference
+var aHashes = sf.url.hashes;
+var aPaths = sf.url.paths;
+var slash = '/';
+
+var lastURL = sf.url();
+var routingError = false;
+
+window.addEventListener('popstate', function(ev){
+	// Don't continue if the last routing was error
+	// Because the router was trying to getting back
+	if(routingError){
+		routingError = false;
+		return;
+	}
+
+	// Reparse URL
+	sf.url.parse();
+	var list = self.list;
+
+	// Every views only backup one old history
+
+	// For root path
+	var newSlash = slash+aPaths.join(slash);
+	var temp = list[slash];
+
+	if(temp.oldPath === newSlash)
+		temp.back();
+	else if(temp.currentPath !== newSlash)
+		temp.goto(newSlash);
+
+
+	// For hash path
+	var keys = Object.keys(aHashes);
+	for (var i = 0; i < keys.length; i++) {
+		var temp = list[keys[i]];
+		if(temp === void 0) continue;
+
+		if(temp.oldPath === aHashes[keys[i]])
+			temp.back();
+		else if(temp.currentPath !== aHashes[keys[i]])
+			temp.goto(aHashes[keys[i]]);
+	}
+}, false);
+
+internal.router = {};
+internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
 	var pattern = /\/:[^/]+/;
+	var sep = /\-/;
+    var knownKeys = /path|url|on|routes/;
 
-	function addRoutes(obj, addition){
+	function addRoutes(obj, addition, selector, parent){
+		if(selector !== false)
+			selector += ' ';
+
 		for(var i = 0; i < obj.length; i++){
-			var current = addition+obj[i].path;
+            var ref = obj[i];
+			var current = addition+ref.path;
 
-			if(obj[i].routes !== void 0){
-				addRoutes(obj[i].routes, current);
+			if(ref.routes !== void 0){
+				addRoutes(ref.routes, current, selector, parent);
 				continue;
 			}
 
-			current = RegExp('^' + current.replace(pattern, '/(.*?)') + '$');
-			current.url = obj[i].url;
-			routes.push(current);
+			var route = RegExp('^' + current.replace(pattern, '/([^/]+)') + '$');
+			route.url = ref.url;
+
+			if(selector !== false){
+				route.selector = selectorList.indexOf(selector);
+
+				if(route.selector === -1){
+					route.selector = selectorList.length;
+					selectorList.push(selector);
+				}
+			}
+
+			if(parent !== void 0)
+				route.parent = parent;
+
+			if(ref.on !== void 0)
+				route.on = ref.on;
+
+            var keys = Object.keys(ref);
+            for(var a = 0; a < keys.length; a++){
+                if(knownKeys.test(keys[a]))
+                  continue;
+
+				addRoutes(ref[keys[a]], current, selector + keys[a], route);
+                break;
+            }
+
+			routes.push(route);
 		}
 	}
 
-	addRoutes(obj_, '');
+    addRoutes(obj_, '', false);
 	return routes;
 }
 
@@ -4530,11 +4310,28 @@ internal.router.findRoute = function(url){
 	return false;
 }
 
-function View(DOMReference){
-	var self = this;
-	self.pageRemoveDelay = 300;
-	self.currentURL = '';
+var self = sf.views = function View(selector, name){
+	if(name === void 0)
+		name = slash;
 
+	var self = sf.views.list[name] = this;
+	self.currentPath = '';
+	self.oldPath = '';
+
+	var rootDOM = {};
+	self.selector = function(selector_){
+		rootDOM = document.querySelector(selector_ || selector);
+
+		// Create listener for link click
+		if(rootDOM){
+			selector = selector_;
+			$.on(rootDOM, 'click', 'a[href]', hrefClicked);
+		}
+	}
+
+	self.selector();
+
+    var selectorList = [selector];
 	var routes = [];
 	routes.findRoute = internal.router.findRoute;
 
@@ -4547,16 +4344,18 @@ function View(DOMReference){
 	};
 
 	self.on = function(event, func){
+		if(onEvent[event] === void 0)
+			return console.error("Event '"+event+"' was not exist");
+
 		if(onEvent[event].indexOf(func) === -1)
 			onEvent[event].push(func);
 	}
 
 	self.addRoute = function(obj){
-		routes.push(...internal.router.toRegexp(obj));
+		routes.push(...internal.router.parseRoutes(obj, selectorList));
 	}
 
-	// Create listener for link click
-	$.on(DOMReference, 'click', 'a[href]', function(ev){
+	function hrefClicked(ev){
 		var elem = ev.target;
 		var attr = elem.getAttribute('href');
 
@@ -4578,82 +4377,144 @@ function View(DOMReference){
 
 		if(!self.goto(path))
 			console.error("Couldn't navigate to", path, "because path not found");
-	});
+	}
 
-	var sandboxDOM = document.createElement('sandbox-dom');
 	var RouterLoading = false; // xhr reference if the router still loading
+	var currentRoute = {};
+
+	var oldDOM = null;
+	var nextDOM = null;
+	var currentDOM = null;
 
 	self.goto = function(path, data, method){
-		if(!method) method = 'GET';
-		if(!data) data = {};
+		// Get template URL
+		var url = routes.findRoute(path);
+		if(!url) return;
 
-		for (var i = 0; i < onEvent['routeStart'].length; i++) {
-			if(onEvent['routeStart'][i](path)) return;
+		// Check if view was exist
+		if(!rootDOM.isConnected){
+			if(rootDOM.nodeType !== void 0)
+				rootDOM = {};
+
+			return console.error(name, "can't route to", path, "because element with selector '"+selector+"' was not found");
 		}
 
-		var oldPath = window.location.pathname;
+		for (var i = 0; i < onEvent['routeStart'].length; i++) {
+			if(onEvent['routeStart'][i](self.oldPath, path)) return;
+		}
+
+		function routeError_(xhr, data){
+			if(xhr.aborted) return;
+			routingError = true;
+
+			RouterLoading = false;
+			for (var i = 0; i < onEvent['routeError'].length; i++) {
+				onEvent['routeError'][i](xhr.status, data);
+			}
+
+			window.history.back();
+		}
 
 		// Abort other router loading if exist
 		if(RouterLoading) RouterLoading.abort();
+
 		RouterLoading = sf.ajax({
-			url:window.location.origin + path,
-			method:method,
-            data:Object.assign(data, {
-                _scarlets:'.dynamic.'
-            }),
+			url:window.location.origin + url.url,
+			method:method || 'GET',
+		    data:Object.assign(data || {}, {
+		        _scarlets:'.dynamic.'
+		    }),
 			success:function(data){
-				sandboxDOM.innerHTML = data;
-
-				if(sandboxDOM.childElementCount !== 1){
-					var dom = document.createElement('div');
-					for (var i = 0, n = sandboxDOM.childElementCount; i < n; i++) {
-						dom.insertBefore(sandboxDOM.firstElementChild, null);
-					}
-				}
-				else var dom = sandboxDOM.firstElementChild;
-
+				// Create new element
+				var dom = document.createElement('sf-page-view');
+				dom.innerHTML = data;
 				dom.classList.add('page-prepare');
+				dom.style.display = 'none';
+
+				if(url.selector === void 0)
+					var DOMReference = rootDOM;
+
+				else // Get element from selector
+					var DOMReference = rootDOM.querySelector(selectorList[url.selector]);
 
 				// Let page script running first
 				DOMReference.insertAdjacentElement('beforeend', dom);
-				if(self.dynamicScript !== false){
-					var scripts = dom.getElementsByTagName('script');
-					for (var i = 0; i < scripts.length; i++) {
-					    gEval(scripts[i].text);
+
+				try{
+					if(self.dynamicScript !== false){
+						var scripts = dom.getElementsByTagName('script');
+						for (var i = 0; i < scripts.length; i++) {
+						    gEval(scripts[i].text);
+						}
 					}
+
+					// Parse the DOM data binding
+					sf.model.init(dom);
+
+					// Trigger loaded event
+					for (var i = 0; i < onEvent['routeFinish'].length; i++) {
+						if(onEvent['routeFinish'][i](self.currentPath, path, url.data)) return;
+					}
+				}catch(e){
+					console.error(e);
+					dom.remove();
+					return routeError_({status:0});
 				}
 
-				// Parse the DOM data binding
-				sf.model.init(dom);
+				dom.style.display = '';
 
-				// Trigger loaded event
-				for (var i = 0; i < onEvent['routeFinish'].length; i++) {
-					if(onEvent['routeFinish'][i](self.currentURL, path, data)) return;
+				if(currentRoute.on !== void 0 && currentRoute.on.leaving)
+					currentRoute.on.leaving(url.data);
+
+				if(currentRoute.on !== void 0 && currentRoute.on.coming)
+					currentRoute.on.coming(url.data);
+
+				if(currentDOM !== null){
+					currentDOM.classList.add('page-previous');
+					currentDOM.classList.remove('page-current');
+					self.oldPath = self.currentPath;
+					oldDOM = currentDOM;
 				}
 
 				// Save current URL
-				self.currentURL = path;
-			},
-			error:function(xhr, data){
-				if(xhr.aborted) return;
+				self.currentPath = path;
+				currentRoute = url;
 
-				RouterLoading = false;
-				for (var i = 0; i < onEvent['error'].length; i++) {
-					onEvent['error'][i](xhr.status, data);
-				}
-			}
+				dom.classList.remove('page-prepare');
+				dom.classList.add('page-current');
+
+				currentDOM = dom;
+				routingError = false;
+			},
+			error:routeError_
 		});
+		return true;
+	}
+
+	self.back = function(){
+		if(oldDOM === null)
+			return self.goto(window.location.pathname);
+
+		// Restore hidden DOM
+		oldDOM.classList.remove('page-previous');
+		oldDOM.classList.add('page-current');
+
+		currentDOM.classList.remove('page-current');
+		currentDOM.classList.add('page-next');
+
+		self.currentPath = self.oldPath;
+		self.oldPath = false;
+
+		nextDOM = currentDOM;
+		oldDOM = null;
+
+		return true;
 	}
 
 	return self;
 }
 
-sf.views = function(el){
-	if(el.constructor === String)
-		el = $(el);
-
-	return new View(el);
-};
+sf.views.list = {};
 
 })();
 sf.internal.virtual_scroll = new function(){

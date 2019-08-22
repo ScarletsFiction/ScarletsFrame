@@ -1775,36 +1775,27 @@ sf.model = function(scope){
 		// Handle Router Start ==>
 		if(internal.router.enabled === true){
 			// Before model binding
-			var temp = $('[sf-controller], [sf-page]', targetNode);
+			var temp = $('[sf-controller]', targetNode);
 			var sfPage = [];
-			try{
-				for (var i = 0; i < temp.length; i++) {
-					if(temp[i].hasAttribute('sf-page')){
-						var sfp = temp[i].getAttribute('sf-page');
-						sfPage.push(sfp);
-						internal.routerLocalEvent('before', sfp);
-					}
-					else{
-						var modelName = temp[i].getAttribute('sf-controller');
-						var model = sf.model.root[modelName];
-						if(model.$page === void 0){
-							model.$page = window.$([]);
 
-							if(model.$page.push === void 0)
-								Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
-						}
+			for (var i = 0; i < temp.length; i++) {
+				var modelName = temp[i].getAttribute('sf-controller');
+				console.log(87587, modelName);
+				var model = sf.model.root[modelName];
+				if(model.$page === void 0){
+					model.$page = window.$([]);
 
-						model.$page.push(temp[i]);
-
-						if(sf.controller.pending[modelName] !== void 0)
-							sf.controller.run(modelName);
-
-						if(model.init !== void 0)
-							model.init(temp[i]);
-					}
+					if(model.$page.push === void 0)
+						Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
 				}
-			}catch(e){
-				console.error(e, "Try to use 'sf.router.when' if you want to execute script after model and the view was initialized.");
+
+				model.$page.push(temp[i]);
+
+				if(sf.controller.pending[modelName] !== void 0)
+					sf.controller.run(modelName);
+
+				if(model.init !== void 0)
+					model.init(temp[i]);
 			}
 
 			// When the model was binded with the view
