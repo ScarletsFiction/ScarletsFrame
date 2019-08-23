@@ -1,7 +1,7 @@
 {
   "name": "scarletsframe",
   "description": "A frontend framework that can help you write a simple web structure",
-  "version": "0.15.2",
+  "version": "0.15.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
@@ -38,5 +38,8 @@
     "frontend",
     "mvw-framework",
     "assetloader"
-  ]
+  ],
+  "dependencies": {
+    "serberries": "^1.4.5"
+  }
 }

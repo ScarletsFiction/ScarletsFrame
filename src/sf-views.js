@@ -56,7 +56,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
 	var pattern = /\/:([^/]+)/;
 	var sep = /\-/;
-    var knownKeys = /path|url|on|routes|beforeRoute/;
+    var knownKeys = /path|url|on|routes|beforeRoute|defaultData/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -72,14 +72,16 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			}
 
 			var keys = [];
-			var route = RegExp('^' + current.replace(pattern, function(full, match){
+			var regex = current.replace(pattern, function(full, match){
 				keys.push(match);
 				return '/([^/]+)';
-			}) + '$');
+			});
+			var route = RegExp('^' + regex + '$');
 
 			route.url = ref.url;
 			route.keys = keys;
 			route.beforeRoute = ref.beforeRoute;
+			route.defaultData = ref.defaultData || {};
 
 			if(selector !== ''){
 				route.selector = selectorList.indexOf(selector);
@@ -96,13 +98,21 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			if(ref.on !== void 0)
 				route.on = ref.on;
 
+			var hasChild = [];
+
             var keys = Object.keys(ref);
             for(var a = 0; a < keys.length; a++){
                 if(knownKeys.test(keys[a]))
                   continue;
 
+				hasChild.push(keys[a]);
 				addRoutes(ref[keys[a]], current, keys[a], route);
                 break;
+            }
+
+            if(hasChild.length !== 0){
+            	route.hasChild = hasChild;
+            	route.forChild = RegExp(regex);
             }
 
 			routes.push(route);
@@ -140,12 +150,14 @@ var self = sf.views = function View(selector, name){
 
 	var self = sf.views.list[name] = this;
 
+	// Init current URL as current View Path
 	if(name === slash)
 		self.currentPath = '/';
 	else
-		;
+		1;
 
 	var initialized = false;
+	var selectorElement = {};
 
 	self.lastPath = '/';
 	self.currentDOM = null;
@@ -158,7 +170,7 @@ var self = sf.views = function View(selector, name){
 	self.selector = function(selector_, isChild){
 		initialized = true;
 
-		var DOM = document.querySelector(selector_ || selector);
+		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document)).querySelector(selector_ || selector);
 
 		if(DOM.viewInitialized)
 			return;
@@ -180,13 +192,18 @@ var self = sf.views = function View(selector, name){
 			temp.routeCached = routes.findRoute(temp.routePath);
 			temp.classList.add('page-current');
 
+			DOM.viewInitialized = true;
+
 			if(!isChild){
 				self.currentDOM = temp;
 				$.on(DOM, 'click', 'a[href]', hrefClicked);
 				rootDOM = DOM;
 			}
+			else{
+				selectorElement[selector_] = DOM;
+				return DOM;
+			}
 
-			DOM.viewInitialized = true;
 			return true;
 		}
 		return false;
@@ -274,12 +291,13 @@ var self = sf.views = function View(selector, name){
 		window.history.go(routeDirection * -1);
 	}
 
+	var pageViewNodeName = 'SF-PAGE-VIEW';
 	function toBeShowed(element){
 		var relatedPage = [];
 
 		var parent = element.parentElement;
 		while(parent !== rootDOM && parent !== null){
-			if(parent.nodeName === 'SF-PAGE-VIEW')
+			if(parent.nodeName === pageViewNodeName)
 				relatedPage.unshift(parent);
 
 			parent = parent.parentElement;
@@ -304,7 +322,7 @@ var self = sf.views = function View(selector, name){
 		self.relatedDOM = relatedPage;
 	}
 
-	self.goto = function(path, data, method){
+	self.goto = function(path, data, method, _callback){
 		if(self.currentPath === path)
 			return;
 
@@ -343,16 +361,86 @@ var self = sf.views = function View(selector, name){
 			if(onEvent['routeStart'][i](self.currentPath, path)) return;
 		}
 
+		function insertLoadedElement(DOMReference, dom, parentElement, pendingShowed){
+			if(parentElement)
+				dom.parentPageElement = parentElement;
+
+			dom.routerData = null;
+			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
+				dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
+				dom.firstChild.remove();
+			}
+
+			// Let page script running first
+			DOMReference.insertAdjacentElement('beforeend', dom);
+
+			try{
+				if(self.dynamicScript !== false){
+					var scripts = dom.getElementsByTagName('script');
+					for (var i = 0; i < scripts.length; i++) {
+					    gEval(scripts[i].text);
+					}
+				}
+
+				// Parse the DOM data binding
+				sf.model.init(dom);
+
+				// Trigger loaded event
+				for (var i = 0; i < onEvent['routeFinish'].length; i++) {
+					if(onEvent['routeFinish'][i](self.currentPath, path, url.data)) return;
+				}
+			}catch(e){
+				console.error(e);
+				dom.remove();
+				return routeError_({status:0});
+			}
+
+			if(url.on !== void 0 && url.on.coming)
+				url.on.coming(url.data);
+
+			dom.removeAttribute('style');
+			toBeShowed(dom);
+
+			if(pendingShowed !== void 0)
+				self.relatedDOM.push(...pendingShowed);
+
+			if(self.currentDOM !== null){
+				self.lastPath = self.currentPath;
+
+				// Old route
+				if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
+					self.currentDOM.routeCached.on.leaving();
+
+				self.lastDOM = self.currentDOM;
+			}
+
+			// Save current URL
+			self.currentPath = path;
+			dom.routeCached = url;
+			dom.routePath = path;
+
+			dom.classList.remove('page-prepare');
+
+			self.currentDOM = dom;
+			routingError = false;
+
+			// Clear old cache
+			var parent = self.currentDOM.parentNode;
+			for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
+				parent.firstElementChild.remove();
+			}
+		}
+
 		RouterLoading = sf.ajax({
 			url:window.location.origin + (url.url || path),
 			method:method || 'GET',
-		    data:Object.assign(data || {}, {
+		    data:Object.assign(data || url.defaultData, {
 		        _sf_view:url.selector === void 0 ? selector : selectorList[url.selector].split(' ').pop()
 		    }),
-			success:function(data){
+			success:function(html_content){
 				// Create new element
 				var dom = document.createElement('sf-page-view');
-				dom.innerHTML = data;
+				dom.innerHTML = html_content;
 				dom.classList.add('page-prepare');
 				dom.style.display = 'none';
 
@@ -360,75 +448,39 @@ var self = sf.views = function View(selector, name){
 					var DOMReference = rootDOM;
 
 				else{ // Get element from selector
-					var DOMReference = rootDOM.querySelector(selectorList[url.selector]);
-					if(DOMReference === null){
-						console.error(selectorList[url.selector], "selector was not found inside", selector);
-						dom.remove();
-						return routeError_({status:0});
-					}
-				}
-
-				dom.routerData = null;
-				if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
-					dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
-					dom.firstChild.remove();
-				}
-
-				// Let page script running first
-				DOMReference.insertAdjacentElement('beforeend', dom);
-
-				try{
-					if(self.dynamicScript !== false){
-						var scripts = dom.getElementsByTagName('script');
-						for (var i = 0; i < scripts.length; i++) {
-						    gEval(scripts[i].text);
+					var DOMReference = selectorElement[selectorList[url.selector]];
+					if(!DOMReference || !DOMReference.isConnected){
+						if(url.parent === void 0){
+							dom.remove();
+							return routeError_({status:0});
+						}
+						else{
+							// Try to load parent router first
+							var newPath = path.match(url.parent.forChild)[0];
+							return self.goto(newPath, false, method, function(parentElement){
+								insertLoadedElement(selectorElement[selectorList[url.selector]], dom, parentElement);
+							});
 						}
 					}
+				}
 
-					// Parse the DOM data binding
-					sf.model.init(dom);
+				if(url.hasChild){
+					var pendingShowed = [];
+					for (var i = 0; i < url.hasChild.length; i++) {
+						selectorElement[url.hasChild[i]] = self.selector(url.hasChild[i], dom);
+						var tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
 
-					// Trigger loaded event
-					for (var i = 0; i < onEvent['routeFinish'].length; i++) {
-						if(onEvent['routeFinish'][i](self.currentPath, path, url.data)) return;
+						if(tempPageView)
+							pendingShowed.unshift(tempPageView);
 					}
-				}catch(e){
-					console.error(e);
-					dom.remove();
-					return routeError_({status:0});
+
+					if(pendingShowed.length === 0)
+						pendingShowed = void 0;
 				}
+				else var pendingShowed = void 0;
 
-				if(url.on !== void 0 && url.on.coming)
-					url.on.coming(url.data);
-
-				dom.removeAttribute('style');
-				toBeShowed(dom);
-
-				if(self.currentDOM !== null){
-					self.lastPath = self.currentPath;
-
-					// Old route
-					if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
-						self.currentDOM.routeCached.on.leaving();
-
-					self.lastDOM = self.currentDOM;
-				}
-
-				// Save current URL
-				self.currentPath = path;
-				dom.routeCached = url;
-				dom.routePath = path;
-
-				dom.classList.remove('page-prepare');
-
-				self.currentDOM = dom;
-				routingError = false;
-
-				// Clear old cache
-				var parent = self.currentDOM.parentNode;
-				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-					parent.firstElementChild.remove();
-				}
+				insertLoadedElement(DOMReference, dom, false, pendingShowed);
+				if(_callback) _callback(dom);
 			},
 			error:routeError_
 		});
