@@ -136,6 +136,9 @@ myView.on('routeStart', function(current, target) {
 myView.on('routeFinish', function(current, target) {
     console.log("Navigated from " + current + " to " + target);
 });
+myView.on('routeCached', function(current, target) {
+    console.log("Using cached route to " + target);
+});
 myView.on('routeError', function(statusCode) {
     console.log("Navigation failed", statusCode);
 });

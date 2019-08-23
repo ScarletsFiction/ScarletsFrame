@@ -315,6 +315,7 @@ var $ = sf.dom; // Shortcut
 		},
 		splice:function(i){
 			for (var n = this.length - 1; i < n; i++) {
+				delete this[i];
 				this[i] = this[i+1];
 			}
 			this.length--;

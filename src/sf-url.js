@@ -12,16 +12,16 @@ var self = sf.url = function(){
 
 var hashes = self.hashes = {};
 self.data = {};
-self.paths = [];
+self.paths = '/';
 
 // Push into latest history
 self.push = function(){
-	window.history.pushState(null, '', self());
+	window.history.pushState((window.history.state || 0) + 1, '', self());
 }
 
 // Remove next history and change current history
 self.replace = function(){
-	window.history.replaceState(null, '', self());
+	window.history.replaceState(window.history.state, '', self());
 }
 
 self.parse = function(){

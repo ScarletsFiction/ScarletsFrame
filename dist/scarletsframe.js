@@ -507,6 +507,7 @@ var $ = sf.dom; // Shortcut
 		},
 		splice:function(i){
 			for (var n = this.length - 1; i < n; i++) {
+				delete this[i];
 				this[i] = this[i+1];
 			}
 			this.length--;
@@ -780,17 +781,26 @@ sf.component = new function(){
 				return sf(function(){
 					self.new(name, element, $item, isCreated, false);
 				});
-			if(self.registered[name][3] === false)
-				return setTimeout(function(){
-					self.new(name, element, $item, isCreated, true);
-				}, 0);
+
+			if(element.childElementCount === 0){
+				if(self.registered[name][3] === false)
+					return setTimeout(function(){
+						self.new(name, element, $item, isCreated, true);
+					}, 0);
+			}
 
 			if(element.hasAttribute('sf-component-ignore') === true)
 				return;
-		}
 
-		if(element === void 0)
-			return new window['$'+capitalizeLetters(name.split('-'))];
+			var avoid = /(^|:)(class|style)/;
+			var attr = element.attributes;
+			for (var i = 0; i < attr.length; i++) {
+				if(avoid.test(attr[i].nodeName))
+					continue;
+
+				$item[attr[i].nodeName] = attr[i].value;
+			}
+		}
 
 		var newElement = element === void 0;
 		if(element === void 0){
@@ -838,14 +848,17 @@ sf.component = new function(){
 			return newID;
 		}
 
-		var temp = self.registered[name][3];
-		if(temp.tempDOM === true){
-			temp = temp.cloneNode(true).childNodes;
-			for (var i = 0, n = temp.length; i < n; i++) {
-				element.appendChild(temp[0]);
+		if(element.childElementCount === 0){
+			var temp = self.registered[name][3];
+
+			if(temp.tempDOM === true){
+				temp = temp.cloneNode(true).childNodes;
+				for (var i = 0, n = temp.length; i < n; i++) {
+					element.appendChild(temp[0]);
+				}
 			}
+			else element.appendChild(temp.cloneNode(true));
 		}
-		else element.appendChild(temp.cloneNode(true));
 
 		if(element.parentNode === null){
 			// Wrap to temporary vDOM
@@ -1000,9 +1013,9 @@ sf.model = function(scope){
 		}, true);
 
 		if(preventExecution){
-			console.groupCollapsed("<-- Expand the template error");
+			console.groupCollapsed("%c<-- Expand the template error", 'color: yellow');
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			console.log(trimIndentation(script).trim());
+			console.log("%c"+trimIndentation(script).trim(), 'color: yellow');
 			console.groupEnd();
 
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
@@ -1029,9 +1042,9 @@ sf.model = function(scope){
 			}
 			else var _evaled_ = eval(script);
 		} catch(e){
-			console.groupCollapsed("<-- Expand the template error");
+			console.groupCollapsed("%c<-- Expand the template error", 'color: yellow');
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			console.log(trimIndentation(script).trim());
+			console.log("%c"+trimIndentation(script).trim(), 'color: yellow');
 			console.groupEnd();
 
 			console.error(e);
@@ -4165,16 +4178,16 @@ var self = sf.url = function(){
 
 var hashes = self.hashes = {};
 self.data = {};
-self.paths = [];
+self.paths = '/';
 
 // Push into latest history
 self.push = function(){
-	window.history.pushState(null, '', self());
+	window.history.pushState((window.history.state || 0) + 1, '', self());
 }
 
 // Remove next history and change current history
 self.replace = function(){
-	window.history.replaceState(null, '', self());
+	window.history.replaceState(window.history.state, '', self());
 }
 
 self.parse = function(){
@@ -4199,34 +4212,40 @@ routerEval = void 0; // Avoid this function being invoked out of scope
 
 // Save reference
 var aHashes = sf.url.hashes;
-var aPaths = sf.url.paths;
 var slash = '/';
 
-var lastURL = sf.url();
 var routingError = false;
+var routeDirection = 1;
+var historyIndex = (window.history.state || 1);
+
+var disableHistoryPush = false;
 
 window.addEventListener('popstate', function(ev){
 	// Don't continue if the last routing was error
 	// Because the router was trying to getting back
 	if(routingError){
 		routingError = false;
+		historyIndex -= routeDirection;
 		return;
 	}
+
+	disableHistoryPush = true;
 
 	// Reparse URL
 	sf.url.parse();
 	var list = self.list;
 
-	// Every views only backup one old history
+	if(window.history.state >= historyIndex)
+		routeDirection = 1;
+	else
+		routeDirection = -1;
+
+	historyIndex += routeDirection;
+
+	// console.warn('historyIndex', historyIndex, window.history.state, routeDirection > 0 ? 'forward' : 'backward');
 
 	// For root path
-	var temp = list[slash];
-
-	if(temp.oldPath === aPaths)
-		temp.back();
-	else if(temp.currentPath !== aPaths)
-		temp.goto(aPaths);
-
+	list[slash].goto(sf.url.paths);
 
 	// For hash path
 	var keys = Object.keys(aHashes);
@@ -4234,11 +4253,10 @@ window.addEventListener('popstate', function(ev){
 		var temp = list[keys[i]];
 		if(temp === void 0) continue;
 
-		if(temp.oldPath === aHashes[keys[i]])
-			temp.back();
-		else if(temp.currentPath !== aHashes[keys[i]])
-			temp.goto(aHashes[keys[i]]);
+		temp.goto(aHashes[keys[i]]);
 	}
+
+	disableHistoryPush = false;
 }, false);
 
 internal.router = {};
@@ -4313,8 +4331,12 @@ var self = sf.views = function View(selector, name){
 		name = slash;
 
 	var self = sf.views.list[name] = this;
-	self.currentPath = '';
-	self.oldPath = '';
+	self.currentPath = '/';
+	self.lastPath = '/';
+	self.currentDOM = null;
+	self.lastDOM = null;
+
+	self.maxCache = 2;
 
 	var rootDOM = {};
 	self.selector = function(selector_){
@@ -4322,9 +4344,25 @@ var self = sf.views = function View(selector, name){
 
 		// Create listener for link click
 		if(rootDOM){
-			selector = selector_;
+			if(selector_)
+				selector = selector_;
+
+			// Bring the content to an sf-page-view element
+			var temp = document.createElement('sf-page-view');
+			rootDOM.insertBefore(temp, rootDOM.firstChild);
+
+			for (var i = 1; i <= rootDOM.childNodes.length; i++) {
+				temp.appendChild(rootDOM.childNodes[1]);
+			}
+
+			temp.routeCached = {};
+			temp.routePath = self.currentPath;
+			self.currentDOM = temp;
+
 			$.on(rootDOM, 'click', 'a[href]', hrefClicked);
+			return true;
 		}
+		return false;
 	}
 
 	self.selector();
@@ -4338,6 +4376,7 @@ var self = sf.views = function View(selector, name){
 	var onEvent = {
 		'routeStart':[],
 		'routeFinish':[],
+		'routeCached':[],
 		'routeError':[]
 	};
 
@@ -4391,11 +4430,18 @@ var self = sf.views = function View(selector, name){
 	}
 
 	var RouterLoading = false; // xhr reference if the router still loading
-	var currentRoute = {};
 
-	var oldDOM = null;
-	var nextDOM = null;
-	var currentDOM = null;
+	function routeError_(xhr, data){
+		if(xhr.aborted) return;
+		routingError = true;
+
+		RouterLoading = false;
+		for (var i = 0; i < onEvent['routeError'].length; i++) {
+			onEvent['routeError'][i](xhr.status, data);
+		}
+
+		window.history.go(routeDirection * -1);
+	}
 
 	self.goto = function(path, data, method){
 		if(self.currentPath === path)
@@ -4410,40 +4456,34 @@ var self = sf.views = function View(selector, name){
 		else
 			aHashes[name] = path;
 
-		sf.url.push();
+		// This won't trigger popstate event
+		if(!disableHistoryPush)
+			sf.url.push();
 
 		// Check if view was exist
 		if(!rootDOM.isConnected){
 			if(rootDOM.nodeType !== void 0)
 				rootDOM = {};
 
-			return console.error(name, "can't route to", path, "because element with selector '"+selector+"' was not found");
-		}
-
-		for (var i = 0; i < onEvent['routeStart'].length; i++) {
-			if(onEvent['routeStart'][i](self.oldPath, path)) return;
-		}
-
-		function routeError_(xhr, data){
-			if(xhr.aborted) return;
-			routingError = true;
-
-			RouterLoading = false;
-			for (var i = 0; i < onEvent['routeError'].length; i++) {
-				onEvent['routeError'][i](xhr.status, data);
-			}
-
-			window.history.back();
+			if(!self.selector());
+				return console.error(name, "can't route to", path, "because element with selector '"+selector+"' was not found");
 		}
 
 		// Abort other router loading if exist
 		if(RouterLoading) RouterLoading.abort();
 
+		// Return if the cache was exist
+		if(tryCache(path)) return true;
+
+		for (var i = 0; i < onEvent['routeStart'].length; i++) {
+			if(onEvent['routeStart'][i](self.currentPath, path)) return;
+		}
+
 		RouterLoading = sf.ajax({
-			url:window.location.origin + url.url,
+			url:window.location.origin + (url.url || path),
 			method:method || 'GET',
 		    data:Object.assign(data || {}, {
-		        _scarlets:'.dynamic.'
+		        _sf_view:url.selector === void 0 ? selector : selectorList[url.selector].split(' ').pop()
 		    }),
 			success:function(data){
 				// Create new element
@@ -4484,50 +4524,100 @@ var self = sf.views = function View(selector, name){
 
 				dom.style.display = '';
 
-				if(currentRoute.on !== void 0 && currentRoute.on.leaving)
-					currentRoute.on.leaving(url.data);
+				if(self.currentDOM !== null){
+					self.currentDOM.classList.add('page-hidden');
+					self.currentDOM.classList.remove('page-current');
+					self.lastPath = self.currentPath;
 
-				if(currentRoute.on !== void 0 && currentRoute.on.coming)
-					currentRoute.on.coming(url.data);
+					// Old route
+					if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
+						self.currentDOM.routeCached.on.leaving();
 
-				if(currentDOM !== null){
-					currentDOM.classList.add('page-previous');
-					currentDOM.classList.remove('page-current');
-					self.oldPath = self.currentPath;
-					oldDOM = currentDOM;
+					if(self.lastDOM !== null)
+						self.lastDOM.remove();
+
+					self.lastDOM = self.currentDOM;
 				}
 
 				// Save current URL
 				self.currentPath = path;
-				currentRoute = url;
+				dom.routeCached = url;
+				dom.routePath = path;
+
+				if(url.on !== void 0 && url.on.coming)
+					url.on.coming(url.data);
 
 				dom.classList.remove('page-prepare');
 				dom.classList.add('page-current');
 
-				currentDOM = dom;
+				self.currentDOM = dom;
 				routingError = false;
+
+				// Clear old cache
+				var parent = self.currentDOM.parentNode;
+				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
+					parent.firstElementChild.remove();
+				}
 			},
 			error:routeError_
 		});
 		return true;
 	}
 
-	self.back = function(){
-		if(oldDOM === null)
-			return self.goto(window.location.pathname);
+	// Use to cache if exist
+	function tryCache(path){
+		var cachedDOM = false;
 
-		// Restore hidden DOM
-		oldDOM.classList.remove('page-previous');
-		oldDOM.classList.add('page-current');
+		function findDOM(dom){
+			if(dom === null)
+				return false;
 
-		currentDOM.classList.remove('page-current');
-		currentDOM.classList.add('page-next');
+			var childs = dom.children;
+			for (var i = 0; i < childs.length; i++) {
+				if(childs[i].routePath === path){
+					cachedDOM = childs[i];
+					// console.warn('cache found for', path, childs[i]);
+					return true;
+				}
+			}
+			return false;
+		}
 
-		self.currentPath = self.oldPath;
-		self.oldPath = false;
+		if(findDOM(rootDOM) === false)
+			for (var i = 0; i < selectorList.length; i++) {
+				if(findDOM(rootDOM.querySelector(selectorList[i])))
+					break;
+			}
 
-		nextDOM = currentDOM;
-		oldDOM = null;
+		if(cachedDOM === false)
+			return false;
+
+		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
+			self.currentDOM.routeCached.on.leaving();
+
+		self.currentDOM.classList.add('page-hidden');
+		self.currentDOM.classList.remove('page-current');
+		cachedDOM.classList.remove('page-hidden');
+		cachedDOM.classList.add('page-current');
+		self.currentDOM = cachedDOM;
+
+		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.coming)
+			self.currentDOM.routeCached.on.coming();
+
+		for (var i = 0; i < onEvent['routeCached'].length; i++) {
+			if(onEvent['routeCached'][i](self.currentPath, self.lastPath)) return;
+		}
+
+		// Trigger reinit for the model
+		var reinitList = self.currentDOM.querySelectorAll('sf-controller');
+		var models = sf.model.root;
+		for (var i = 0; i < reinitList.length; i++) {
+			if(models[reinitList[i]].reinit)
+				models[reinitList[i]].reinit();
+		}
+
+		self.lastPath = self.currentPath;
+		self.currentPath = self.currentDOM.routePath;
 
 		return true;
 	}
