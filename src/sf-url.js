@@ -28,7 +28,7 @@ self.parse = function(){
 	self.data = window.location.hash.slice(1).split('|');
 	var hashes_ = self.data.shift().split('#');
 
-	for (var i = 1; i < hashes_.length; i++) {
+	for (var i = 0; i < hashes_.length; i++) {
 		var temp = hashes_[i].split('/');
 		hashes[temp.shift()] = '/'+temp.join('/');
 	}

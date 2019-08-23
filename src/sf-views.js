@@ -71,6 +71,8 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				continue;
 			}
 
+			current = current.split('//').join('/');
+
 			var keys = [];
 			var regex = current.replace(pattern, function(full, match){
 				keys.push(match);
@@ -149,12 +151,15 @@ var self = sf.views = function View(selector, name){
 		name = slash;
 
 	var self = sf.views.list[name] = this;
+	var pendingAutoRoute = void 0;
 
 	// Init current URL as current View Path
 	if(name === slash)
 		self.currentPath = sf.url.paths;
-	else
-		self.currentPath = sf.url.hashes[name] || '/';
+	else{
+		self.currentPath = '';
+		pendingAutoRoute = sf.url.hashes[name] || void 0;
+	}
 
 	var initialized = false;
 	var selectorElement = {};
@@ -172,8 +177,10 @@ var self = sf.views = function View(selector, name){
 
 		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document)).querySelector(selector_ || selector);
 
+		if(!DOM) return false;
+
 		if(DOM.viewInitialized)
-			return;
+			return false;
 
 		// Create listener for link click
 		if(DOM){
@@ -181,16 +188,19 @@ var self = sf.views = function View(selector, name){
 				selector = selector_;
 
 			// Bring the content to an sf-page-view element
-			var temp = document.createElement('sf-page-view');
-			DOM.insertBefore(temp, DOM.firstChild);
+			if(DOM.childElementCount !== 0){
+				var temp = document.createElement('sf-page-view');
+				DOM.insertBefore(temp, DOM.firstChild);
 
-			for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
-				temp.appendChild(DOM.childNodes[1]);
+				for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
+					temp.appendChild(DOM.childNodes[1]);
+				}
+
+				temp.routePath = self.currentPath;
+				temp.routeCached = routes.findRoute(temp.routePath);
+				temp.classList.add('page-current');
 			}
-
-			temp.routePath = self.currentPath;
-			temp.routeCached = routes.findRoute(temp.routePath);
-			temp.classList.add('page-current');
+			else var temp = null;
 
 			DOM.viewInitialized = true;
 
@@ -233,8 +243,20 @@ var self = sf.views = function View(selector, name){
 	self.addRoute = function(obj){
 		routes.push(...internal.router.parseRoutes(obj, selectorList));
 
-		if(!initialized)
+		if(!initialized){
 			self.selector();
+
+			if(name === slash && !rootDOM.childElementCount){
+				var target = self.currentPath;
+				self.currentPath = '';
+				self.goto(target);
+			}
+
+			if(pendingAutoRoute !== void 0){
+				self.goto(pendingAutoRoute);
+				pendingAutoRoute = void 0;
+			}
+		}
 	}
 
 	function hrefClicked(ev){
