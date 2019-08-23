@@ -20,9 +20,9 @@ sf.model = function(scope){
 	}
 
 	for (var i = internal.controller.pending.length - 1; i >= 0; i--) {
-		var scope = sf.controller.pending[internal.controller.pending[i]];
-		if(scope !== void 0){
-			scope(root_(internal.controller.pending[i]), root_);
+		var temp = sf.controller.pending[internal.controller.pending[i]];
+		if(temp !== void 0){
+			temp(root_(internal.controller.pending[i]), root_);
 			internal.controller.pending.splice(i, 1);
 		}
 	}
