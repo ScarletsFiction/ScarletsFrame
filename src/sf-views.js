@@ -152,9 +152,9 @@ var self = sf.views = function View(selector, name){
 
 	// Init current URL as current View Path
 	if(name === slash)
-		self.currentPath = '/';
+		self.currentPath = sf.url.paths;
 	else
-		1;
+		self.currentPath = sf.url.hashes[name] || '/';
 
 	var initialized = false;
 	var selectorElement = {};
