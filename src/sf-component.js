@@ -66,17 +66,26 @@ sf.component = new function(){
 				return sf(function(){
 					self.new(name, element, $item, isCreated, false);
 				});
-			if(self.registered[name][3] === false)
-				return setTimeout(function(){
-					self.new(name, element, $item, isCreated, true);
-				}, 0);
+
+			if(element.childElementCount === 0){
+				if(self.registered[name][3] === false)
+					return setTimeout(function(){
+						self.new(name, element, $item, isCreated, true);
+					}, 0);
+			}
 
 			if(element.hasAttribute('sf-component-ignore') === true)
 				return;
-		}
 
-		if(element === void 0)
-			return new window['$'+capitalizeLetters(name.split('-'))];
+			var avoid = /(^|:)(class|style)/;
+			var attr = element.attributes;
+			for (var i = 0; i < attr.length; i++) {
+				if(avoid.test(attr[i].nodeName))
+					continue;
+
+				$item[attr[i].nodeName] = attr[i].value;
+			}
+		}
 
 		var newElement = element === void 0;
 		if(element === void 0){
@@ -124,14 +133,17 @@ sf.component = new function(){
 			return newID;
 		}
 
-		var temp = self.registered[name][3];
-		if(temp.tempDOM === true){
-			temp = temp.cloneNode(true).childNodes;
-			for (var i = 0, n = temp.length; i < n; i++) {
-				element.appendChild(temp[0]);
+		if(element.childElementCount === 0){
+			var temp = self.registered[name][3];
+
+			if(temp.tempDOM === true){
+				temp = temp.cloneNode(true).childNodes;
+				for (var i = 0, n = temp.length; i < n; i++) {
+					element.appendChild(temp[0]);
+				}
 			}
+			else element.appendChild(temp.cloneNode(true));
 		}
-		else element.appendChild(temp.cloneNode(true));
 
 		if(element.parentNode === null){
 			// Wrap to temporary vDOM

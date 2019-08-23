@@ -84,9 +84,9 @@ sf.model = function(scope){
 		}, true);
 
 		if(preventExecution){
-			console.groupCollapsed("<-- Expand the template error");
+			console.groupCollapsed("%c<-- Expand the template error", 'color: yellow');
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			console.log(trimIndentation(script).trim());
+			console.log("%c"+trimIndentation(script).trim(), 'color: yellow');
 			console.groupEnd();
 
 			console.error("Trying to executing unrecognized function ("+preventExecution+")");
@@ -113,9 +113,9 @@ sf.model = function(scope){
 			}
 			else var _evaled_ = eval(script);
 		} catch(e){
-			console.groupCollapsed("<-- Expand the template error");
+			console.groupCollapsed("%c<-- Expand the template error", 'color: yellow');
 			console.log(trimIndentation(processingElement.outerHTML).trim());
-			console.log(trimIndentation(script).trim());
+			console.log("%c"+trimIndentation(script).trim(), 'color: yellow');
 			console.groupEnd();
 
 			console.error(e);
