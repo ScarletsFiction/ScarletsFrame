@@ -10,10 +10,6 @@ sf.loader = new function(){
 	var whenDOMLoaded = [];
 	var whenProgress = [];
 
-	self.off = function(){
-		self.turnedOff = true;
-	}
-
 	// Make event listener
 	self.onFinish = function(func){
 		if(self.DOMWasLoaded) return func();

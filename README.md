@@ -15,6 +15,7 @@ A frontend framework that can help you write a simple web structure with complex
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 - [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
 - [State Listener](https://jsbin.com/qohifel/edit?html,js,output)
+- [Views and Router](https://codesandbox.io/s/viewsrouter-example-1vbdh)
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -52,6 +53,7 @@ sf(function(){
 ```
 
 ### Asset Loader
+This feature is useful if you want to display progress bar and loading percentage before your page was fully loaded.
 
 If you run this on the html body, you will see style changes when loading. So it would be better if you hide the html content then display it after everything completed.
 ```js
@@ -80,11 +82,6 @@ After the loading complete, this function will be triggered before all `sf(funct
 sf.loader.onFinish(function(){
    console.log("All content was loaded from internet or cache");
 });
-```
-
-Model and controller will be start after content loader was finished. But if you don't use this feature, you need to turn it off with
-```js
-sf.loader.off();
 ```
 
 ### Router / Views
