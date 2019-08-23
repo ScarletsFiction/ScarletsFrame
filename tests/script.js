@@ -291,7 +291,9 @@ views.addRoute([
       'nested-view':[
          {
             path:'/:nest',
-            url:'/test/page1/nest1',
+            beforeRoute:function(data){
+               this.url = '/test/page1/'+data.nest
+            }
          }
       ]
    },{

@@ -54,9 +54,9 @@ window.addEventListener('popstate', function(ev){
 internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
-	var pattern = /\/:[^/]+/;
+	var pattern = /\/:([^/]+)/;
 	var sep = /\-/;
-    var knownKeys = /path|url|on|routes/;
+    var knownKeys = /path|url|on|routes|beforeRoute/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -71,8 +71,15 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				continue;
 			}
 
-			var route = RegExp('^' + current.replace(pattern, '/([^/]+)') + '$');
+			var keys = [];
+			var route = RegExp('^' + current.replace(pattern, function(full, match){
+				keys.push(match);
+				return '/([^/]+)';
+			}) + '$');
+
 			route.url = ref.url;
+			route.keys = keys;
+			route.beforeRoute = ref.beforeRoute;
 
 			if(selector !== ''){
 				route.selector = selectorList.indexOf(selector);
@@ -94,7 +101,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
                 if(knownKeys.test(keys[a]))
                   continue;
 
-				addRoutes(ref[keys[a]], current, selector + keys[a], route);
+				addRoutes(ref[keys[a]], current, keys[a], route);
                 break;
             }
 
@@ -110,7 +117,16 @@ internal.router.findRoute = function(url){
 	for(var i=0; i<this.length; i++){
 		var found = url.match(this[i]);
 		if(found !== null){
-			this[i].data = found;
+			var keys = this[i].keys;
+			if(keys !== void 0){
+				var data = this[i].data = {};
+				found.shift();
+
+				for (var a = 0; a < keys.length; a++) {
+					data[keys[a]] = found[a];
+				}
+			}
+
 			return this[i];
 		}
 	}
@@ -134,6 +150,7 @@ var self = sf.views = function View(selector, name){
 	self.lastPath = '/';
 	self.currentDOM = null;
 	self.lastDOM = null;
+	self.relatedDOM = [];
 
 	self.maxCache = 2;
 
@@ -257,6 +274,36 @@ var self = sf.views = function View(selector, name){
 		window.history.go(routeDirection * -1);
 	}
 
+	function toBeShowed(element){
+		var relatedPage = [];
+
+		var parent = element.parentElement;
+		while(parent !== rootDOM && parent !== null){
+			if(parent.nodeName === 'SF-PAGE-VIEW')
+				relatedPage.unshift(parent);
+
+			parent = parent.parentElement;
+		}
+
+		for (var i = 0; i < self.relatedDOM.length; i++) {
+			if(relatedPage.indexOf(self.relatedDOM[i]) === -1){
+				self.relatedDOM[i].classList.add('page-hidden');
+				self.relatedDOM[i].classList.remove('page-current');
+			}
+		}
+
+		for (var i = 0; i < relatedPage.length; i++) {
+			relatedPage[i].classList.add('page-current');
+			relatedPage[i].classList.remove('page-hidden');
+		}
+
+		element.classList.add('page-current');
+		element.classList.remove('page-hidden');
+
+		relatedPage.push(element);
+		self.relatedDOM = relatedPage;
+	}
+
 	self.goto = function(path, data, method){
 		if(self.currentPath === path)
 			return;
@@ -264,6 +311,9 @@ var self = sf.views = function View(selector, name){
 		// Get template URL
 		var url = routes.findRoute(path);
 		if(!url) return;
+
+		if(url.beforeRoute !== void 0)
+			url.beforeRoute(url.data);
 
 		if(name === slash)
 			sf.url.paths = path;
@@ -348,11 +398,13 @@ var self = sf.views = function View(selector, name){
 					return routeError_({status:0});
 				}
 
-				dom.style.display = '';
+				if(url.on !== void 0 && url.on.coming)
+					url.on.coming(url.data);
+
+				dom.removeAttribute('style');
+				toBeShowed(dom);
 
 				if(self.currentDOM !== null){
-					self.currentDOM.classList.add('page-hidden');
-					self.currentDOM.classList.remove('page-current');
 					self.lastPath = self.currentPath;
 
 					// Old route
@@ -367,11 +419,7 @@ var self = sf.views = function View(selector, name){
 				dom.routeCached = url;
 				dom.routePath = path;
 
-				if(url.on !== void 0 && url.on.coming)
-					url.on.coming(url.data);
-
 				dom.classList.remove('page-prepare');
-				dom.classList.add('page-current');
 
 				self.currentDOM = dom;
 				routingError = false;
@@ -418,10 +466,7 @@ var self = sf.views = function View(selector, name){
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
 			self.currentDOM.routeCached.on.leaving();
 
-		self.currentDOM.classList.add('page-hidden');
-		self.currentDOM.classList.remove('page-current');
-		cachedDOM.classList.remove('page-hidden');
-		cachedDOM.classList.add('page-current');
+		toBeShowed(cachedDOM);
 		self.currentDOM = cachedDOM;
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.coming)
