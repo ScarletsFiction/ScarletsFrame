@@ -123,7 +123,14 @@ var self = sf.views = function View(selector, name){
 		name = slash;
 
 	var self = sf.views.list[name] = this;
-	self.currentPath = '/';
+
+	if(name === slash)
+		self.currentPath = '/';
+	else
+		;
+
+	var initialized = false;
+
 	self.lastPath = '/';
 	self.currentDOM = null;
 	self.lastDOM = null;
@@ -132,6 +139,7 @@ var self = sf.views = function View(selector, name){
 
 	var rootDOM = {};
 	self.selector = function(selector_){
+		initialized = true;
 		rootDOM = document.querySelector(selector_ || selector);
 
 		// Create listener for link click
@@ -147,8 +155,8 @@ var self = sf.views = function View(selector, name){
 				temp.appendChild(rootDOM.childNodes[1]);
 			}
 
-			temp.routeCached = {};
 			temp.routePath = self.currentPath;
+			temp.routeCached = routes.findRoute(temp.routePath);
 			self.currentDOM = temp;
 
 			$.on(rootDOM, 'click', 'a[href]', hrefClicked);
@@ -156,8 +164,6 @@ var self = sf.views = function View(selector, name){
 		}
 		return false;
 	}
-
-	self.selector();
 
     var selectorList = [selector];
 	var routes = [];
@@ -182,6 +188,9 @@ var self = sf.views = function View(selector, name){
 
 	self.addRoute = function(obj){
 		routes.push(...internal.router.parseRoutes(obj, selectorList));
+
+		if(!initialized)
+			self.selector();
 	}
 
 	function hrefClicked(ev){
@@ -401,11 +410,12 @@ var self = sf.views = function View(selector, name){
 		}
 
 		// Trigger reinit for the model
-		var reinitList = self.currentDOM.querySelectorAll('sf-controller');
+		var reinitList = self.currentDOM.querySelectorAll('[sf-controller]');
 		var models = sf.model.root;
 		for (var i = 0; i < reinitList.length; i++) {
-			if(models[reinitList[i]].reinit)
-				models[reinitList[i]].reinit();
+			var modelName = reinitList[i].getAttribute('sf-controller') || reinitList[i].sf$component;
+			if(models[modelName].reinit)
+				models[modelName].reinit();
 		}
 
 		self.lastPath = self.currentPath;
