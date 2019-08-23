@@ -4,6 +4,7 @@
       <title>Test Page</title>
       <meta charset="UTF-8">
       <script src='https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.js'></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
       <script src='/dist/scarletsframe.min.js'></script>
       <style type="text/css">
@@ -31,12 +32,15 @@
       <div>
          <b>Dynamic Page Navigation</b><br>
          <i>Note: the url also changed, if you hit refresh you will be redirected to other page. This feature is supposed for Scarlets Framework on PHP.</i><br><br>
-         <custom-view></custom-view>
+         <custom-view>
+            View place<br>
+            <a href="/test/page1">Go to page 1</a>
+            <a href="/test/page1/nest1">Go to nest 1</a>
+            <a href="/test/page1/nest2">Go to nest 2</a>
+            <a href="/test/page2">Go to page 2</a>
+         </custom-view>
          <br>
-
-         <a href="/test/page1">Go to page 1</a>
-         <a href="/test/page2">Go to page 2</a>
-         <a href="/" sf-router-ignore>Refresh current page</a>
+         <a href="/">Refresh whole page</a>
       </div><br><br>
 
       <!-- Virtual Scroll And Array Binding -->

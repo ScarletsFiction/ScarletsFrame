@@ -59,7 +59,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
     var knownKeys = /path|url|on|routes/;
 
 	function addRoutes(obj, addition, selector, parent){
-		if(selector !== false)
+		if(selector !== '')
 			selector += ' ';
 
 		for(var i = 0; i < obj.length; i++){
@@ -74,12 +74,12 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			var route = RegExp('^' + current.replace(pattern, '/([^/]+)') + '$');
 			route.url = ref.url;
 
-			if(selector !== false){
+			if(selector !== ''){
 				route.selector = selectorList.indexOf(selector);
 
 				if(route.selector === -1){
 					route.selector = selectorList.length;
-					selectorList.push(selector);
+					selectorList.push(selector.trim());
 				}
 			}
 
@@ -102,7 +102,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 		}
 	}
 
-    addRoutes(obj_, '', false);
+    addRoutes(obj_, '', '');
 	return routes;
 }
 
@@ -138,28 +138,38 @@ var self = sf.views = function View(selector, name){
 	self.maxCache = 2;
 
 	var rootDOM = {};
-	self.selector = function(selector_){
+	self.selector = function(selector_, isChild){
 		initialized = true;
-		rootDOM = document.querySelector(selector_ || selector);
+
+		var DOM = document.querySelector(selector_ || selector);
+
+		if(DOM.viewInitialized)
+			return;
 
 		// Create listener for link click
-		if(rootDOM){
+		if(DOM){
 			if(selector_)
 				selector = selector_;
 
 			// Bring the content to an sf-page-view element
 			var temp = document.createElement('sf-page-view');
-			rootDOM.insertBefore(temp, rootDOM.firstChild);
+			DOM.insertBefore(temp, DOM.firstChild);
 
-			for (var i = 1; i <= rootDOM.childNodes.length; i++) {
-				temp.appendChild(rootDOM.childNodes[1]);
+			for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
+				temp.appendChild(DOM.childNodes[1]);
 			}
 
 			temp.routePath = self.currentPath;
 			temp.routeCached = routes.findRoute(temp.routePath);
-			self.currentDOM = temp;
+			temp.classList.add('page-current');
 
-			$.on(rootDOM, 'click', 'a[href]', hrefClicked);
+			if(!isChild){
+				self.currentDOM = temp;
+				$.on(DOM, 'click', 'a[href]', hrefClicked);
+				rootDOM = DOM;
+			}
+
+			DOM.viewInitialized = true;
 			return true;
 		}
 		return false;
@@ -226,6 +236,9 @@ var self = sf.views = function View(selector, name){
 			return;
 
 		ev.preventDefault();
+		if(self.currentPath === path)
+			return;
+
 		if(!self.goto(path))
 			console.error("Couldn't navigate to", path, "because path not found");
 	}
@@ -296,8 +309,20 @@ var self = sf.views = function View(selector, name){
 				if(url.selector === void 0)
 					var DOMReference = rootDOM;
 
-				else // Get element from selector
+				else{ // Get element from selector
 					var DOMReference = rootDOM.querySelector(selectorList[url.selector]);
+					if(DOMReference === null){
+						console.error(selectorList[url.selector], "selector was not found inside", selector);
+						dom.remove();
+						return routeError_({status:0});
+					}
+				}
+
+				dom.routerData = null;
+				if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
+					dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
+					dom.firstChild.remove();
+				}
 
 				// Let page script running first
 				DOMReference.insertAdjacentElement('beforeend', dom);
@@ -333,9 +358,6 @@ var self = sf.views = function View(selector, name){
 					// Old route
 					if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
 						self.currentDOM.routeCached.on.leaving();
-
-					if(self.lastDOM !== null)
-						self.lastDOM.remove();
 
 					self.lastDOM = self.currentDOM;
 				}

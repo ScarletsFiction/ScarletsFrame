@@ -64,8 +64,6 @@ sf(function(){
          console.log("Item: 21-25");
          list.list2 = list.list2b.slice(20, 25);
       }, 5000);
-// return;
-
       // Reuse element from the middle
       setTimeout(function(){
          console.log("Item: 21-23, 31-35");
@@ -75,7 +73,6 @@ sf(function(){
       // Variable height for list2
       setTimeout(function(){
          list.list2 = list.list2b;
-// return;
 
          var elements = list.list2.$virtual.elements();
          for (var i = 0; i < elements.length; i++) {
@@ -147,6 +144,12 @@ sf(function(){
 var binding = null;
 sf.model.for('model-binding', function(self, root){
    binding = self;
+
+   setTimeout(function(){
+      var self = root('model-binding');
+      self.inputBinding1 = 'Two way binding';
+      self.inputBinding2 = 'One way binding';
+   }, 4000);
 
    self.onKeyUp = console.warn;
 
@@ -255,13 +258,6 @@ sf(function(){
    });
 });
 
-// Simulate model binding on dynamic page load
-sf.router.before('test/page2', function(root){
-   var self = root('model-binding');
-   self.inputBinding1 = 'Two way binding';
-   self.inputBinding2 = 'One way binding';
-});
-
 // ===== Dynamic Loader =====
 
 var loaderWorking = false;
@@ -285,64 +281,50 @@ sf.loader.js(['/tests/test_loader.js']);
 
 // ===== Router =====
 
-var routerOk = false;
-sf.router.enable();
-sf.router.lazyViewPoint["@default"] = 'custom-view';
+var views = new sf.views('custom-view');
+views.maxCache = 100;
+views.addRoute([
+   {
+      path:'/test/page1',
+      url:'/test/page1',
+
+      'nested-view':[
+         {
+            path:'/:nest',
+            url:'/test/page1/nest1',
+         }
+      ]
+   },{
+      path:'/test/page2',
+      url:'/test/page2',
+   }
+]);
 
 sf.model.for('test-page1', function(self){
    self.text = "Hello from page 1";
+});
+
+sf.model.for('test-page1-nest1', function(self){
+   self.text = "Hello from nest 1";
+});
+
+sf.model.for('test-page1-nest2', function(self){
+   self.text = "Hello from nest 2";
 });
 
 sf.model.for('test-page2', function(self){
    self.text = "Hello from page 2";
 });
 
-sf.router.before('test/page1', function(root){
-    console.log("Page 1 is being loaded");
-    routerOk = routerOk && true;
-});
-
-var page2Loaded = false;
-sf.router.before('test/page2', function(root){
-   console.log("Page 2 was loaded");
-   if(page2Loaded === true)
-   	console.error("Page 2 loaded 2 times");
-
-   page2Loaded = true;
-   setTimeout(function(){
-   	sf.router.goto('/test/page1', {}, 'get');
-   }, 10);
-});
-
-sf.router.after('test/page2', function(root){
-    console.log("Page 2 is being removed");
-    routerOk = true;
-});
-
-setTimeout(function(){
-   if(!routerOk)
-      console.error("Router 'after' or 'before' was not called");
-}, 10000);
-
-setTimeout(function(){
-   sf.router.goto('/test/page2', {}, 'get'); // This will be canceled
-   sf.router.goto('/test/page2', {}, 'get');
-}, 3000);
-
-sf.router.on('loading', function(target) {
+views.on('routeStart', function(current, target) {
     console.log("Loading path to " + target);
 });
-sf.router.on('loaded', function(current, target) {
+views.on('routeFinish', function(current, target) {
     console.log("Navigated from " + current + " to " + target);
-
-    if(target === '/test/page1'){
-       history.pushState(null, '', '/');
-       console.log('Address bar was restored to initial');
-    }
 });
-sf.router.on('error', function(e) {
+views.on('routeError', function(e) {
     console.error("Navigation failed", e);
 });
-sf.router.on('special', function(obj){
-   if(obj.title) sf.dom.findOne('head > title').innerHTML = obj.title;
-});
+// views.on('routeData', function(obj){
+//    if(obj.title) sf.dom.findOne('head > title').innerHTML = obj.title;
+// });

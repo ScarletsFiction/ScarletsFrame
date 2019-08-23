@@ -6,7 +6,9 @@ module.exports = {
     response:function(req, res, closeConnection){
         res.writeHead(200);
         var data = {title:"Now you're at page 1"};
-        closeConnection('<!-- SF-Special:'+JSON.stringify(data)+'--><div sf-page="test/page1">This is page 1</div>');
+        closeConnection('<!-- SF-View-Data:'+JSON.stringify(data)+`--><div>This is page 1
+    <nested-view>Raw Henlo</nested-view>
+</div>`);
     },
  
     // Scope initialization after script loaded
