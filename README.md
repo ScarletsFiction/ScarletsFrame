@@ -52,7 +52,7 @@ sf(function(){
 });
 ```
 
-### Asset Loader
+## Asset Loader
 This feature is useful if you want to display progress bar and loading percentage before your page was fully loaded.
 
 If you run this on the html body, you will see style changes when loading. So it would be better if you hide the html content then display it after everything completed.
@@ -84,11 +84,20 @@ sf.loader.onFinish(function(){
 });
 ```
 
-### Router / Views
-This currently unfinished yet, but you can still use it.
+## Router / Views
+Views is used when you want to load different template/page in current browser's tab. To initialize it you need to prepare the view element on the DOM, it also support lazy element that dynamically being loaded.
+
+The view name is optional, if you doesn't give name it will be your real URL path. Instead if you give it the view name, you will get hashtag with the view path.
 
 ```js
-var myView = new sf.views('.my-selector');
+// sf.views(selector, name);
+var myView = new sf.views('.my-selector', 'first');
+```
+
+### Specify routes
+Before the view can being used, you must specify the available routes.
+
+```js
 myView.addRoute([
   {
     path:'/',
@@ -124,12 +133,18 @@ myView.addRoute([
 ]);
 ```
 
-These route will valid for any href link inside of the view element.
-But you can also call the route by calling `myView.goto(path)`.
+These route will valid for your current tab, and can also being called like
+```html
+<a href="#first/about/profile">My Profile</a>
+```
+
+Multiple view path also supported by adding more hashtag and the view name, or adding the real URL. But you can also call the route by calling `myView.goto(path)`.
+
 ```js
 myView.goto('/user/home', data = {}, method = 'get');
 ```
 
+### Views event
 Here you can listen if any page was loaded, loading, or load error
 ```js
 myView.on('routeStart', function(current, target) {
@@ -146,49 +161,28 @@ myView.on('routeError', function(statusCode) {
 });
 ```
 
-### Controller
-Controller is used for controling your model, so this would have a list of your static function.
-
-Get controller name for the selected element node
+### Initialize/Define Model
+Let's start with this simple element
 ```html
 <div sf-controller="something">
-  <span id="username"></span>
+  <span>{{ text }}</span>
 </div>
 ```
-
-Get current controller name for the selected element node
 ```js
-sf.controller.modelName($('#username')[0]) // return == 'something'
-```
-
-Get model scope for the selected element node
-```js
-sf.controller.modelScope($('#username')[0], function(obj){
-    // obj == sf.model.root['something']
-})
-```
-
-#### Initialize controller
-Register controller when initialization.<br>
-You should use this for defining static function for your controller only.<br>
-
-This will run on first page load and can't be called twice.
-```js
-sf.controller.for(name, function(self){
-    self.myFunction = function(){
-        return true;
-    }
+sf.model.for('something', function(self, other){
+  // `text` on the DOM element will be filled with `My Name`
+  self.text = 'My Name';
 });
-```
 
-This is where you put your logic to control after the model was loaded and the controller was initialized. This function can be called more than once before the router invoke the `before` event and after the page was contain the matched `sf-controller` attribute. If the attribute was not found, then it will not be executed.
-```js
-sf.controller.run(name, function(self){
-    var time = Date.now();
+// Controller will be executed after the model was initialized
+sf.controller.for('something', function(self, other){
+  // If you want to get reference from other model scope
+  var greet = other('another-thing').stuff;
+  greet === sf.model('another-thing').stuff;
+});
 
-    if(self.myFunction()){
-        alert('Hello world!');
-    }
+sf.model.for('another-thing', function(self, other){
+  self.stuff = 'Hello world';
 });
 ```
 
@@ -213,8 +207,10 @@ As a replacement for `<script>` tag. You can also output html by wrap it inside 
 `{{@exec javascript stuff}}`
 All model variable or function can be referenced to the execution scope.
 For security reason, unrecognized function call will prevent template execution.
+
 This feature is supposed for simple execution, but if you have complex execution it's better to define it as a function on the controller.
-Make sure you write in ES5 because 
+
+Make sure you write in ES5 because browser doesn't use transpiler.
 ```html
 <div sf-controller="something">
   <span>{{@exec
@@ -259,33 +255,53 @@ And the HTML output content will be escaped like below
   </span>
 </div>
 ```
+## Controller
+Controller is used for controling your model, so this would have a list of your static function.
 
-#### Initialize/Define Model
-Let's start with this simple element
+Get controller name for the selected element node
 ```html
 <div sf-controller="something">
-  <span>{{ text }}</span>
+  <span id="username"></span>
 </div>
 ```
+
+Get current controller name for the selected element node
 ```js
-sf.model.for('something', function(self, other){
-  // `text` on the DOM element will be filled with `My Name`
-  self.text = 'My Name';
-});
+sf.controller.modelName($('#username')[0]) // return == 'something'
+```
 
-// Controller will be executed after the model was initialized
-sf.controller.for('something', function(self, other){
-  // If you want to get reference from other model scope
-  var greet = other('another-thing').stuff;
-  greet === sf.model('another-thing').stuff;
-});
+Get model scope for the selected element node
+```js
+sf.controller.modelScope($('#username')[0], function(obj){
+    // obj == sf.model.root['something']
+})
+```
 
-sf.model.for('another-thing', function(self, other){
-  self.stuff = 'Hello world';
+### Initialize controller
+Register controller when initialization.<br>
+You should use this for defining static function for your controller only.<br>
+
+This will run on first page load and can't be called twice.
+```js
+sf.controller.for(name, function(self){
+    self.myFunction = function(){
+        return true;
+    }
 });
 ```
 
-### Safely replace HTML text that already binded.
+This is where you put your logic to control after the model was loaded and the controller was initialized. This function can be called more than once before the router invoke the `before` event and after the page was contain the matched `sf-controller` attribute. If the attribute was not found, then it will not be executed.
+```js
+sf.controller.run(name, function(self){
+    var time = Date.now();
+
+    if(self.myFunction()){
+        alert('Hello world!');
+    }
+});
+```
+
+## Safely replace HTML text that already binded.
 This will help you to replace text on HTML content depend on the model data. But this will not change the model data.
 ```html
 <div sf-controller="something">
@@ -303,11 +319,11 @@ self.$replace('text', /\*(.*?)\*/g, function(full, word){
 // self.list.$replace(index, key, needle, replacement);
 ```
 
-### Array data to list of DOM element
+## Array data to list of DOM element
 Any element with `sf-repeat-this` will be binded with the array condition on the model. If you `push` or `splice` the array data, then the element will also being modified.
 
 These addional feature can be used after DOM element was binded.
-#### refresh
+### refresh
 Redraw small changes to an element. The `length` can be passed with negative number to select from the last index. If `index` or `length` was not defined, it will check any changes of the model.
 ```js
 myArray.refresh(index = 0, length = 1);
@@ -325,25 +341,25 @@ When you make changes into `x.cartID`, `x.item`, and call the refresh function i
 myArray.refresh(index, length, 'item');
 ```
 
-#### softRefresh
+### softRefresh
 Rebuild element for the model. If `index` or `length` was not defined, it will rebuild all element.
 ```js
 myArray.softRefresh(index = 0, length = 1);
 ```
 
-#### swap
+### swap
 Swap 2 array value and the related element without rebuild the element nodes.
 ```js
 myArray.swap(fromIndex, toIndex);
 ```
 
-#### move
+### move
 Move some array value and the related element without rebuild the element nodes.
 ```js
 myArray.move(fromIndex, toIndex[, length]);
 ```
 
-#### getElement
+### getElement
 Get the DOM element of the selected index
 ```js
 myArray.getElement(index);
@@ -403,7 +419,7 @@ sf.model.for('music.feedback', function(self, root){
 </body>
 ```
 
-### Virtual Scroll
+## Virtual Scroll
 To activate virtual scroll mode on your list of element. You need to add `sf-virtual-list` on the parent element. But if you have dynamic/different row height, then you also need to add `sf-list-dynamic`.
 When you are using a scroller that located on a parent element, you should define the parent index `scroll-parent-index="1"` on the element attribute.
 If you think you need to update the content on the bottom more early, you could reduce the bottom scroll bounding with `scroll-reduce-floor="112"` in pixels.
@@ -427,8 +443,8 @@ sf.model.for('example', function(self){
 
 Because chrome has scroll anchoring feature, you may need to use [scrollbar library](https://github.com/Grsmto/simplebar) to avoid scroll jump when scrolling with chrome scrollbar.
 
-### Available method for virtual scrolling
-#### Obtain all DOM elements
+## Available method for virtual scrolling
+### Obtain all DOM elements
 Elements on the virtual DOM will be combined with visible DOM element and return array of element that have the same index with the actual data.
 ```js
 // This will return array of elements
@@ -438,7 +454,7 @@ var elements = self.list.$virtual.elements();
 var $elem = $(elements);
 ```
 
-#### Scroll to or get element offset by the index
+### Scroll to or get element offset by the index
 ```js
 // Instantly scroll to 3rd element
 self.list.$virtual.scrollTo(8);
@@ -451,7 +467,7 @@ self.list.$virtual.refresh();
 var offsetTop = self.list.$virtual.offsetTo(8);
 ```
 
-### Views and Model data binding
+## Views and Model data binding
 Every element that built from a template will have one-way data binding. Even it's defined in attributes or innerHTML. To deactivate the feature you need to specify `sf-bind-ignore` on the parent attributes.
 ```html
 <div sf-bind-ignore>{{ myStatic }}</div>

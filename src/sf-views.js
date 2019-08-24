@@ -54,6 +54,8 @@ window.addEventListener('popstate', function(ev){
 // Listen to every link click
 sf(function(){
 	$.on(document.body, 'click', 'a[href]', function(ev){
+		ev.preventDefault();
+
 		var elem = ev.target;
 		var attr = elem.getAttribute('href');
 
@@ -70,7 +72,6 @@ sf(function(){
 		if(path.indexOf('//') !== -1)
 			return;
 
-		ev.preventDefault();
 		var parsed = sf.url.parse(attr);
 		sf.url.data = parsed.data;
 
