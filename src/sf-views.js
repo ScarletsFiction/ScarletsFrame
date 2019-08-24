@@ -158,7 +158,7 @@ var self = sf.views = function View(selector, name){
 		self.currentPath = sf.url.paths;
 	else{
 		self.currentPath = '';
-		pendingAutoRoute = sf.url.hashes[name] || void 0;
+		pendingAutoRoute = aHashes[name] || void 0;
 	}
 
 	var initialized = false;
@@ -188,17 +188,24 @@ var self = sf.views = function View(selector, name){
 				selector = selector_;
 
 			// Bring the content to an sf-page-view element
-			if(DOM.childElementCount !== 0){
-				var temp = document.createElement('sf-page-view');
-				DOM.insertBefore(temp, DOM.firstChild);
-
-				for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
-					temp.appendChild(DOM.childNodes[1]);
+			if(DOM.childNodes.length !== 0){
+				if(DOM.childNodes.length === 1 && DOM.firstChild.nodeName === '#text' && DOM.firstChild.textContent.trim() === ''){
+					var temp = null;
+					DOM.firstChild.remove();
 				}
+				else{
+					var temp = document.createElement('sf-page-view');
+					DOM.insertBefore(temp, DOM.firstChild);
 
-				temp.routePath = self.currentPath;
-				temp.routeCached = routes.findRoute(temp.routePath);
-				temp.classList.add('page-current');
+					for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
+						temp.appendChild(DOM.childNodes[1]);
+					}
+
+					temp.routePath = self.currentPath;
+					temp.routeCached = routes.findRoute(temp.routePath);
+					temp.classList.add('page-current');
+					self.relatedDOM.push(temp);
+				}
 			}
 			else var temp = null;
 
@@ -361,7 +368,7 @@ var self = sf.views = function View(selector, name){
 			aHashes[name] = path;
 
 		// This won't trigger popstate event
-		if(!disableHistoryPush)
+		if(!disableHistoryPush && !_callback)
 			sf.url.push();
 
 		// Check if view was exist
