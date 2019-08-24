@@ -24,7 +24,23 @@ self.replace = function(){
 	window.history.replaceState(window.history.state, '', self());
 }
 
-self.parse = function(){
+self.parse = function(url){
+	if(url !== void 0){
+		var data = {hashes:{}};
+
+		data.data = url.split('|');
+		var hashes_ = data.data.shift().split('#');
+
+		for (var i = 1; i < hashes_.length; i++) {
+			var temp = hashes_[i].split('/');
+			data.hashes[temp.shift()] = '/'+temp.join('/');
+		}
+
+		// Paths
+		data.paths = window.location.pathname;
+		return data;
+	}
+
 	self.data = window.location.hash.split('|');
 	var hashes_ = self.data.shift().split('#');
 

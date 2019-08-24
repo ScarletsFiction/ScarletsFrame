@@ -51,6 +51,43 @@ window.addEventListener('popstate', function(ev){
 	disableHistoryPush = false;
 }, false);
 
+// Listen to every link click
+sf(function(){
+	$.on(document.body, 'click', 'a[href]', function(ev){
+		var elem = ev.target;
+		var attr = elem.getAttribute('href');
+
+		if(attr[0] === '@'){ // ignore
+			var target = elem.getAttribute('target');
+			if(target)
+				window.open(attr.slice(1), target);
+			else window.location = attr.slice(1);
+			return;
+		}
+
+		// Make sure it's from current origin
+		var path = elem.href.replace(window.location.origin, '');
+		if(path.indexOf('//') !== -1)
+			return;
+
+		ev.preventDefault();
+		var parsed = sf.url.parse(attr);
+		sf.url.data = parsed.data;
+
+		var ref = self.list[slash];
+		if(ref !== void 0 && ref.currentPath !== parsed.paths && !ref.goto(parsed.paths))
+			console.error("Couldn't navigate to", parsed.paths, "because path not found");
+
+		var hashes = parsed.hashes;
+		for (var i = 0, view = Object.keys(hashes); i < view.length; i++) {
+			ref = self.list[view[i]];
+
+			if(ref !== void 0 && ref.currentPath !== hashes[view[i]])
+				ref.goto(hashes[view[i]]);
+		}
+	});
+});
+
 internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
@@ -214,7 +251,6 @@ var self = sf.views = function View(selector, name){
 
 			if(!isChild){
 				self.currentDOM = temp;
-				$.on(DOM, 'click', 'a[href]', hrefClicked);
 				rootDOM = DOM;
 			}
 			else{
@@ -265,46 +301,6 @@ var self = sf.views = function View(selector, name){
 				pendingAutoRoute = void 0;
 			}
 		}
-	}
-
-	function hrefClicked(ev){
-		var elem = ev.target;
-		var attr = elem.getAttribute('href');
-
-		if(attr[0] === '@'){ // ignore
-			var target = elem.getAttribute('target');
-			if(target)
-				window.open(attr.slice(1), target);
-			else window.location = attr.slice(1);
-			return;
-		}
-
-		if(attr[0] === '#'){
-			ev.preventDefault();
-			var keys = attr.slice(1).split('#');
-			for (var i = 0; i < keys.length; i++) {
-				var key = keys[i].split(slash);
-				var ref = sf.views.list[key.shift()];
-
-				if(ref !== void 0){
-					key = key.join(slash);
-					if(ref.currentPath !== key)
-						ref.goto(key);
-				}
-			}
-		}
-
-		// Make sure it's from current origin
-		var path = elem.href.replace(window.location.origin, '');
-		if(path.indexOf('//') !== -1)
-			return;
-
-		ev.preventDefault();
-		if(self.currentPath === path)
-			return;
-
-		if(!self.goto(path))
-			console.error("Couldn't navigate to", path, "because path not found");
 	}
 
 	var RouterLoading = false; // xhr reference if the router still loading
