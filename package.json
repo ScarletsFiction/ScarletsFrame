@@ -1,7 +1,7 @@
 {
   "name": "scarletsframe",
   "description": "A frontend framework that can help you write a simple web structure",
-  "version": "0.15.5",
+  "version": "0.15.6",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
@@ -25,7 +25,8 @@
     "gulp-rename": "^1.4.0",
     "gulp-sourcemaps": "^2.6.5",
     "gulp-uglify-es": "^1.0.4",
-    "node-notifier": "^5.4.1"
+    "node-notifier": "^5.4.1",
+    "serberries": "^1.4.5"
   },
   "main": "dist/scarletsframe.js",
   "keywords": [
@@ -38,8 +39,5 @@
     "frontend",
     "mvw-framework",
     "assetloader"
-  ],
-  "dependencies": {
-    "serberries": "^1.4.5"
-  }
+  ]
 }

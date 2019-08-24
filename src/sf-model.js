@@ -1533,8 +1533,7 @@ sf.model = function(scope){
 	var inputTextBound = function(e){
 		if(e.fromSFFramework === true) return;
 
-		inputBoundRunning = true;
-		var ref = e.target;
+		var ref = inputBoundRunning = e.target;
 		ref.viewInputted = true;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
@@ -1553,8 +1552,7 @@ sf.model = function(scope){
 	var inputCheckBoxBound = function(e){
 		if(e.fromSFFramework === true) return;
 		
-		inputBoundRunning = true;
-		var ref = e.target;
+		var ref = inputBoundRunning = e.target;
 		ref.viewInputted = true;
 		var value = ref.typeData === Number ? Number(ref.value) : ref.value;
 		var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
@@ -1580,8 +1578,7 @@ sf.model = function(scope){
 	var inputSelectBound = function(e){
 		if(e.fromSFFramework === true) return;
 		
-		inputBoundRunning = true;
-		var ref = e.target;
+		var ref = inputBoundRunning = e.target;
 		ref.viewInputted = true;
 		var typeData = ref.typeData;
 		if(ref.multiple === true){
@@ -1627,10 +1624,10 @@ sf.model = function(scope){
 	}
 
 	var inputBoundRun = function(model, property, elements){
-		if(inputBoundRunning === true)
-			return; // Avoid multiple assigment
-
 		for (var i = 0; i < elements.length; i++) {
+			if(inputBoundRunning === elements[i])
+				continue; // Avoid multiple assigment
+
 			var ev = new Event('change');
 			ev.fromSFFramework = true;
 
@@ -2039,8 +2036,7 @@ sf.model = function(scope){
 					var ref = model.sf$bindedKey[propertyName];
 					for (var i = 0; i < ref.length; i++) {
 						if(inputBoundRun === ref[i]){
-							if(inputBoundRunning !== true) // Avoid multiple assigment
-								ref[i](model, propertyName, ref.input);
+							ref[i](model, propertyName, ref.input);
 							continue;
 						}
 						ref[i]();
