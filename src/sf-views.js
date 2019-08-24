@@ -332,8 +332,6 @@ var self = sf.views = function View(selector, name){
 			}
 		}
 
-		console.log(12432, parentSimilarity);
-
 		var showedSibling = void 0;
 		for (var i = 0; i < relatedPage.length; i++) {
 			if(showedSibling === void 0 && relatedPage[i].parentElement === parentSimilarity)
