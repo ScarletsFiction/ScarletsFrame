@@ -135,7 +135,10 @@ myView.addRoute([
 
 These route will valid for your current tab, and can also being called like
 ```html
-<a href="#first/about/profile">My Profile</a>
+<a href="#first/about/profile">First view route</a>
+<a href="/realpath#first/alex">First view with real path route</a>
+<a href="@/browser/route">No route processing</a>
+<a href="//www.google.com/">Change domain</a>
 ```
 
 Multiple view path also supported by adding more hashtag and the view name, or adding the real URL. But you can also call the route by calling `myView.goto(path)`.
