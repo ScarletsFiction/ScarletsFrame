@@ -72,20 +72,7 @@ sf(function(){
 		if(path.indexOf('//') !== -1)
 			return;
 
-		var parsed = sf.url.parse(attr);
-		sf.url.data = parsed.data;
-
-		var ref = self.list[slash];
-		if(ref !== void 0 && ref.currentPath !== parsed.paths && !ref.goto(parsed.paths))
-			console.error("Couldn't navigate to", parsed.paths, "because path not found");
-
-		var hashes = parsed.hashes;
-		for (var i = 0, view = Object.keys(hashes); i < view.length; i++) {
-			ref = self.list[view[i]];
-
-			if(ref !== void 0 && ref.currentPath !== hashes[view[i]])
-				ref.goto(hashes[view[i]]);
-		}
+		self.goto(attr);
 	});
 });
 
@@ -319,8 +306,8 @@ var self = sf.views = function View(selector, name){
 	}
 
 	var pageViewNodeName = 'SF-PAGE-VIEW';
-	function toBeShowed(element){
-		var relatedPage = [];
+	function toBeShowed(element, event, path, data){
+		var relatedPage = [element];
 
 		var parent = element.parentElement;
 		while(parent !== rootDOM && parent !== null){
@@ -330,22 +317,38 @@ var self = sf.views = function View(selector, name){
 			parent = parent.parentElement;
 		}
 
+		var lastSibling = void 0;
+		var parentSimilarity = void 0;
+
 		for (var i = 0; i < self.relatedDOM.length; i++) {
 			if(relatedPage.indexOf(self.relatedDOM[i]) === -1){
+				if(lastSibling === void 0){
+					lastSibling = self.relatedDOM[i];
+					parentSimilarity = lastSibling.parentElement;
+				}
+
 				self.relatedDOM[i].classList.add('page-hidden');
 				self.relatedDOM[i].classList.remove('page-current');
 			}
 		}
 
+		console.log(12432, parentSimilarity);
+
+		var showedSibling = void 0;
 		for (var i = 0; i < relatedPage.length; i++) {
+			if(showedSibling === void 0 && relatedPage[i].parentElement === parentSimilarity)
+				showedSibling = relatedPage[i];
+
 			relatedPage[i].classList.add('page-current');
 			relatedPage[i].classList.remove('page-hidden');
 		}
 
+		self.showedSibling = showedSibling;
+		self.lastSibling = lastSibling;
+
 		element.classList.add('page-current');
 		element.classList.remove('page-hidden');
 
-		relatedPage.push(element);
 		self.relatedDOM = relatedPage;
 	}
 
@@ -412,11 +415,6 @@ var self = sf.views = function View(selector, name){
 
 				// Parse the DOM data binding
 				sf.model.init(dom);
-
-				// Trigger loaded event
-				for (var i = 0; i < onEvent['routeFinish'].length; i++) {
-					if(onEvent['routeFinish'][i](self.currentPath, path, url.data)) return;
-				}
 			}catch(e){
 				console.error(e);
 				dom.remove();
@@ -430,6 +428,12 @@ var self = sf.views = function View(selector, name){
 
 			dom.removeAttribute('style');
 			toBeShowed(dom);
+
+			// Trigger loaded event
+			var event = onEvent['routeFinish'];
+			for (var i = 0; i < event.length; i++) {
+				if(event[i](self.currentPath, path, url.data)) return;
+			}
 
 			if(pendingShowed !== void 0)
 				self.relatedDOM.push(...pendingShowed);
@@ -548,14 +552,16 @@ var self = sf.views = function View(selector, name){
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
 			self.currentDOM.routeCached.on.leaving();
 
-		toBeShowed(cachedDOM);
 		self.currentDOM = cachedDOM;
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.coming)
 			self.currentDOM.routeCached.on.coming();
 
-		for (var i = 0; i < onEvent['routeCached'].length; i++) {
-			if(onEvent['routeCached'][i](self.currentPath, self.lastPath)) return;
+		toBeShowed(cachedDOM);
+
+		var event = onEvent['routeCached'];
+		for (var i = 0; i < event.length; i++) {
+			if(event[i](self.currentPath, self.lastPath)) return;
 		}
 
 		// Trigger reinit for the model
@@ -576,6 +582,22 @@ var self = sf.views = function View(selector, name){
 	return self;
 }
 
-sf.views.list = {};
+self.list = {};
+self.goto = function(url){
+	var parsed = sf.url.parse(url);
+	sf.url.data = parsed.data;
+
+	var ref = self.list[slash];
+	if(ref !== void 0 && ref.currentPath !== parsed.paths && !ref.goto(parsed.paths))
+		console.error("Couldn't navigate to", parsed.paths, "because path not found");
+
+	var hashes = parsed.hashes;
+	for (var i = 0, view = Object.keys(hashes); i < view.length; i++) {
+		ref = self.list[view[i]];
+
+		if(ref !== void 0 && ref.currentPath !== hashes[view[i]])
+			ref.goto(hashes[view[i]]);
+	}
+}
 
 })();

@@ -6,7 +6,7 @@ var myserver = new Serberries({
 });
 
 // Set public folder for serving static assets
-myserver.setPublicFolder("../");
+myserver.setPublicFolder(__dirname+"/../");
  
 myserver.on('error', function(errcode, msg, trace){
     console.error("Error code: "+errcode+' ('+msg+')');

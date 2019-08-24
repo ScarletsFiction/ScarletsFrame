@@ -6,7 +6,7 @@ module.exports = {
     // Response handler
     response:function(req, res, closeConnection){
         res.writeHead(200);
-        closeConnection(fs.readFileSync("index.html", 'utf8'));
+        closeConnection(fs.readFileSync(__dirname+"/../index.html", 'utf8'));
     },
  
     // Scope initialization after script loaded

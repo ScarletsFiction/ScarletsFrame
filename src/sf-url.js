@@ -37,7 +37,7 @@ self.parse = function(url){
 		}
 
 		// Paths
-		data.paths = window.location.pathname;
+		data.paths = url.split('#')[0];
 		return data;
 	}
 

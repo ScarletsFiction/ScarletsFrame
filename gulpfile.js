@@ -7,6 +7,8 @@ var rename = require('gulp-rename');
 // var babel = require('gulp-babel');
 var notifier = require('node-notifier');
 
+require('./tests/server.js');
+
 gulp.task('js', function(){
   // Set the order
   return gulp.src([

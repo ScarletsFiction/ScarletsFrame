@@ -31,7 +31,7 @@ var $ = sf.dom; // Shortcut
 
 	self.prevAll = function(element, selector, isNext){
 		var result = [];
-		var findNodes = selector === null || selector.constructor !== String ? true : false;
+		var findNodes = !selector || selector.constructor !== String ? true : false;
 
 		// Skip current element
 		element = isNext ? element.nextSibling : element.previousSibling;
