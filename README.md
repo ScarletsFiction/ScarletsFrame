@@ -95,20 +95,27 @@ myView.addRoute([
     url:'/',
     on:{
       coming:function(){
-        console.log('henlo from route');
+        console.log('henlo from / route');
       },
       leaving:function(){
-        console.log('leaving from route');
+        console.log('leaving from / route');
       },
     },
   },{
     path:'/login',
     url:'/login'
   },{
+    // Dynamic path depend on the pattern
+    path:'/about/:page',
+    beforeRoute:function(data){
+      this.url = '/about/static/'+data.page+'.html';
+    }
+  },{
+    // You can obtain username from routeFinish's event or myView.data
     path:'/:username',
     url:'/home',
 
-    // Child element view
+    // Selector for the view, inside of .my-selector
     '.user-page-view':[{
       path:'/gallery',
       url:'/user/gallery'
@@ -117,10 +124,8 @@ myView.addRoute([
 ]);
 ```
 
-You can also enable script when routing by caling
-
 These route will valid for any href link inside of the view element.
-But you can also route by calling `myView.goto` function from the script.
+But you can also call the route by calling `myView.goto(path)`.
 ```js
 myView.goto('/user/home', data = {}, method = 'get');
 ```
@@ -130,7 +135,7 @@ Here you can listen if any page was loaded, loading, or load error
 myView.on('routeStart', function(current, target) {
     console.log("Loading path to " + target);
 });
-myView.on('routeFinish', function(current, target) {
+myView.on('routeFinish', function(current, target, data) {
     console.log("Navigated from " + current + " to " + target);
 });
 myView.on('routeCached', function(current, target) {

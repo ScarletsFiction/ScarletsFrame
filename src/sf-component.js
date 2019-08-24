@@ -77,8 +77,12 @@ sf.component = new function(){
 			if(element.hasAttribute('sf-component-ignore') === true)
 				return;
 
-			var avoid = /(^|:)(class|style)/;
+			var avoid = /(^|:)(sf-|class|style)/;
 			var attr = element.attributes;
+
+			if(attr.length !== 0 && $item === void 0)
+				$item = {};
+
 			for (var i = 0; i < attr.length; i++) {
 				if(avoid.test(attr[i].nodeName))
 					continue;

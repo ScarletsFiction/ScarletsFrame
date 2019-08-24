@@ -168,6 +168,7 @@ var self = sf.views = function View(selector, name){
 	self.currentDOM = null;
 	self.lastDOM = null;
 	self.relatedDOM = [];
+	self.data = void 0;
 
 	self.maxCache = 2;
 
@@ -402,6 +403,7 @@ var self = sf.views = function View(selector, name){
 
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
+			self.data = url.data;
 
 			try{
 				if(self.dynamicScript !== false){
@@ -423,6 +425,8 @@ var self = sf.views = function View(selector, name){
 				dom.remove();
 				return routeError_({status:0});
 			}
+
+			self.data = url.data;
 
 			if(url.on !== void 0 && url.on.coming)
 				url.on.coming(url.data);

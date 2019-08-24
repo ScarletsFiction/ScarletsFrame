@@ -527,10 +527,6 @@ sf.loader = new function(){
 	var whenDOMLoaded = [];
 	var whenProgress = [];
 
-	self.off = function(){
-		self.turnedOff = true;
-	}
-
 	// Make event listener
 	self.onFinish = function(func){
 		if(self.DOMWasLoaded) return func();
@@ -792,8 +788,12 @@ sf.component = new function(){
 			if(element.hasAttribute('sf-component-ignore') === true)
 				return;
 
-			var avoid = /(^|:)(class|style)/;
+			var avoid = /(^|:)(sf-|class|style)/;
 			var attr = element.attributes;
+
+			if(attr.length !== 0 && $item === void 0)
+				$item = {};
+
 			for (var i = 0; i < attr.length; i++) {
 				if(avoid.test(attr[i].nodeName))
 					continue;
@@ -949,9 +949,9 @@ sf.model = function(scope){
 	}
 
 	for (var i = internal.controller.pending.length - 1; i >= 0; i--) {
-		var scope = sf.controller.pending[internal.controller.pending[i]];
-		if(scope !== void 0){
-			scope(root_(internal.controller.pending[i]), root_);
+		var temp = sf.controller.pending[internal.controller.pending[i]];
+		if(temp !== void 0){
+			temp(root_(internal.controller.pending[i]), root_);
 			internal.controller.pending.splice(i, 1);
 		}
 	}
@@ -4191,10 +4191,10 @@ self.replace = function(){
 }
 
 self.parse = function(){
-	self.data = window.location.hash.slice(1).split('|');
+	self.data = window.location.hash.split('|');
 	var hashes_ = self.data.shift().split('#');
 
-	for (var i = 0; i < hashes_.length; i++) {
+	for (var i = 1; i < hashes_.length; i++) {
 		var temp = hashes_[i].split('/');
 		hashes[temp.shift()] = '/'+temp.join('/');
 	}
@@ -4366,7 +4366,7 @@ var self = sf.views = function View(selector, name){
 		self.currentPath = sf.url.paths;
 	else{
 		self.currentPath = '';
-		pendingAutoRoute = sf.url.hashes[name] || void 0;
+		pendingAutoRoute = aHashes[name] || void 0;
 	}
 
 	var initialized = false;
@@ -4376,6 +4376,7 @@ var self = sf.views = function View(selector, name){
 	self.currentDOM = null;
 	self.lastDOM = null;
 	self.relatedDOM = [];
+	self.data = void 0;
 
 	self.maxCache = 2;
 
@@ -4396,17 +4397,24 @@ var self = sf.views = function View(selector, name){
 				selector = selector_;
 
 			// Bring the content to an sf-page-view element
-			if(DOM.childElementCount !== 0){
-				var temp = document.createElement('sf-page-view');
-				DOM.insertBefore(temp, DOM.firstChild);
-
-				for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
-					temp.appendChild(DOM.childNodes[1]);
+			if(DOM.childNodes.length !== 0){
+				if(DOM.childNodes.length === 1 && DOM.firstChild.nodeName === '#text' && DOM.firstChild.textContent.trim() === ''){
+					var temp = null;
+					DOM.firstChild.remove();
 				}
+				else{
+					var temp = document.createElement('sf-page-view');
+					DOM.insertBefore(temp, DOM.firstChild);
 
-				temp.routePath = self.currentPath;
-				temp.routeCached = routes.findRoute(temp.routePath);
-				temp.classList.add('page-current');
+					for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
+						temp.appendChild(DOM.childNodes[1]);
+					}
+
+					temp.routePath = self.currentPath;
+					temp.routeCached = routes.findRoute(temp.routePath);
+					temp.classList.add('page-current');
+					self.relatedDOM.push(temp);
+				}
 			}
 			else var temp = null;
 
@@ -4569,7 +4577,7 @@ var self = sf.views = function View(selector, name){
 			aHashes[name] = path;
 
 		// This won't trigger popstate event
-		if(!disableHistoryPush)
+		if(!disableHistoryPush && !_callback)
 			sf.url.push();
 
 		// Check if view was exist
@@ -4603,6 +4611,7 @@ var self = sf.views = function View(selector, name){
 
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
+			self.data = url.data;
 
 			try{
 				if(self.dynamicScript !== false){
@@ -4624,6 +4633,8 @@ var self = sf.views = function View(selector, name){
 				dom.remove();
 				return routeError_({status:0});
 			}
+
+			self.data = url.data;
 
 			if(url.on !== void 0 && url.on.coming)
 				url.on.coming(url.data);
