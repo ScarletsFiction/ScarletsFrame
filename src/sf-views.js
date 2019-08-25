@@ -76,12 +76,14 @@ sf(function(){
 	});
 });
 
+var cachedURL = {};
+
 internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
 	var pattern = /\/:([^/]+)/;
 	var sep = /\-/;
-    var knownKeys = /path|url|on|routes|beforeRoute|defaultData/;
+    var knownKeys = /path|url|templateURL|html|on|routes|beforeRoute|defaultData/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -105,7 +107,25 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			});
 			var route = RegExp('^' + regex + '$');
 
-			route.url = ref.url;
+			if(ref.url !== void 0)
+				route.url = ref.url;
+
+			else if(ref.templateURL !== void 0)
+				route.templateURL = ref.templateURL;
+
+			else if(ref.html !== void 0){
+				// Create new element
+				var dom = route.html = document.createElement('sf-page-view');
+
+				if(ref.html.constructor === String)
+					dom.innerHTML = ref.html;
+				else
+					dom.appendChild(ref.html);
+
+				dom.classList.add('page-prepare');
+				dom.style.display = 'none';
+			}
+
 			route.keys = keys;
 			route.beforeRoute = ref.beforeRoute;
 			route.defaultData = ref.defaultData || {};
@@ -327,7 +347,7 @@ var self = sf.views = function View(selector, name){
 					parentSimilarity = lastSibling.parentElement;
 				}
 
-				self.relatedDOM[i].classList.add('page-hidden');
+				// self.relatedDOM[i].classList.add('page-hidden');
 				self.relatedDOM[i].classList.remove('page-current');
 			}
 		}
@@ -338,14 +358,14 @@ var self = sf.views = function View(selector, name){
 				showedSibling = relatedPage[i];
 
 			relatedPage[i].classList.add('page-current');
-			relatedPage[i].classList.remove('page-hidden');
+			// relatedPage[i].classList.remove('page-hidden');
 		}
 
 		self.showedSibling = showedSibling;
 		self.lastSibling = lastSibling;
 
 		element.classList.add('page-current');
-		element.classList.remove('page-hidden');
+		// element.classList.remove('page-hidden');
 
 		self.relatedDOM = relatedPage;
 	}
@@ -463,8 +483,59 @@ var self = sf.views = function View(selector, name){
 			}
 		}
 
+		var afterDOMLoaded = function(dom){
+			if(url.selector === void 0)
+				var DOMReference = rootDOM;
+
+			else{ // Get element from selector
+				var DOMReference = selectorElement[selectorList[url.selector]];
+				if(!DOMReference || !DOMReference.isConnected){
+					if(url.parent === void 0){
+						dom.remove();
+						return routeError_({status:0});
+					}
+					else{
+						// Try to load parent router first
+						var newPath = path.match(url.parent.forChild)[0];
+						return self.goto(newPath, false, method, function(parentElement){
+							insertLoadedElement(selectorElement[selectorList[url.selector]], dom, parentElement);
+						});
+					}
+				}
+			}
+
+			if(url.hasChild){
+				var pendingShowed = [];
+				for (var i = 0; i < url.hasChild.length; i++) {
+					selectorElement[url.hasChild[i]] = self.selector(url.hasChild[i], dom);
+					var tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
+
+					if(tempPageView)
+						pendingShowed.unshift(tempPageView);
+				}
+
+				if(pendingShowed.length === 0)
+					pendingShowed = void 0;
+			}
+			else var pendingShowed = void 0;
+
+			insertLoadedElement(DOMReference, dom, false, pendingShowed);
+			if(_callback) _callback(dom);
+		}
+
+		//(url.url || path)
+		if(url.templateURL !== void 0 && cachedURL[url.templateURL] !== void 0){
+			afterDOMLoaded(cachedURL[url.templateURL].cloneNode(true));
+			return true;
+		}
+
+		if(url.html){
+			afterDOMLoaded(url.html.cloneNode(true));
+			return true;
+		}
+
 		RouterLoading = sf.ajax({
-			url:window.location.origin + (url.url || path),
+			url:window.location.origin + (url.templateURL || url.url || path),
 			method:method || 'GET',
 		    data:Object.assign(data || url.defaultData, {
 		        _sf_view:url.selector === void 0 ? selector : selectorList[url.selector].split(' ').pop()
@@ -476,43 +547,10 @@ var self = sf.views = function View(selector, name){
 				dom.classList.add('page-prepare');
 				dom.style.display = 'none';
 
-				if(url.selector === void 0)
-					var DOMReference = rootDOM;
+				if(url.templateURL !== void 0)
+					cachedURL[url.templateURL] = dom.cloneNode(true);
 
-				else{ // Get element from selector
-					var DOMReference = selectorElement[selectorList[url.selector]];
-					if(!DOMReference || !DOMReference.isConnected){
-						if(url.parent === void 0){
-							dom.remove();
-							return routeError_({status:0});
-						}
-						else{
-							// Try to load parent router first
-							var newPath = path.match(url.parent.forChild)[0];
-							return self.goto(newPath, false, method, function(parentElement){
-								insertLoadedElement(selectorElement[selectorList[url.selector]], dom, parentElement);
-							});
-						}
-					}
-				}
-
-				if(url.hasChild){
-					var pendingShowed = [];
-					for (var i = 0; i < url.hasChild.length; i++) {
-						selectorElement[url.hasChild[i]] = self.selector(url.hasChild[i], dom);
-						var tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
-
-						if(tempPageView)
-							pendingShowed.unshift(tempPageView);
-					}
-
-					if(pendingShowed.length === 0)
-						pendingShowed = void 0;
-				}
-				else var pendingShowed = void 0;
-
-				insertLoadedElement(DOMReference, dom, false, pendingShowed);
-				if(_callback) _callback(dom);
+				afterDOMLoaded(dom);
 			},
 			error:routeError_
 		});

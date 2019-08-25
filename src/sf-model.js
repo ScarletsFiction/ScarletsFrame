@@ -1331,10 +1331,16 @@ sf.model = function(scope){
 		else{
 			setTimeout(function(){
 				var scroller = internal.findScrollerElement(parentNode);
+
 				if(scroller === null) return;
+
+				var computed = getComputedStyle(scroller);
+				if(computed.backfaceVisibility === 'hidden' || computed.overflow.indexOf('hidden') !== -1)
+					return;
+
 				scroller.classList.add('sf-scroll-element');
 				internal.addScrollerStyle();
-			}, 500);
+			}, 1000);
 		}
 
 		for (var i = 0; i < editProperty.length; i++) {
