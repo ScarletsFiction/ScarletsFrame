@@ -16,6 +16,7 @@ A frontend framework that can help you write a simple web structure with complex
 - [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
 - [State Listener](https://jsbin.com/qohifel/edit?html,js,output)
 - [Views and Router](https://codesandbox.io/s/viewsrouter-example-1vbdh)
+- [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -609,6 +610,79 @@ Or you can do it directly from DOM like below.
 When you called `sf.model('model-name')` or `sf(document.querySelector('model-name'))`, it will return every component model scope as an array. But if you want to count how many component are created on the DOM, you can get the length of `sf.component.available`.
 
 The model will be automatically removed after the element was deleted. Or you could also call `myElement.destroy()`.
+
+## Language/Locale
+There are 2 ways on how to add your language pack:
+ - Server side: Using server for serving the unknown language
+ - Client side: Import language
+
+### Server side
+You will need to set the serving URL before getting started.
+
+```js
+sf.lang.serverURL = 'http://localhost/language';
+```
+
+The library will request any missing language by using POST method to above URL. The example request data that will be received by your server is below:
+
+```js
+lang  = en
+paths = '{"second":1,"my":{"test":1}}'
+```
+The `lang` is the language identifier (`sf.lang.default`) that can be used to select the language pack on your server. And the `paths` is the missing language path (ex: `second` and `my.test`). The server side response is up to you. The response from the server must be a JSON format because it will being merged with the current language pack on client side. After the language was loaded, the library will not requesting again untul you clear the language `sf.lang.list['en']`.
+
+### Client side
+Sometime the language pack will getting bigger if you have many languages for your app. But, the setup is pretty simple. All you need is just add the language and set the default language.
+
+```js
+var myLang = {
+  date:"Current date is {date}",
+  my:{
+    name:"Your name is {name}"
+  }
+};
+
+sf.lang.add('en', myLang);
+sf.lang.default = 'en';
+```
+
+If the language was missing, the library will not doing anything if you was not setup the server side URL.
+
+### Using on DOM
+When using this library for every element, you should manually initialize it for your `document.body` or specific dynamic element.
+
+```html
+<body>
+  <!-- Put the text on the HTML content -->
+  <p sf-lang="my.test"></p>
+
+  <!-- Put the text on the placeholder (for input element) -->
+  <input type="text" sf-lang="for.placeholder"></input>
+</body>
+
+<script>
+  sf.lang(document.body);
+</script>
+```
+
+### Translate from script
+The library also support string's static/dynamic interpolation.
+```js
+// Define interpolation globally
+sf.lang.interpolate = {
+  timestamp:Date.now,
+  name:"Lusia"
+};
+sf.lang.get('my.name'); // My Name is Lusia
+
+// Use interpolation for current translation
+sf.lang.get('my.name', {name:"Alex"}); // My Name is Alex
+
+// Use callback for waiting request to the server side
+sf.lang.get('server.name', /* {...}, */function(text){
+  // Parameter 2 can also be used as callback/interpolation data
+});
+```
 
 ## Contribution
 If you want to help in ScarletsFrame please fork this project and edit on your repository, then make a pull request to here. Otherwise, you can help with donation via [patreon](https://www.patreon.com/stefansarya).
