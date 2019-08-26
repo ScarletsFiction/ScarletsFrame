@@ -1782,6 +1782,11 @@ sf.model = function(scope){
 			var sfPage = [];
 
 			for (var i = 0; i < temp.length; i++) {
+				if(temp[i].sf$initialized)
+					continue;
+
+				temp[i].sf$initialized = true;
+
 				var modelName = temp[i].getAttribute('sf-controller') || temp[i].sf$component;
 				var model = self.root[modelName] || sf.model(modelName);
 				if(model.$page === void 0){
@@ -1875,6 +1880,7 @@ sf.model = function(scope){
 		if(isScan === void 0){
 			var temp = element.querySelectorAll('[sf-controller]');
 			for (var i = 0; i < temp.length; i++) {
+				temp[i].sf$initialized = false;
 				DOMNodeRemoved(temp[i], true);
 			}
 		}

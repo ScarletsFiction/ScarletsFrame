@@ -51,6 +51,7 @@ self.parse = function(url){
 
 	// Paths
 	self.paths = window.location.pathname;
+	return hashes;
 }
 
 self.parse();

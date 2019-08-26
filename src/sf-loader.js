@@ -146,6 +146,7 @@ sf.loader = new function(){
 		}
 
 		self.DOMWasLoaded = true;
+		self.turnedOff = true;
 
 		// Initialize all pending model
 		var keys = Object.keys(internal.modelPending);
