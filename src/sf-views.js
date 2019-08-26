@@ -2,6 +2,8 @@
 var gEval = routerEval;
 routerEval = void 0; // Avoid this function being invoked out of scope
 
+var rejectResponse = /<html/;
+
 // Save reference
 var aHashes = sf.url.hashes;
 var slash = '/';
@@ -447,6 +449,9 @@ var self = sf.views = function View(selector, name){
 			dom.removeAttribute('style');
 			toBeShowed(dom);
 
+			var tempDOM = self.currentDOM;
+			self.currentDOM = dom;
+
 			// Trigger loaded event
 			var event = onEvent['routeFinish'];
 			for (var i = 0; i < event.length; i++) {
@@ -456,14 +461,14 @@ var self = sf.views = function View(selector, name){
 			if(pendingShowed !== void 0)
 				self.relatedDOM.push(...pendingShowed);
 
-			if(self.currentDOM !== null){
+			if(tempDOM !== null){
 				self.lastPath = self.currentPath;
 
 				// Old route
-				if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
-					self.currentDOM.routeCached.on.leaving();
+				if(tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
+					tempDOM.routeCached.on.leaving();
 
-				self.lastDOM = self.currentDOM;
+				self.lastDOM = tempDOM;
 			}
 
 			// Save current URL
@@ -472,8 +477,6 @@ var self = sf.views = function View(selector, name){
 			dom.routePath = path;
 
 			dom.classList.remove('page-prepare');
-
-			self.currentDOM = dom;
 			routingError = false;
 
 			// Clear old cache
@@ -541,6 +544,11 @@ var self = sf.views = function View(selector, name){
 		        _sf_view:url.selector === void 0 ? selector : selectorList[url.selector].split(' ').pop()
 		    }),
 			success:function(html_content){
+				if(rejectResponse.test(html_content)){
+					console.error("Views request was received <html> while it was dissalowed. Please check http response from Network Tab.");
+					return routeError_(1);
+				}
+
 				// Create new element
 				var dom = document.createElement('sf-page-view');
 				dom.innerHTML = html_content;
