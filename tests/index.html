@@ -49,7 +49,7 @@
             <a href="/test/page2">Go to page 2</a>
          </custom-view>
          <br>
-         <a href="/">Refresh whole page</a>
+         <a href="@/">Refresh whole page</a>
       </div><br><br>
 
       <!-- Virtual Scroll And Array Binding -->
@@ -166,6 +166,18 @@
          </div>
          <comp-test id="henlos">custom template here</comp-test>
          <comp-test sf-repeat-this="item in items"></comp-test>
+      </div>
+
+      <!-- Language -->
+      <div id="lang-test">
+        <script>
+          sf(function(){
+            sf.language.serverURL = '/test/lang';
+            sf.language(document.querySelector('#lang-test'))
+          })
+        </script>
+         <p sf-lang="my.test"></p>
+         <p sf-lang="second"></p>
       </div>
 
       <script type="text/javascript" src="/tests/script.js"></script>
