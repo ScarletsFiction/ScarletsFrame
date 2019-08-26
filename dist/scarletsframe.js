@@ -4336,7 +4336,7 @@ function refreshLang(list, noPending){
 	var defaultLang = self.list[self.default];
 
 	for (var i = list.length-1; i >= 0; i--) {
-		if(list[i].sf_lang === self.default){
+		if(list[i].sf_lang === self.default && noPending === true){
 			list.splice(i, 1);
 			continue;
 		}
@@ -4357,7 +4357,8 @@ function refreshLang(list, noPending){
 			continue;
 		}
 
-		list.splice(i, 1);
+		if(noPending === true)
+			list.splice(i, 1);
 
 		if(elem.tagName === 'INPUT')
 			elem.placeholder = value;

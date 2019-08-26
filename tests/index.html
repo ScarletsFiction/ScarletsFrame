@@ -172,10 +172,25 @@
       <div id="lang-test">
         <script>
           sf(function(){
+            sf.lang.default = 'en';
+            sf.lang.add('en', {
+              hello:{
+                other:{
+                  side:"Hello from the other side"
+                }
+              },
+              "i'm":{
+                here:"I'm on here!"
+              }
+            });
             sf.lang.serverURL = '/test/lang';
             sf.lang(document.querySelector('#lang-test'))
           })
         </script>
+
+         <p sf-lang="hello.other.side"></p>
+         <input type="text" sf-lang="i'm.here"/>
+
          <p sf-lang="my.test"></p>
          <p sf-lang="second"></p>
       </div>
