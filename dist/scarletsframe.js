@@ -596,14 +596,6 @@ sf.loader = new function(){
 		}
 	}
 
-	setTimeout(function(){
-		if(self.totalContent === 0 && !self.turnedOff){
-			self.loadedContent = self.totalContent = 1;
-			console.warn("If you don't use content loader feature, please turn it off with `sf.loader.off()`");
-		}
-	}, 10000);
-
-
 	var isQueued = false;
 	var lastState = '';
 	document.addEventListener("load", function domLoadEvent(event){
@@ -614,10 +606,7 @@ sf.loader = new function(){
 			isQueued = sf.model.queuePreprocess(document.body);
 			if(isQueued.length === 0) isQueued = false;
 
-			if(lastState === 'loading'){
-				var repeatedList = $('[sf-repeat-this]', document.body);
-
-				// Find images
+			if(lastState === 'loading'){ // Find images
 				var temp = $('img:not(onload)[src]');
 				for (var i = 0; i < temp.length; i++) {
 					sf.loader.totalContent++;
@@ -663,6 +652,7 @@ sf.loader = new function(){
 		}
 
 		self.DOMWasLoaded = true;
+		self.turnedOff = true;
 
 		// Initialize all pending model
 		var keys = Object.keys(internal.modelPending);
@@ -702,7 +692,7 @@ sf.loader = new function(){
 		whenDOMReady = whenDOMLoaded = null;
 
 		// Last init
-		sf.controller.init();
+		// sf.controller.init();
 		sf.model.init(document.body, isQueued);
 
 		isQueued = null;
@@ -2711,6 +2701,11 @@ sf.model = function(scope){
 			var sfPage = [];
 
 			for (var i = 0; i < temp.length; i++) {
+				if(temp[i].sf$initialized)
+					continue;
+
+				temp[i].sf$initialized = true;
+
 				var modelName = temp[i].getAttribute('sf-controller') || temp[i].sf$component;
 				var model = self.root[modelName] || sf.model(modelName);
 				if(model.$page === void 0){
@@ -2804,6 +2799,7 @@ sf.model = function(scope){
 		if(isScan === void 0){
 			var temp = element.querySelectorAll('[sf-controller]');
 			for (var i = 0; i < temp.length; i++) {
+				temp[i].sf$initialized = false;
 				DOMNodeRemoved(temp[i], true);
 			}
 		}
@@ -3640,10 +3636,10 @@ sf.controller = new function(){
 	}
 
 	self.init = function(parent){
-		if(!sf.loader.DOMWasLoaded)
+		if(!sf.loader.DOMWasLoaded){
 			return sf(function(){
 				self.init(parent);
-			});
+			});}
 
 		var temp = $('[sf-controller]', parent || document.body);
 		for (var i = 0; i < temp.length; i++) {
@@ -3654,7 +3650,7 @@ sf.controller = new function(){
 	// Create listener for sf-click
 	document.addEventListener('DOMContentLoaded', function(){
 		$.on(document.body, 'click', '[sf-click]', listenSFClick);
-		self.init();
+		// self.init();
 	}, {capture:true, once:true});
 }
 
@@ -4422,6 +4418,7 @@ self.parse = function(url){
 
 	// Paths
 	self.paths = window.location.pathname;
+	return hashes;
 }
 
 self.parse();
@@ -4454,10 +4451,6 @@ window.addEventListener('popstate', function(ev){
 
 	disableHistoryPush = true;
 
-	// Reparse URL
-	sf.url.parse();
-	var list = self.list;
-
 	if(window.history.state >= historyIndex)
 		routeDirection = 1;
 	else
@@ -4467,17 +4460,8 @@ window.addEventListener('popstate', function(ev){
 
 	// console.warn('historyIndex', historyIndex, window.history.state, routeDirection > 0 ? 'forward' : 'backward');
 
-	// For root path
-	list[slash].goto(sf.url.paths);
-
-	// For hash path
-	var keys = Object.keys(aHashes);
-	for (var i = 0; i < keys.length; i++) {
-		var temp = list[keys[i]];
-		if(temp === void 0) continue;
-
-		temp.goto(aHashes[keys[i]]);
-	}
+	// Reparse URL
+	self.goto();
 
 	disableHistoryPush = false;
 }, false);
@@ -4626,7 +4610,13 @@ var self = sf.views = function View(selector, name){
 	if(name === void 0)
 		name = slash;
 
-	var self = sf.views.list[name] = this;
+	var self = this;
+
+	if(sf.views.list[name] === void 0)
+		sf.views.list[name] = [];
+
+	sf.views.list[name].push(self);
+
 	var pendingAutoRoute = void 0;
 
 	// Init current URL as current View Path
@@ -4809,8 +4799,9 @@ var self = sf.views = function View(selector, name){
 		var url = routes.findRoute(path);
 		if(!url) return;
 
-		if(url.beforeRoute !== void 0)
-			url.beforeRoute(url.data);
+		// Return when beforeRoute returned truthy value
+		if(url.beforeRoute !== void 0 && url.beforeRoute(url.data))
+			return;
 
 		if(name === slash)
 			sf.url.paths = path;
@@ -4894,7 +4885,7 @@ var self = sf.views = function View(selector, name){
 				self.lastPath = self.currentPath;
 
 				// Old route
-				if(tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
+				if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
 					tempDOM.routeCached.on.leaving();
 
 				self.lastDOM = tempDOM;
@@ -5060,16 +5051,27 @@ self.goto = function(url){
 	var parsed = sf.url.parse(url);
 	sf.url.data = parsed.data;
 
-	var ref = self.list[slash];
-	if(ref !== void 0 && ref.currentPath !== parsed.paths && !ref.goto(parsed.paths))
-		console.error("Couldn't navigate to", parsed.paths, "because path not found");
+	var list = self.list;
 
-	var hashes = parsed.hashes;
-	for (var i = 0, view = Object.keys(hashes); i < view.length; i++) {
-		ref = self.list[view[i]];
+	// For root path
+	if(list[slash] !== void 0){
+		var ref = list[slash];
+		for (var a = 0; a < ref.length; a++) {
+			if(ref[a].currentPath !== parsed.paths)
+				ref[a].goto(parsed.paths);
+		}
+	}
 
-		if(ref !== void 0 && ref.currentPath !== hashes[view[i]])
-			ref.goto(hashes[view[i]]);
+	// For hash path
+	var view = Object.keys(parsed.hashes);
+	for (var i = 0; i < view.length; i++) {
+		var ref = list[view[i]];
+		if(ref === void 0) continue;
+
+		for (var a = 0; a < ref.length; a++) {
+			if(ref[a].currentPath !== parsed.hashes[view[i]])
+				ref[a].goto(parsed.hashes[view[i]]);
+		}
 	}
 }
 

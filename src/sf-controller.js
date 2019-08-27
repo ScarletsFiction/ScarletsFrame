@@ -155,10 +155,10 @@ sf.controller = new function(){
 	}
 
 	self.init = function(parent){
-		if(!sf.loader.DOMWasLoaded)
+		if(!sf.loader.DOMWasLoaded){
 			return sf(function(){
 				self.init(parent);
-			});
+			});}
 
 		var temp = $('[sf-controller]', parent || document.body);
 		for (var i = 0; i < temp.length; i++) {
@@ -169,7 +169,7 @@ sf.controller = new function(){
 	// Create listener for sf-click
 	document.addEventListener('DOMContentLoaded', function(){
 		$.on(document.body, 'click', '[sf-click]', listenSFClick);
-		self.init();
+		// self.init();
 	}, {capture:true, once:true});
 }
 
