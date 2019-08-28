@@ -2,8 +2,10 @@
 var self = sf.url = function(){
 	// Hashes
 	var hashes_ = '';
-	for(var keys in hashes)
+	for(var keys in hashes){
+		if(hashes[keys] === '/') continue;
 		hashes_ += '#'+keys+hashes[keys];
+	}
 
 	var data_ = '|'+self.data.join('|');
 
@@ -51,7 +53,7 @@ self.parse = function(url){
 
 	// Paths
 	self.paths = window.location.pathname;
-	return hashes;
+	return self;
 }
 
 self.parse();

@@ -48,6 +48,11 @@ sf(function(){
 		var elem = ev.target;
 		var attr = elem.getAttribute('href');
 
+		if(attr === null){
+			elem = $.parent(elem, 'a[href]');
+			attr = elem.getAttribute('href');
+		}
+
 		if(attr[0] === '@'){ // ignore
 			var target = elem.getAttribute('target');
 			if(target)
@@ -191,14 +196,14 @@ var self = sf.views = function View(selector, name){
 
 	sf.views.list[name].push(self);
 
-	var pendingAutoRoute = void 0;
+	var pendingAutoRoute = false;
 
 	// Init current URL as current View Path
 	if(name === slash)
 		self.currentPath = sf.url.paths;
 	else{
 		self.currentPath = '';
-		pendingAutoRoute = aHashes[name] || void 0;
+		pendingAutoRoute = true;
 	}
 
 	var initialized = false;
@@ -299,9 +304,13 @@ var self = sf.views = function View(selector, name){
 				self.goto(target);
 			}
 
-			if(pendingAutoRoute !== void 0){
-				self.goto(pendingAutoRoute);
-				pendingAutoRoute = void 0;
+			if(pendingAutoRoute){
+				if(aHashes[name] !== void 0)
+					self.goto(aHashes[name]);
+				else
+					self.goto('/');
+
+				pendingAutoRoute = false;
 			}
 		}
 	}
