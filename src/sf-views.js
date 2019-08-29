@@ -199,14 +199,11 @@ var self = sf.views = function View(selector, name){
 	var pendingAutoRoute = false;
 
 	// Init current URL as current View Path
-	if(name === slash)
-		self.currentPath = sf.url.paths;
-	else{
-		self.currentPath = '';
-		pendingAutoRoute = true;
-	}
+	self.currentPath = '';
+	pendingAutoRoute = true;
 
 	var initialized = false;
+	var firstRouted = false;
 	var selectorElement = {};
 
 	self.lastPath = '/';
@@ -295,22 +292,21 @@ var self = sf.views = function View(selector, name){
 	self.addRoute = function(obj){
 		routes.push(...internal.router.parseRoutes(obj, selectorList));
 
-		if(!initialized){
+		if(!initialized)
 			self.selector();
 
-			if(name === slash && !rootDOM.childElementCount){
-				var target = self.currentPath;
-				self.currentPath = '';
-				self.goto(target);
-			}
+		if(!firstRouted){
+			if(name === slash && !rootDOM.childElementCount)
+				firstRouted = self.goto(sf.url.paths);
 
 			if(pendingAutoRoute){
 				if(aHashes[name] !== void 0)
-					self.goto(aHashes[name]);
+					firstRouted = self.goto(aHashes[name]);
 				else
-					self.goto('/');
+					firstRouted = self.goto('/');
 
-				pendingAutoRoute = false;
+				if(firstRouted)
+					pendingAutoRoute = false;
 			}
 		}
 	}

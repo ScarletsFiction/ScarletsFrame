@@ -13,7 +13,7 @@ sf.events = (function(){
 		if(Events[name] === void 0){
 			var active = void 0;
 
-			if(run !== undefined && run.constructor === Boolean)
+			if(run !== void 0 && run.constructor === Boolean)
 				active = run;
 
 			if(active !== void 0){
