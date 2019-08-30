@@ -1,6 +1,7 @@
 sf.events = (function(){
 	var callbacks = {};
 	var callbacksWhen = {};
+	self.warningWhen = 10;
 
 	function Events(name, run){
 		if(name.constructor === Array){
@@ -93,8 +94,8 @@ sf.events = (function(){
 		if(callbacks[name] === void 0)
 			callbacks[name] = [];
 
-		if(callbacks[name].length >= 10)
-			console.warn("Events have more than 10 callback, there may possible memory leak.");
+		if(callbacks[name].length >= self.warningWhen)
+			console.warn("Events", name, "have more than", self.warningWhen, "callback, there may possible memory leak.");
 
 		callbacks[name].push(callback);
 	}

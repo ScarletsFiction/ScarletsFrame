@@ -199,8 +199,12 @@ var self = sf.views = function View(selector, name){
 	var pendingAutoRoute = false;
 
 	// Init current URL as current View Path
-	self.currentPath = '';
-	pendingAutoRoute = true;
+	if(name === slash)
+		self.currentPath = sf.url.paths;
+	else{
+		self.currentPath = '';
+		pendingAutoRoute = true;
+	}
 
 	var initialized = false;
 	var firstRouted = false;
@@ -296,8 +300,10 @@ var self = sf.views = function View(selector, name){
 			self.selector();
 
 		if(!firstRouted){
-			if(name === slash && !rootDOM.childElementCount)
+			if(name === slash && !rootDOM.childElementCount){
+				self.currentPath = '';
 				firstRouted = self.goto(sf.url.paths);
+			}
 
 			if(pendingAutoRoute){
 				if(aHashes[name] !== void 0)

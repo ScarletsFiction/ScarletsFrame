@@ -1,15 +1,144 @@
 sf.dom = function(selector, context){
-	if(selector[0] === '<') return sf.dom.parseElement(selector);
-	if(selector.constructor !== String) return selector;
+	if(selector == null)
+		selector = {length:0};
+	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
+		selector = sf.dom.parseElement(selector);
+	else if(context)
+		selector = context.querySelectorAll(selector);
+	else if(selector.constructor === String)
+		selector = document.querySelectorAll(selector);
+	else selector = {0:selector, length:1};
 
-	if(context) return context.querySelectorAll(selector);
-	return document.querySelectorAll(selector);
+	Object.assign(selector, sf.dom.fn);
+	return selector;
 }
 
 var $ = sf.dom; // Shortcut
 
 ;(function(){
 	var self = sf.dom;
+
+	function appendObjectArray(obj, arr){
+		for (var i = 0; i < arr.length; i++)
+			obj[obj.length++] = arr[i];
+	}
+
+	var css_str = /\-[a-z0-9]/;
+	var css_strRep = function(f, m){return m.toUpperCase()};
+
+	self.fn = {
+		push:function(el){
+			if(el.constructor !== Array)
+				el = [el];
+
+			var t = {length:0};
+			appendObjectArray(t, this);
+			appendObjectArray(t, el);
+			Object.assign(t, internal.dom.extends_Dom7);
+
+			return t;
+		},
+		find:function(selector){
+			var t = {length:0};
+			for (var i = 0; i < this.length; i++)
+				appendObjectArray(t, this[i].querySelectorAll(selector));
+			return Object.assign(t, self.fn);
+		},
+		parent:function(selector){
+			var t = {length:0};
+			for (var i = 0; i < this.length; i++)
+				appendObjectArray(t, self.parent(this[i], selector));
+			return Object.assign(t, self.fn);
+		},
+		prevAll:function(selector){
+			var t = {length:0};
+			for (var i = 0; i < this.length; i++)
+				appendObjectArray(t, self.prevAll(this[i], selector));
+			return Object.assign(t, self.fn);
+		},
+		nextAll:function(selector){
+			var t = {length:0};
+			for (var i = 0; i < this.length; i++)
+				appendObjectArray(t, self.nextAll(this[i], selector, true));
+			return Object.assign(t, self.fn);
+		},
+		children:function(selector){
+			var t = {length:0};
+			for (var i = 0; i < this.length; i++)
+				appendObjectArray(t, this[i].children);
+			return Object.assign(t, self.fn);
+		},
+
+		// Action only
+		addClass:function(name){
+			for (var i = 0; i < this.length; i++)
+				this[i].classList.add(...name.split(' '));
+			return this;
+		},
+		removeClass:function(name){
+			for (var i = 0; i < this.length; i++)
+				this[i].classList.remove(...name.split(' '));
+			return this;
+		},
+		toggleClass:function(name){
+			for (var i = 0; i < this.length; i++)
+				this[i].classList.toggle(...name.split(' '));
+			return this;
+		},
+		hasClass:function(name){
+			for (var i = 0; i < this.length; i++)
+				if(this[i].classList.contains(name))
+					return true;
+			return false;
+		},
+		css:function(name, value){
+			if(value === void 0 && name.constructor === String)
+				return this[0].style[name];
+
+			if(name.constructor === Object){
+				var keys = Object.keys(name);
+				for (var i = 0; i < keys.length; i++) {
+					if(/\-/.test(keys[i]) !== true)
+						continue;
+
+					name[keys[i].replace(css_str, css_strRep)] = name[keys[i]];
+					delete name[keys[i]];
+				}
+
+				for (var i = 0; i < this.length; i++) {
+					Object.assign(this[i].style, name);
+				}
+				return this;
+			}
+
+			name = name.replace(css_str, css_strRep);
+
+			for (var i = 0; i < this.length; i++)
+				this[i].style[name] = value;
+
+			return this;
+		},
+		on:function(event, selector, callback){
+			for (var i = 0; i < this.length; i++)
+				self.on(this[i], event, selector, callback);
+			return this;
+		},
+		off:function(event, selector, callback){
+			for (var i = 0; i < this.length; i++)
+				self.off(this[i], event, selector, callback);
+			return this;
+		},
+		once:function(event, selector, callback){
+			for (var i = 0; i < this.length; i++)
+				self.on(this[i], event, selector, callback, true);
+			return this;
+		},
+		animateCSS:function(){
+			for (var i = 0; i < this.length; i++)
+				self.on(this[i], event, selector, callback, true);
+			return this;
+		},
+	};
 
 	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);
@@ -92,6 +221,8 @@ var $ = sf.dom; // Shortcut
 		callback.once = once;
 		element.addEventListener(event, callback, {capture:true, once:once === true});
 
+		if(once) return;
+
 		// Save event listener
 		if(element.sf$eventListener === void 0)
 			element.sf$eventListener = {};
@@ -111,10 +242,11 @@ var $ = sf.dom; // Shortcut
 	 * Remove event listener
 	 * @param  Node 	element 	parent element
 	 * @param  string 	event   	event name
-	 * @param  string  	selector    selector
+	 * @param  string  	selector    selector | callback
+	 * @param  function  	callback    callback
 	 * @return null
 	 */
-	self.off = function(element, event, selector){
+	self.off = function(element, event, selector, callback){
 		// Remove all event
 		if(event === void 0){
 			if(element.sf$eventListener === void 0)
@@ -135,17 +267,36 @@ var $ = sf.dom; // Shortcut
 			return;
 		}
 
+		if(selector !== void 0 && selector.constructor === Function){
+			callback = selector;
+			selector = void 0;
+		}
+
 		// Remove listener
-		if(element.sf$eventListener === void 0)
+		if(element.sf$eventListener === void 0){
+			if(callback !== void 0)
+				element.removeEventListener(event, callback, {capture:true});
+
 			return;
+		}
 
-		var ref = element.sf$eventListener;
-		if(ref !== void 0 && ref[event] !== void 0){
-			for (var i = ref[event].length - 1; i >= 0; i--) {
-				if(selector && ref[event][i].selector !== selector)
-					continue;
+		if(callback){
+			element.removeEventListener(event, callback, {capture:true});
+			var ref = element.sf$eventListener[event];
+			var i = ref.indexOf(callback);
 
-				element.removeEventListener(event, ref[event].splice(i, 1), true);
+			if(i !== -1)
+				ref.splice(i, 1);
+		}
+		else{
+			var ref = element.sf$eventListener;
+			if(ref !== void 0 && ref[event] !== void 0){
+				for (var i = ref[event].length - 1; i >= 0; i--) {
+					if(selector && ref[event][i].selector !== selector)
+						continue;
+
+					element.removeEventListener(event, ref[event].splice(i, 1), {capture:true});
+				}
 			}
 		}
 	}
