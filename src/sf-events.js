@@ -55,7 +55,7 @@ sf.events = (function(){
 						try{
 							callback[i].apply(null, arguments);
 							if(callback[i].once === true)
-								callback[i].splice(i--, 1);
+								callback.splice(i--, 1);
 						} catch(e) {
 							console.error(e);
 						}

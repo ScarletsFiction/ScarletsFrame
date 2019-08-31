@@ -94,10 +94,13 @@ self.get = function(path, obj, callback){
 function diveFill(obj1, obj2){
 	var keys = Object.keys(obj2);
 	for (var i = 0; i < keys.length; i++) {
-		if(obj1[keys[i]] === void 0)
-			obj1[keys[i]] = obj2[keys[i]];
-		else
-			diveFill(obj1[keys[i]], obj2[keys[i]]);
+		var key = keys[i];
+
+		if(obj1[key] === void 0)
+			obj1[key] = obj2[key];
+
+		else if(obj2[key].constructor === Object)
+			diveFill(obj1[key], obj2[key]);
 	}
 }
 
