@@ -437,52 +437,55 @@ var self = sf.views = function View(selector, name){
 				}
 			}
 
-			// Parse the DOM data binding
-			sf.model.init(dom);
+			// Wait if there are some comonent that being initialized
+			setTimeout(function(){
+				// Parse the DOM data binding
+				sf.model.init(dom);
 
-			self.data = url.data;
+				self.data = url.data;
 
-			if(url.on !== void 0 && url.on.coming)
-				url.on.coming(url.data);
+				if(url.on !== void 0 && url.on.coming)
+					url.on.coming(url.data);
 
-			dom.removeAttribute('style');
-			toBeShowed(dom);
+				dom.removeAttribute('style');
+				toBeShowed(dom);
 
-			var tempDOM = self.currentDOM;
-			self.currentDOM = dom;
+				var tempDOM = self.currentDOM;
+				self.currentDOM = dom;
 
-			// Trigger loaded event
-			var event = onEvent['routeFinish'];
-			for (var i = 0; i < event.length; i++) {
-				if(event[i](self.currentPath, path, url.data)) return;
-			}
+				// Trigger loaded event
+				var event = onEvent['routeFinish'];
+				for (var i = 0; i < event.length; i++) {
+					if(event[i](self.currentPath, path, url.data)) return;
+				}
 
-			if(pendingShowed !== void 0)
-				self.relatedDOM.push(...pendingShowed);
+				if(pendingShowed !== void 0)
+					self.relatedDOM.push(...pendingShowed);
 
-			if(tempDOM !== null){
-				self.lastPath = self.currentPath;
+				if(tempDOM !== null){
+					self.lastPath = self.currentPath;
 
-				// Old route
-				if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
-					tempDOM.routeCached.on.leaving(path, url);
+					// Old route
+					if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
+						tempDOM.routeCached.on.leaving(path, url);
 
-				self.lastDOM = tempDOM;
-			}
+					self.lastDOM = tempDOM;
+				}
 
-			// Save current URL
-			self.currentPath = path;
-			dom.routeCached = url;
-			dom.routePath = path;
+				// Save current URL
+				self.currentPath = path;
+				dom.routeCached = url;
+				dom.routePath = path;
 
-			dom.classList.remove('page-prepare');
-			routingError = false;
+				dom.classList.remove('page-prepare');
+				routingError = false;
 
-			// Clear old cache
-			var parent = self.currentDOM.parentNode;
-			for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-				parent.firstElementChild.remove();
-			}
+				// Clear old cache
+				var parent = self.currentDOM.parentNode;
+				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
+					parent.firstElementChild.remove();
+				}
+			}, 200);
 		}
 
 		var afterDOMLoaded = function(dom){
