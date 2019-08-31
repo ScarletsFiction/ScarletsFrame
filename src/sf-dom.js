@@ -74,13 +74,11 @@ var $ = sf.dom; // Shortcut
 		remove:function(){
 			for (var i = 0; i < this.length; i++)
 				this[i].remove();
-
 			return this;
 		},
 		empty:function(){
 			for (var i = 0; i < this.length; i++)
 				this[i].textContent = '';
-
 			return this;
 		},
 		addClass:function(name){
@@ -188,9 +186,9 @@ var $ = sf.dom; // Shortcut
 			}
 			return this;
 		},
-		animateCSS:function(){
+		animateCSS:function(name, callback, duration){
 			for (var i = 0; i < this.length; i++)
-				self.on(this[i], event, selector, callback, true);
+				self.animateCSS(this[i], name, callback, duration);
 			return this;
 		},
 	};
@@ -384,11 +382,17 @@ var $ = sf.dom; // Shortcut
 		}
 	}
 
-	self.animateCSS = function(element, animationName, callback, duration) {
+	self.animateCSS = function(element, animationName, callback, duration){
+		if(element === void 0)
+			return;
+
+		if(callback && callback.constructor !== Function){
+			duration = callback;
+			callback = void 0;
+		}
+
 		var animationEnd = {
 			animation: 'animationend',
-			OAnimation: 'oAnimationEnd',
-			MozAnimation: 'mozAnimationEnd',
 			WebkitAnimation: 'webkitAnimationEnd',
 		};
 
@@ -399,22 +403,86 @@ var $ = sf.dom; // Shortcut
 			}
 		}
 
-		if(duration){
-			element.style.webkitAnimationDuration = duration+'s';
-			element.style.animationDuration = duration+'s';
+	  	var style = element.style;
+	  	var mode = 0;
+
+		if(animateCSS.indexOf(animationName) !== -1){
+			var list = animationName.split(' ');
+			element.classList.add.apply(element.classList, list);
+
+			if(duration){
+				style.webkitAnimationDuration = duration+'s';
+				style.animationDuration = duration+'s';
+			}
+		}
+		else{
+			mode = 1;
+			var arrange = animationName;
+
+			if(duration === void 0 || duration.constructor === Number)
+				duration = {
+					duration:duration && duration.constructor === Number ? duration : 0.6,
+					ease:'ease',
+					fill:'both'
+				};
+
+			if(duration.constructor === Object){
+				if(duration.duration !== void 0)
+					arrange += ' '+duration.duration+'s';
+				if(duration.ease !== void 0)
+					arrange += ' '+duration.ease;
+
+				if(duration.delay !== void 0){
+					arrange += ' '+duration.delay+'s';
+
+					if(animationEnd === 'animationend')
+						var animationStart = 'animationstart';
+					else var animationStart = 'webkitAnimationStart';
+
+					if(duration.visible === false)
+						style.visibility = 'hidden';
+
+					sf.dom.once(element, animationStart, function(){
+						style.visibility = 'visible';
+					});
+				}
+				else style.visibility = 'visible';
+
+				if(duration.iteration !== void 0)
+					arrange += ' '+duration.iteration;
+				if(duration.direction !== void 0)
+					arrange += ' '+duration.direction;
+				if(duration.fill !== void 0)
+					arrange += ' '+duration.fill;
+			}
+
+			var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
+			var parentStyle = element.parentElement.style;
+
+			element.parentElement.classList.add('anim-parent');
+			element.classList.add('anim-element');
+
+			style.webkitAnimation = style.animation = arrange;
+			parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
 		}
 
-		var list = ('animated ' + animationName).split(' ');
-		element.classList.add.apply(element.classList, list);
-		$.once(element, animationEnd, function(){
-			element.classList.remove.apply(element.classList, list);
-			
-			if(duration) setTimeout(function(){
-				element.style.webkitAnimationDuration = duration+'s';
-				element.style.animationDuration = duration+'s';
+		self.once(element, animationEnd, function(){
+			if(mode === 0 && duration){
+				element.classList.remove.apply(element.classList, list);
+				setTimeout(function(){
+					style.webkitAnimationDuration = 
+					style.animationDuration = duration+'s';
+				}, 1);
+			}
+
+			if(mode === 1) setTimeout(function(){
+				style.visibility = '';
+				element.classList.remove('anim-element');
+				style.webkitAnimation = style.animation = 
+				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
 			}, 1);
 
-			if(typeof callback === 'function') callback();
+			if(callback !== void 0) callback();
 		});
 	}
 
