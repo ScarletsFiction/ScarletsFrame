@@ -430,21 +430,15 @@ var self = sf.views = function View(selector, name){
 			DOMReference.insertAdjacentElement('beforeend', dom);
 			self.data = url.data;
 
-			try{
-				if(self.dynamicScript !== false){
-					var scripts = dom.getElementsByTagName('script');
-					for (var i = 0; i < scripts.length; i++) {
-					    gEval(scripts[i].text);
-					}
+			if(self.dynamicScript !== false){
+				var scripts = dom.getElementsByTagName('script');
+				for (var i = 0; i < scripts.length; i++) {
+				    gEval(scripts[i].text);
 				}
-
-				// Parse the DOM data binding
-				sf.model.init(dom);
-			}catch(e){
-				console.error(e);
-				dom.remove();
-				return routeError_({status:0});
 			}
+
+			// Parse the DOM data binding
+			sf.model.init(dom);
 
 			self.data = url.data;
 
@@ -471,7 +465,7 @@ var self = sf.views = function View(selector, name){
 
 				// Old route
 				if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
-					tempDOM.routeCached.on.leaving();
+					tempDOM.routeCached.on.leaving(path, url);
 
 				self.lastDOM = tempDOM;
 			}

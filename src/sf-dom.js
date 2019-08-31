@@ -1,13 +1,14 @@
 sf.dom = function(selector, context){
 	if(selector == null)
-		selector = {length:0};
+		selector = Object.assign({length:0}, internal.dom.extends_Dom7);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
 		selector = sf.dom.parseElement(selector);
 	else if(context)
 		selector = context.querySelectorAll(selector);
 	else if(selector.constructor === String)
 		selector = document.querySelectorAll(selector);
-	else selector = {0:selector, length:1};
+	else if(selector.constructor !== Array)
+		selector = {0:selector, length:1};
 
 	Object.assign(selector, sf.dom.fn);
 	return selector;
@@ -27,7 +28,7 @@ var $ = sf.dom; // Shortcut
 	var css_strRep = function(f, m){return m.toUpperCase()};
 
 	self.fn = {
-		push:function(el){
+		add:function(el){
 			if(el.constructor !== Array)
 				el = [el];
 
@@ -70,6 +71,18 @@ var $ = sf.dom; // Shortcut
 		},
 
 		// Action only
+		remove:function(){
+			for (var i = 0; i < this.length; i++)
+				this[i].remove();
+
+			return this;
+		},
+		empty:function(){
+			for (var i = 0; i < this.length; i++)
+				this[i].textContent = '';
+
+			return this;
+		},
 		addClass:function(name){
 			for (var i = 0; i < this.length; i++)
 				this[i].classList.add(...name.split(' '));
@@ -90,6 +103,24 @@ var $ = sf.dom; // Shortcut
 				if(this[i].classList.contains(name))
 					return true;
 			return false;
+		},
+		prop:function(name, value){
+			if(value === void 0)
+				return this[0][name];
+
+			for (var i = 0; i < this.length; i++)
+				this[i][name] = value;
+
+			return this;
+		},
+		attr:function(name, value){
+			if(value === void 0)
+				return this[0].getAttribute(name);
+
+			for (var i = 0; i < this.length; i++)
+				this[i].setAttribute(name, value);
+
+			return this;
 		},
 		css:function(name, value){
 			if(value === void 0 && name.constructor === String)
@@ -133,12 +164,61 @@ var $ = sf.dom; // Shortcut
 				self.on(this[i], event, selector, callback, true);
 			return this;
 		},
+		trigger:function(events, data, direct) {
+			events = events.split(' ');
+			for (var i = 0; i < events.length; i++) {
+				var event = events[i];
+				for (var j = 0; j < this.length; j++) {
+					if(direct === true){
+						this[j][event]();
+						continue;
+					}
+
+					var evt;
+					try {
+						evt = new window.CustomEvent(event, {detail: data, bubbles: true, cancelable: true});
+					} catch (e) {
+						evt = document.createEvent('Event');
+						evt.initEvent(event, true, true);
+						evt.detail = data;
+					}
+
+					this[j].dispatchEvent(evt);
+				}
+			}
+			return this;
+		},
 		animateCSS:function(){
 			for (var i = 0; i < this.length; i++)
 				self.on(this[i], event, selector, callback, true);
 			return this;
 		},
 	};
+
+	Object.assign(self.fn, {
+		click:function(d){this.trigger('click', d, true)},
+		blur:function(d){this.trigger('blur', d, true)},
+		focus:function(d){this.trigger('focus', d, true)},
+		focusin:function(d){this.trigger('focusin', d)},
+		focusout:function(d){this.trigger('focusout', d)},
+		keyup:function(d){this.trigger('keyup', d)},
+		keydown:function(d){this.trigger('keydown', d)},
+		keypress:function(d){this.trigger('keypress', d)},
+		submit:function(d){this.trigger('submit', d)},
+		change:function(d){this.trigger('change', d)},
+		mousedown:function(d){this.trigger('mousedown', d)},
+		mousemove:function(d){this.trigger('mousemove', d)},
+		mouseup:function(d){this.trigger('mouseup', d)},
+		mouseenter:function(d){this.trigger('mouseenter', d)},
+		mouseleave:function(d){this.trigger('mouseleave', d)},
+		mouseout:function(d){this.trigger('mouseout', d)},
+		mouseover:function(d){this.trigger('mouseover', d)},
+		touchstart:function(d){this.trigger('touchstart', d)},
+		touchend:function(d){this.trigger('touchend', d)},
+		touchmove:function(d){this.trigger('touchmove', d)},
+		resize:function(d){this.trigger('resize', d, true)},
+		scroll:function(d){this.trigger('scroll', d, true)},
+	});
 
 	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);
@@ -283,6 +363,9 @@ var $ = sf.dom; // Shortcut
 		if(callback){
 			element.removeEventListener(event, callback, {capture:true});
 			var ref = element.sf$eventListener[event];
+			if(ref === void 0)
+				return;
+
 			var i = ref.indexOf(callback);
 
 			if(i !== -1)

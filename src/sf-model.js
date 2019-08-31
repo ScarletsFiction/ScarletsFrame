@@ -1789,12 +1789,8 @@ sf.model = function(scope){
 
 				var modelName = temp[i].getAttribute('sf-controller') || temp[i].sf$component;
 				var model = self.root[modelName] || sf.model(modelName);
-				if(model.$page === void 0){
-					model.$page = window.$([]);
-
-					if(model.$page.push === void 0)
-						Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
-				}
+				if(model.$page === void 0)
+					model.$page = $();
 
 				model.$page.push(temp[i]);
 
