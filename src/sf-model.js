@@ -606,7 +606,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			}).split('_model_._modelScope.').join('_model_.').split('._modelScope.').join('.');
+			}).split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
 
 			// Evaluate
 			if(runEval === '#noEval'){
@@ -717,7 +717,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			}).split('_model_._modelScope.').join('_model_.');
+			}).split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
 
 			var result = '';
 			var check = false;

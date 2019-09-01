@@ -437,7 +437,7 @@ var self = sf.views = function View(selector, name){
 				}
 			}
 
-			// Wait if there are some comonent that being initialized
+			// Wait if there are some component that being initialized
 			setTimeout(function(){
 				// Parse the DOM data binding
 				sf.model.init(dom);
