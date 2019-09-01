@@ -382,13 +382,13 @@ var $ = sf.dom; // Shortcut
 		}
 	}
 
-	self.animateKey = function(element, animationName, callback, duration){
+	self.animateKey = function(element, animationName, duration, callback){
 		if(element === void 0)
 			return;
 
-		if(callback && callback.constructor !== Function){
-			duration = callback;
-			callback = void 0;
+		if(duration && duration.constructor === Function){
+			callback = duration;
+			duration = void 0;
 		}
 
 		var animationEnd = {
@@ -444,20 +444,26 @@ var $ = sf.dom; // Shortcut
 		}
 
 		var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
-		var parentStyle = element.parentElement.style;
 
-		element.parentElement.classList.add('anim-parent');
+		if(element.parentElement !== null){
+			var parentStyle = element.parentElement.style;
+			element.parentElement.classList.add('anim-parent');
+			parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
+		}
+
 		element.classList.add('anim-element');
-
 		style.webkitAnimation = style.animation = arrange;
-		parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
 
 		self.once(element, animationEnd, function(){
 			setTimeout(function(){
 				style.visibility = '';
 				element.classList.remove('anim-element');
-				style.webkitAnimation = style.animation = 
-				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+				style.webkitAnimation = style.animation = '';
+
+				if(element.parentElement !== null){
+					var parentStyle = element.parentElement.style;
+					parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+				}
 			}, 1);
 
 			if(callback !== void 0) callback();

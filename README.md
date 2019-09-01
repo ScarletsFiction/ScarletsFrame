@@ -2,6 +2,7 @@
 
 [![Written by](https://img.shields.io/badge/Written%20by-ScarletsFiction-%231e87ff.svg)](LICENSE)
 [![Software License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE)
+[![](https://data.jsdelivr.com/v1/package/npm/scarletsframe/badge)](https://www.jsdelivr.com/package/npm/scarletsframe)
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=ScarletsFrame%20is%20frontend%20library%20that%20can%20help%20simplify%20your%20code.&url=https://github.com/ScarletsFiction/ScarletsFrame&via=github&hashtags=scarletsframe,browser,framework,library,mvw)
 
 # ScarletsFrame
@@ -21,7 +22,7 @@ A frontend framework that can help you write a simple web structure with complex
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
 ```html
-<script type="text/javascript" src='https://unpkg.com/scarletsframe@latest/dist/scarletsframe.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest'></script>
 ```
 
 This framework still being developed and may have breaking changes before the release, make sure you specify the version instead using `latest`. Please help the development of this framework >.<
