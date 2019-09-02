@@ -447,7 +447,7 @@ var $ = sf.dom; // Shortcut
 		if(duration.fill !== void 0)
 			arrange += ' '+duration.fill;
 
-		requestAnimationFrame(function(){
+		setTimeout(function(){
 			if(!element.isConnected){
 				if(callback !== void 0) callback();
 				return;
@@ -465,7 +465,7 @@ var $ = sf.dom; // Shortcut
 			style.webkitAnimation = style.animation = arrange;
 
 			self.once(element, animationEnd, function(){
-				requestAnimationFrame(function(){
+				setTimeout(function(){
 					if(element.parentElement !== null){
 						style.visibility = '';
 						element.classList.remove('anim-element');
@@ -526,7 +526,7 @@ var $ = sf.dom; // Shortcut
 	}
 
 	var documentElement = null;
-	requestAnimationFrame(function(){
+	setTimeout(function(){
 		sf.loader.domReady(function(){
 			documentElement = document.body.parentElement;
 		});

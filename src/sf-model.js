@@ -633,7 +633,7 @@ sf.model = function(scope){
 		if(runEval === '#noEval'){
 			// Clear memory before return
 			preParsed = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
-			requestAnimationFrame(function(){prepared = null});
+			setTimeout(function(){prepared = null});
 		}
 		return prepared;
 	}
@@ -844,7 +844,7 @@ sf.model = function(scope){
 		if(runEval === '#noEval'){
 			// Clear memory before return
 			_modelScope = runEval = scopeMask = itemMask = html = null;
-			requestAnimationFrame(function(){prepared = null});
+			setTimeout(function(){prepared = null});
 			return [prepared, preParsedReference, _content_];
 		}
 

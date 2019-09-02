@@ -443,7 +443,7 @@ var self = sf.views = function View(selector, name){
 			}
 
 			// Wait if there are some component that being initialized
-			requestAnimationFrame(function(){
+			setTimeout(function(){
 				// Parse the DOM data binding
 				sf.model.init(dom);
 
