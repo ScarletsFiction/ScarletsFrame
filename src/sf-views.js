@@ -301,6 +301,9 @@ var self = sf.views = function View(selector, name){
 
 		if(!firstRouted){
 			sf(function(){
+				if(firstRouted)
+					return;
+
 				if(name === slash && !rootDOM.childElementCount){
 					self.currentPath = '';
 					firstRouted = self.goto(sf.url.paths);

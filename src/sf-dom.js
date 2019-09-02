@@ -447,30 +447,37 @@ var $ = sf.dom; // Shortcut
 		if(duration.fill !== void 0)
 			arrange += ' '+duration.fill;
 
-		var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
+		requestAnimationFrame(function(){
+			if(!element.isConnected){
+				if(callback !== void 0) callback();
+				return;
+			}
 
-		if(element.parentElement !== null){
-			var parentStyle = element.parentElement.style;
-			element.parentElement.classList.add('anim-parent');
-			parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
-		}
+			element.classList.add('anim-element');
 
-		element.classList.add('anim-element');
-		style.webkitAnimation = style.animation = arrange;
+			if(element.parentElement !== null){
+				var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
+				var parentStyle = element.parentElement.style;
+				element.parentElement.classList.add('anim-parent');
+				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
+			}
 
-		self.once(element, animationEnd, function(){
-			requestAnimationFrame(function(){
-				style.visibility = '';
-				element.classList.remove('anim-element');
-				style.webkitAnimation = style.animation = '';
+			style.webkitAnimation = style.animation = arrange;
 
-				if(element.parentElement !== null){
-					var parentStyle = element.parentElement.style;
-					parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
-				}
+			self.once(element, animationEnd, function(){
+				requestAnimationFrame(function(){
+					if(element.parentElement !== null){
+						style.visibility = '';
+						element.classList.remove('anim-element');
+						style.webkitAnimation = style.animation = '';
+
+						var parentStyle = element.parentElement.style;
+						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+					}
+				});
+
+				if(callback !== void 0) callback();
 			});
-
-			if(callback !== void 0) callback();
 		});
 	}
 
