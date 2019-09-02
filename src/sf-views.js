@@ -300,20 +300,22 @@ var self = sf.views = function View(selector, name){
 			self.selector();
 
 		if(!firstRouted){
-			if(name === slash && !rootDOM.childElementCount){
-				self.currentPath = '';
-				firstRouted = self.goto(sf.url.paths);
-			}
+			sf(function(){
+				if(name === slash && !rootDOM.childElementCount){
+					self.currentPath = '';
+					firstRouted = self.goto(sf.url.paths);
+				}
 
-			if(pendingAutoRoute){
-				if(aHashes[name] !== void 0)
-					firstRouted = self.goto(aHashes[name]);
-				else
-					firstRouted = self.goto('/');
+				if(pendingAutoRoute){
+					if(aHashes[name] !== void 0)
+						firstRouted = self.goto(aHashes[name]);
+					else
+						firstRouted = self.goto('/');
 
-				if(firstRouted)
-					pendingAutoRoute = false;
-			}
+					if(firstRouted)
+						pendingAutoRoute = false;
+				}
+			});
 		}
 	}
 
@@ -438,7 +440,7 @@ var self = sf.views = function View(selector, name){
 			}
 
 			// Wait if there are some component that being initialized
-			setTimeout(function(){
+			requestAnimationFrame(function(){
 				// Parse the DOM data binding
 				sf.model.init(dom);
 
@@ -485,7 +487,7 @@ var self = sf.views = function View(selector, name){
 				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
 					parent.firstElementChild.remove();
 				}
-			}, 200);
+			});
 		}
 
 		var afterDOMLoaded = function(dom){
@@ -557,8 +559,16 @@ var self = sf.views = function View(selector, name){
 				dom.classList.add('page-prepare');
 				dom.style.display = 'none';
 
-				if(url.templateURL !== void 0)
-					cachedURL[url.templateURL] = dom.cloneNode(true);
+				// Same as above but without the component initialization
+				if(url.templateURL !== void 0){
+					internal.component.skip = true;
+					var temp = document.createElement('sf-page-view');
+					temp.innerHTML = html_content;
+					cachedURL[url.templateURL] = temp.cloneNode(true);
+					temp.classList.add('page-prepare');
+					temp.style.display = 'none';
+					internal.component.skip = false;
+				}
 
 				afterDOMLoaded(dom);
 			},

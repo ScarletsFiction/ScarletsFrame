@@ -61,17 +61,15 @@ sf.component = new function(){
 
 	var tempDOM = document.createElement('div');
 	self.new = function(name, element, $item, isCreated, retriggered){
-		if(isCreated === true){
-			if(sf.loader.DOMWasLoaded === false)
-				return sf(function(){
-					self.new(name, element, $item, isCreated, false);
-				});
+		if(internal.component.skip)
+			return;
 
+		if(isCreated === true){
 			if(element.childElementCount === 0){
 				if(self.registered[name][3] === false)
-					return setTimeout(function(){
+					return requestAnimationFrame(function(){
 						self.new(name, element, $item, isCreated, true);
-					}, 0);
+					});
 			}
 
 			if(element.hasAttribute('sf-component-ignore') === true)

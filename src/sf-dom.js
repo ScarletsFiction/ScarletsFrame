@@ -120,6 +120,12 @@ var $ = sf.dom; // Shortcut
 
 			return this;
 		},
+		removeAttr:function(name){
+			for (var i = 0; i < this.length; i++)
+				this[i].removeAttribute(name);
+
+			return this;
+		},
 		css:function(name, value){
 			if(value === void 0 && name.constructor === String)
 				return this[0].style[name];
@@ -413,35 +419,33 @@ var $ = sf.dom; // Shortcut
 				fill:'both'
 			};
 
-		if(duration.constructor === Object){
-			if(duration.duration !== void 0)
-				arrange += ' '+duration.duration+'s';
-			if(duration.ease !== void 0)
-				arrange += ' '+duration.ease;
+		if(duration.duration !== void 0)
+			arrange += ' '+duration.duration+'s';
+		if(duration.ease !== void 0)
+			arrange += ' '+duration.ease;
 
-			if(duration.delay !== void 0){
-				arrange += ' '+duration.delay+'s';
+		if(duration.delay !== void 0){
+			arrange += ' '+duration.delay+'s';
 
-				if(animationEnd === 'animationend')
-					var animationStart = 'animationstart';
-				else var animationStart = 'webkitAnimationStart';
+			if(animationEnd === 'animationend')
+				var animationStart = 'animationstart';
+			else var animationStart = 'webkitAnimationStart';
 
-				if(duration.visible === false)
-					style.visibility = 'hidden';
+			if(duration.visible === false)
+				style.visibility = 'hidden';
 
-				sf.dom.once(element, animationStart, function(){
-					style.visibility = 'visible';
-				});
-			}
-			else style.visibility = 'visible';
-
-			if(duration.iteration !== void 0)
-				arrange += ' '+duration.iteration;
-			if(duration.direction !== void 0)
-				arrange += ' '+duration.direction;
-			if(duration.fill !== void 0)
-				arrange += ' '+duration.fill;
+			self.once(element, animationStart, function(){
+				style.visibility = 'visible';
+			});
 		}
+		else style.visibility = 'visible';
+
+		if(duration.iteration !== void 0)
+			arrange += ' '+duration.iteration;
+		if(duration.direction !== void 0)
+			arrange += ' '+duration.direction;
+		if(duration.fill !== void 0)
+			arrange += ' '+duration.fill;
 
 		var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
 
@@ -455,7 +459,7 @@ var $ = sf.dom; // Shortcut
 		style.webkitAnimation = style.animation = arrange;
 
 		self.once(element, animationEnd, function(){
-			setTimeout(function(){
+			requestAnimationFrame(function(){
 				style.visibility = '';
 				element.classList.remove('anim-element');
 				style.webkitAnimation = style.animation = '';
@@ -464,7 +468,7 @@ var $ = sf.dom; // Shortcut
 					var parentStyle = element.parentElement.style;
 					parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
 				}
-			}, 1);
+			});
 
 			if(callback !== void 0) callback();
 		});
@@ -515,11 +519,11 @@ var $ = sf.dom; // Shortcut
 	}
 
 	var documentElement = null;
-	setTimeout(function(){
+	requestAnimationFrame(function(){
 		sf.loader.domReady(function(){
 			documentElement = document.body.parentElement;
 		});
-	}, 1);
+	});
 
 	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
