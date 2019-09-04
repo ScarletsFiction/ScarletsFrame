@@ -197,31 +197,83 @@ var $ = sf.dom; // Shortcut
 				self.animateKey(this[i], name, callback, duration);
 			return this;
 		},
+		each:function(callback){
+			for (var i = 0; i < this.length; i++)
+				callback(this[i], i, this);
+			return this;
+		},
+		data:function(key, value){
+			if(value === void 0)
+				return this[0].$data ? this[0].$data[key] : void 0;
+
+			for (var i = 0; i < this.length; i++){
+				if(this[i].$data === void 0)
+					this[i].$data = {};
+				this[i].$data[key] = value;
+			}
+			return this;
+		},
+		removeData:function(key){
+			for (var i = 0; i < this.length; i++){
+				if(this[i].$data === void 0)
+					continue;
+
+				delete this[i].$data[key];
+			}
+			return this;
+		},
+		append:function(element){
+			if(element.constructor === Array){
+				for (var i = 0; i < element.length; i++)
+					this[0].append(element[i]);
+			}
+			else{
+				if(element.constructor === String)
+					this[0].insertAdjacentHTML('beforeEnd', element);
+				else this[0].append(element);
+			}
+			return this;
+		},
+		prepend:function(element){
+			if(element.constructor === Array){
+				for (var i = 0; i < element.length; i++)
+					this[0].prepend(element[i]);
+			}
+			else{
+				if(element.constructor === String)
+					this[0].insertAdjacentHTML('afterBegin', element);
+				else this[0].prepend(element);
+			}
+			return this;
+		},
+		eq:function(i){
+			return $(this[i]);
+		},
 	};
 
 	Object.assign(self.fn, {
-		click:function(d){this.trigger('click', d, true)},
-		blur:function(d){this.trigger('blur', d, true)},
-		focus:function(d){this.trigger('focus', d, true)},
-		focusin:function(d){this.trigger('focusin', d)},
-		focusout:function(d){this.trigger('focusout', d)},
-		keyup:function(d){this.trigger('keyup', d)},
-		keydown:function(d){this.trigger('keydown', d)},
-		keypress:function(d){this.trigger('keypress', d)},
-		submit:function(d){this.trigger('submit', d)},
-		change:function(d){this.trigger('change', d)},
-		mousedown:function(d){this.trigger('mousedown', d)},
-		mousemove:function(d){this.trigger('mousemove', d)},
-		mouseup:function(d){this.trigger('mouseup', d)},
-		mouseenter:function(d){this.trigger('mouseenter', d)},
-		mouseleave:function(d){this.trigger('mouseleave', d)},
-		mouseout:function(d){this.trigger('mouseout', d)},
-		mouseover:function(d){this.trigger('mouseover', d)},
-		touchstart:function(d){this.trigger('touchstart', d)},
-		touchend:function(d){this.trigger('touchend', d)},
-		touchmove:function(d){this.trigger('touchmove', d)},
-		resize:function(d){this.trigger('resize', d, true)},
-		scroll:function(d){this.trigger('scroll', d, true)},
+		click:function(d){return this.trigger('click', d, true)},
+		blur:function(d){return this.trigger('blur', d, true)},
+		focus:function(d){return this.trigger('focus', d, true)},
+		focusin:function(d){return this.trigger('focusin', d)},
+		focusout:function(d){return this.trigger('focusout', d)},
+		keyup:function(d){return this.trigger('keyup', d)},
+		keydown:function(d){return this.trigger('keydown', d)},
+		keypress:function(d){return this.trigger('keypress', d)},
+		submit:function(d){return this.trigger('submit', d)},
+		change:function(d){return this.trigger('change', d)},
+		mousedown:function(d){return this.trigger('mousedown', d)},
+		mousemove:function(d){return this.trigger('mousemove', d)},
+		mouseup:function(d){return this.trigger('mouseup', d)},
+		mouseenter:function(d){return this.trigger('mouseenter', d)},
+		mouseleave:function(d){return this.trigger('mouseleave', d)},
+		mouseout:function(d){return this.trigger('mouseout', d)},
+		mouseover:function(d){return this.trigger('mouseover', d)},
+		touchstart:function(d){return this.trigger('touchstart', d)},
+		touchend:function(d){return this.trigger('touchend', d)},
+		touchmove:function(d){return this.trigger('touchmove', d)},
+		resize:function(d){return this.trigger('resize', d, true)},
+		scroll:function(d){return this.trigger('scroll', d, true)},
 	});
 
 	self.findOne = function(selector, context){
