@@ -68,7 +68,8 @@ sf.internal.virtual_scroll = new function(){
 		internal.afterModelBinding = undefined;
 
 		setTimeout(function(){
-			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
+			if(list.$virtual === undefined || !parentNode.isConnected)
+				return; // Somewhat it's uninitialized
 
 			scroller = internal.findScrollerElement(parentNode);
 			scroller.classList.add('sf-scroll-element');
@@ -711,16 +712,16 @@ sf.internal.virtual_scroll = new function(){
 				for (var i = _onElementResize.length - 1; i >= 0; i--) {
 					temp = _onElementResize[i];
 
+					// Check if it's removed from DOM
+					if(!temp.element.isConnected){
+						_onElementResize.splice(i, 1);
+						continue;
+					}
+
 					// Check resize
 					if(temp.element.scrollHeight === temp.height
 						|| temp.element.scrollWidth === temp.width)
 						continue;
-
-					// Check if it's removed from DOM
-					if(temp.element.parentElement === null){
-						_onElementResize.splice(i, 1);
-						continue;
-					}
 
 					temp.callback();
 				}

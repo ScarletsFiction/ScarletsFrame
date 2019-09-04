@@ -447,6 +447,8 @@ var $ = sf.dom; // Shortcut
 		if(duration.fill !== void 0)
 			arrange += ' '+duration.fill;
 
+		style.webkitAnimation = style.animation = arrange;
+
 		setTimeout(function(){
 			if(!element.isConnected){
 				if(callback !== void 0) callback();
@@ -461,8 +463,6 @@ var $ = sf.dom; // Shortcut
 				element.parentElement.classList.add('anim-parent');
 				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
 			}
-
-			style.webkitAnimation = style.animation = arrange;
 
 			self.once(element, animationEnd, function(){
 				setTimeout(function(){

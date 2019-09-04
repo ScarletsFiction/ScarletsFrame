@@ -117,7 +117,6 @@ internal.router.parseRoutes = function(obj_, selectorList){
 					dom.appendChild(ref.html);
 
 				dom.classList.add('page-prepare');
-				dom.style.display = 'none';
 			}
 
 			route.keys = keys;
@@ -452,11 +451,10 @@ var self = sf.views = function View(selector, name){
 				if(url.on !== void 0 && url.on.coming)
 					url.on.coming(url.data);
 
-				dom.removeAttribute('style');
-				toBeShowed(dom);
-
 				var tempDOM = self.currentDOM;
 				self.currentDOM = dom;
+
+				toBeShowed(dom);
 
 				// Trigger loaded event
 				var event = onEvent['routeFinish'];
@@ -560,16 +558,14 @@ var self = sf.views = function View(selector, name){
 				var dom = document.createElement('sf-page-view');
 				dom.innerHTML = html_content;
 				dom.classList.add('page-prepare');
-				dom.style.display = 'none';
 
 				// Same as above but without the component initialization
 				if(url.templateURL !== void 0){
 					internal.component.skip = true;
 					var temp = document.createElement('sf-page-view');
 					temp.innerHTML = html_content;
-					cachedURL[url.templateURL] = temp.cloneNode(true);
 					temp.classList.add('page-prepare');
-					temp.style.display = 'none';
+					cachedURL[url.templateURL] = temp;
 					internal.component.skip = false;
 				}
 
