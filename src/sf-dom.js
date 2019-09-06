@@ -1,6 +1,8 @@
 sf.dom = function(selector, context){
 	if(selector == null)
 		selector = Object.assign({length:0}, internal.dom.extends_Dom7);
+	else if(selector.constructor === Function)
+		return sf(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
 		selector = sf.dom.parseElement(selector);
 	else if(context)
@@ -248,6 +250,45 @@ var $ = sf.dom; // Shortcut
 		},
 		eq:function(i){
 			return $(this[i]);
+		},
+		insertAfter:function(el){
+			var parent = el.parentElement;
+			parent.insertBefore(this[0], el.nextSibling);
+
+			for (var i = 1; i < this.length; i++)
+				parent.insertBefore(this[i], this[i-1]);
+			return this;
+		},
+		insertBefore:function(el){
+			var parent = el.parentElement;
+			for (var i = 0; i < this.length; i++)
+				parent.insertBefore(this[i], el);
+			return this;
+		},
+
+		text:function(text){
+			if(text === void 0)
+				return this[0].innerText;
+
+			for (var i = 0; i < this.length; i++)
+				this[i].innerText = text;
+			return this;
+		},
+		html:function(text){
+			if(text === void 0)
+				return this[0].innerHTML;
+
+			for (var i = 0; i < this.length; i++)
+				this[i].innerHTML = text;
+			return this;
+		},
+		val:function(text){
+			if(text === void 0)
+				return this[0].value;
+
+			for (var i = 0; i < this.length; i++)
+				this[i].text = text;
+			return this;
 		},
 	};
 

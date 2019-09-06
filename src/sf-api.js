@@ -1,5 +1,6 @@
 sf.API = function(method, url, data, success, complete, accessToken, getXHR){
-	if(typeof data !== 'object')
+	var type = typeof data;
+	if(type !== 'object' && type !== 'function')
 		data = {};
 
 	var req = {
@@ -24,6 +25,12 @@ sf.API = function(method, url, data, success, complete, accessToken, getXHR){
 
 	if(data.constructor !== FormData)
 		req.contentType = "application/json";
+
+	if(data.constructor === Function){
+		complete = success;
+		success = data;
+		data = {};
+	}
 
 	data._method = method.toUpperCase();
 
