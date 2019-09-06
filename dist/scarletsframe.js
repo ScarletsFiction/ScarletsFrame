@@ -192,14 +192,17 @@ else
   Reflect_Construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };
 sf.dom = function(selector, context){
 	if(selector == null)
-		selector = {length:0};
+		selector = Object.assign({length:0}, internal.dom.extends_Dom7);
+	else if(selector.constructor === Function)
+		return sf(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
 		selector = sf.dom.parseElement(selector);
 	else if(context)
 		selector = context.querySelectorAll(selector);
 	else if(selector.constructor === String)
 		selector = document.querySelectorAll(selector);
-	else selector = {0:selector, length:1};
+	else if(selector.constructor !== Array)
+		selector = {0:selector, length:1};
 
 	Object.assign(selector, sf.dom.fn);
 	return selector;
@@ -219,7 +222,7 @@ var $ = sf.dom; // Shortcut
 	var css_strRep = function(f, m){return m.toUpperCase()};
 
 	self.fn = {
-		push:function(el){
+		add:function(el){
 			if(el.constructor !== Array)
 				el = [el];
 
@@ -262,6 +265,16 @@ var $ = sf.dom; // Shortcut
 		},
 
 		// Action only
+		remove:function(){
+			for (var i = 0; i < this.length; i++)
+				this[i].remove();
+			return this;
+		},
+		empty:function(){
+			for (var i = 0; i < this.length; i++)
+				this[i].textContent = '';
+			return this;
+		},
 		addClass:function(name){
 			for (var i = 0; i < this.length; i++)
 				this[i].classList.add(...name.split(' '));
@@ -282,6 +295,30 @@ var $ = sf.dom; // Shortcut
 				if(this[i].classList.contains(name))
 					return true;
 			return false;
+		},
+		prop:function(name, value){
+			if(value === void 0)
+				return this[0][name];
+
+			for (var i = 0; i < this.length; i++)
+				this[i][name] = value;
+
+			return this;
+		},
+		attr:function(name, value){
+			if(value === void 0)
+				return this[0].getAttribute(name);
+
+			for (var i = 0; i < this.length; i++)
+				this[i].setAttribute(name, value);
+
+			return this;
+		},
+		removeAttr:function(name){
+			for (var i = 0; i < this.length; i++)
+				this[i].removeAttribute(name);
+
+			return this;
 		},
 		css:function(name, value){
 			if(value === void 0 && name.constructor === String)
@@ -325,12 +362,152 @@ var $ = sf.dom; // Shortcut
 				self.on(this[i], event, selector, callback, true);
 			return this;
 		},
-		animateCSS:function(){
+		trigger:function(events, data, direct) {
+			events = events.split(' ');
+			for (var i = 0; i < events.length; i++) {
+				var event = events[i];
+				for (var j = 0; j < this.length; j++) {
+					if(direct === true){
+						this[j][event]();
+						continue;
+					}
+
+					var evt;
+					try {
+						evt = new window.CustomEvent(event, {detail: data, bubbles: true, cancelable: true});
+					} catch (e) {
+						evt = document.createEvent('Event');
+						evt.initEvent(event, true, true);
+						evt.detail = data;
+					}
+
+					this[j].dispatchEvent(evt);
+				}
+			}
+			return this;
+		},
+		animateKey:function(name, callback, duration){
 			for (var i = 0; i < this.length; i++)
-				self.on(this[i], event, selector, callback, true);
+				self.animateKey(this[i], name, callback, duration);
+			return this;
+		},
+		each:function(callback){
+			for (var i = 0; i < this.length; i++)
+				callback(this[i], i, this);
+			return this;
+		},
+		data:function(key, value){
+			if(value === void 0)
+				return this[0].$data ? this[0].$data[key] : void 0;
+
+			for (var i = 0; i < this.length; i++){
+				if(this[i].$data === void 0)
+					this[i].$data = {};
+				this[i].$data[key] = value;
+			}
+			return this;
+		},
+		removeData:function(key){
+			for (var i = 0; i < this.length; i++){
+				if(this[i].$data === void 0)
+					continue;
+
+				delete this[i].$data[key];
+			}
+			return this;
+		},
+		append:function(element){
+			if(element.constructor === Array){
+				for (var i = 0; i < element.length; i++)
+					this[0].append(element[i]);
+			}
+			else{
+				if(element.constructor === String)
+					this[0].insertAdjacentHTML('beforeEnd', element);
+				else this[0].append(element);
+			}
+			return this;
+		},
+		prepend:function(element){
+			if(element.constructor === Array){
+				for (var i = 0; i < element.length; i++)
+					this[0].prepend(element[i]);
+			}
+			else{
+				if(element.constructor === String)
+					this[0].insertAdjacentHTML('afterBegin', element);
+				else this[0].prepend(element);
+			}
+			return this;
+		},
+		eq:function(i){
+			return $(this[i]);
+		},
+		insertAfter:function(el){
+			var parent = el.parentElement;
+			parent.insertBefore(this[0], el.nextSibling);
+
+			for (var i = 1; i < this.length; i++)
+				parent.insertBefore(this[i], this[i-1]);
+			return this;
+		},
+		insertBefore:function(el){
+			var parent = el.parentElement;
+			for (var i = 0; i < this.length; i++)
+				parent.insertBefore(this[i], el);
+			return this;
+		},
+
+		text:function(text){
+			if(text === void 0)
+				return this[0].innerText;
+
+			for (var i = 0; i < this.length; i++)
+				this[i].innerText = text;
+			return this;
+		},
+		html:function(text){
+			if(text === void 0)
+				return this[0].innerHTML;
+
+			for (var i = 0; i < this.length; i++)
+				this[i].innerHTML = text;
+			return this;
+		},
+		val:function(text){
+			if(text === void 0)
+				return this[0].value;
+
+			for (var i = 0; i < this.length; i++)
+				this[i].text = text;
 			return this;
 		},
 	};
+
+	Object.assign(self.fn, {
+		click:function(d){return this.trigger('click', d, true)},
+		blur:function(d){return this.trigger('blur', d, true)},
+		focus:function(d){return this.trigger('focus', d, true)},
+		focusin:function(d){return this.trigger('focusin', d)},
+		focusout:function(d){return this.trigger('focusout', d)},
+		keyup:function(d){return this.trigger('keyup', d)},
+		keydown:function(d){return this.trigger('keydown', d)},
+		keypress:function(d){return this.trigger('keypress', d)},
+		submit:function(d){return this.trigger('submit', d)},
+		change:function(d){return this.trigger('change', d)},
+		mousedown:function(d){return this.trigger('mousedown', d)},
+		mousemove:function(d){return this.trigger('mousemove', d)},
+		mouseup:function(d){return this.trigger('mouseup', d)},
+		mouseenter:function(d){return this.trigger('mouseenter', d)},
+		mouseleave:function(d){return this.trigger('mouseleave', d)},
+		mouseout:function(d){return this.trigger('mouseout', d)},
+		mouseover:function(d){return this.trigger('mouseover', d)},
+		touchstart:function(d){return this.trigger('touchstart', d)},
+		touchend:function(d){return this.trigger('touchend', d)},
+		touchmove:function(d){return this.trigger('touchmove', d)},
+		resize:function(d){return this.trigger('resize', d, true)},
+		scroll:function(d){return this.trigger('scroll', d, true)},
+	});
 
 	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);
@@ -475,6 +652,9 @@ var $ = sf.dom; // Shortcut
 		if(callback){
 			element.removeEventListener(event, callback, {capture:true});
 			var ref = element.sf$eventListener[event];
+			if(ref === void 0)
+				return;
+
 			var i = ref.indexOf(callback);
 
 			if(i !== -1)
@@ -493,11 +673,17 @@ var $ = sf.dom; // Shortcut
 		}
 	}
 
-	self.animateCSS = function(element, animationName, callback, duration) {
+	self.animateKey = function(element, animationName, duration, callback){
+		if(element === void 0)
+			return;
+
+		if(duration && duration.constructor === Function){
+			callback = duration;
+			duration = void 0;
+		}
+
 		var animationEnd = {
 			animation: 'animationend',
-			OAnimation: 'oAnimationEnd',
-			MozAnimation: 'mozAnimationEnd',
 			WebkitAnimation: 'webkitAnimationEnd',
 		};
 
@@ -508,22 +694,75 @@ var $ = sf.dom; // Shortcut
 			}
 		}
 
-		if(duration){
-			element.style.webkitAnimationDuration = duration+'s';
-			element.style.animationDuration = duration+'s';
+	  	var style = element.style;
+		var arrange = animationName;
+
+		if(duration === void 0 || duration.constructor === Number)
+			duration = {
+				duration:duration && duration.constructor === Number ? duration : 0.6,
+				ease:'ease',
+				fill:'both'
+			};
+
+		if(duration.duration !== void 0)
+			arrange += ' '+duration.duration+'s';
+		if(duration.ease !== void 0)
+			arrange += ' '+duration.ease;
+
+		if(duration.delay !== void 0){
+			arrange += ' '+duration.delay+'s';
+
+			if(animationEnd === 'animationend')
+				var animationStart = 'animationstart';
+			else var animationStart = 'webkitAnimationStart';
+
+			if(duration.visible === false)
+				style.visibility = 'hidden';
+
+			self.once(element, animationStart, function(){
+				style.visibility = 'visible';
+			});
 		}
+		else style.visibility = 'visible';
 
-		var list = ('animated ' + animationName).split(' ');
-		element.classList.add.apply(element.classList, list);
-		$.once(element, animationEnd, function(){
-			element.classList.remove.apply(element.classList, list);
-			
-			if(duration) setTimeout(function(){
-				element.style.webkitAnimationDuration = duration+'s';
-				element.style.animationDuration = duration+'s';
-			}, 1);
+		if(duration.iteration !== void 0)
+			arrange += ' '+duration.iteration;
+		if(duration.direction !== void 0)
+			arrange += ' '+duration.direction;
+		if(duration.fill !== void 0)
+			arrange += ' '+duration.fill;
 
-			if(typeof callback === 'function') callback();
+		style.webkitAnimation = style.animation = arrange;
+
+		setTimeout(function(){
+			if(!element.isConnected){
+				if(callback !== void 0) callback();
+				return;
+			}
+
+			element.classList.add('anim-element');
+
+			if(element.parentElement !== null){
+				var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
+				var parentStyle = element.parentElement.style;
+				element.parentElement.classList.add('anim-parent');
+				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
+			}
+
+			self.once(element, animationEnd, function(){
+				setTimeout(function(){
+					if(element.parentElement !== null){
+						style.visibility = '';
+						element.classList.remove('anim-element');
+						style.webkitAnimation = style.animation = '';
+
+						var parentStyle = element.parentElement.style;
+						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+					}
+				});
+
+				if(callback !== void 0) callback();
+			});
 		});
 	}
 
@@ -576,7 +815,7 @@ var $ = sf.dom; // Shortcut
 		sf.loader.domReady(function(){
 			documentElement = document.body.parentElement;
 		});
-	}, 1);
+	});
 
 	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
@@ -913,17 +1152,15 @@ sf.component = new function(){
 
 	var tempDOM = document.createElement('div');
 	self.new = function(name, element, $item, isCreated, retriggered){
-		if(isCreated === true){
-			if(sf.loader.DOMWasLoaded === false)
-				return sf(function(){
-					self.new(name, element, $item, isCreated, false);
-				});
+		if(internal.component.skip)
+			return;
 
+		if(isCreated === true){
 			if(element.childElementCount === 0){
 				if(self.registered[name][3] === false)
-					return setTimeout(function(){
+					return requestAnimationFrame(function(){
 						self.new(name, element, $item, isCreated, true);
-					}, 0);
+					});
 			}
 
 			if(element.hasAttribute('sf-component-ignore') === true)
@@ -1676,7 +1913,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			}).split('_model_._modelScope.').join('_model_.').split('._modelScope.').join('.');
+			}).split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
 
 			// Evaluate
 			if(runEval === '#noEval'){
@@ -1703,7 +1940,7 @@ sf.model = function(scope){
 		if(runEval === '#noEval'){
 			// Clear memory before return
 			preParsed = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
-			setTimeout(function(){prepared = null}, 1);
+			setTimeout(function(){prepared = null});
 		}
 		return prepared;
 	}
@@ -1787,7 +2024,7 @@ sf.model = function(scope){
 				return temp_.replace(scopeMask, function(full, matched){
 					return '_modelScope.'+matched;
 				});
-			}).split('_model_._modelScope.').join('_model_.');
+			}).split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
 
 			var result = '';
 			var check = false;
@@ -1914,7 +2151,7 @@ sf.model = function(scope){
 		if(runEval === '#noEval'){
 			// Clear memory before return
 			_modelScope = runEval = scopeMask = itemMask = html = null;
-			setTimeout(function(){prepared = null}, 1);
+			setTimeout(function(){prepared = null});
 			return [prepared, preParsedReference, _content_];
 		}
 
@@ -2859,12 +3096,8 @@ sf.model = function(scope){
 
 				var modelName = temp[i].getAttribute('sf-controller') || temp[i].sf$component;
 				var model = self.root[modelName] || sf.model(modelName);
-				if(model.$page === void 0){
-					model.$page = window.$([]);
-
-					if(model.$page.push === void 0)
-						Object.assign(model.$page.__proto__, internal.dom.extends_Dom7);
-				}
+				if(model.$page === void 0)
+					model.$page = $();
 
 				model.$page.push(temp[i]);
 
@@ -3548,7 +3781,8 @@ sf.model = function(scope){
 	}
 })();
 sf.API = function(method, url, data, success, complete, accessToken, getXHR){
-	if(typeof data !== 'object')
+	var type = typeof data;
+	if(type !== 'object' && type !== 'function')
 		data = {};
 
 	var req = {
@@ -3573,6 +3807,12 @@ sf.API = function(method, url, data, success, complete, accessToken, getXHR){
 
 	if(data.constructor !== FormData)
 		req.contentType = "application/json";
+
+	if(data.constructor === Function){
+		complete = success;
+		success = data;
+		data = {};
+	}
 
 	data._method = method.toUpperCase();
 
@@ -4258,7 +4498,7 @@ sf.events = (function(){
 						try{
 							callback[i].apply(null, arguments);
 							if(callback[i].once === true)
-								callback[i].splice(i--, 1);
+								callback.splice(i--, 1);
 						} catch(e) {
 							console.error(e);
 						}
@@ -4410,10 +4650,13 @@ self.get = function(path, obj, callback){
 function diveFill(obj1, obj2){
 	var keys = Object.keys(obj2);
 	for (var i = 0; i < keys.length; i++) {
-		if(obj1[keys[i]] === void 0)
-			obj1[keys[i]] = obj2[keys[i]];
-		else
-			diveFill(obj1[keys[i]], obj2[keys[i]]);
+		var key = keys[i];
+
+		if(obj1[key] === void 0)
+			obj1[key] = obj2[key];
+
+		else if(obj2[key].constructor === Object)
+			diveFill(obj1[key], obj2[key]);
 	}
 }
 
@@ -4545,6 +4788,18 @@ self.replace = function(){
 	window.history.replaceState(window.history.state, '', self());
 }
 
+self.get = function(name, index){
+	self.parse();
+
+	if(name.constructor === Number)
+		return self.paths.split('/')[name+1];
+
+	if(hashes[name] === void 0)
+		return;
+
+	return hashes[name].split('/')[index+1];
+}
+
 self.parse = function(url){
 	if(url !== void 0){
 		var data = {hashes:{}};
@@ -4655,9 +4910,8 @@ var cachedURL = {};
 internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
-	var pattern = /\/:([^/]+)/;
-	var sep = /\-/;
-    var knownKeys = /path|url|templateURL|html|on|routes|beforeRoute|defaultData/;
+	var pattern = /\/:([^/]+)/g;
+    var knownKeys = /^(path|url|templateURL|html|on|routes|beforeRoute|defaultData)$/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -4667,10 +4921,8 @@ internal.router.parseRoutes = function(obj_, selectorList){
             var ref = obj[i];
 			var current = addition+ref.path;
 
-			if(ref.routes !== void 0){
+			if(ref.routes !== void 0)
 				addRoutes(ref.routes, current, selector, parent);
-				continue;
-			}
 
 			current = current.split('//').join('/');
 
@@ -4697,7 +4949,6 @@ internal.router.parseRoutes = function(obj_, selectorList){
 					dom.appendChild(ref.html);
 
 				dom.classList.add('page-prepare');
-				dom.style.display = 'none';
 			}
 
 			route.keys = keys;
@@ -4724,7 +4975,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
             var keys = Object.keys(ref);
             for(var a = 0; a < keys.length; a++){
                 if(knownKeys.test(keys[a]))
-                  continue;
+                	continue;
 
 				hasChild.push(keys[a]);
 				addRoutes(ref[keys[a]], current, keys[a], route);
@@ -4880,20 +5131,25 @@ var self = sf.views = function View(selector, name){
 			self.selector();
 
 		if(!firstRouted){
-			if(name === slash && !rootDOM.childElementCount){
-				self.currentPath = '';
-				firstRouted = self.goto(sf.url.paths);
-			}
-
-			if(pendingAutoRoute){
-				if(aHashes[name] !== void 0)
-					firstRouted = self.goto(aHashes[name]);
-				else
-					firstRouted = self.goto('/');
-
+			sf(function(){
 				if(firstRouted)
-					pendingAutoRoute = false;
-			}
+					return;
+
+				if(name === slash && !rootDOM.childElementCount){
+					self.currentPath = '';
+					firstRouted = self.goto(sf.url.paths);
+				}
+
+				if(pendingAutoRoute){
+					if(aHashes[name] !== void 0)
+						firstRouted = self.goto(aHashes[name]);
+					else
+						firstRouted = self.goto('/');
+
+					if(firstRouted)
+						pendingAutoRoute = false;
+				}
+			});
 		}
 	}
 
@@ -5010,65 +5266,61 @@ var self = sf.views = function View(selector, name){
 			DOMReference.insertAdjacentElement('beforeend', dom);
 			self.data = url.data;
 
-			try{
-				if(self.dynamicScript !== false){
-					var scripts = dom.getElementsByTagName('script');
-					for (var i = 0; i < scripts.length; i++) {
-					    gEval(scripts[i].text);
-					}
+			if(self.dynamicScript !== false){
+				var scripts = dom.getElementsByTagName('script');
+				for (var i = 0; i < scripts.length; i++) {
+				    gEval(scripts[i].text);
 				}
+			}
 
+			// Wait if there are some component that being initialized
+			setTimeout(function(){
 				// Parse the DOM data binding
 				sf.model.init(dom);
-			}catch(e){
-				console.error(e);
-				dom.remove();
-				return routeError_({status:0});
-			}
 
-			self.data = url.data;
+				self.data = url.data;
 
-			if(url.on !== void 0 && url.on.coming)
-				url.on.coming(url.data);
+				if(url.on !== void 0 && url.on.coming)
+					url.on.coming(url.data);
 
-			dom.removeAttribute('style');
-			toBeShowed(dom);
+				var tempDOM = self.currentDOM;
+				self.currentDOM = dom;
 
-			var tempDOM = self.currentDOM;
-			self.currentDOM = dom;
+				toBeShowed(dom);
 
-			// Trigger loaded event
-			var event = onEvent['routeFinish'];
-			for (var i = 0; i < event.length; i++) {
-				if(event[i](self.currentPath, path, url.data)) return;
-			}
+				// Trigger loaded event
+				var event = onEvent['routeFinish'];
+				for (var i = 0; i < event.length; i++) {
+					if(event[i](self.currentPath, path, url.data)) return;
+				}
 
-			if(pendingShowed !== void 0)
-				self.relatedDOM.push(...pendingShowed);
+				if(pendingShowed !== void 0)
+					self.relatedDOM.push(...pendingShowed);
 
-			if(tempDOM !== null){
-				self.lastPath = self.currentPath;
+				if(tempDOM !== null){
+					self.lastPath = self.currentPath;
 
-				// Old route
-				if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
-					tempDOM.routeCached.on.leaving();
+					// Old route
+					if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
+						tempDOM.routeCached.on.leaving(path, url);
 
-				self.lastDOM = tempDOM;
-			}
+					self.lastDOM = tempDOM;
+				}
 
-			// Save current URL
-			self.currentPath = path;
-			dom.routeCached = url;
-			dom.routePath = path;
+				// Save current URL
+				self.currentPath = path;
+				dom.routeCached = url;
+				dom.routePath = path;
 
-			dom.classList.remove('page-prepare');
-			routingError = false;
+				dom.classList.remove('page-prepare');
+				routingError = false;
 
-			// Clear old cache
-			var parent = self.currentDOM.parentNode;
-			for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-				parent.firstElementChild.remove();
-			}
+				// Clear old cache
+				var parent = self.currentDOM.parentNode;
+				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
+					parent.firstElementChild.remove();
+				}
+			});
 		}
 
 		var afterDOMLoaded = function(dom){
@@ -5138,10 +5390,16 @@ var self = sf.views = function View(selector, name){
 				var dom = document.createElement('sf-page-view');
 				dom.innerHTML = html_content;
 				dom.classList.add('page-prepare');
-				dom.style.display = 'none';
 
-				if(url.templateURL !== void 0)
-					cachedURL[url.templateURL] = dom.cloneNode(true);
+				// Same as above but without the component initialization
+				if(url.templateURL !== void 0){
+					internal.component.skip = true;
+					var temp = document.createElement('sf-page-view');
+					temp.innerHTML = html_content;
+					temp.classList.add('page-prepare');
+					cachedURL[url.templateURL] = temp;
+					internal.component.skip = false;
+				}
 
 				afterDOMLoaded(dom);
 			},
@@ -5311,7 +5569,8 @@ sf.internal.virtual_scroll = new function(){
 		internal.afterModelBinding = undefined;
 
 		setTimeout(function(){
-			if(list.$virtual === undefined) return; // Somewhat it's uninitialized
+			if(list.$virtual === undefined || !parentNode.isConnected)
+				return; // Somewhat it's uninitialized
 
 			scroller = internal.findScrollerElement(parentNode);
 			scroller.classList.add('sf-scroll-element');
@@ -5954,16 +6213,16 @@ sf.internal.virtual_scroll = new function(){
 				for (var i = _onElementResize.length - 1; i >= 0; i--) {
 					temp = _onElementResize[i];
 
+					// Check if it's removed from DOM
+					if(!temp.element.isConnected){
+						_onElementResize.splice(i, 1);
+						continue;
+					}
+
 					// Check resize
 					if(temp.element.scrollHeight === temp.height
 						|| temp.element.scrollWidth === temp.width)
 						continue;
-
-					// Check if it's removed from DOM
-					if(temp.element.parentElement === null){
-						_onElementResize.splice(i, 1);
-						continue;
-					}
 
 					temp.callback();
 				}

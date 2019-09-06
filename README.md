@@ -8,7 +8,26 @@
 # ScarletsFrame
 A frontend framework that can help you write a simple web structure with complex feature. This framework have small memory allocation and allows you to directly write template in the HTML instead of creating different file and load it later. [Here](https://rawgit.com/krausest/js-framework-benchmark/master/webdriver-ts-results/table.html) you can see the benchmark.
 
-# Example
+## Table of contents
+ - [Example](#example)
+ - [Install](#install-with-cdn-link)
+ - [Hints](#hints)
+ - [Asset Loader](#asset-loader)
+ - [Router / Views](#router-views)
+   - [Specify routes](#specify-routes)
+   - [Views event](#views-event)
+   - [Page transition](#page-transition)
+ - [Define Model](#initialize-define-model)
+   - [Model & Template](#model-template-feature)
+   - [Views and Model data binding](#views-and-model-data-binding)
+ - [Controller](#controller)
+ - [Virtual Scroll](#virtual-scroll)
+ - [Components](#components)
+ - [Language/Locale](#language-locale)
+ - [Contribution](#contribution)
+ - [License](#license)
+
+## Example
 - [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
 - [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
 - [Simple Component](https://jsbin.com/guwevis/edit?html,js,console,output)
@@ -16,6 +35,7 @@ A frontend framework that can help you write a simple web structure with complex
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 - [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
 - [State Listener](https://jsbin.com/qohifel/edit?html,js,output)
+- [Shared Model](https://jsbin.com/xiyeron/edit?html,js,output)
 - [Views and Router](https://codesandbox.io/s/viewsrouter-example-1vbdh)
 - [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
 
@@ -43,7 +63,7 @@ sf.model.for('things', (self, root) => {
 });
 ```
 
-## How to use
+## Hints
 After this library was initialized, you could access `sf` from global scope.
 
 When you're passing a function to `sf`, it will be executed after all DOM content / Asset Loader was finished loading.
@@ -53,6 +73,33 @@ sf(function(){
     console.log("All set!");
 });
 ```
+
+Instead of using jQuery library, this framework also have `sf.dom` as jQuery alternative that was optimized for performance, memory friendly, and easily find your event listener from devtools.
+
+```js
+window.$ = sf.dom;
+$('head title').html("Henlo");
+
+// $.fn.extend = something;
+```
+
+`sf.dom` also has `animateKey` for trigger your CSS animation keyframe.
+
+```js
+$('.element').animateKey(name, duration, callback);
+```
+
+The `duration` is in seconds (numeric) and also can be the `callback` if you passed a function. `duration` can also being passed with object of:
+
+| key | description |
+|---|---|
+| duration | The overall animation duration (seconds) |
+| delay | Delay before starting the animation (seconds) |
+| ease | [Animation playing speed variation](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timing-function) |
+| fill | [Set initial style before animating](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-fill-mode) |
+| visible | Does the element should be visible before animation start? |
+| iteration | [Number of times for the animation cycles](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-iteration-count) |
+| direction | [Set the animation to play backward or forward](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-direction) |
 
 ## Asset Loader
 This feature is useful if you want to display progress bar and loading percentage before your page was fully loaded.
@@ -120,7 +167,15 @@ myView.addRoute([
     path:'/about/:page',
     beforeRoute:function(data){
       this.url = '/about/static/'+data.page+'.html';
-    }
+    },
+
+    // Nested route
+    routes:[
+      {
+        path:'/:id', //=> /about/:page/:id
+        ...
+      }
+    ]
   },{
     // You can obtain username from routeFinish's event or myView.data
     path:'/:username',
@@ -164,6 +219,33 @@ myView.on('routeCached', function(current, target) {
 myView.on('routeError', function(statusCode) {
     console.log("Navigation failed", statusCode);
 });
+```
+
+### Page transition
+Because there are many design that can be implemented, this framework doesn't come with CSS styles. If you want to animate the page (like hiding/showing) within the script, you can use `routeStart` and `routeFinish/routeCached` above.
+
+```css
+/* Default style for all page */
+sf-page-view{
+  display: block;
+  visibility: hidden;
+  position: absolute;
+  overflow: hidden;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+
+/* When page was displayed from cache/new page */
+sf-page-view.page-current{
+  visibility: visible;
+  z-index: 1;
+}
+
+/* When page is being prepared but already inserted into DOM */
+sf-page-view.page-prepare{
+  display: none;
+}
 ```
 
 ### Initialize/Define Model
@@ -260,6 +342,94 @@ And the HTML output content will be escaped like below
   </span>
 </div>
 ```
+
+## Views and Model data binding
+Every element that built from a template will have one-way data binding. Even it's defined in attributes or innerHTML. To deactivate the feature you need to specify `sf-bind-ignore` on the parent attributes.
+```html
+<div sf-bind-ignore>{{ myStatic }}</div>
+```
+
+To enable two-way data binding with input element, you need to set model property in `sf-bound` attribute. When you need to obtain multiple value for `checkbox` or `select`, your model property should be an **Array** type. But if you like to check if the checkbox is `checked` or not, you need to set the model property as **Boolean** type. Using **String** data type will only return the last selected data.
+
+```html
+<!-- data on the model will be updated if input detected and vice versa -->
+<input sf-bound="myInput" type="text" />
+<textarea sf-bound="myText" type="text"></textarea>
+<input sf-bound="myFiles" type="file" />
+<input sf-bound="myRadio" type="radio" value="radio1" />
+<input sf-bound="myRadio" type="radio" value="radio2" />
+
+<!-- You can also set property in `name` attribute -->
+<input name="myCheckbox" type="checkbox" value="check1" sf-bound />
+<input name="myCheckbox" type="checkbox" value="check2" sf-bound />
+
+<select sf-bound="selectInput" typedata="number">
+   <option value="1">Select 1</option>
+   <option value="2">Select 2</option>
+   <option value="3">Select 3</option>
+</select>
+
+<select sf-bound="selectInput" multiple>
+   <option value="{{ x.val }}" sf-repeat-this="x in selectData">
+    {{ x.text }}
+   </option>
+</select>
+```
+
+To enable one-way data binding with input element, you need to define model property in `sf-bind` attribute.
+```html
+<!-- 'myInput' on the model will be updated if input detected -->
+<!-- (View -> Model) -->
+<input sf-bind="myInput" type="text" typedata="number"/>
+
+<!-- input will be updated if 'myInput' on the model was changed -->
+<!-- (Model -> Input) -->
+<input value="{{myInput}}" type="text" />
+
+<!-- You can also add prefixed value -->
+<input value="It's {{myInput}}" type="text" />
+
+<!-- When binding to `class` attribute you need to use `:class` -->
+<span :class="icon-{{myInput || 'nothing'}}" style="font-size: {{myInput}}" />
+```
+
+```js
+// Model for the above examples
+sf.model.for('example', function(self){
+  // Any input on element will update this content and the binded view
+  self.myInput = 0;
+
+  // Listen any changes before new value assigned to `myInput`
+  // Useful if you want to process any changes
+  self.on$myInput = function(oldValue, newValue){}
+
+  // Listen changes (Model -> View)
+  // Trigger only when the value is not being set from the View
+  self.out$myInput = function(oldValue, newValue){}
+
+  // Listen changes (Model -> View)
+  // This can also being triggered when (View -> [Model -> View])
+  self.m2v$myInput = function(oldValue, newValue){
+    if(newValue > 100)
+      return 100; // Force value for myInput
+  }
+
+  // Listen changes (View -> Model)
+  // This will triggered on input/change event
+  self.v2m$myInput = function(oldValue, newValue){
+    console.log("Value will be reverted in 3s to oldValue");
+    setTimeout(function(){
+      self.myInput = oldValue;
+    }, 3000);
+  }
+});
+```
+
+You can also initialize your DOM with `sf.model.init` if you added the DOM dynamically.
+```js
+sf.model.init(targetNode = false)
+```
+
 ## Controller
 Controller is used for controling your model, so this would have a list of your static function.
 
@@ -386,7 +556,7 @@ sf.model.for('music.feedback', function(self, root){
     // Register event when 'reviews' was modified
     self.on$reviews = {
        remove:function(elem, remove){
-          sf.dom.animateCSS(elem, 'bounceOutLeft', function(){
+          $(elem).animateKey('bounceOutLeft', function(){
              remove(); // Remove the element
           });
 
@@ -470,93 +640,6 @@ self.list.$virtual.refresh();
 // This will be available on static element height
 // Get an offset that can be used for `scrollTop`
 var offsetTop = self.list.$virtual.offsetTo(8);
-```
-
-## Views and Model data binding
-Every element that built from a template will have one-way data binding. Even it's defined in attributes or innerHTML. To deactivate the feature you need to specify `sf-bind-ignore` on the parent attributes.
-```html
-<div sf-bind-ignore>{{ myStatic }}</div>
-```
-
-To enable two-way data binding with input element, you need to set model property in `sf-bound` attribute. When you need to obtain multiple value for `checkbox` or `select`, your model property should be an **Array** type. But if you like to check if the checkbox is `checked` or not, you need to set the model property as **Boolean** type. Using **String** data type will only return the last selected data.
-
-```html
-<!-- data on the model will be updated if input detected and vice versa -->
-<input sf-bound="myInput" type="text" />
-<textarea sf-bound="myText" type="text"></textarea>
-<input sf-bound="myFiles" type="file" />
-<input sf-bound="myRadio" type="radio" value="radio1" />
-<input sf-bound="myRadio" type="radio" value="radio2" />
-
-<!-- You can also set property in `name` attribute -->
-<input name="myCheckbox" type="checkbox" value="check1" sf-bound />
-<input name="myCheckbox" type="checkbox" value="check2" sf-bound />
-
-<select sf-bound="selectInput" typedata="number">
-   <option value="1">Select 1</option>
-   <option value="2">Select 2</option>
-   <option value="3">Select 3</option>
-</select>
-
-<select sf-bound="selectInput" multiple>
-   <option value="{{ x.val }}" sf-repeat-this="x in selectData">
-    {{ x.text }}
-   </option>
-</select>
-```
-
-To enable one-way data binding with input element, you need to define model property in `sf-bind` attribute.
-```html
-<!-- 'myInput' on the model will be updated if input detected -->
-<!-- (View -> Model) -->
-<input sf-bind="myInput" type="text" typedata="number"/>
-
-<!-- input will be updated if 'myInput' on the model was changed -->
-<!-- (Model -> Input) -->
-<input value="{{myInput}}" type="text" />
-
-<!-- You can also add prefixed value -->
-<input value="It's {{myInput}}" type="text" />
-
-<!-- When binding to `class` attribute you need to use `:class` -->
-<span :class="icon-{{myInput || 'nothing'}}" style="font-size: {{myInput}}" />
-```
-
-```js
-// Model for the above examples
-sf.model.for('example', function(self){
-  // Any input on element will update this content and the binded view
-  self.myInput = 0;
-
-  // Listen any changes before new value assigned to `myInput`
-  // Useful if you want to process any changes
-  self.on$myInput = function(oldValue, newValue){}
-
-  // Listen changes (Model -> View)
-  // Trigger only when the value is not being set from the View
-  self.out$myInput = function(oldValue, newValue){}
-
-  // Listen changes (Model -> View)
-  // This can also being triggered when (View -> [Model -> View])
-  self.m2v$myInput = function(oldValue, newValue){
-    if(newValue > 100)
-      return 100; // Force value for myInput
-  }
-
-  // Listen changes (View -> Model)
-  // This will triggered on input/change event
-  self.v2m$myInput = function(oldValue, newValue){
-    console.log("Value will be reverted in 3s to oldValue");
-    setTimeout(function(){
-      self.myInput = oldValue;
-    }, 3000);
-  }
-});
-```
-
-You can also initialize your DOM with `sf.model.init` if you added the DOM dynamically.
-```js
-sf.model.init(targetNode = false)
 ```
 
 ## Components
