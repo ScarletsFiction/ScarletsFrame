@@ -75,9 +75,8 @@ var cachedURL = {};
 internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
-	var pattern = /\/:([^/]+)/;
-	var sep = /\-/;
-    var knownKeys = /path|url|templateURL|html|on|routes|beforeRoute|defaultData/;
+	var pattern = /\/:([^/]+)/g;
+    var knownKeys = /^(path|url|templateURL|html|on|routes|beforeRoute|defaultData)$/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -87,10 +86,8 @@ internal.router.parseRoutes = function(obj_, selectorList){
             var ref = obj[i];
 			var current = addition+ref.path;
 
-			if(ref.routes !== void 0){
+			if(ref.routes !== void 0)
 				addRoutes(ref.routes, current, selector, parent);
-				continue;
-			}
 
 			current = current.split('//').join('/');
 
@@ -143,7 +140,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
             var keys = Object.keys(ref);
             for(var a = 0; a < keys.length; a++){
                 if(knownKeys.test(keys[a]))
-                  continue;
+                	continue;
 
 				hasChild.push(keys[a]);
 				addRoutes(ref[keys[a]], current, keys[a], route);

@@ -26,6 +26,18 @@ self.replace = function(){
 	window.history.replaceState(window.history.state, '', self());
 }
 
+self.get = function(name, index){
+	self.parse();
+
+	if(name.constructor === Number)
+		return self.paths.split('/')[name+1];
+
+	if(hashes[name] === void 0)
+		return;
+
+	return hashes[name].split('/')[index+1];
+}
+
 self.parse = function(url){
 	if(url !== void 0){
 		var data = {hashes:{}};
