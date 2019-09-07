@@ -290,7 +290,7 @@ var self = sf.views = function View(selector, name){
 	}
 
 	self.addRoute = function(obj){
-		routes.push(...internal.router.parseRoutes(obj, selectorList));
+		routes.push.apply(routes, internal.router.parseRoutes(obj, selectorList));
 
 		if(!initialized)
 			self.selector();
@@ -460,7 +460,7 @@ var self = sf.views = function View(selector, name){
 				}
 
 				if(pendingShowed !== void 0)
-					self.relatedDOM.push(...pendingShowed);
+					self.relatedDOM.push.apply(self.relatedDOM, pendingShowed);
 
 				if(tempDOM !== null){
 					self.lastPath = self.currentPath;

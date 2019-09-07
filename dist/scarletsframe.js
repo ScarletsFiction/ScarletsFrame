@@ -191,21 +191,40 @@ if(typeof Reflect !== 'undefined')
 else 
   Reflect_Construct = function(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; };
 sf.dom = function(selector, context){
-	if(selector == null)
-		selector = Object.assign({length:0}, internal.dom.extends_Dom7);
+	if(!selector){
+		if(selector === void 0){
+			var temp = function(sel) {return temp.find(sel)};
+			Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
+
+			return Object.assign(temp, DOMList.prototype);
+		}
+		else return new DOMList([]);
+	}
 	else if(selector.constructor === Function)
 		return sf(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
-		selector = sf.dom.parseElement(selector);
+		return new DOMList(sf.dom.parseElement(selector));
 	else if(context)
-		selector = context.querySelectorAll(selector);
+		return new DOMList(context.querySelectorAll(selector));
 	else if(selector.constructor === String)
-		selector = document.querySelectorAll(selector);
+		return new DOMList(document.querySelectorAll(selector));
 	else if(selector.constructor !== Array)
-		selector = {0:selector, length:1};
+		return new DOMList(selector);
+}
 
-	Object.assign(selector, sf.dom.fn);
-	return selector;
+function DOMList(elements){
+	if(elements.length === void 0){
+		this[0] = elements;
+		this.length = 1;
+		return this;
+	}
+
+    for (var i = 0; i < elements.length; i += 1) {
+      this[i] = elements[i];
+    }
+
+    this.length = elements.length;
+	return this;
 }
 
 var $ = sf.dom; // Shortcut
@@ -213,55 +232,68 @@ var $ = sf.dom; // Shortcut
 ;(function(){
 	var self = sf.dom;
 
-	function appendObjectArray(obj, arr){
-		for (var i = 0; i < arr.length; i++)
-			obj[obj.length++] = arr[i];
-	}
-
 	var css_str = /\-[a-z0-9]/;
 	var css_strRep = function(f, m){return m.toUpperCase()};
 
-	self.fn = {
+	// ToDo: Optimize performance by using `length` check instead of `for` loop
+	self.fn = DOMList.prototype = {
+		push:function(el){
+			this[this.length++] = el;
+		},
+		indexOf:function(el){
+			var keys = Object.keys(this);
+			for (var i = 0; i < keys.length; i++) {
+				if(this[keys[i]] === el)
+					return i;
+			}
+			return -1;
+		},
+		splice:function(i){
+			for (var n = this.length - 1; i < n; i++) {
+				delete this[i];
+				this[i] = this[i+1];
+			}
+			this.length--;
+		},
 		add:function(el){
-			if(el.constructor !== Array)
-				el = [el];
-
-			var t = {length:0};
-			appendObjectArray(t, this);
-			appendObjectArray(t, el);
-			Object.assign(t, internal.dom.extends_Dom7);
-
-			return t;
+			this[this.length++] = el;
+			return this;
 		},
 		find:function(selector){
-			var t = {length:0};
+			if(this.length === 1) // Optimize perf ~66%
+				return new DOMList(this[0].querySelectorAll(selector));
+
+			var t = [];
 			for (var i = 0; i < this.length; i++)
-				appendObjectArray(t, this[i].querySelectorAll(selector));
-			return Object.assign(t, self.fn);
+				t.push.apply(t, this[i].querySelectorAll(selector));
+			return new DOMList(t);
 		},
 		parent:function(selector){
-			var t = {length:0};
+			if(this.length === 1)
+				return new DOMList(self.parent(this[0]));
+
+			var t = [];
 			for (var i = 0; i < this.length; i++)
-				appendObjectArray(t, self.parent(this[i], selector));
-			return Object.assign(t, self.fn);
+				t.push.apply(t, self.parent(this[i], selector));
+			return new DOMList(t);
 		},
 		prevAll:function(selector){
-			var t = {length:0};
+			var t = [];
 			for (var i = 0; i < this.length; i++)
-				appendObjectArray(t, self.prevAll(this[i], selector));
-			return Object.assign(t, self.fn);
+				t.push.apply(t, self.prevAll(this[i], selector));
+			return new DOMList(t);
 		},
 		nextAll:function(selector){
-			var t = {length:0};
+			var t = [];
 			for (var i = 0; i < this.length; i++)
-				appendObjectArray(t, self.nextAll(this[i], selector, true));
-			return Object.assign(t, self.fn);
+				t.push.apply(t, self.nextAll(this[i], selector, true));
+			return new DOMList(t);
 		},
 		children:function(selector){
-			var t = {length:0};
+			var t = [];
 			for (var i = 0; i < this.length; i++)
-				appendObjectArray(t, this[i].children);
-			return Object.assign(t, self.fn);
+				t.push.apply(t, this[i].children);
+			return new DOMList(t);
 		},
 
 		// Action only
@@ -277,17 +309,17 @@ var $ = sf.dom; // Shortcut
 		},
 		addClass:function(name){
 			for (var i = 0; i < this.length; i++)
-				this[i].classList.add(...name.split(' '));
+				DOMTokenList.prototype.add.apply(this[i].classList, name.split(' '));
 			return this;
 		},
 		removeClass:function(name){
 			for (var i = 0; i < this.length; i++)
-				this[i].classList.remove(...name.split(' '));
+				DOMTokenList.prototype.remove.apply(this[i].classList, name.split(' '));
 			return this;
 		},
 		toggleClass:function(name){
 			for (var i = 0; i < this.length; i++)
-				this[i].classList.toggle(...name.split(' '));
+				DOMTokenList.prototype.toggle.apply(this[i].classList, name.split(' '));
 			return this;
 		},
 		hasClass:function(name){
@@ -441,7 +473,7 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		eq:function(i){
-			return $(this[i]);
+			return new DOMList(this[i]);
 		},
 		insertAfter:function(el){
 			var parent = el.parentElement;
@@ -881,29 +913,6 @@ var $ = sf.dom; // Shortcut
 		return element;
 	}
 
-	internal.dom = {};
-	internal.dom.extends_Dom7 = {
-		push:function(el){
-			this[this.length] = el;
-			this.length++;
-		},
-		indexOf:function(el){
-			var keys = Object.keys(this);
-			for (var i = 0; i < keys.length; i++) {
-				if(this[keys[i]] === el)
-					return i;
-			}
-			return -1;
-		},
-		splice:function(i){
-			for (var n = this.length - 1; i < n; i++) {
-				delete this[i];
-				this[i] = this[i+1];
-			}
-			this.length--;
-		},
-	};
-
 })();
 sf.loader = new function(){
 	var self = this;
@@ -1196,8 +1205,10 @@ sf.component = new function(){
 
 		self.available[name].push(newID);
 
-		var newObj = sf.model.root[newID] = {};
-		self.registered[name][0](newObj, sf.model, $item, element);
+		var newObj = sf.model.root[newID] = {$el:$()};
+		newObj.$el.push(element);
+
+		self.registered[name][0](newObj, sf.model, $item);
 
 		var extend = self.registered[name][4];
 		if(extend !== void 0){
@@ -1205,18 +1216,18 @@ sf.component = new function(){
 				for (var i = 0; i < extend.length; i++) {
 					if(bases[extend[i]] === void 0)
 						return console.error("'"+extend[i]+"' base is not found");
-					bases[extend[i]](newObj, sf.model, $item, element);
+					bases[extend[i]](newObj, sf.model, $item);
 				}
 			}
 			else{
 				if(bases[extend] === void 0)
 					return console.error("'"+extend+"' base is not found");
-				bases[extend](newObj, sf.model, $item, element);
+				bases[extend](newObj, sf.model, $item);
 			}
 		}
 
 		if(self.registered[name][1])
-			self.registered[name][1](newObj, sf.model, $item, element);
+			self.registered[name][1](newObj, sf.model, $item);
 
 		scope.triggerEvent(name, 'created', newObj);
 
@@ -3082,32 +3093,41 @@ sf.model = function(scope){
 
 		if(!targetNode) targetNode = document.body;
 
-		// Handle Router Start ==>
-		if(internal.router.enabled === true){
-			// Before model binding
-			var temp = $('[sf-controller]', targetNode);
-			var sfPage = [];
+		// Before model binding
+		var temp = $('[sf-controller]', targetNode);
+		var sfPage = [];
 
-			for (var i = 0; i < temp.length; i++) {
-				if(temp[i].sf$initialized)
-					continue;
+		for (var i = 0; i < temp.length; i++) {
+			if(temp[i].sf$initialized)
+				continue;
 
-				temp[i].sf$initialized = true;
+			temp[i].sf$initialized = true;
 
-				var modelName = temp[i].getAttribute('sf-controller') || temp[i].sf$component;
-				var model = self.root[modelName] || sf.model(modelName);
-				if(model.$page === void 0)
-					model.$page = $();
-
-				model.$page.push(temp[i]);
-
-				if(sf.controller.pending[modelName] !== void 0)
-					sf.controller.run(modelName);
+			if(temp[i].sf$component){
+				var model = self.root[temp[i].sf$component];
 
 				if(model.init !== void 0)
 					model.init(temp[i]);
+
+				continue;
 			}
 
+			var modelName = temp[i].getAttribute('sf-controller');
+			var model = self.root[modelName] || sf.model(modelName);
+			if(model.$el === void 0)
+				model.$el = $();
+
+			model.$el.push(temp[i]);
+
+			if(sf.controller.pending[modelName] !== void 0)
+				sf.controller.run(modelName);
+
+			if(model.init !== void 0)
+				model.init(temp[i]);
+		}
+
+		// Handle Router Start ==>
+		if(internal.router.enabled === true){
 			// When the model was binded with the view
 			internal.afterModelBinding = function(){
 				for (var i = 0; i < sfPage.length; i++) {
@@ -3192,10 +3212,10 @@ sf.model = function(scope){
 			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
 			var model = sf.model.root[modelName];
 
-			if(model.$page){
-				var i = model.$page.indexOf(element);
+			if(model.$el){
+				var i = model.$el.indexOf(element);
 				if(i !== -1)
-					model.$page.splice(i)
+					model.$el.splice(i)
 			}
 
 			if(model.destroy)
@@ -5125,7 +5145,7 @@ var self = sf.views = function View(selector, name){
 	}
 
 	self.addRoute = function(obj){
-		routes.push(...internal.router.parseRoutes(obj, selectorList));
+		routes.push.apply(routes, internal.router.parseRoutes(obj, selectorList));
 
 		if(!initialized)
 			self.selector();
@@ -5295,7 +5315,7 @@ var self = sf.views = function View(selector, name){
 				}
 
 				if(pendingShowed !== void 0)
-					self.relatedDOM.push(...pendingShowed);
+					self.relatedDOM.push.apply(self.relatedDOM, pendingShowed);
 
 				if(tempDOM !== null){
 					self.lastPath = self.currentPath;

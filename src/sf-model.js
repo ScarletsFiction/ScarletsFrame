@@ -1775,32 +1775,41 @@ sf.model = function(scope){
 
 		if(!targetNode) targetNode = document.body;
 
-		// Handle Router Start ==>
-		if(internal.router.enabled === true){
-			// Before model binding
-			var temp = $('[sf-controller]', targetNode);
-			var sfPage = [];
+		// Before model binding
+		var temp = $('[sf-controller]', targetNode);
+		var sfPage = [];
 
-			for (var i = 0; i < temp.length; i++) {
-				if(temp[i].sf$initialized)
-					continue;
+		for (var i = 0; i < temp.length; i++) {
+			if(temp[i].sf$initialized)
+				continue;
 
-				temp[i].sf$initialized = true;
+			temp[i].sf$initialized = true;
 
-				var modelName = temp[i].getAttribute('sf-controller') || temp[i].sf$component;
-				var model = self.root[modelName] || sf.model(modelName);
-				if(model.$page === void 0)
-					model.$page = $();
-
-				model.$page.push(temp[i]);
-
-				if(sf.controller.pending[modelName] !== void 0)
-					sf.controller.run(modelName);
+			if(temp[i].sf$component){
+				var model = self.root[temp[i].sf$component];
 
 				if(model.init !== void 0)
 					model.init(temp[i]);
+
+				continue;
 			}
 
+			var modelName = temp[i].getAttribute('sf-controller');
+			var model = self.root[modelName] || sf.model(modelName);
+			if(model.$el === void 0)
+				model.$el = $();
+
+			model.$el.push(temp[i]);
+
+			if(sf.controller.pending[modelName] !== void 0)
+				sf.controller.run(modelName);
+
+			if(model.init !== void 0)
+				model.init(temp[i]);
+		}
+
+		// Handle Router Start ==>
+		if(internal.router.enabled === true){
 			// When the model was binded with the view
 			internal.afterModelBinding = function(){
 				for (var i = 0; i < sfPage.length; i++) {
@@ -1885,10 +1894,10 @@ sf.model = function(scope){
 			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
 			var model = sf.model.root[modelName];
 
-			if(model.$page){
-				var i = model.$page.indexOf(element);
+			if(model.$el){
+				var i = model.$el.indexOf(element);
 				if(i !== -1)
-					model.$page.splice(i)
+					model.$el.splice(i)
 			}
 
 			if(model.destroy)

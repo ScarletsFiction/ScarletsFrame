@@ -221,6 +221,16 @@ myView.on('routeError', function(statusCode) {
 });
 ```
 
+### Model element collection
+After any element with `sf-controller` attribute was inserted into DOM, the  related model will have `$el` property that contains collection of `sf-controller` elements. This also applies when using component (But only contain one element).
+
+```js
+sf.model.for('something', function(self){
+  self.$el('#element').html("Route was finished");
+  // self.$el.find('#element').html("Route was finished");
+});
+```
+
 ### Page transition
 Because there are many design that can be implemented, this framework doesn't come with CSS styles. If you want to animate the page (like hiding/showing) within the script, you can use `routeStart` and `routeFinish/routeCached` above.
 
@@ -625,8 +635,8 @@ Elements on the virtual DOM will be combined with visible DOM element and return
 // This will return array of elements
 var elements = self.list.$virtual.elements();
 
-// You could also wrap it to jQuery
 var $elem = $(elements);
+$elem.find('.something');
 ```
 
 ### Scroll to or get element offset by the index
@@ -646,8 +656,12 @@ var offsetTop = self.list.$virtual.offsetTo(8);
 Components feature is used when you have many element for one model. Each component will have same structure but with different value. When defining component name you must use `-` and word character.
 
 ```js
-sf.component.for('model-name', function(self, root, $item, element){
+sf.component.for('model-name', function(self, root, $item){
   self.data = "text";
+
+  // self.$el[0] <-- Contain the current element
+  // self.$el('selector') <-- Shortcut to self.$el.find()
+  // $('model-name') <-- Get another element from DOM include this
 
   // If you're using sf-repeat-this for this component
   // `$item` will have your item value instead of undefined

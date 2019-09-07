@@ -105,8 +105,10 @@ sf.component = new function(){
 
 		self.available[name].push(newID);
 
-		var newObj = sf.model.root[newID] = {};
-		self.registered[name][0](newObj, sf.model, $item, element);
+		var newObj = sf.model.root[newID] = {$el:$()};
+		newObj.$el.push(element);
+
+		self.registered[name][0](newObj, sf.model, $item);
 
 		var extend = self.registered[name][4];
 		if(extend !== void 0){
@@ -114,18 +116,18 @@ sf.component = new function(){
 				for (var i = 0; i < extend.length; i++) {
 					if(bases[extend[i]] === void 0)
 						return console.error("'"+extend[i]+"' base is not found");
-					bases[extend[i]](newObj, sf.model, $item, element);
+					bases[extend[i]](newObj, sf.model, $item);
 				}
 			}
 			else{
 				if(bases[extend] === void 0)
 					return console.error("'"+extend+"' base is not found");
-				bases[extend](newObj, sf.model, $item, element);
+				bases[extend](newObj, sf.model, $item);
 			}
 		}
 
 		if(self.registered[name][1])
-			self.registered[name][1](newObj, sf.model, $item, element);
+			self.registered[name][1](newObj, sf.model, $item);
 
 		scope.triggerEvent(name, 'created', newObj);
 
