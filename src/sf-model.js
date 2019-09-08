@@ -2180,7 +2180,6 @@ sf.model = function(scope){
 					return _content_[match];
 				});
 
-				// console.log(99, checkList);
 				checkList.split('"').join("'").replace(extract, function(full, match){
 					match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
 						return '.'+match_;
@@ -2310,6 +2309,10 @@ sf.model = function(scope){
 							// Get new start flag
 							if(a + 1 < indexes.length)
 								addressStart = $.getSelector(textNode, true);
+						}
+						else if(addressStart !== null){
+							addressStart = addressStart.slice();
+							addressStart[addressStart.length-1]++;
 						}
 					}
 
