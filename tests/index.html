@@ -31,7 +31,12 @@
         nested-view{
           background: rgba(0,0,200,0.2);
           display: block;
-          height: 30px;
+          height: 16px;
+        }
+        nested2-view{
+          background: rgba(0,200,0,0.2);
+          display: block;
+          height: 16px;
         }
         custom-view > sf-page-view:first-child{
          display: block;
@@ -47,14 +52,22 @@
          <i>Note: the url also changed, if you hit refresh you will be redirected to other page. This feature is supposed for Scarlets Framework on PHP.</i><br><br>
          <custom-view>
             View place<br>
-            <a href="/test/page1">Go to page 1</a>
-            <a href="/test/page1/nest1">Go to nest 1-1</a>
-            <a href="/test/page1/nest2">Go to nest 1-2</a><br>
-            <a href="/test/page2">Go to page 2</a>
-            <a href="/test/page2/nest1">Go to nest 2-1</a>
-            <a href="/test/page2/nest2">Go to nest 2-2</a>
+            <a href="/test/page1">Go to page 1</a> || Nest->
+            <a href="/test/page1/nest1">1-1</a> | 
+            <a href="/test/page1/nest2">1-2</a> | 
+            <a href="/test/page1/nest1/nest1">1-1-1</a> | 
+            <a href="/test/page1/nest1/nest2">1-1-2</a> | 
+            <a href="/test/page1/nest2/nest1">1-2-1</a> | 
+            <a href="/test/page1/nest2/nest2">1-2-2</a> | <br>
+            <a href="/test/page2">Go to page 2</a> || Nest->
+            <a href="/test/page2/nest1">2-1</a> | 
+            <a href="/test/page2/nest2">2-2</a> | 
+            <a href="/test/page2/nest1/nest1">2-1-1</a> | 
+            <a href="/test/page2/nest1/nest2">2-1-2</a> | 
+            <a href="/test/page2/nest2/nest1">2-2-1</a> | 
+            <a href="/test/page2/nest2/nest2">2-2-2</a> | 
          </custom-view>
-         <br>
+         <br><br>
          <a href="@/">Refresh whole page</a>
       </div><br><br>
 

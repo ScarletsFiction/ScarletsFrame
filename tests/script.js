@@ -1,3 +1,5 @@
+var $ = sf.dom;
+
 // ===== Virtual List =====
 
 var test = null;
@@ -225,6 +227,9 @@ sf.controller.for('model-binding', function(self, root){
 
 sf.model.for('components', function(self){
    self.items = [1,2,3];
+   self.init = function(){
+      console.log("Model init called", self.$el);
+   }
    self.clickOK = function(){
       console.warn("Click OK!");
    }
@@ -236,8 +241,11 @@ sf.component.for('comp-test', function(self){
 
 sf.component.html('comp-test', `<div>1. {{ data }}</div><div>2. {{ data }}</div><br>`);
 
-sf.controller.for('comp-test', function(self, root, item, element){
-   console.warn('comp-test', item, element);
+sf.controller.for('comp-test', function(self, root, item){
+   console.warn('comp-test', item, self.$el);
+   self.init = function(){
+      console.log("Component init called");
+   }
 });
 
 sf(function(){
@@ -292,13 +300,40 @@ views.addRoute([
          {
             path:'/:nest',
             beforeRoute:function(data){
-               this.url = '/test/page1/'+data.nest
-            }
+               this.url = '/test/lv1/'+data.nest
+            },
+
+            'nested2-view':[
+               {
+                  path:'/:nest',
+                  beforeRoute:function(data){
+                     this.url = '/test/lv2/'+data.nest
+                  }
+               }
+            ]
          }
       ]
    },{
       path:'/test/page2',
       url:'/test/page2',
+
+      'nested-view':[
+         {
+            path:'/:nest',
+            beforeRoute:function(data){
+               this.url = '/test/lv1/'+data.nest
+            },
+
+            'nested2-view':[
+               {
+                  path:'/:nest',
+                  beforeRoute:function(data){
+                     this.url = '/test/lv2/'+data.nest
+                  }
+               }
+            ]
+         }
+      ]
    }
 ]);
 

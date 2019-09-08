@@ -1,12 +1,12 @@
 module.exports = {
     // URL path
-    path: '/test/page1/nest2',
+    path: '/test/lv1/nest1',
  
     // Response handler
     response:function(req, res, closeConnection){
         res.writeHead(200);
-        var data = {title:"Now you're at nest 2"};
-        closeConnection('<!-- SF-View-Data:'+JSON.stringify(data)+'--><div>This is nest 2</div>');
+        var data = {title:"Now you're at nest 1"};
+        closeConnection('<!-- SF-View-Data:'+JSON.stringify(data)+'--><div>This is nest 1<nested2-view>Default exist</nested2-view></div>');
     },
  
     // Scope initialization after script loaded
