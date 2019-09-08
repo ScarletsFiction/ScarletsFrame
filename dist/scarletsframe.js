@@ -611,11 +611,14 @@ var $ = sf.dom; // Shortcut
 		}
 
 		if(selector){
+			// Check the related callback from `$0.sf$eventListener[event][index].callback`
+
 			var tempCallback = callback;
 			callback = function(ev){
 				if(self.parent(ev.target, selector) !== null)
 					tempCallback(ev);
 			}
+			callback.callback = tempCallback;
 		}
 
 		callback.selector = selector;
@@ -3498,7 +3501,6 @@ sf.model = function(scope){
 					return _content_[match];
 				});
 
-				// console.log(99, checkList);
 				checkList.split('"').join("'").replace(extract, function(full, match){
 					match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
 						return '.'+match_;
@@ -3628,6 +3630,10 @@ sf.model = function(scope){
 							// Get new start flag
 							if(a + 1 < indexes.length)
 								addressStart = $.getSelector(textNode, true);
+						}
+						else if(addressStart !== null && a + 1 < indexes.length){
+							addressStart = addressStart.slice();
+							addressStart[addressStart.length-1]++;
 						}
 					}
 
@@ -5059,7 +5065,6 @@ var self = sf.views = function View(selector, name){
 
 	var initialized = false;
 	var firstRouted = false;
-	var selectorElement = {};
 
 	self.lastPath = '/';
 	self.currentDOM = null;
@@ -5070,55 +5075,54 @@ var self = sf.views = function View(selector, name){
 	self.maxCache = 2;
 
 	var rootDOM = {};
-	self.selector = function(selector_, isChild){
+	self.selector = function(selector_, isChild, currentPath){
 		initialized = true;
 
 		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document)).querySelector(selector_ || selector);
 
 		if(!DOM) return false;
 
-		if(DOM.viewInitialized)
+		if(DOM.sf$viewInitialized)
 			return false;
+
+		if(collection === null)
+			collection = DOM.getElementsByTagName('sf-page-view');
 
 		// Create listener for link click
 		if(DOM){
 			if(selector_)
 				selector = selector_;
 
+			var temp = null;
+
 			// Bring the content to an sf-page-view element
 			if(DOM.childNodes.length !== 0){
-				if(DOM.childNodes.length === 1 && DOM.firstChild.nodeName === '#text' && DOM.firstChild.textContent.trim() === ''){
-					var temp = null;
+				if(DOM.childNodes.length === 1 && DOM.firstChild.nodeName === '#text' && DOM.firstChild.textContent.trim() === '')
 					DOM.firstChild.remove();
-				}
 				else{
-					var temp = document.createElement('sf-page-view');
+					temp = document.createElement('sf-page-view');
 					DOM.insertBefore(temp, DOM.firstChild);
 
 					for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
 						temp.appendChild(DOM.childNodes[1]);
 					}
 
-					temp.routePath = self.currentPath;
+					temp.routePath = currentPath || self.currentPath;
 					temp.routeCached = routes.findRoute(temp.routePath);
 					temp.classList.add('page-current');
-					self.relatedDOM.push(temp);
+					DOM.defaultViewContent = temp;
 				}
 			}
-			else var temp = null;
 
-			DOM.viewInitialized = true;
+			DOM.sf$viewInitialized = true;
 
 			if(!isChild){
 				self.currentDOM = temp;
 				rootDOM = DOM;
-			}
-			else{
-				selectorElement[selector_] = DOM;
-				return DOM;
+				return true;
 			}
 
-			return true;
+			return DOM;
 		}
 		return false;
 	}
@@ -5175,6 +5179,26 @@ var self = sf.views = function View(selector, name){
 
 	var RouterLoading = false; // xhr reference if the router still loading
 
+	var collection = null;
+	function findRelatedElement(currentURL){
+		var found = [];
+		for (var i = 0; i < collection.length; i++) {
+			if(currentURL.indexOf(collection[i].routePath) === 0)
+				found.push(collection[i]);
+		}
+
+		return found;
+	}
+
+	function findCachedURL(currentURL){
+		for (var i = collection.length-1; i >= 0; i--) { // Search from deep view first
+			if(currentURL === collection[i].routePath)
+				return collection[i];
+		}
+
+		return false;
+	}
+
 	function routeError_(xhr, data){
 		if(xhr.aborted) return;
 		routingError = true;
@@ -5209,7 +5233,6 @@ var self = sf.views = function View(selector, name){
 					parentSimilarity = lastSibling.parentElement;
 				}
 
-				// self.relatedDOM[i].classList.add('page-hidden');
 				self.relatedDOM[i].classList.remove('page-current');
 			}
 		}
@@ -5220,14 +5243,12 @@ var self = sf.views = function View(selector, name){
 				showedSibling = relatedPage[i];
 
 			relatedPage[i].classList.add('page-current');
-			// relatedPage[i].classList.remove('page-hidden');
 		}
 
 		self.showedSibling = showedSibling;
 		self.lastSibling = lastSibling;
 
 		element.classList.add('page-current');
-		// element.classList.remove('page-hidden');
 
 		self.relatedDOM = relatedPage;
 	}
@@ -5338,36 +5359,26 @@ var self = sf.views = function View(selector, name){
 				// Clear old cache
 				var parent = self.currentDOM.parentNode;
 				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-					parent.firstElementChild.remove();
+					if(parent.defaultViewContent !== parent.firstElementChild)
+						parent.firstElementChild.remove();
+					else if(parent.childElementCount > 1)
+						parent.firstElementChild.nextElementSibling.remove();
 				}
 			});
 		}
 
 		var afterDOMLoaded = function(dom){
-			if(url.selector === void 0)
-				var DOMReference = rootDOM;
+			if(url.selector || url.hasChild){
+				var selectorElement = dom.sf$viewSelector;
 
-			else{ // Get element from selector
-				var DOMReference = selectorElement[selectorList[url.selector]];
-				if(!DOMReference || !DOMReference.isConnected){
-					if(url.parent === void 0){
-						dom.remove();
-						return routeError_({status:0});
-					}
-					else{
-						// Try to load parent router first
-						var newPath = path.match(url.parent.forChild)[0];
-						return self.goto(newPath, false, method, function(parentElement){
-							insertLoadedElement(selectorElement[selectorList[url.selector]], dom, parentElement);
-						});
-					}
-				}
+				if(selectorElement === void 0)
+					selectorElement = dom.sf$viewSelector = {};
 			}
 
 			if(url.hasChild){
 				var pendingShowed = [];
 				for (var i = 0; i < url.hasChild.length; i++) {
-					selectorElement[url.hasChild[i]] = self.selector(url.hasChild[i], dom);
+					selectorElement[url.hasChild[i]] = self.selector(url.hasChild[i], dom, path);
 					var tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
 
 					if(tempPageView)
@@ -5378,6 +5389,45 @@ var self = sf.views = function View(selector, name){
 					pendingShowed = void 0;
 			}
 			else var pendingShowed = void 0;
+
+			if(url.selector === void 0)
+				var DOMReference = rootDOM;
+			else{ // Get element from selector
+				var selectorName = selectorList[url.selector];
+				var DOMReference = null;
+
+				var last = findRelatedElement(path);
+
+				// Find current parent
+				for (var i = 0; i < last.length; i++) {
+					var found = last[i].sf$viewSelector;
+					if(found === void 0 || found[selectorName] === void 0)
+						continue;
+
+					DOMReference = found[selectorName];
+				}
+
+				if(!DOMReference || !DOMReference.isConnected){
+					if(url.parent === void 0){
+						dom.remove();
+						return routeError_({status:0});
+					}
+					else{
+						// Try to load parent router first
+						var newPath = path.match(url.parent.forChild)[0];
+						return self.goto(newPath, false, method, function(parentElement){
+							DOMReference = parentElement.sf$viewSelector[selectorName];
+							insertLoadedElement(DOMReference, dom, parentElement);
+
+							if(_callback) return _callback(dom);
+
+							var defaultViewContent = dom.parentElement.defaultViewContent;
+							if(defaultViewContent.routePath !== path)
+								defaultViewContent.classList.remove('page-current');
+						});
+					}
+				}
+			}
 
 			insertLoadedElement(DOMReference, dom, false, pendingShowed);
 			if(_callback) _callback(dom);
@@ -5436,6 +5486,10 @@ var self = sf.views = function View(selector, name){
 			if(dom === null)
 				return false;
 
+			cachedDOM = findCachedURL(path);
+			if(cachedDOM)
+				return true;
+
 			var childs = dom.children;
 			for (var i = 0; i < childs.length; i++) {
 				if(childs[i].routePath === path){
@@ -5444,6 +5498,7 @@ var self = sf.views = function View(selector, name){
 					return true;
 				}
 			}
+
 			return false;
 		}
 

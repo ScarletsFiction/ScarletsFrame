@@ -8,36 +8,36 @@
 # ScarletsFrame
 A frontend framework that can help you write a simple web structure with complex feature. This framework have small memory allocation and allows you to directly write template in the HTML instead of creating different file and load it later. [Here](https://rawgit.com/krausest/js-framework-benchmark/master/webdriver-ts-results/table.html) you can see the benchmark.
 
+## Example
+- [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
+- [Simple Component](https://jsbin.com/guwevis/edit?html,js,console,output)
+- [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
+- [State Listener](https://jsbin.com/qohifel/edit?html,js,output)
+- [Shared Model](https://jsbin.com/xiyeron/edit?html,js,output)
+- [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
+- [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
+- [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
+- [Views and Router](https://codesandbox.io/s/viewsrouter-example-1vbdh)
+- [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
+
 ## Table of contents
  - [Example](#example)
  - [Install](#install-with-cdn-link)
  - [Hints](#hints)
  - [Asset Loader](#asset-loader)
- - [Router / Views](#router-views)
+ - [Router / Views](#router--views)
    - [Specify routes](#specify-routes)
    - [Views event](#views-event)
    - [Page transition](#page-transition)
  - [Define Model](#initialize-define-model)
-   - [Model & Template](#model-template-feature)
+   - [Model & Template](#model--template-feature)
    - [Views and Model data binding](#views-and-model-data-binding)
  - [Controller](#controller)
  - [Virtual Scroll](#virtual-scroll)
  - [Components](#components)
- - [Language/Locale](#language-locale)
+ - [Language/Locale](#language--locale)
  - [Contribution](#contribution)
  - [License](#license)
-
-## Example
-- [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
-- [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
-- [Simple Component](https://jsbin.com/guwevis/edit?html,js,console,output)
-- [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
-- [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
-- [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
-- [State Listener](https://jsbin.com/qohifel/edit?html,js,output)
-- [Shared Model](https://jsbin.com/xiyeron/edit?html,js,output)
-- [Views and Router](https://codesandbox.io/s/viewsrouter-example-1vbdh)
-- [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -74,7 +74,7 @@ sf(function(){
 });
 ```
 
-Instead of using jQuery library, this framework also have `sf.dom` as jQuery alternative that was optimized for performance, memory friendly, and easily find your event listener from devtools.
+This framework also have `sf.dom` as jQuery's alternative that was optimized for [performance](https://jsbench.me/r6k09d2avk/1), memory friendly, and easily find your event listener from devtools.
 
 ```js
 window.$ = sf.dom;
@@ -137,6 +137,8 @@ sf.loader.onFinish(function(){
 Views is used when you want to load different template/page in current browser's tab. To initialize it you need to prepare the view element on the DOM, it also support lazy element that dynamically being loaded.
 
 The view name is optional, if you doesn't give name it will be your real URL path. Instead if you give it the view name, you will get hashtag with the view path.
+
+> This feature need more optimization
 
 ```js
 // sf.views(selector, name);

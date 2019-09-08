@@ -249,6 +249,7 @@ var self = sf.views = function View(selector, name){
 					temp.routePath = currentPath || self.currentPath;
 					temp.routeCached = routes.findRoute(temp.routePath);
 					temp.classList.add('page-current');
+					DOM.defaultViewContent = temp;
 				}
 			}
 
@@ -319,12 +320,10 @@ var self = sf.views = function View(selector, name){
 
 	var collection = null;
 	function findRelatedElement(currentURL){
-		var found = {related:[], obsolete:[]};
+		var found = [];
 		for (var i = 0; i < collection.length; i++) {
 			if(currentURL.indexOf(collection[i].routePath) === 0)
-				found.related.push(collection[i]);
-			else if(collection[i].classList.contains('page-current'))
-				found.obsolete.push(collection[i]);
+				found.push(collection[i]);
 		}
 
 		return found;
@@ -499,7 +498,10 @@ var self = sf.views = function View(selector, name){
 				// Clear old cache
 				var parent = self.currentDOM.parentNode;
 				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-					parent.firstElementChild.remove();
+					if(parent.defaultViewContent !== parent.firstElementChild)
+						parent.firstElementChild.remove();
+					else if(parent.childElementCount > 1)
+						parent.firstElementChild.nextElementSibling.remove();
 				}
 			});
 		}
@@ -536,8 +538,8 @@ var self = sf.views = function View(selector, name){
 				var last = findRelatedElement(path);
 
 				// Find current parent
-				for (var i = 0; i < last.related.length; i++) {
-					var found = last.related[i].sf$viewSelector;
+				for (var i = 0; i < last.length; i++) {
+					var found = last[i].sf$viewSelector;
 					if(found === void 0 || found[selectorName] === void 0)
 						continue;
 
@@ -555,6 +557,12 @@ var self = sf.views = function View(selector, name){
 						return self.goto(newPath, false, method, function(parentElement){
 							DOMReference = parentElement.sf$viewSelector[selectorName];
 							insertLoadedElement(DOMReference, dom, parentElement);
+
+							if(_callback) return _callback(dom);
+
+							var defaultViewContent = dom.parentElement.defaultViewContent;
+							if(defaultViewContent.routePath !== path)
+								defaultViewContent.classList.remove('page-current');
 						});
 					}
 				}
@@ -617,6 +625,10 @@ var self = sf.views = function View(selector, name){
 			if(dom === null)
 				return false;
 
+			cachedDOM = findCachedURL(path);
+			if(cachedDOM)
+				return true;
+
 			var childs = dom.children;
 			for (var i = 0; i < childs.length; i++) {
 				if(childs[i].routePath === path){
@@ -625,10 +637,6 @@ var self = sf.views = function View(selector, name){
 					return true;
 				}
 			}
-
-			cachedDOM = findCachedURL(path);
-			if(cachedDOM)
-				return true;
 
 			return false;
 		}
