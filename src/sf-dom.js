@@ -419,11 +419,14 @@ var $ = sf.dom; // Shortcut
 		}
 
 		if(selector){
+			// Check the related callback from `$0.sf$eventListener[event][index].callback`
+
 			var tempCallback = callback;
 			callback = function(ev){
 				if(self.parent(ev.target, selector) !== null)
 					tempCallback(ev);
 			}
+			callback.callback = tempCallback;
 		}
 
 		callback.selector = selector;

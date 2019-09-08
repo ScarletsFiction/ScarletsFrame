@@ -4,7 +4,6 @@
       <title>Test Page</title>
       <meta charset="UTF-8">
       <script src='https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.js'></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
       <script src='/dist/scarletsframe.min.js'></script>
       <style type="text/css">
@@ -24,12 +23,17 @@
          background-color: pink;
         }
         sf-page-view{
-         display: block;
-        }
-        sf-page-view.page-hidden{
          display: none;
         }
-        custom-view > sf-page-view.page-hidden:first-child{
+        sf-page-view.page-current{
+         display: block;
+        }
+        nested-view{
+          background: rgba(0,0,200,0.2);
+          display: block;
+          height: 30px;
+        }
+        custom-view > sf-page-view:first-child{
          display: block;
         }
       </style>
@@ -44,9 +48,11 @@
          <custom-view>
             View place<br>
             <a href="/test/page1">Go to page 1</a>
-            <a href="/test/page1/nest1">Go to nest 1</a>
-            <a href="/test/page1/nest2">Go to nest 2</a>
+            <a href="/test/page1/nest1">Go to nest 1-1</a>
+            <a href="/test/page1/nest2">Go to nest 1-2</a><br>
             <a href="/test/page2">Go to page 2</a>
+            <a href="/test/page2/nest1">Go to nest 2-1</a>
+            <a href="/test/page2/nest2">Go to nest 2-2</a>
          </custom-view>
          <br>
          <a href="@/">Refresh whole page</a>

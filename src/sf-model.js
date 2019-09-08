@@ -2310,7 +2310,7 @@ sf.model = function(scope){
 							if(a + 1 < indexes.length)
 								addressStart = $.getSelector(textNode, true);
 						}
-						else if(addressStart !== null){
+						else if(addressStart !== null && a + 1 < indexes.length){
 							addressStart = addressStart.slice();
 							addressStart[addressStart.length-1]++;
 						}
