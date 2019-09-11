@@ -257,7 +257,7 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		append:function(element){
-			if(element.constructor === Array){
+			if(element.constructor === Array || element.constructor === Object){
 				for (var i = 0; i < element.length; i++)
 					this[0].append(element[i]);
 			}
@@ -269,7 +269,7 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		prepend:function(element){
-			if(element.constructor === Array){
+			if(element.constructor === Array || element.constructor === Object){
 				for (var i = 0; i < element.length; i++)
 					this[0].prepend(element[i]);
 			}
@@ -374,8 +374,10 @@ var $ = sf.dom; // Shortcut
 		// Skip current element
 		element = isNext ? element.nextSibling : element.previousSibling;
 		while (element !== null) {
-			if(findNodes === false && element.matches(selector) === true)
-				result.push(element);
+			if(findNodes === false){
+				if(element.matches(selector) === true)
+					result.push(element);
+			}
 			else{
 				if(element === selector)
 					break;
@@ -423,8 +425,9 @@ var $ = sf.dom; // Shortcut
 
 			var tempCallback = callback;
 			callback = function(ev){
-				if(self.parent(ev.target, selector) !== null)
-					tempCallback(ev);
+				var target = self.parent(ev.target, selector);
+				if(target !== null)
+					tempCallback.apply(target, [ev]);
 			}
 			callback.callback = tempCallback;
 		}
@@ -525,17 +528,13 @@ var $ = sf.dom; // Shortcut
 			duration = void 0;
 		}
 
-		var animationEnd = {
-			animation: 'animationend',
-			WebkitAnimation: 'webkitAnimationEnd',
-		};
+		var animationEnd = null;
 
-		for (var t in animationEnd){
-			if(element.style[t] !== void 0){
-				animationEnd = animationEnd[t];
-				break;
-			}
-		}
+		if(element.style.animation !== void 0)
+			animationEnd = 'animationend';
+
+		if(element.style.WebkitAnimation !== void 0)
+			animationEnd = 'webkitAnimationEnd';
 
 	  	var style = element.style;
 		var arrange = animationName;
@@ -559,10 +558,16 @@ var $ = sf.dom; // Shortcut
 				var animationStart = 'animationstart';
 			else var animationStart = 'webkitAnimationStart';
 
-			if(duration.visible === false)
+			if(duration.visible === false){
+				element.classList.add('anim-pending');
 				style.visibility = 'hidden';
+			}
 
 			self.once(element, animationStart, function(){
+				if(!element.isConnected)
+					return;
+
+				element.classList.remove('anim-pending');
 				style.visibility = 'visible';
 			});
 		}
