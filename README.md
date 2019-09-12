@@ -413,21 +413,24 @@ sf.model.for('example', function(self){
 
   // Listen any changes before new value assigned to `myInput`
   // Useful if you want to process any changes
+  // Returned value will assigned as new value
   self.on$myInput = function(oldValue, newValue){}
 
   // Listen changes (Model -> View)
-  // Trigger only when the value is not being set from the View
+  // Useful to avoid execution when new value was assigned from the view
+  // Returned value will assigned as new value
   self.out$myInput = function(oldValue, newValue){}
 
   // Listen changes (Model -> View)
   // This can also being triggered when (View -> [Model -> View])
+  // Returned value will only change element content
   self.m2v$myInput = function(oldValue, newValue){
-    if(newValue > 100)
-      return 100; // Force value for myInput
+      return formatCurrency(newValue);
   }
 
   // Listen changes (View -> Model)
   // This will triggered on input/change event
+  // Returned value will assigned as new value
   self.v2m$myInput = function(oldValue, newValue){
     console.log("Value will be reverted in 3s to oldValue");
     setTimeout(function(){
@@ -486,24 +489,6 @@ sf.controller.run(name, function(self){
         alert('Hello world!');
     }
 });
-```
-
-## Safely replace HTML text that already binded.
-This will help you to replace text on HTML content depend on the model data. But this will not change the model data.
-```html
-<div sf-controller="something">
-  <span>*One hundred* is &gt; my age</span>
-</div>
-```
-```js
-// Inside 'something' model scope
-self.$replace('text', /\*(.*?)\*/g, function(full, word){
-  return '<b>'+word+'</b>';
-});
-
-// If you want to use this feature for array data
-// you can also use the above function from the array
-// self.list.$replace(index, key, needle, replacement);
 ```
 
 ## Array data to list of DOM element

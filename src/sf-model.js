@@ -2047,10 +2047,15 @@ sf.model = function(scope){
 					var m2v = model['m2v$'+propertyName];
 					if(m2v !== void 0){
 						newValue = m2v(objValue, val);
-						objValue = val;
 
-						if(newValue !== void 0)
-							val = newValue;
+						if(newValue !== void 0){
+							objValue = newValue;
+							m2v = val;
+						}
+						else{
+							m2v = void 0;
+							objValue = val;
+						}
 					}
 					else
 						objValue = newValue !== void 0 ? newValue : val;
@@ -2058,13 +2063,16 @@ sf.model = function(scope){
 					var ref = model.sf$bindedKey[propertyName];
 					for (var i = 0; i < ref.length; i++) {
 						if(inputBoundRun === ref[i]){
-							ref[i](val, ref.input);
+							ref[i](objValue, ref.input);
 							continue;
 						}
 
 						if(syntheticTemplate(ref[i].element, ref[i].template, void 0, model) === false)
 							0; //No update
 					}
+
+					if(m2v !== void 0)
+						objValue = m2v;
 				}
 
 				inputBoundRunning = false;
