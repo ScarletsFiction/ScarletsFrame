@@ -172,8 +172,9 @@ sf.model.for('model-binding', function(self, root){
       }, 4000);
    };
    self.inputBinding5 = [];
-   self.out$inputBinding5 = function(old, news){
-      console.warn("inputBinding5 was updated from:", old, 'to', news);
+   self.out$inputBinding2 = function(old, news){
+      console.warn("inputBinding2 was modified from:", news, 'to', Math.round(news));
+      return Math.round(news);
    };
    self.inputBinding6a = [
       {text:'Select 1', val:1},
