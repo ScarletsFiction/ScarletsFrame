@@ -1908,15 +1908,15 @@ sf.model = function(scope){
 			if(model.destroy)
 				model.destroy(element);
 
-			removeModelBinding(modelName);
 			if(element.sf$component !== void 0){
 				var modelFrom = element.sf$componentFrom;
 				var components = sf.component.available[modelFrom];
 				components.splice(components.indexOf(modelName), 1);
 				internal.component.triggerEvent(modelFrom, 'removed', self.root[modelName]);
 				delete self.root[modelName];
+				return;
 			}
-			return;
+			removeModelBinding(model);
 		}
 	}
 
@@ -1949,18 +1949,26 @@ sf.model = function(scope){
 		}
 	});
 
-	var removeModelBinding = self.reset = function(modelName){
-		var ref = self.root[modelName];
+	var removeModelBinding = self.reset = function(ref){
 		if(ref === void 0)
 			return;
 
 		var bindedKey = ref.sf$bindedKey;
 		var temp = null;
 		for(var key in bindedKey){
-			delete bindedKey[key];
-
-			if(ref[key] === void 0 || ref[key] === null)
+			if(bindedKey[key] === null)
 				continue;
+
+			for (var i = bindedKey[key].length-1; i >= 0; i--) {
+				if(!bindedKey[key][i].element.isConnected)
+					bindedKey[key].splice(i, 1);
+			}
+
+			if(bindedKey[key].input !== void 0)
+				for (var i = bindedKey[key].input.length-1; i >= 0; i--) {
+					if(!bindedKey[key].input[i].isConnected)
+						bindedKey[key].input.splice(i, 1);
+				}
 
 			if(ref[key].constructor === String ||
 				ref[key].constructor === Number ||
@@ -1980,13 +1988,17 @@ sf.model = function(scope){
 			}
 			else continue;
 
-			if(Object.getOwnPropertyDescriptor(ref, key) === void 0)
-				continue;
+			if(bindedKey[key].length === 0){
+				delete bindedKey[key];
 
-			// Reconfigure / Remove property descriptor
-			var temp = ref[key];
-			delete ref[key];
-			ref[key] = temp;
+				if(Object.getOwnPropertyDescriptor(ref, key) === void 0)
+					continue;
+
+				// Reconfigure / Remove property descriptor
+				var temp = ref[key];
+				delete ref[key];
+				ref[key] = temp;
+			}
 		}
 	}
 

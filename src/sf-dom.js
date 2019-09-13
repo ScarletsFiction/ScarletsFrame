@@ -21,6 +21,11 @@ sf.dom = function(selector, context){
 }
 
 function DOMList(elements){
+	if(elements === null){
+		this.length = 0;
+		return this;
+	}
+
 	if(elements.length === void 0){
 		this[0] = elements;
 		this.length = 1;
@@ -78,7 +83,7 @@ var $ = sf.dom; // Shortcut
 		},
 		parent:function(selector){
 			if(this.length === 1)
-				return new DOMList(self.parent(this[0]));
+				return new DOMList(self.parent(this[0], selector));
 
 			var t = [];
 			for (var i = 0; i < this.length; i++)
