@@ -32,31 +32,19 @@ function interpolate(text, obj){
 var waiting = false;
 var pendingCallback = [];
 self.get = function(path, obj, callback){
-	var value = diveObject(self.list[self.default], path);
-
 	if(obj !== void 0 && obj.constructor === Function){
 		callback = obj;
 		obj = void 0;
 	}
 
-	if(value !== void 0){
-		if(obj)
-			value = interpolate(value, obj);
+	if(path.constructor === String)
+		return getSingle(path, obj, callback);
+	else
+		return getMany(path, obj, callback);
+}
 
-		if(!callback)
-			return value;
-		return callback(value);
-	}
-
-	if(pending === false)
-		pending = {};
-
-	diveObject(pending, path, 1);
-
-	if(callback){
-		callback.path = path;
-		pendingCallback.push(callback);
-	}
+function startRequest(){
+	if(pending === false) return;
 
 	// Request to server after 500ms
 	// To avoid multiple request
@@ -79,7 +67,10 @@ self.get = function(path, obj, callback){
 
 				var defaultLang = self.list[self.default];
 				for (var i = 0; i < pendingCallback.length; i++) {
-					pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
+					if(pendingCallback[i].callbackOnly === void 0)
+						pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
+					else
+						pendingCallback[i]();
 				}
 
 				pendingCallback.length = 0;
@@ -87,8 +78,97 @@ self.get = function(path, obj, callback){
 			error:self.onError,
 		});
 	}, 500);
+}
 
+function getSingle(path, obj, callback){
+	var value = diveObject(self.list[self.default], path);
+	if(value !== void 0){
+		if(obj)
+			value = interpolate(value, obj);
+
+		if(!callback)
+			return value;
+		return callback(value);
+	}
+
+	if(pending === false)
+		pending = {};
+
+	diveObject(pending, path, 1);
+
+	if(callback){
+		callback.path = path;
+		pendingCallback.push(callback);
+	}
+
+	startRequest();
 	return path;
+}
+
+function getMany(paths, obj, callback){
+	var default_ = self.list[self.default];
+	var value = {};
+	var missing = [];
+
+	for (var i = 0; i < paths.length; i++) {
+		var temp = diveObject(default_, paths[i]);
+
+		if(temp)
+			value[paths[i]] = temp;
+		else 
+			missing.push(paths[i]);
+	}
+
+	if(missing.length === 0){
+		if(obj)
+			value = interpolate(value, obj);
+
+		if(!callback)
+			return value;
+		return callback(value);
+	}
+
+	if(pending === false)
+		pending = {};
+
+	for (var i = 0; i < missing.length; i++) {
+		diveObject(pending, missing[i], 1);
+	}
+
+	var callback_ = function(){
+		for (var i = 0; i < missing.length; i++) {
+			var temp = diveObject(default_, missing[i]);
+
+			if(temp)
+				value[missing[i]] = temp;
+		}
+
+		return callback(value);
+	}
+
+	callback_.callbackOnly = true;
+	pendingCallback.push(callback_);
+
+	startRequest();
+}
+
+self.assign = function(model, keyPath, obj, callback){
+	var keys = Object.keys(keyPath);
+	var vals = Object.values(keyPath);
+
+	if(obj !== void 0 && obj.constructor === Function){
+		callback = obj;
+		obj = void 0;
+	}
+
+	getMany(vals, obj, function(values){
+		for (var i = 0; i < keys.length; i++) {
+			model[keys[i]] = values[vals[i]];
+		}
+
+		if(callback)
+			callback();
+	});
 }
 
 function diveFill(obj1, obj2){
@@ -119,25 +199,15 @@ self.init = function(el){
 	refreshLang(list);
 
 	if(pending !== false && self.serverURL !== false){
-		if(activeRequest !== false)
-			activeRequest.abort();
+		var callback = function(){
+			pending = false;
+			refreshLang(pendingElement, true);
+		}
 
-		activeRequest = sf.ajax({
-			url:self.serverURL,
-			data:{
-				lang:self.default,
-				paths:JSON.stringify(pending)
-			},
-			dataType:'json',
-			method:'POST',
-			success:function(obj){
-				pending = false;
+		callback.callbackOnly = true;
+		pendingCallback.push(callback);
 
-				self.add(self.default, obj);
-				refreshLang(pendingElement, true);
-			},
-			error:self.onError,
-		});
+		startRequest();
 	}
 
 	if(pending !== false && self.serverURL === false)
@@ -146,7 +216,7 @@ self.init = function(el){
 
 function diveObject(obj, path, setValue){
 	var parts = path.split('.');
-	for (var i = 0, n = parts.length-1; i < parts.length; i++) {
+	for (var i = 0, n = parts.length-1; i <= n; i++) {
 		var key = parts[i];
 
 		if(setValue === void 0){ // get only
@@ -155,12 +225,15 @@ function diveObject(obj, path, setValue){
 
 	    	obj = obj[key];
 		}
-		else{ // set if undefined
+		else{ // set
 			if(i === n){
 				obj[key] = setValue;
 				return;
 			}
-			else obj = obj[key] = {};
+
+			if(obj[key] === void 0)
+                obj = obj[key] = {};
+            else obj = obj[key];
 		}
     }
 

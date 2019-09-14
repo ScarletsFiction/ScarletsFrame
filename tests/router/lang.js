@@ -1,5 +1,19 @@
-var languages = {en:{second:'Second!', my:{test:'My Test!'}}};
-// These implementation could be more better
+var languages = {
+    en:{
+        second:'Second!',
+        my:{
+            test:'My Test!'
+        },
+        stuff:{
+            chicken:'Rooster!',
+            game:'Harvestmoon!',
+        },
+        another:{
+            day:'Sunday!',
+            friend:'Aliz!',
+        },
+    }
+};
 
 module.exports = {
     // URL path
@@ -17,11 +31,30 @@ module.exports = {
         res.writeHead(200);
         var obj = {};
 
+        // These implementation could be more better
         if(json.my && json.my.test)
         	obj.my = {test:lang.my.test};
-        
+
         if(json.second)
-        	obj.second = lang.second;
+            obj.second = lang.second;
+
+        if(json.stuff){
+            obj.stuff = {};
+
+            if(json.stuff.chicken)
+                obj.stuff.chicken = lang.stuff.chicken;
+            if(json.stuff.game)
+                obj.stuff.game = lang.stuff.game;
+        }
+
+        if(json.another){
+            obj.another = {};
+
+            if(json.another.day)
+                obj.another.day = lang.another.day;
+            if(json.another.friend)
+                obj.another.friend = lang.another.friend;
+        }
 
         closeConnection(JSON.stringify(obj));
     },
