@@ -213,7 +213,7 @@ var self = sf.views = function View(selector, name){
 	self.currentDOM = null;
 	self.lastDOM = null;
 	self.relatedDOM = [];
-	self.data = void 0;
+	self.data = {};
 
 	self.maxCache = 2;
 
@@ -440,7 +440,7 @@ var self = sf.views = function View(selector, name){
 			if(parentElement)
 				dom.parentPageElement = parentElement;
 
-			dom.routerData = null;
+			dom.routerData = {};
 			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
 				dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
 				dom.firstChild.remove();
@@ -448,7 +448,8 @@ var self = sf.views = function View(selector, name){
 
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
-			self.data = url.data;
+			Object.assign(dom.routerData, url.data)
+			self.data = dom.routerData;
 
 			if(self.dynamicScript !== false){
 				var scripts = dom.getElementsByTagName('script');
@@ -462,10 +463,8 @@ var self = sf.views = function View(selector, name){
 				// Parse the DOM data binding
 				sf.model.init(dom);
 
-				self.data = url.data;
-
 				if(url.on !== void 0 && url.on.coming)
-					url.on.coming(url.data);
+					url.on.coming(self.data);
 
 				var tempDOM = self.currentDOM;
 				self.currentDOM = dom;
@@ -475,7 +474,7 @@ var self = sf.views = function View(selector, name){
 				// Trigger loaded event
 				var event = onEvent['routeFinish'];
 				for (var i = 0; i < event.length; i++) {
-					if(event[i](self.currentPath, path, url.data)) return;
+					if(event[i](self.currentPath, path)) return;
 				}
 
 				if(pendingShowed !== void 0)
@@ -658,6 +657,7 @@ var self = sf.views = function View(selector, name){
 			self.currentDOM.routeCached.on.leaving();
 
 		self.currentDOM = cachedDOM;
+		self.data = cachedDOM.routerData;
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.coming)
 			self.currentDOM.routeCached.on.coming();
@@ -666,7 +666,7 @@ var self = sf.views = function View(selector, name){
 
 		var event = onEvent['routeCached'];
 		for (var i = 0; i < event.length; i++) {
-			if(event[i](self.currentPath, self.lastPath)) return;
+			event[i](self.currentPath, self.lastPath);
 		}
 
 		// Trigger reinit for the model
