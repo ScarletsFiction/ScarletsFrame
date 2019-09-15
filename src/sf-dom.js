@@ -82,8 +82,11 @@ var $ = sf.dom; // Shortcut
 			return new DOMList(t);
 		},
 		parent:function(selector){
-			if(this.length === 1)
-				return new DOMList(self.parent(this[0], selector));
+			if(this.length === 1){
+				if(selector)
+					return new DOMList(self.parent(this[0], selector));
+				return new DOMList(this[0].parentElement);
+			}
 
 			var t = [];
 			for (var i = 0; i < this.length; i++)
@@ -571,6 +574,9 @@ var $ = sf.dom; // Shortcut
 			self.once(element, animationStart, function(){
 				if(!element.isConnected)
 					return;
+
+				if(duration.whenBegin)
+					duration.whenBegin();
 
 				element.classList.remove('anim-pending');
 				style.visibility = 'visible';

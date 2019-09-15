@@ -76,7 +76,7 @@ internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
 	var pattern = /\/:([^/]+)/g;
-    var knownKeys = /^(path|url|templateURL|html|on|routes|beforeRoute|defaultData)$/;
+    var knownKeys = /^(path|url|templateURL|html|on|routes|beforeRoute|defaultData|cache)$/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -134,6 +134,9 @@ internal.router.parseRoutes = function(obj_, selectorList){
 
 			if(ref.on !== void 0)
 				route.on = ref.on;
+
+			if(ref.cache)
+				route.cache = true;
 
 			var hasChild = [];
 
@@ -466,6 +469,9 @@ var self = sf.views = function View(selector, name){
 				if(url.on !== void 0 && url.on.coming)
 					url.on.coming(self.data);
 
+				if(url.cache)
+					dom.routeNoRemove = true;
+
 				var tempDOM = self.currentDOM;
 				self.currentDOM = dom;
 
@@ -501,7 +507,7 @@ var self = sf.views = function View(selector, name){
 				// Clear old cache
 				var parent = self.currentDOM.parentNode;
 				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-					if(parent.defaultViewContent !== parent.firstElementChild)
+					if(parent.defaultViewContent !== parent.firstElementChild && parent.firstElementChild.routeNoRemove)
 						parent.firstElementChild.remove();
 					else if(parent.childElementCount > 1)
 						parent.firstElementChild.nextElementSibling.remove();
