@@ -187,16 +187,20 @@ var self = sf.views = function View(selector, name){
 
 	var self = this;
 
-	if(sf.views.list[name] === void 0)
-		sf.views.list[name] = [];
+	if(name){
+		if(sf.views.list[name] === void 0)
+			sf.views.list[name] = [];
 
-	sf.views.list[name].push(self);
+		sf.views.list[name].push(self);
+	}
 
 	var pendingAutoRoute = false;
 
 	// Init current URL as current View Path
 	if(name === slash)
 		self.currentPath = sf.url.paths;
+	else if(name === false)
+		self.currentPath = '';
 	else{
 		self.currentPath = '';
 		pendingAutoRoute = true;
@@ -293,7 +297,7 @@ var self = sf.views = function View(selector, name){
 		if(!initialized)
 			self.selector();
 
-		if(!firstRouted){
+		if(!firstRouted && name){
 			sf(function(){
 				if(firstRouted)
 					return;
@@ -406,7 +410,7 @@ var self = sf.views = function View(selector, name){
 
 		if(name === slash)
 			sf.url.paths = path;
-		else
+		else if(name)
 			aHashes[name] = path;
 
 		// This won't trigger popstate event
@@ -591,7 +595,7 @@ var self = sf.views = function View(selector, name){
 		    }),
 			success:function(html_content){
 				if(rejectResponse.test(html_content)){
-					console.error("Views request was received <html> while it was dissalowed. Please check http response from Network Tab.");
+					console.error("Views request was received <html> while it was disalowed. Please check http response from Network Tab.");
 					return routeError_(1);
 				}
 
