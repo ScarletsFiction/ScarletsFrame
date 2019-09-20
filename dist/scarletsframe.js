@@ -23,14 +23,14 @@ var sf = function(stuff){
 sf.internal = {};
 sf.regex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
-	validFunctionCall:/[a-zA-Z0-9 \]\$\)]/,
+	validFunctionCall:/[_a-zA-Z0-9 \]\$\)]/,
 	strictVar:'(?=\\b[^.]|^|\\n| +|\\t|\\W )',
 	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
 
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 
-	arrayItemsObserve:/\b_model_\.([a-zA-Z0-9.['\]]+)(?:$|[^'\]])/g,
+	arrayItemsObserve:/\b_model_\.([_a-zA-Z0-9.['\]]+)(?:$|[^'\]])/g,
 };
 
 var allowedFunctionEval = {'for':true, 'if':true, 'while':true, '_content_.take':true, 'console.log':true};
@@ -213,6 +213,11 @@ sf.dom = function(selector, context){
 }
 
 function DOMList(elements){
+	if(elements === null){
+		this.length = 0;
+		return this;
+	}
+
 	if(elements.length === void 0){
 		this[0] = elements;
 		this.length = 1;
@@ -269,8 +274,11 @@ var $ = sf.dom; // Shortcut
 			return new DOMList(t);
 		},
 		parent:function(selector){
-			if(this.length === 1)
-				return new DOMList(self.parent(this[0]));
+			if(this.length === 1){
+				if(selector)
+					return new DOMList(self.parent(this[0], selector));
+				return new DOMList(this[0].parentElement);
+			}
 
 			var t = [];
 			for (var i = 0; i < this.length; i++)
@@ -546,6 +554,18 @@ var $ = sf.dom; // Shortcut
 		return document.querySelector(selector);
 	}
 
+	self.isChildOf = function(child, parent) {
+	     var node = child.parentNode;
+	     while (node !== null) {
+	         if(node === parent)
+	             return true;
+
+	         node = node.parentNode;
+	     }
+
+	     return false;
+	}
+
 	self.parent = function(element, selector){
 		if(element.closest) return element.closest(selector);
 
@@ -758,6 +778,9 @@ var $ = sf.dom; // Shortcut
 			self.once(element, animationStart, function(){
 				if(!element.isConnected)
 					return;
+
+				if(duration.whenBegin)
+					duration.whenBegin();
 
 				element.classList.remove('anim-pending');
 				style.visibility = 'visible';
@@ -1116,11 +1139,6 @@ sf.component = new function(){
 	var events = {};
 
 	self.for = function(name, func, extend){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.for(name, func);
-			});
-
 		if(self.registered[name] === void 0)
 			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
 		self.registered[name][0] = func;
@@ -1172,10 +1190,16 @@ sf.component = new function(){
 		if(internal.component.skip)
 			return;
 
+		// element.sf$avoidInit = true;
+		// var avoidRepeatedList = element.querySelectorAll('[sf-repeat-this]');
+		// for (var i = 0; i < avoidRepeatedList.length; i++) {
+		// 	avoidRepeatedList[i].sf$avoidInit = true;
+		// }
+
 		if(isCreated === true){
 			if(element.childElementCount === 0){
 				if(self.registered[name][3] === false)
-					return requestAnimationFrame(function(){
+					return setTimeout(function(){
 						self.new(name, element, $item, isCreated, true);
 					});
 			}
@@ -1280,6 +1304,11 @@ sf.component = new function(){
 	}
 
 	function componentInit(element, newID, from){
+		// for (var i = 0; i < avoidRepeatedList.length; i++) {
+		// 	avoidRepeatedList[i].sf$avoidInit = void 0;
+		// }
+
+		// element.sf$avoidInit = void 0;
 		element.setAttribute('sf-controller', '');
 		element.sf$component = newID;
 		element.sf$componentFrom = from;
@@ -2181,7 +2210,6 @@ sf.model = function(scope){
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
 		var parentChilds = parentNode.children;
-		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		// Update callback
 		var modelRef = self.root[modelName];
@@ -2243,8 +2271,8 @@ sf.model = function(scope){
 					}
 					else parentNode.appendChild(temp);
 
-					if(isKeyed === false)
-						syntheticCache(temp, template, list[i]);
+					syntheticCache(temp, template, list[i]);
+					temp.model = list[i];
 				}
 
 				if(list.$virtual && list.$virtual.refreshVirtualSpacer)
@@ -2360,8 +2388,8 @@ sf.model = function(scope){
 						break;
 
 					var temp = templateParser(template, list[i]);
-					if(isKeyed === false)
-						syntheticCache(temp, template, list[i]);
+					syntheticCache(temp, template, list[i]);
+					temp.model = item;
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
@@ -2378,8 +2406,8 @@ sf.model = function(scope){
 			if(item === void 0) return;
 
 			var temp = templateParser(template, item);
-			if(isKeyed === false)
-				syntheticCache(temp, template, item);
+			syntheticCache(temp, template, item);
+			temp.model = item;
 
 			// Create
 			if(options === 'insertAfter'){
@@ -2517,7 +2545,7 @@ sf.model = function(scope){
 						Array.prototype.splice.apply(this, temp);
 
 						// Rebuild all element
-						if(arguments[1] !== true || isKeyed){
+						if(arguments[1] !== true){
 							processElement(0, 'clear');
 							processElement(0, 'hardRefresh');
 						}
@@ -2742,12 +2770,8 @@ sf.model = function(scope){
 					list.hardRefresh(i);
 					break;
 				}
-				else{
-					if(isKeyed === true)
-						list.softRefresh(i);
-					else if(syntheticTemplate(elem, template, property, list[i]) === false)
-						continue; // Continue if no update
-				}
+				else if(syntheticTemplate(elem, template, property, list[i]) === false)
+					continue; // Continue if no update
 
 				if(callback !== void 0 && callback.update)
 					callback.update(elem, 'replace');
@@ -2794,7 +2818,6 @@ sf.model = function(scope){
 		template = self.extractPreprocess(template, mask, name);
 
 		if(method.length === 2){
-			var isKeyed = parentNode.classList.contains('sf-keyed-list');
 			var tempDOM = document.createElement('div');
 			var modelRef = self.root[name];
 
@@ -2802,8 +2825,8 @@ sf.model = function(scope){
 				var elem = templateParser(template, items[i]);
 				tempDOM.appendChild(elem);
 
-				if(isKeyed === false)
-					syntheticCache(elem, template, items[i]);
+				syntheticCache(elem, template, items[i]);
+				elem.model = items[i];
 			}
 
 			// Enable element binding
@@ -3166,10 +3189,11 @@ sf.model = function(scope){
 	function repeatedListBinding(temp, targetNode, queued, controller_){
 		for (var a = 0; a < temp.length; a++) {
 			var element = temp[a];
-			var parent = element.parentElement;
 
-			if(queued !== void 0)
-				element.classList.remove('sf-dom-queued');
+			// if(element.sf$avoidInit)
+			// 	continue;
+
+			var parent = element.parentElement;
 
 			if(parent.classList.contains('sf-virtual-list')){
 				var ceiling = document.createElement(element.tagName);
@@ -3234,15 +3258,15 @@ sf.model = function(scope){
 			if(model.destroy)
 				model.destroy(element);
 
-			removeModelBinding(modelName);
 			if(element.sf$component !== void 0){
 				var modelFrom = element.sf$componentFrom;
 				var components = sf.component.available[modelFrom];
 				components.splice(components.indexOf(modelName), 1);
 				internal.component.triggerEvent(modelFrom, 'removed', self.root[modelName]);
 				delete self.root[modelName];
+				return;
 			}
-			return;
+			removeModelBinding(model);
 		}
 	}
 
@@ -3275,18 +3299,26 @@ sf.model = function(scope){
 		}
 	});
 
-	var removeModelBinding = self.reset = function(modelName){
-		var ref = self.root[modelName];
+	var removeModelBinding = self.reset = function(ref){
 		if(ref === void 0)
 			return;
 
 		var bindedKey = ref.sf$bindedKey;
 		var temp = null;
 		for(var key in bindedKey){
-			delete bindedKey[key];
-
-			if(ref[key] === void 0 || ref[key] === null)
+			if(bindedKey[key] === null)
 				continue;
+
+			for (var i = bindedKey[key].length-1; i >= 0; i--) {
+				if(!bindedKey[key][i].element.isConnected)
+					bindedKey[key].splice(i, 1);
+			}
+
+			if(bindedKey[key].input !== void 0)
+				for (var i = bindedKey[key].input.length-1; i >= 0; i--) {
+					if(!bindedKey[key].input[i].isConnected)
+						bindedKey[key].input.splice(i, 1);
+				}
 
 			if(ref[key].constructor === String ||
 				ref[key].constructor === Number ||
@@ -3306,13 +3338,17 @@ sf.model = function(scope){
 			}
 			else continue;
 
-			if(Object.getOwnPropertyDescriptor(ref, key) === void 0)
-				continue;
+			if(bindedKey[key].length === 0){
+				delete bindedKey[key];
 
-			// Reconfigure / Remove property descriptor
-			var temp = ref[key];
-			delete ref[key];
-			ref[key] = temp;
+				if(Object.getOwnPropertyDescriptor(ref, key) === void 0)
+					continue;
+
+				// Reconfigure / Remove property descriptor
+				var temp = ref[key];
+				delete ref[key];
+				ref[key] = temp;
+			}
 		}
 	}
 
@@ -3438,7 +3474,6 @@ sf.model = function(scope){
 		// Check if it's component
 		var tagName = targetNode.tagName.toLowerCase();
 		if(sf.component.registered[tagName] !== void 0){
-			targetNode.parentNode.classList.add('sf-keyed-list');
 			targetNode.textContent = '';
 			targetNode.remove();
 			targetNode.setAttribute('sf-component-ignore', '');
@@ -3774,14 +3809,14 @@ sf.model = function(scope){
 			// Get reference for debugging
 			var current = processingElement = nodes[a];
 
+			// if(current.sf$avoidInit)
+			// 	continue;
+
 			var modelElement = sf.controller.modelElement(current);
 			if(modelElement === null)
 				continue;
 
 			var model = modelElement.sf$component === void 0 ? modelElement.getAttribute('sf-controller') : modelElement.sf$component;
-
-			if(queued !== void 0)
-				current.classList.remove('sf-dom-queued');
 
 			if(internal.modelPending[model] || self.root[model] === undefined)
 				self(model);
@@ -4632,31 +4667,19 @@ function interpolate(text, obj){
 var waiting = false;
 var pendingCallback = [];
 self.get = function(path, obj, callback){
-	var value = diveObject(self.list[self.default], path);
-
 	if(obj !== void 0 && obj.constructor === Function){
 		callback = obj;
 		obj = void 0;
 	}
 
-	if(value !== void 0){
-		if(obj)
-			value = interpolate(value, obj);
+	if(path.constructor === String)
+		return getSingle(path, obj, callback);
+	else
+		return getMany(path, obj, callback);
+}
 
-		if(!callback)
-			return value;
-		return callback(value);
-	}
-
-	if(pending === false)
-		pending = {};
-
-	diveObject(pending, path, 1);
-
-	if(callback){
-		callback.path = path;
-		pendingCallback.push(callback);
-	}
+function startRequest(){
+	if(pending === false) return;
 
 	// Request to server after 500ms
 	// To avoid multiple request
@@ -4679,7 +4702,10 @@ self.get = function(path, obj, callback){
 
 				var defaultLang = self.list[self.default];
 				for (var i = 0; i < pendingCallback.length; i++) {
-					pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
+					if(pendingCallback[i].callbackOnly === void 0)
+						pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
+					else
+						pendingCallback[i]();
 				}
 
 				pendingCallback.length = 0;
@@ -4687,8 +4713,97 @@ self.get = function(path, obj, callback){
 			error:self.onError,
 		});
 	}, 500);
+}
 
+function getSingle(path, obj, callback){
+	var value = diveObject(self.list[self.default], path);
+	if(value !== void 0){
+		if(obj)
+			value = interpolate(value, obj);
+
+		if(!callback)
+			return value;
+		return callback(value);
+	}
+
+	if(pending === false)
+		pending = {};
+
+	diveObject(pending, path, 1);
+
+	if(callback){
+		callback.path = path;
+		pendingCallback.push(callback);
+	}
+
+	startRequest();
 	return path;
+}
+
+function getMany(paths, obj, callback){
+	var default_ = self.list[self.default];
+	var value = {};
+	var missing = [];
+
+	for (var i = 0; i < paths.length; i++) {
+		var temp = diveObject(default_, paths[i]);
+
+		if(temp)
+			value[paths[i]] = temp;
+		else 
+			missing.push(paths[i]);
+	}
+
+	if(missing.length === 0){
+		if(obj)
+			value = interpolate(value, obj);
+
+		if(!callback)
+			return value;
+		return callback(value);
+	}
+
+	if(pending === false)
+		pending = {};
+
+	for (var i = 0; i < missing.length; i++) {
+		diveObject(pending, missing[i], 1);
+	}
+
+	var callback_ = function(){
+		for (var i = 0; i < missing.length; i++) {
+			var temp = diveObject(default_, missing[i]);
+
+			if(temp)
+				value[missing[i]] = temp;
+		}
+
+		return callback(value);
+	}
+
+	callback_.callbackOnly = true;
+	pendingCallback.push(callback_);
+
+	startRequest();
+}
+
+self.assign = function(model, keyPath, obj, callback){
+	var keys = Object.keys(keyPath);
+	var vals = Object.values(keyPath);
+
+	if(obj !== void 0 && obj.constructor === Function){
+		callback = obj;
+		obj = void 0;
+	}
+
+	getMany(vals, obj, function(values){
+		for (var i = 0; i < keys.length; i++) {
+			model[keys[i]] = values[vals[i]];
+		}
+
+		if(callback)
+			callback();
+	});
 }
 
 function diveFill(obj1, obj2){
@@ -4719,25 +4834,15 @@ self.init = function(el){
 	refreshLang(list);
 
 	if(pending !== false && self.serverURL !== false){
-		if(activeRequest !== false)
-			activeRequest.abort();
+		var callback = function(){
+			pending = false;
+			refreshLang(pendingElement, true);
+		}
 
-		activeRequest = sf.ajax({
-			url:self.serverURL,
-			data:{
-				lang:self.default,
-				paths:JSON.stringify(pending)
-			},
-			dataType:'json',
-			method:'POST',
-			success:function(obj){
-				pending = false;
+		callback.callbackOnly = true;
+		pendingCallback.push(callback);
 
-				self.add(self.default, obj);
-				refreshLang(pendingElement, true);
-			},
-			error:self.onError,
-		});
+		startRequest();
 	}
 
 	if(pending !== false && self.serverURL === false)
@@ -4746,7 +4851,7 @@ self.init = function(el){
 
 function diveObject(obj, path, setValue){
 	var parts = path.split('.');
-	for (var i = 0, n = parts.length-1; i < parts.length; i++) {
+	for (var i = 0, n = parts.length-1; i <= n; i++) {
 		var key = parts[i];
 
 		if(setValue === void 0){ // get only
@@ -4755,12 +4860,15 @@ function diveObject(obj, path, setValue){
 
 	    	obj = obj[key];
 		}
-		else{ // set if undefined
+		else{ // set
 			if(i === n){
 				obj[key] = setValue;
 				return;
 			}
-			else obj = obj[key] = {};
+
+			if(obj[key] === void 0)
+                obj = obj[key] = {};
+            else obj = obj[key];
 		}
     }
 
@@ -4955,7 +5063,7 @@ internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
 	var pattern = /\/:([^/]+)/g;
-    var knownKeys = /^(path|url|templateURL|html|on|routes|beforeRoute|defaultData)$/;
+    var knownKeys = /^(path|url|templateURL|html|on|routes|beforeRoute|defaultData|cache)$/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -5014,6 +5122,9 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			if(ref.on !== void 0)
 				route.on = ref.on;
 
+			if(ref.cache)
+				route.cache = true;
+
 			var hasChild = [];
 
             var keys = Object.keys(ref);
@@ -5066,16 +5177,20 @@ var self = sf.views = function View(selector, name){
 
 	var self = this;
 
-	if(sf.views.list[name] === void 0)
-		sf.views.list[name] = [];
+	if(name){
+		if(sf.views.list[name] === void 0)
+			sf.views.list[name] = [];
 
-	sf.views.list[name].push(self);
+		sf.views.list[name].push(self);
+	}
 
 	var pendingAutoRoute = false;
 
 	// Init current URL as current View Path
 	if(name === slash)
 		self.currentPath = sf.url.paths;
+	else if(name === false)
+		self.currentPath = '';
 	else{
 		self.currentPath = '';
 		pendingAutoRoute = true;
@@ -5088,7 +5203,7 @@ var self = sf.views = function View(selector, name){
 	self.currentDOM = null;
 	self.lastDOM = null;
 	self.relatedDOM = [];
-	self.data = void 0;
+	self.data = {};
 
 	self.maxCache = 2;
 
@@ -5172,7 +5287,7 @@ var self = sf.views = function View(selector, name){
 		if(!initialized)
 			self.selector();
 
-		if(!firstRouted){
+		if(!firstRouted && name){
 			sf(function(){
 				if(firstRouted)
 					return;
@@ -5285,7 +5400,7 @@ var self = sf.views = function View(selector, name){
 
 		if(name === slash)
 			sf.url.paths = path;
-		else
+		else if(name)
 			aHashes[name] = path;
 
 		// This won't trigger popstate event
@@ -5315,7 +5430,7 @@ var self = sf.views = function View(selector, name){
 			if(parentElement)
 				dom.parentPageElement = parentElement;
 
-			dom.routerData = null;
+			dom.routerData = {};
 			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
 				dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
 				dom.firstChild.remove();
@@ -5323,7 +5438,8 @@ var self = sf.views = function View(selector, name){
 
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
-			self.data = url.data;
+			Object.assign(dom.routerData, url.data)
+			self.data = dom.routerData;
 
 			if(self.dynamicScript !== false){
 				var scripts = dom.getElementsByTagName('script');
@@ -5337,10 +5453,11 @@ var self = sf.views = function View(selector, name){
 				// Parse the DOM data binding
 				sf.model.init(dom);
 
-				self.data = url.data;
-
 				if(url.on !== void 0 && url.on.coming)
-					url.on.coming(url.data);
+					url.on.coming(self.data);
+
+				if(url.cache)
+					dom.routeNoRemove = true;
 
 				var tempDOM = self.currentDOM;
 				self.currentDOM = dom;
@@ -5350,7 +5467,7 @@ var self = sf.views = function View(selector, name){
 				// Trigger loaded event
 				var event = onEvent['routeFinish'];
 				for (var i = 0; i < event.length; i++) {
-					if(event[i](self.currentPath, path, url.data)) return;
+					if(event[i](self.currentPath, path)) return;
 				}
 
 				if(pendingShowed !== void 0)
@@ -5377,7 +5494,7 @@ var self = sf.views = function View(selector, name){
 				// Clear old cache
 				var parent = self.currentDOM.parentNode;
 				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-					if(parent.defaultViewContent !== parent.firstElementChild)
+					if(parent.defaultViewContent !== parent.firstElementChild && parent.firstElementChild.routeNoRemove)
 						parent.firstElementChild.remove();
 					else if(parent.childElementCount > 1)
 						parent.firstElementChild.nextElementSibling.remove();
@@ -5470,7 +5587,7 @@ var self = sf.views = function View(selector, name){
 		    }),
 			success:function(html_content){
 				if(rejectResponse.test(html_content)){
-					console.error("Views request was received <html> while it was dissalowed. Please check http response from Network Tab.");
+					console.error("Views request was received <html> while it was disalowed. Please check http response from Network Tab.");
 					return routeError_(1);
 				}
 
@@ -5533,6 +5650,7 @@ var self = sf.views = function View(selector, name){
 			self.currentDOM.routeCached.on.leaving();
 
 		self.currentDOM = cachedDOM;
+		self.data = cachedDOM.routerData;
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.coming)
 			self.currentDOM.routeCached.on.coming();
@@ -5541,7 +5659,7 @@ var self = sf.views = function View(selector, name){
 
 		var event = onEvent['routeCached'];
 		for (var i = 0; i < event.length; i++) {
-			if(event[i](self.currentPath, self.lastPath)) return;
+			event[i](self.currentPath, self.lastPath);
 		}
 
 		// Trigger reinit for the model

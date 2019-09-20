@@ -1,12 +1,30 @@
-<a href="https://www.patreon.com/stefansarya"><img src="http://anisics.stream/assets/img/support-badge.png" height="20"></a>
-
-[![Written by](https://img.shields.io/badge/Written%20by-ScarletsFiction-%231e87ff.svg)](LICENSE)
+<a href='https://patreon.com/stefansarya'><img src='https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2Fstefansarya%2Fpledges&style=for-the-badge' height='20'></a>
 [![Software License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE)
 [![](https://data.jsdelivr.com/v1/package/npm/scarletsframe/badge)](https://www.jsdelivr.com/package/npm/scarletsframe)
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=ScarletsFrame%20is%20frontend%20library%20that%20can%20help%20simplify%20your%20code.&url=https://github.com/ScarletsFiction/ScarletsFrame&via=github&hashtags=scarletsframe,browser,framework,library,mvw)
 
 # ScarletsFrame
-A frontend framework that can help you write a simple web structure with complex feature. This framework have small memory allocation and allows you to directly write template in the HTML instead of creating different file and load it later. [Here](https://rawgit.com/krausest/js-framework-benchmark/master/webdriver-ts-results/table.html) you can see the benchmark.
+A frontend framework that can help you write a simple web structure with complex feature. This framework have small memory allocation and allows you to directly write template in the HTML. [Here](https://rawgit.com/krausest/js-framework-benchmark/master/webdriver-ts-results/table.html) you can see the benchmark.
+
+## Table of contents
+ - [Example](#example)
+ - [Install](#install-with-cdn-link)
+ - [Hints](#hints)
+ - [Asset Loader](#asset-loader)
+ - [Router / Views](#router--views)
+   - [Specify routes](#specify-routes)
+   - [Views event](#views-event)
+   - [Page cache](#set-page-view-cache)
+   - [Page transition](#page-transition)
+ - [Define Model](#initialize-define-model)
+   - [Model & Template](#model--template-feature)
+   - [Views and Model data binding](#views-and-model-data-binding)
+ - [Controller](#controller)
+ - [Virtual Scroll](#virtual-scroll)
+ - [Components](#components)
+ - [Language / Locale](#language--locale)
+ - [Contribution](#contribution)
+ - [License](#license)
 
 ## Example
 - [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
@@ -19,25 +37,6 @@ A frontend framework that can help you write a simple web structure with complex
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 - [Views and Router](https://codesandbox.io/s/viewsrouter-example-1vbdh)
 - [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
-
-## Table of contents
- - [Example](#example)
- - [Install](#install-with-cdn-link)
- - [Hints](#hints)
- - [Asset Loader](#asset-loader)
- - [Router / Views](#router--views)
-   - [Specify routes](#specify-routes)
-   - [Views event](#views-event)
-   - [Page transition](#page-transition)
- - [Define Model](#initialize-define-model)
-   - [Model & Template](#model--template-feature)
-   - [Views and Model data binding](#views-and-model-data-binding)
- - [Controller](#controller)
- - [Virtual Scroll](#virtual-scroll)
- - [Components](#components)
- - [Language/Locale](#language--locale)
- - [Contribution](#contribution)
- - [License](#license)
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -62,6 +61,8 @@ sf.model.for('things', (self, root) => {
   ...
 });
 ```
+
+These documentation may need to be redesigned. If you're developer that interested to help this framework, please visit some open issue to improve this or help by donate so this framework can have it's own website.
 
 ## Hints
 After this library was initialized, you could access `sf` from global scope.
@@ -138,11 +139,19 @@ Views is used when you want to load different template/page in current browser's
 
 The view name is optional, if you doesn't give name it will be your real URL path. Instead if you give it the view name, you will get hashtag with the view path.
 
-> This feature need more optimization
+> This feature need some optimization
 
 ```js
 // sf.views(selector, name);
+
+// Path as main URL
+var myMain = new sf.views('.my-selector');
+
+// Path in hashtag
 var myView = new sf.views('.my-selector', 'first');
+
+// Hidden path
+var viewOnly = new sf.views('.my-selector', false);
 ```
 
 ### Specify routes
@@ -153,6 +162,7 @@ myView.addRoute([
   {
     path:'/',
     url:'/',
+    cache:true, // Keep current page
     on:{
       coming:function(){
         console.log('henlo from / route');
@@ -196,23 +206,23 @@ These route will valid for your current tab, and can also being called like
 ```html
 <a href="#first/about/profile">First view route</a>
 <a href="/realpath#first/alex">First view with real path route</a>
-<a href="@/browser/route">No route processing</a>
+<a href="@/browser/route">Native browser's route</a>
 <a href="//www.google.com/">Change domain</a>
 ```
 
 Multiple view path also supported by adding more hashtag and the view name, or adding the real URL. But you can also call the route by calling `myView.goto(path)`.
 
 ```js
-myView.goto('/user/home', data = {}, method = 'get');
+myView.goto('/user/home', {/* 'GET' Data Field */}, method = 'GET');
 ```
 
 ### Views event
-Here you can listen if any page was loaded, loading, or load error
+Here you can listen if any page was loaded, loading, or load error. 
 ```js
 myView.on('routeStart', function(current, target) {
     console.log("Loading path to " + target);
 });
-myView.on('routeFinish', function(current, target, data) {
+myView.on('routeFinish', function(current, target) {
     console.log("Navigated from " + current + " to " + target);
 });
 myView.on('routeCached', function(current, target) {
@@ -221,6 +231,19 @@ myView.on('routeCached', function(current, target) {
 myView.on('routeError', function(statusCode) {
     console.log("Navigation failed", statusCode);
 });
+```
+
+After/when these event you can obtain the route data by using:
+```js
+// path:'/:username'
+myView.data; // {username:'myself'}
+```
+
+### Set page view cache
+This feature will cache the page view on the DOM and let it invisible.<br>
+The default limit is set to 2 page view.
+```js
+myView.maxCache = 10;
 ```
 
 ### Model element collection
@@ -692,17 +715,20 @@ Or you can do it directly from DOM like below.
 <model-name></model-name>
 ```
 
-When you called `sf.model('model-name')` or `sf(document.querySelector('model-name'))`, it will return every component model scope as an array. But if you want to count how many component are created on the DOM, you can get the length of `sf.component.available`.
+To obtain the model scope of an component, you can do the following:
 
-The model will be automatically removed after the element was deleted. Or you could also call `myElement.destroy()`.
+> sf.component.available['model-name'][0]
+> $('model-name')[0].model
 
-## Language/Locale
+The model will be automatically removed after the element was deleted. Or you could also call `theElement.destroy()`. Just make sure you're **not saving these element/model reference** anywhere so it could be garbage collected.
+
+## Language / Locale
 There are 2 ways on how to add your language pack:
  - Server side: Using server for serving the unknown language
- - Client side: Import language
+ - Client side: Import language from the script
 
 ### Server side
-You will need to set the serving URL before getting started.
+You will need to set the serving URL before getting started. If you're confused, you can sneak peek from the test case.
 
 ```js
 sf.lang.serverURL = 'http://localhost/language';
@@ -721,7 +747,7 @@ Sometime the language pack will getting bigger if you have many languages for yo
 
 ```js
 var myLang = {
-  date:"Current date is {date}",
+  timestamp:"Current timestamp is {timestamp}",
   my:{
     name:"Your name is {name}"
   }
@@ -764,9 +790,24 @@ sf.lang.get('my.name'); // My Name is Lusia
 sf.lang.get('my.name', {name:"Alex"}); // My Name is Alex
 
 // Use callback for waiting request to the server side
-sf.lang.get('server.name', /* {...}, */function(text){
+sf.lang.get('date', /* {...}, */function(text){
   // Parameter 2 can also be used as callback/interpolation data
 });
+
+// Multiple path at once
+sf.lang.get(['date', 'my.name'], /* {...}, */, function(values){
+  // Parameter 2 can also be used as callback/interpolation data
+  /* values = {
+    'server.name':Date.now(),
+    'my.name':'My Name is Lusia'
+  }*/
+});
+
+// Directly assign to object
+var myObject = sf.model('name');
+sf.lang.assign(myObject, {
+  modelKey:'my.name'
+}, /* {interpolation data}*/);
 ```
 
 ## Contribution

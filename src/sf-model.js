@@ -855,7 +855,6 @@ sf.model = function(scope){
 		var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 		var refreshTimer = -1;
 		var parentChilds = parentNode.children;
-		var isKeyed = parentNode.classList.contains('sf-keyed-list');
 
 		// Update callback
 		var modelRef = self.root[modelName];
@@ -917,8 +916,8 @@ sf.model = function(scope){
 					}
 					else parentNode.appendChild(temp);
 
-					if(isKeyed === false)
-						syntheticCache(temp, template, list[i]);
+					syntheticCache(temp, template, list[i]);
+					temp.model = list[i];
 				}
 
 				if(list.$virtual && list.$virtual.refreshVirtualSpacer)
@@ -1034,8 +1033,8 @@ sf.model = function(scope){
 						break;
 
 					var temp = templateParser(template, list[i]);
-					if(isKeyed === false)
-						syntheticCache(temp, template, list[i]);
+					syntheticCache(temp, template, list[i]);
+					temp.model = item;
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
@@ -1052,8 +1051,8 @@ sf.model = function(scope){
 			if(item === void 0) return;
 
 			var temp = templateParser(template, item);
-			if(isKeyed === false)
-				syntheticCache(temp, template, item);
+			syntheticCache(temp, template, item);
+			temp.model = item;
 
 			// Create
 			if(options === 'insertAfter'){
@@ -1191,7 +1190,7 @@ sf.model = function(scope){
 						Array.prototype.splice.apply(this, temp);
 
 						// Rebuild all element
-						if(arguments[1] !== true || isKeyed){
+						if(arguments[1] !== true){
 							processElement(0, 'clear');
 							processElement(0, 'hardRefresh');
 						}
@@ -1416,12 +1415,8 @@ sf.model = function(scope){
 					list.hardRefresh(i);
 					break;
 				}
-				else{
-					if(isKeyed === true)
-						list.softRefresh(i);
-					else if(syntheticTemplate(elem, template, property, list[i]) === false)
-						continue; // Continue if no update
-				}
+				else if(syntheticTemplate(elem, template, property, list[i]) === false)
+					continue; // Continue if no update
 
 				if(callback !== void 0 && callback.update)
 					callback.update(elem, 'replace');
@@ -1468,7 +1463,6 @@ sf.model = function(scope){
 		template = self.extractPreprocess(template, mask, name);
 
 		if(method.length === 2){
-			var isKeyed = parentNode.classList.contains('sf-keyed-list');
 			var tempDOM = document.createElement('div');
 			var modelRef = self.root[name];
 
@@ -1476,8 +1470,8 @@ sf.model = function(scope){
 				var elem = templateParser(template, items[i]);
 				tempDOM.appendChild(elem);
 
-				if(isKeyed === false)
-					syntheticCache(elem, template, items[i]);
+				syntheticCache(elem, template, items[i]);
+				elem.model = items[i];
 			}
 
 			// Enable element binding
@@ -1840,10 +1834,11 @@ sf.model = function(scope){
 	function repeatedListBinding(temp, targetNode, queued, controller_){
 		for (var a = 0; a < temp.length; a++) {
 			var element = temp[a];
-			var parent = element.parentElement;
 
-			if(queued !== void 0)
-				element.classList.remove('sf-dom-queued');
+			// if(element.sf$avoidInit)
+			// 	continue;
+
+			var parent = element.parentElement;
 
 			if(parent.classList.contains('sf-virtual-list')){
 				var ceiling = document.createElement(element.tagName);
@@ -2124,7 +2119,6 @@ sf.model = function(scope){
 		// Check if it's component
 		var tagName = targetNode.tagName.toLowerCase();
 		if(sf.component.registered[tagName] !== void 0){
-			targetNode.parentNode.classList.add('sf-keyed-list');
 			targetNode.textContent = '';
 			targetNode.remove();
 			targetNode.setAttribute('sf-component-ignore', '');
@@ -2460,14 +2454,14 @@ sf.model = function(scope){
 			// Get reference for debugging
 			var current = processingElement = nodes[a];
 
+			// if(current.sf$avoidInit)
+			// 	continue;
+
 			var modelElement = sf.controller.modelElement(current);
 			if(modelElement === null)
 				continue;
 
 			var model = modelElement.sf$component === void 0 ? modelElement.getAttribute('sf-controller') : modelElement.sf$component;
-
-			if(queued !== void 0)
-				current.classList.remove('sf-dom-queued');
 
 			if(internal.modelPending[model] || self.root[model] === undefined)
 				self(model);

@@ -8,11 +8,6 @@ sf.component = new function(){
 	var events = {};
 
 	self.for = function(name, func, extend){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.for(name, func);
-			});
-
 		if(self.registered[name] === void 0)
 			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
 		self.registered[name][0] = func;
@@ -64,10 +59,16 @@ sf.component = new function(){
 		if(internal.component.skip)
 			return;
 
+		// element.sf$avoidInit = true;
+		// var avoidRepeatedList = element.querySelectorAll('[sf-repeat-this]');
+		// for (var i = 0; i < avoidRepeatedList.length; i++) {
+		// 	avoidRepeatedList[i].sf$avoidInit = true;
+		// }
+
 		if(isCreated === true){
 			if(element.childElementCount === 0){
 				if(self.registered[name][3] === false)
-					return requestAnimationFrame(function(){
+					return setTimeout(function(){
 						self.new(name, element, $item, isCreated, true);
 					});
 			}
@@ -172,6 +173,11 @@ sf.component = new function(){
 	}
 
 	function componentInit(element, newID, from){
+		// for (var i = 0; i < avoidRepeatedList.length; i++) {
+		// 	avoidRepeatedList[i].sf$avoidInit = void 0;
+		// }
+
+		// element.sf$avoidInit = void 0;
 		element.setAttribute('sf-controller', '');
 		element.sf$component = newID;
 		element.sf$componentFrom = from;

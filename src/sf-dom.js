@@ -362,6 +362,18 @@ var $ = sf.dom; // Shortcut
 		return document.querySelector(selector);
 	}
 
+	self.isChildOf = function(child, parent) {
+	     var node = child.parentNode;
+	     while (node !== null) {
+	         if(node === parent)
+	             return true;
+
+	         node = node.parentNode;
+	     }
+
+	     return false;
+	}
+
 	self.parent = function(element, selector){
 		if(element.closest) return element.closest(selector);
 
