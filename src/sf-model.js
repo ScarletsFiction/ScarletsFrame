@@ -917,7 +917,6 @@ sf.model = function(scope){
 					else parentNode.appendChild(temp);
 
 					syntheticCache(temp, template, list[i]);
-					temp.model = list[i];
 				}
 
 				if(list.$virtual && list.$virtual.refreshVirtualSpacer)
@@ -1034,7 +1033,6 @@ sf.model = function(scope){
 
 					var temp = templateParser(template, list[i]);
 					syntheticCache(temp, template, list[i]);
-					temp.model = item;
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
@@ -1052,7 +1050,6 @@ sf.model = function(scope){
 
 			var temp = templateParser(template, item);
 			syntheticCache(temp, template, item);
-			temp.model = item;
 
 			// Create
 			if(options === 'insertAfter'){
@@ -1418,6 +1415,9 @@ sf.model = function(scope){
 				else if(syntheticTemplate(elem, template, property, list[i]) === false)
 					continue; // Continue if no update
 
+				if(elem.model !== list[i])
+					elem.model = list[i];
+
 				if(callback !== void 0 && callback.update)
 					callback.update(elem, 'replace');
 			}
@@ -1471,7 +1471,6 @@ sf.model = function(scope){
 				tempDOM.appendChild(elem);
 
 				syntheticCache(elem, template, items[i]);
-				elem.model = items[i];
 			}
 
 			// Enable element binding
