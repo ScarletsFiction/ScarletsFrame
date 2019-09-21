@@ -117,7 +117,7 @@ function Request(requestOptions) {
             script_1 = null;
             delete window[callbackName_1];
         };
-        document.querySelector('head').appendChild(script_1);
+        document.head.appendChild(script_1);
         if (options.timeout > 0) {
             abortTimeout_1 = setTimeout(function () {
                 script_1.parentNode.removeChild(script_1);

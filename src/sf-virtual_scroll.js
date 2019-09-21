@@ -77,6 +77,11 @@ sf.internal.virtual_scroll = new function(){
 
 			virtual.resetViewport();
 
+			if(parentNode.hasAttribute('scroll-reduce-floor')){
+				parentNode.sf$scroll_reduce_floor = parentNode.getAttribute('scroll-reduce-floor');
+				parentNode.removeAttribute('scroll-reduce-floor');
+			}
+
 			if(parentNode.classList.contains('sf-list-dynamic')){
 				dynamicList = true;
 				dynamicHeight(list, targetNode, parentNode, scroller);
@@ -461,9 +466,9 @@ sf.internal.virtual_scroll = new function(){
 		else{
 			bounding.floor = parentNode.children[self.prepareCount + 3].offsetTop; // +2 element
 
-			if(parentNode.hasAttribute('scroll-reduce-floor')){
-				bounding.floor -= parentNode.getAttribute('scroll-reduce-floor');
-				bounding.ceiling -= parentNode.getAttribute('scroll-reduce-floor');
+			if(parentNode.sf$scroll_reduce_floor){
+				bounding.floor -= parentNode.sf$scroll_reduce_floor;
+				bounding.ceiling -= parentNode.sf$scroll_reduce_floor;
 			}
 		}
 
