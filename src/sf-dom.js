@@ -374,6 +374,16 @@ var $ = sf.dom; // Shortcut
 	     return false;
 	}
 
+	self.parentHasProperty = function(element, propertyName){
+		do {
+			if(element[propertyName] !== void 0)
+				return element;
+
+			element = element.parentElement;
+		} while (element !== null);
+		return null;
+	}
+
 	self.parent = function(element, selector){
 		if(element.closest) return element.closest(selector);
 

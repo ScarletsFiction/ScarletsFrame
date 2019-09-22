@@ -247,7 +247,7 @@ myView.maxCache = 10;
 ```
 
 ### Model element collection
-After any element with `sf-controller` attribute was inserted into DOM, the  related model will have `$el` property that contains collection of `sf-controller` elements. This also applies when using component (But only contain one element).
+After any element with `<sf-model>` tag was inserted into DOM, the related model will have `$el` property that contains collection of `<sf-model>` elements. This also applies when using component (But only contain one element).
 
 ```js
 sf.model.for('something', function(self){
@@ -286,9 +286,9 @@ sf-page-view.page-prepare{
 ### Initialize/Define Model
 Let's start with this simple element
 ```html
-<div sf-controller="something">
+<sf-model name="something">
   <span>{{ text }}</span>
-</div>
+</sf-model>
 ```
 ```js
 sf.model.for('something', function(self, other){
@@ -334,7 +334,7 @@ This feature is supposed for simple execution, but if you have complex execution
 
 Make sure you write in ES5 because browser doesn't use transpiler.
 ```html
-<div sf-controller="something">
+<sf-model name="something">
   <span>{{@exec
       for(var i = 0; i < 5; i++){
         {[ <label>i -> {{ i }}</label> ]}
@@ -349,7 +349,7 @@ Make sure you write in ES5 because browser doesn't use transpiler.
       // Don't use this if you don't know how to secure your code
       @return number.join(',');
     }}</span>
-</div>
+</sf-model>
 ```
 ```js
 sf.model.for('something', function(self, other){
@@ -366,7 +366,7 @@ sf.controller.for('something', function(self){
 
 And the HTML output content will be escaped like below
 ```html
-<div sf-controller="something">
+<sf-model name="something">
   <span>
     <label>i -&gt; 0</label>
     <label>i -&gt; 1</label>
@@ -375,7 +375,7 @@ And the HTML output content will be escaped like below
     <label>i -&gt; 4</label>
     <br> 1,2,3,4,5
   </span>
-</div>
+</sf-model>
 ```
 
 ## Views and Model data binding
@@ -473,9 +473,9 @@ Controller is used for controling your model, so this would have a list of your 
 
 Get controller name for the selected element node
 ```html
-<div sf-controller="something">
+<sf-model name="something">
   <span id="username"></span>
-</div>
+</sf-model>
 ```
 
 Get current controller name for the selected element node
@@ -503,7 +503,7 @@ sf.controller.for(name, function(self){
 });
 ```
 
-This is where you put your logic to control after the model was loaded and the controller was initialized. This function can be called more than once before the router invoke the `before` event and after the page was contain the matched `sf-controller` attribute. If the attribute was not found, then it will not be executed.
+This is where you put your logic to control after the model was loaded and the controller was initialized. This function can be called more than once before the router invoke the `before` event and after the page was contain the matched `<sf-model name="">`. If the name was not found, then it will not be executed.
 ```js
 sf.controller.run(name, function(self){
     var time = Date.now();
@@ -589,7 +589,7 @@ sf.model.for('music.feedback', function(self, root){
 });
 ```
 ```html
-<body sf-controller="music.feedback">
+<sf-model name="music.feedback">
   <!-- Model scope for music.feedback -->
 
   <div sf-repeat-this="x in reviews" class='review' id='review{{x.id}}'>
@@ -611,7 +611,7 @@ sf.model.for('music.feedback', function(self, root){
     }}</ul>
     <p class='review-comment'>{{x.content}}</p>
   </div>
-</body>
+</sf-model>
 ```
 
 ## Virtual Scroll
@@ -675,6 +675,18 @@ sf.component.for('model-name', function(self, root, $item){
 
   // If you're using sf-repeat-this for this component
   // `$item` will have your item value instead of undefined
+
+  self.beforeInit = function(){
+    // When element is being initialized
+  }
+
+  self.init = function(){
+    // When element was appended into DOM
+  }
+
+  self.destroy = function(){
+    // When element was removed from DOM
+  }
 });
 ```
 
@@ -684,17 +696,6 @@ If you already inserted the component to the DOM, you can create attach new comp
 
 ```js
 sf.component.new('model-name', element = undefined);
-```
-
-When new component are created to the element, it will trigger event that was registered.
-
-```js
-sf.component.event('model-name', function(scope, event){
-  // scope.data === 'text'
-  if(event === 'created');
-  if(event === 'connected');
-  if(event === 'removed');
-});
 ```
 
 If you want to create the component in the DOM, you need to define the HTML content for the component.

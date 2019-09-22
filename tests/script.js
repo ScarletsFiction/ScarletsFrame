@@ -236,31 +236,30 @@ sf.model.for('components', function(self){
    }
 });
 
-sf.component.for('comp-test', function(self){
+sf.component.for('comp-test', function(self, root, item){
+   self.item = item;
    self.data = 'zxc';
 });
 
-sf.component.html('comp-test', `<div>1. {{ data }}</div><div>2. {{ data }}</div><br>`);
+sf.component.html('comp-test', `<div>1. {{ data }}</div><div>item: {{ item }}</div><br>`);
 
 sf.controller.for('comp-test', function(self, root, item){
    console.warn('comp-test', item, self.$el);
    self.init = function(){
-      console.log("Component init called");
+      console.warn("Component init called");
    }
 });
 
 sf(function(){
-   var ID = sf.component.new('comp-test', compDefined);
-
-   elem2 = new $CompTest('from javascript');
+   var elem2 = new $CompTest('from javascript');
    components.appendChild(elem2);
 });
 
-var testElement = document.getElementById('test');
-if(sf.controller.modelName(testElement) !== 'model-binding')
-   console.error("Can't obtain correct 'modelName'");
+sf(function(){return;
+   var testElement = document.getElementById('test');
+   if(sf.controller.modelName(testElement) !== 'model-binding')
+      console.error("Can't obtain correct 'modelName'");
 
-sf(function(){
    sf.controller.modelScope(testElement, function(self){
       if(!self.addition)
          console.error("Can't access model scope with 'modelScope' function");

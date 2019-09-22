@@ -49,10 +49,10 @@ sf.controller = new function(){
 	}
 
 	self.modelElement = function(element){
-		if(element.nodeType === 1 && element.hasAttribute('sf-controller') === true)
+		if(element.nodeType === 1 && element.sf$controlled !== void 0)
 			return element;
 
-		return $.parent(element, '[sf-controller]');
+		return $.parentHasProperty(element, 'sf$controlled');
 	}
 
 	self.modelName = function(element){
@@ -62,7 +62,7 @@ sf.controller = new function(){
 			return;
 		}
 
-		name = name.sf$component === void 0? name.getAttribute('sf-controller') : name.sf$component;
+		name = name.sf$controlled;
 
 		// Initialize it first
 		if(name !== void 0 && !self.active[name])
@@ -80,12 +80,12 @@ sf.controller = new function(){
 			script = element.getAttribute('sf-click');
 		}
 
-		var model = $.parent(element, '[sf-controller]');
-		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model.sf$component;
-		var _modelScope = sf.model.root[model];
+		var model = $.parentHasProperty(element, 'sf$controlled');
+		var _modelScope = model.model;
+		model = model.sf$controlled;
 
 		if(_modelScope === void 0)
-			throw "Couldn't find model for "+model+" that was called from sf-click";
+			return console.error("Couldn't find model for '"+model+"' that was called from sf-click");
 
 		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
 		script = avoidQuotes(script, function(script_){
@@ -162,7 +162,7 @@ sf.controller = new function(){
 
 		var temp = $('[sf-controller]', parent || document.body);
 		for (var i = 0; i < temp.length; i++) {
-			self.run(temp[i].sf$component === void 0? temp[i].getAttribute('sf-controller') : temp[i].sf$component);
+			self.run(temp[i].sf$controlled);
 		}
 	}
 

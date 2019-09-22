@@ -464,7 +464,7 @@ var self = sf.views = function View(selector, name){
 			// Wait if there are some component that being initialized
 			setTimeout(function(){
 				// Parse the DOM data binding
-				sf.model.init(dom);
+				// sf.model.init(dom);
 
 				if(url.on !== void 0 && url.on.coming)
 					url.on.coming(self.data);
@@ -673,15 +673,6 @@ var self = sf.views = function View(selector, name){
 		var event = onEvent['routeCached'];
 		for (var i = 0; i < event.length; i++) {
 			event[i](self.currentPath, self.lastPath);
-		}
-
-		// Trigger reinit for the model
-		var reinitList = self.currentDOM.querySelectorAll('[sf-controller]');
-		var models = sf.model.root;
-		for (var i = 0; i < reinitList.length; i++) {
-			var modelName = reinitList[i].getAttribute('sf-controller') || reinitList[i].sf$component;
-			if(models[modelName].reinit)
-				models[modelName].reinit();
 		}
 
 		self.lastPath = self.currentPath;

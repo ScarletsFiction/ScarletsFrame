@@ -79,15 +79,11 @@ sf.loader = new function(){
 		}
 	}
 
-	var isQueued = false;
 	var lastState = '';
 	document.addEventListener("load", function domLoadEvent(event){
 		// Add processing class to queued element
-		if(isQueued === false && document.body){
+		if(document.body){
 			document.removeEventListener('load', domLoadEvent, true);
-
-			isQueued = sf.model.queuePreprocess(document.body);
-			if(isQueued.length === 0) isQueued = false;
 
 			if(lastState === 'loading'){ // Find images
 				var temp = $('img:not(onload)[src]');
@@ -112,9 +108,6 @@ sf.loader = new function(){
 					}
 				}
 			}
-
-			if(isQueued === false)
-				isQueued = sf.model.queuePreprocess(document.body);
 
 			resourceWaitTimer = setInterval(waitResources, 100);
 			document.removeEventListener('readystatechange', domStateEvent, true);
@@ -173,12 +166,6 @@ sf.loader = new function(){
 		whenDOMReady.splice(0);
 		whenDOMLoaded.splice(0);
 		whenDOMReady = whenDOMLoaded = null;
-
-		// Last init
-		// sf.controller.init();
-		sf.model.init(document.body, isQueued);
-
-		isQueued = null;
 	}
 }
 sf.prototype.constructor = sf.loader.onFinish;

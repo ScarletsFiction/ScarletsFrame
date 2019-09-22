@@ -5,7 +5,6 @@ var uglify = require('gulp-uglify-es').default;
 var header = require('gulp-header');
 var rename = require('gulp-rename');
 var fs = require('fs');
-// var babel = require('gulp-babel');
 var notifier = require('node-notifier');
 
 require('./tests/server.js');
@@ -16,35 +15,22 @@ gulp.task('js', function(){
   // Set the order
   return gulp.src([
       'src/sf-a_init.js',
-      'src/sf-a_polyfill.js',
       'src/sf-dom.js',
       'src/sf-loader.js',
       'src/sf-component.js',
       'src/sf-model.js',
-      'src/**/*.js'
+      'src/sf-model/*.js',
+      'src/**/*.js',
+      'src/sf-z_end.js',
     ]).pipe(sourcemaps.init())
 
     // Save as combined script
-    .pipe(concat('scarletsframe.js'))
-    /*.pipe(babel({
-      presets: [
-        [
-          "@babel/preset-env",
-          {
-            targets: {
-              ie: 10
-            },
-            loose:true,
-            modules: false
-          }
-        ]
-      ]
-    }))*/
+    .pipe(concat('scarletsframe.min.js'))
     .pipe(gulp.dest('dist'))
 
     // Create minified file (This would be little slower)
-    .pipe(rename('scarletsframe.min.js')).on('error', swallowError)
-    .pipe(uglify()).on('error', swallowError)
+    // .pipe(rename('scarletsframe.min.js')).on('error', swallowError)
+    // .pipe(uglify()).on('error', swallowError)
 
     // Add header so developer can know about this script
     .pipe(header(`/*
@@ -67,11 +53,9 @@ gulp.task('js', function(){
     });
 });
 
-gulp.task('watch', function(){
+gulp.task('default', function(){
   gulp.watch(['src/**/*.js'], gulp.series('js'));
 });
-
-gulp.task('default', gulp.series('watch'));
 
 function swallowError(error){
   console.log(error.message)

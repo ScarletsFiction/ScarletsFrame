@@ -1,7 +1,7 @@
 {
   "name": "scarletsframe",
   "description": "A frontend framework that can help you write a simple web structure",
-  "version": "0.18.5",
+  "version": "0.20.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
@@ -12,14 +12,17 @@
     "url": "https://github.com/ScarletsFiction/ScarletsFrame/issues"
   },
   "browserslist": [
-    "Android >= 4.4.4",
-    "IOS >= 7",
-    "last 2 versions",
-    "ie >= 10"
+    "Android >= 5.0",
+    "IOS >= 10.1",
+    "Safari >= 10.1",
+    "Chrome >= 66",
+    "Firefox >= 63",
+    "Opera >= 53",
+    "Samsung >= 6.0",
+    "Edge >= 76"
   ],
   "devDependencies": {
     "gulp": "^4.0.2",
-    "gulp-babel": "^8.0.0",
     "gulp-concat": "^2.6.1",
     "gulp-header": "^2.0.9",
     "gulp-rename": "^1.4.0",

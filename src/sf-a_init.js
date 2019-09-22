@@ -1,11 +1,21 @@
 (function(global, factory){
+  if(window.customElements === void 0){
+    console.error("This browser was not supported");
+  
+    if(window.onOldBrowser)
+    	return window.onOldBrowser();
+  
+    console.error("Please make an callback in 'window.onOldBrowser' to create a custom fallback");
+    return alert("This browser was not supported");
+  }
+
   // Dynamic script when using router to load template
   // Feature is disabled by default
   function routerEval(code){eval(code)}
 
-  if(typeof exports === 'object' && typeof module !== 'void 0') module.exports = factory(global, routerEval);
+  if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global, routerEval);
   else global.sf = factory(global, routerEval);
-}(typeof window !== "void 0" ? window : this, (function(window, routerEval){'use strict';
+}(typeof window !== "undefined" ? window : this, (function(window, routerEval){'use strict';
 if(typeof document === void 0)
 	document = window.document;
 // ===== Module Init =====

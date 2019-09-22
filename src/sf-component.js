@@ -5,7 +5,6 @@ sf.component = new function(){
 	self.available = {};
 
 	var bases = {};
-	var events = {};
 
 	self.for = function(name, func, extend){
 		if(self.registered[name] === void 0)
@@ -15,11 +14,6 @@ sf.component = new function(){
 
 		defineComponent(name);
 	}
-
-	self.event = function(name, func){
-		events[name] = func;
-	}
-
 	self.base = function(name, func){
 		bases[name] = func;
 	}
@@ -47,19 +41,10 @@ sf.component = new function(){
 		self.registered[name][3] = tempDOM;
 	}
 
-	scope.triggerEvent = function(name, event, obj){
-		if(events[name] === void 0 || events[name][event] === void 0)
-			return;
-
-		events[name][event](obj, event);
-	}
-
 	var tempDOM = document.createElement('div');
 	self.new = function(name, element, $item, isCreated, retriggered){
 		if(internal.component.skip)
 			return;
-
-		// if(element.hasAttribute('sf-repeat-this')) return;
 
 		if(isCreated === true){
 			if(element.childElementCount === 0){
@@ -69,7 +54,7 @@ sf.component = new function(){
 					});
 			}
 
-			if(element.hasAttribute('sf-component-ignore') === true)
+			if(element.sf$componentIgnore === true)
 				return;
 
 			var avoid = /(^|:)(sf-|class|style)/;
@@ -126,11 +111,12 @@ sf.component = new function(){
 		if(self.registered[name][1])
 			self.registered[name][1](newObj, sf.model, $item);
 
-		scope.triggerEvent(name, 'created', newObj);
-
 		if(newElement !== true && isCreated !== true){
 			componentInit(element, newID, name);
 			element.model = sf.model.root[newID];
+
+			if(element.model.beforeInit)
+				element.model.beforeInit();
 			return newID;
 		}
 
@@ -150,13 +136,20 @@ sf.component = new function(){
 			// Wrap to temporary vDOM
 			tempDOM.appendChild(element);
 			componentInit(element, newID, name);
-			sf.model.init(element);
+			sf.model.init(element, newID);
+
+			if(element.model.beforeInit)
+				element.model.beforeInit();
+
 			element = tempDOM.firstElementChild;
 			element.remove();
 		}
 		else if(isCreated === true){
 			componentInit(element, newID, name);
-			sf.model.init(element);
+			sf.model.init(element, newID);
+
+			if(element.model.beforeInit)
+				element.model.beforeInit();
 		}
 
 		element.model = sf.model.root[newID];
@@ -169,8 +162,7 @@ sf.component = new function(){
 	}
 
 	function componentInit(element, newID, from){
-		element.setAttribute('sf-controller', '');
-		element.sf$component = newID;
+		element.sf$controlled = newID;
 		element.sf$componentFrom = from;
 	}
 
@@ -179,7 +171,7 @@ sf.component = new function(){
 
 	var HTMLElement_wrap = (function(Class){
 		function Wrapper(){
-			return Reflect_Construct(Class, arguments, Object.getPrototypeOf(this).constructor);
+			return Reflect.construct(Class, arguments, Object.getPrototypeOf(this).constructor);
 		}
 		Wrapper.prototype = Object.create(Class.prototype, {constructor:{value: Wrapper, enumerable: false, writable: true, configurable: true}}); 
 		return Object.setPrototypeOf(Wrapper, Class);
@@ -203,7 +195,27 @@ sf.component = new function(){
 		func.__proto__ = HTMLElement;
 
 		func.prototype.connectedCallback = function(){
-			scope.triggerEvent(name, 'connected', this);
+			if(this.hasAttribute('sf-repeat-this')){
+				this.sf$componentIgnore = true;
+				return;
+			}
+
+			// Maybe it's not the time
+			if(!this.model)
+				return;
+		};
+
+		func.prototype.disconnectedCallback = function(){
+			if(this.sf$componentIgnore)
+				return;
+
+			var components = sf.component.available[tagName];
+			components.splice(components.indexOf(this.sf$controller), 1);
+
+			if(this.model.destroy)
+				this.model.destroy();
+
+			delete self.root[this.sf$controlled];
 		};
 
 		try{

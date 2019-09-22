@@ -64,9 +64,6 @@ sf.internal.virtual_scroll = new function(){
 				virtual.preparedLength = 18;
 		}
 
-		var pendingFunction = internal.afterModelBinding;
-		internal.afterModelBinding = undefined;
-
 		setTimeout(function(){
 			if(list.$virtual === undefined || !parentNode.isConnected)
 				return; // Somewhat it's uninitialized
@@ -87,11 +84,6 @@ sf.internal.virtual_scroll = new function(){
 				dynamicHeight(list, targetNode, parentNode, scroller);
 			}
 			else staticHeight(list, targetNode, parentNode, scroller);
-
-			if(pendingFunction !== undefined){
-				pendingFunction();
-				pendingFunction = undefined;
-			}
 		}, 500);
 	}
 
