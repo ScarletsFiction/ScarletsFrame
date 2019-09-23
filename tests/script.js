@@ -181,6 +181,10 @@ sf.model.for('model-binding', function(self, root){
       {text:'Select 2', val:2},
       {text:'Select 3', val:3},
    ];
+   setTimeout(function(){
+      console.error(self.inputBinding6a)
+      self.inputBinding6a.push({text:'Select 4', val:4});
+   }, 5000);
    self.inputBinding6 = '';
    self.on$inputBinding6 = function(old, news){
       console.warn("inputBinding6 was updated from:", old, 'to', news);

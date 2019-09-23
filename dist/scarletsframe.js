@@ -566,6 +566,16 @@ var $ = sf.dom; // Shortcut
 	     return false;
 	}
 
+	self.parentHasProperty = function(element, propertyName){
+		do {
+			if(element[propertyName] !== void 0)
+				return element;
+
+			element = element.parentElement;
+		} while (element !== null);
+		return null;
+	}
+
 	self.parent = function(element, selector){
 		if(element.closest) return element.closest(selector);
 
@@ -1190,11 +1200,7 @@ sf.component = new function(){
 		if(internal.component.skip)
 			return;
 
-		// element.sf$avoidInit = true;
-		// var avoidRepeatedList = element.querySelectorAll('[sf-repeat-this]');
-		// for (var i = 0; i < avoidRepeatedList.length; i++) {
-		// 	avoidRepeatedList[i].sf$avoidInit = true;
-		// }
+		// if(element.hasAttribute('sf-repeat-this')) return;
 
 		if(isCreated === true){
 			if(element.childElementCount === 0){
@@ -1304,13 +1310,8 @@ sf.component = new function(){
 	}
 
 	function componentInit(element, newID, from){
-		// for (var i = 0; i < avoidRepeatedList.length; i++) {
-		// 	avoidRepeatedList[i].sf$avoidInit = void 0;
-		// }
-
-		// element.sf$avoidInit = void 0;
-		element.setAttribute('sf-controller', '');
-		element.sf$component = newID;
+		element.classList.add('sf-controlled');
+		element.sf$controlled = newID;
 		element.sf$componentFrom = from;
 	}
 
@@ -2272,7 +2273,6 @@ sf.model = function(scope){
 					else parentNode.appendChild(temp);
 
 					syntheticCache(temp, template, list[i]);
-					temp.model = list[i];
 				}
 
 				if(list.$virtual && list.$virtual.refreshVirtualSpacer)
@@ -2389,7 +2389,6 @@ sf.model = function(scope){
 
 					var temp = templateParser(template, list[i]);
 					syntheticCache(temp, template, list[i]);
-					temp.model = item;
 
 					if(list.$virtual){
 						oldChild.parentNode.replaceChild(temp, oldChild);
@@ -2407,7 +2406,6 @@ sf.model = function(scope){
 
 			var temp = templateParser(template, item);
 			syntheticCache(temp, template, item);
-			temp.model = item;
 
 			// Create
 			if(options === 'insertAfter'){
@@ -2773,6 +2771,9 @@ sf.model = function(scope){
 				else if(syntheticTemplate(elem, template, property, list[i]) === false)
 					continue; // Continue if no update
 
+				if(elem.model !== list[i])
+					elem.model = list[i];
+
 				if(callback !== void 0 && callback.update)
 					callback.update(elem, 'replace');
 			}
@@ -2826,7 +2827,6 @@ sf.model = function(scope){
 				tempDOM.appendChild(elem);
 
 				syntheticCache(elem, template, items[i]);
-				elem.model = items[i];
 			}
 
 			// Enable element binding
@@ -3138,9 +3138,10 @@ sf.model = function(scope){
 				continue;
 
 			temp[i].sf$initialized = true;
+			temp[i].classList.add('sf-controlled');
 
-			if(temp[i].sf$component){
-				var model = self.root[temp[i].sf$component];
+			if(temp[i].sf$componentFrom){
+				var model = temp[i].model;
 
 				if(model.init !== void 0)
 					model.init(temp[i]);
@@ -3148,11 +3149,12 @@ sf.model = function(scope){
 				continue;
 			}
 
-			var modelName = temp[i].getAttribute('sf-controller');
+			var modelName = temp[i].sf$controlled = temp[i].getAttribute('sf-controller');
 			var model = self.root[modelName] || sf.model(modelName);
 			if(model.$el === void 0)
 				model.$el = $();
 
+			temp[i].removeAttribute('sf-controller');
 			model.$el.push(temp[i]);
 
 			if(sf.controller.pending[modelName] !== void 0)
@@ -3238,15 +3240,15 @@ sf.model = function(scope){
 	// Don't call if the removed element is TEXT or #comment
 	var DOMNodeRemoved = scope.DOMNodeRemoved = function(element, isScan){
 		if(isScan === void 0){
-			var temp = element.querySelectorAll('[sf-controller]');
+			var temp = element.querySelectorAll('.sf-controlled');
 			for (var i = 0; i < temp.length; i++) {
 				temp[i].sf$initialized = false;
 				DOMNodeRemoved(temp[i], true);
 			}
 		}
 
-		if(element.hasAttribute('sf-controller') !== false){
-			var modelName = element.sf$component === void 0 ? element.getAttribute('sf-controller') : element.sf$component;
+		var modelName = element.sf$controlled;
+		if(modelName !== void 0){
 			var model = sf.model.root[modelName];
 
 			if(model.$el){
@@ -3258,7 +3260,7 @@ sf.model = function(scope){
 			if(model.destroy)
 				model.destroy(element);
 
-			if(element.sf$component !== void 0){
+			if(element.sf$componentFrom !== void 0){
 				var modelFrom = element.sf$componentFrom;
 				var components = sf.component.available[modelFrom];
 				components.splice(components.indexOf(modelName), 1);
@@ -3816,7 +3818,7 @@ sf.model = function(scope){
 			if(modelElement === null)
 				continue;
 
-			var model = modelElement.sf$component === void 0 ? modelElement.getAttribute('sf-controller') : modelElement.sf$component;
+			var model = modelElement.sf$controlled;
 
 			if(internal.modelPending[model] || self.root[model] === undefined)
 				self(model);
@@ -4000,10 +4002,10 @@ sf.controller = new function(){
 	}
 
 	self.modelElement = function(element){
-		if(element.nodeType === 1 && element.hasAttribute('sf-controller') === true)
+		if(element.nodeType === 1 && element.sf$controlled !== void 0)
 			return element;
 
-		return $.parent(element, '[sf-controller]');
+		return $.parentHasProperty(element, 'sf$controlled');
 	}
 
 	self.modelName = function(element){
@@ -4013,7 +4015,7 @@ sf.controller = new function(){
 			return;
 		}
 
-		name = name.sf$component === void 0? name.getAttribute('sf-controller') : name.sf$component;
+		name = name.sf$controlled;
 
 		// Initialize it first
 		if(name !== void 0 && !self.active[name])
@@ -4031,9 +4033,9 @@ sf.controller = new function(){
 			script = element.getAttribute('sf-click');
 		}
 
-		var model = $.parent(element, '[sf-controller]');
-		model = model.sf$component === void 0 ? model.getAttribute('sf-controller') : model.sf$component;
-		var _modelScope = sf.model.root[model];
+		var model = $.parentHasProperty(element, 'sf$controlled');
+		var _modelScope = model.model;
+		model = model.sf$controlled;
 
 		if(_modelScope === void 0)
 			throw "Couldn't find model for "+model+" that was called from sf-click";
@@ -4113,7 +4115,7 @@ sf.controller = new function(){
 
 		var temp = $('[sf-controller]', parent || document.body);
 		for (var i = 0; i < temp.length; i++) {
-			self.run(temp[i].sf$component === void 0? temp[i].getAttribute('sf-controller') : temp[i].sf$component);
+			self.run(temp[i].sf$controlled);
 		}
 	}
 
@@ -4270,7 +4272,7 @@ function Request(requestOptions) {
             script_1 = null;
             delete window[callbackName_1];
         };
-        document.querySelector('head').appendChild(script_1);
+        document.head.appendChild(script_1);
         if (options.timeout > 0) {
             abortTimeout_1 = setTimeout(function () {
                 script_1.parentNode.removeChild(script_1);
@@ -5663,12 +5665,11 @@ var self = sf.views = function View(selector, name){
 		}
 
 		// Trigger reinit for the model
-		var reinitList = self.currentDOM.querySelectorAll('[sf-controller]');
-		var models = sf.model.root;
+		var reinitList = self.currentDOM.querySelectorAll('.sf-controlled');
 		for (var i = 0; i < reinitList.length; i++) {
-			var modelName = reinitList[i].getAttribute('sf-controller') || reinitList[i].sf$component;
-			if(models[modelName].reinit)
-				models[modelName].reinit();
+			var model = reinitList[i].model;
+			if(model.reinit)
+				model.reinit();
 		}
 
 		self.lastPath = self.currentPath;
@@ -5788,6 +5789,11 @@ sf.internal.virtual_scroll = new function(){
 			internal.addScrollerStyle();
 
 			virtual.resetViewport();
+
+			if(parentNode.hasAttribute('scroll-reduce-floor')){
+				parentNode.sf$scroll_reduce_floor = parentNode.getAttribute('scroll-reduce-floor');
+				parentNode.removeAttribute('scroll-reduce-floor');
+			}
 
 			if(parentNode.classList.contains('sf-list-dynamic')){
 				dynamicList = true;
@@ -6173,9 +6179,9 @@ sf.internal.virtual_scroll = new function(){
 		else{
 			bounding.floor = parentNode.children[self.prepareCount + 3].offsetTop; // +2 element
 
-			if(parentNode.hasAttribute('scroll-reduce-floor')){
-				bounding.floor -= parentNode.getAttribute('scroll-reduce-floor');
-				bounding.ceiling -= parentNode.getAttribute('scroll-reduce-floor');
+			if(parentNode.sf$scroll_reduce_floor){
+				bounding.floor -= parentNode.sf$scroll_reduce_floor;
+				bounding.ceiling -= parentNode.sf$scroll_reduce_floor;
 			}
 		}
 

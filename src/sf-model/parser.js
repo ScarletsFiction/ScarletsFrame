@@ -576,10 +576,8 @@ self.queuePreprocess = function(targetNode, extracting, collectOther){
 				continue;
 			}
 
-			if(attrs['sf-bound'] !== void 0 || attrs['sf-bind'] !== void 0){
+			if(attrs['sf-bound'] !== void 0 || attrs['sf-bind'] !== void 0)
 				collectOther.input.push(currentNode);
-				continue;
-			}
 
 			// Skip nested component
 			if(internal.component[currentNode.tagName] !== void 0)
