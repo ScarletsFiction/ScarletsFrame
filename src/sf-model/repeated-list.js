@@ -1,4 +1,4 @@
-var loopParser = function(name, template, script, targetNode, parentNode){
+var loopParser = function(name, template, script, parentNode){
 	var method = script.split(' in ');
 	var mask = method[0];
 
@@ -44,7 +44,7 @@ var loopParser = function(name, template, script, targetNode, parentNode){
 			}
 		});
 
-		bindArray(template, items, mask, name, method[1], targetNode, parentNode, tempDOM);
+		bindArray(template, items, mask, name, method[1], parentNode, tempDOM);
 
 		// Output to real DOM if not being used for virtual list
 		if(items.$virtual === void 0){
@@ -59,52 +59,47 @@ var loopParser = function(name, template, script, targetNode, parentNode){
 	}
 }
 
-function repeatedListBinding(targetNode){
-	var temp = targetNode.querySelectorAll('[sf-repeat-this]');
-	for (var a = 0; a < temp.length; a++) {
-		var element = temp[a];
+function repeatedListBinding(element){
+	var parent = element.parentElement;
 
-		var parent = element.parentElement;
+	if(parent.classList.contains('sf-virtual-list')){
+		var ceiling = document.createElement(element.tagName);
+		ceiling.classList.add('virtual-spacer');
+		var floor = ceiling.cloneNode(true);
 
-		if(parent.classList.contains('sf-virtual-list')){
-			var ceiling = document.createElement(element.tagName);
-			ceiling.classList.add('virtual-spacer');
-			var floor = ceiling.cloneNode(true);
+		ceiling.classList.add('ceiling');
+		parent.insertBefore(ceiling, parent.firstElementChild); // prepend
 
-			ceiling.classList.add('ceiling');
-			parent.insertBefore(ceiling, parent.firstElementChild); // prepend
-
-			floor.classList.add('floor');
-			parent.appendChild(floor); // append
-		}
-
-		var after = element.nextElementSibling;
-		if(after === null || element === after)
-			after = false;
-
-		var before = element.previousElementSibling;
-		if(before === null || element === before)
-			before = false;
-
-		var script = element.getAttribute('sf-repeat-this');
-		element.removeAttribute('sf-repeat-this');
-
-		// Check if the element was already bound to prevent vulnerability
-		if(element.outerHTML.indexOf('sf-bind-list') !== -1){
-			console.error("Can't parse element that already bound");
-			continue;
-		}
-
-		var controller = sf.controller.modelName(element);
-		if(controller === void 0) continue;
-
-		loopParser(controller, element, script, targetNode, parent);
-		element.remove();
+		floor.classList.add('floor');
+		parent.appendChild(floor); // append
 	}
+
+	var after = element.nextElementSibling;
+	if(after === null || element === after)
+		after = false;
+
+	var before = element.previousElementSibling;
+	if(before === null || element === before)
+		before = false;
+
+	var script = element.getAttribute('sf-repeat-this');
+	element.removeAttribute('sf-repeat-this');
+
+	// Check if the element was already bound to prevent vulnerability
+	if(element.outerHTML.indexOf('sf-bind-list') !== -1){
+		console.error("Can't parse element that already bound");
+		return;
+	}
+
+	var controller = sf.controller.modelName(element);
+	if(controller === void 0) return;
+
+	loopParser(controller, element, script, parent);
+	element.remove();
 }
 
 // ToDo: Use class instead of this
-var bindArray = function(template, list, mask, modelName, propertyName, targetNode, parentNode, tempDOM){
+var bindArray = function(template, list, mask, modelName, propertyName, parentNode, tempDOM){
 	var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 	var refreshTimer = -1;
 	var parentChilds = parentNode.children;
@@ -574,7 +569,7 @@ var bindArray = function(template, list, mask, modelName, propertyName, targetNo
 		else list.$virtual.callback_ = {ref:modelRef, var:eventVar};
 
 		parentNode.replaceChild(template.html, parentChilds[1]);
-		sf.internal.virtual_scroll.handle(list, targetNode, parentNode);
+		sf.internal.virtual_scroll.handle(list, parentNode);
 		template.html.remove();
 	}
 	else{

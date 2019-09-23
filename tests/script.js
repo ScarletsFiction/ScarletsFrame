@@ -191,7 +191,7 @@ sf.model.for('model-binding', function(self, root){
    self.stuff = '(text from the model)';
    self.stuffes = ' and stuff';
    self.vuln = "{{self.vul}}{{@exec console.error('something not gud')}}";
-   self.vul = "this shouldn't be visible";
+   self.vul = "this musn't being visible";
    setTimeout(function(){sf.model.init(reinit)}, 1000);
 });
 sf.controller.for('model-binding', function(self, root){
@@ -238,6 +238,7 @@ sf.model.for('components', function(self){
 
 sf.component.for('comp-test', function(self, root, item){
    self.item = item;
+   self.tries = [1,2,3];
    self.data = 'zxc';
 });
 
@@ -365,3 +366,9 @@ views.on('routeError', function(e) {
 // views.on('routeData', function(obj){
 //    if(obj.title) sf.dom.findOne('head > title').innerHTML = obj.title;
 // });
+
+setTimeout(function(){
+   var a = sf.model.queuePreprocess(document.body)
+   console.log("Trying to reinit", a.length, "element (must be 0)");
+   sf.model.parsePreprocess(a);
+}, 10000);

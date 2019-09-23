@@ -4,6 +4,38 @@
       <title>Test Page</title>
       <meta charset="UTF-8">
       <script src='https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.js'></script>
+      <script>
+        var _bst = window.setTimeout;
+        var _bst_ = 0;
+        window.setTimeout = function(f,t){
+          _bst_++;
+          return _bst(f,t);
+        }
+
+        var _bsi = window.setInterval;
+        var _bsi_ = 0;
+        window.setInterval = function(f,t){
+          _bsi_++;
+          return _bsi(f,t);
+        }
+
+        _bst(function(){
+          console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
+        }, 5000);
+
+        var tempbst = 0;
+        _bst(function(){
+          tempbst = _bst_+_bsi_;
+          console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
+        }, 20000);
+
+        _bst(function(){
+          if(tempbst !== _bst_+_bsi_){
+            console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
+            return console.log("Looks like internal framework timer was not effective");
+          }
+        }, 30000);
+      </script>
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
       <script src='/dist/scarletsframe.min.js'></script>
       <style type="text/css">
@@ -72,7 +104,7 @@
       </div><br><br>
 
       <!-- Virtual Scroll And Array Binding -->
-      <sf-model name="virtual-scroll" id="reinit2">
+      <sf-m name="virtual-scroll" id="reinit2">
          <style type="text/css">
             .scroller{
                overflow-x: hidden;
@@ -101,15 +133,15 @@
 
          <b>Virtual Scroll - Dynamic Height</b>
          <i>Automatically scroll to item-11</i>
-         <ul class="scroller sf-virtual-list sf-list-dynamic sf-keyed-list">
+         <ul class="scroller sf-virtual-list sf-list-dynamic">
             <li sf-repeat-this="x in list2" data-id="{{x.id}}">
                <label>{{x.id}}</label>
             </li>
          </ul>
-      </sf-model><br><br>
+      </sf-m><br><br>
 
       <!-- Model and Controller -->
-      <sf-model name="model-binding" id="reinit">
+      <sf-m name="model-binding" id="reinit">
          <span :class="transit {{ bold ? 'bold' : '' }} {{ pink ? 'pink' : '' }}">Change variable on keyboard input</span><br>
 
          <input type="text" sf-bound="inputBinding1" onkeyup="sf(this).onKeyUp(event)"><br>
@@ -170,31 +202,27 @@
             {{@exec {[ <br><br>expected error{{vuln}} ]} }}
             {{@exec 
                // This must throw error
-               Object.keys({a:1});
-            }}
-            {{@exec 
-               // This must throw error
-               ;(function(){})();
+               Object.keys
+               ({a:1});
             }}
             {{@exec 
                // This must throw error
                var a = function(){}
             }}
-            {{@exec 
-               // This must throw error
-               ;(()=>{})();
-            }}
             </div>
-            <script>console.log("There are must have 4 total error")</script>
+            <script>console.log("There are must have 2 total error")</script>
          </div>
-      </sf-model>
+      </sf-m>
 
       <!-- Components -->
-      <sf-model name="components" id='components'>
+      <sf-m name="components" id='components'>
          <a sf-click="clickOK()">test click</a><br>
-         <comp-test id="henlos">custom text here</comp-test>
+         <comp-test id="henlos">
+            custom {{data}} text here
+            <span sf-repeat-this="num in tries">{{#num}}</span>
+         </comp-test>
          <comp-test sf-repeat-this="item in items"></comp-test>
-      </sf-model>
+      </sf-m>
 
       <!-- Language -->
       <div id="lang-test">

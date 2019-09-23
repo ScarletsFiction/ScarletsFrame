@@ -18,12 +18,6 @@ self.init = function(el, modelName){
 
 	sf.model.parsePreprocess(sf.model.queuePreprocess(el));
 	bindInput(el);
-
-	if(el.sf$componentFrom)
-		return;
-
-	// Find element for array binding
-	repeatedListBinding(el);
 }
 
 // Escape the escaped quote
@@ -80,13 +74,13 @@ var localEval = function(script, _model_, _modelScope, _content_){
 		}
 	}, true);
 
-	if(preventExecution){
+	if(preventExecution !== false){
 		console.groupCollapsed("%c<-- Expand the template error", 'color: yellow');
 		console.log(trimIndentation(processingElement.outerHTML).trim());
 		console.log("%c"+trimIndentation(script).trim(), 'color: yellow');
 		console.groupEnd();
 
-		console.error("Trying to executing unrecognized function ("+preventExecution+")");
+		console.error("Trying to executing unrecognized function \""+preventExecution+'"');
 		return '#TemplateError';
 	}
 	// ==== Security check ended ====

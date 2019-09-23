@@ -4,8 +4,13 @@ var dataParser = function(html, _model_, mask, scope, runEval, preParsedReferenc
 	var _modelScope = self.root[scope];
 	if(!runEval) runEval = '';
 
+	var modelKeys = self.modelKeys(_modelScope).join('|');
+
+	if(modelKeys.length === 0)
+		throw "'"+scope+"' model was not found";
+
 	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')\\b', 'g');
+	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
 
 	if(mask)
 		var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
@@ -32,7 +37,7 @@ var dataParser = function(html, _model_, mask, scope, runEval, preParsedReferenc
 			return temp_.replace(scopeMask, function(full, matched){
 				return '_modelScope.'+matched;
 			});
-		}).split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
+		});//.split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
 
 		// Evaluate
 		if(runEval === '#noEval'){
@@ -118,9 +123,13 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 	});
 
 	var _modelScope = self.root[scope];
+	var modelKeys = self.modelKeys(_modelScope).join('|');
+
+	if(modelKeys.length === 0)
+		throw "'"+scope+"' model was not found";
 
 	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp(sf.regex.strictVar+'('+self.modelKeys(_modelScope).join('|')+')\\b', 'g');
+	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
 
 	if(mask)
 		var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
@@ -143,7 +152,7 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 			return temp_.replace(scopeMask, function(full, matched){
 				return '_modelScope.'+matched;
 			});
-		}).split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
+		});//.split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
 
 		var result = '';
 		var check = false;
@@ -278,36 +287,17 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 }
 
 self.extractPreprocess = function(targetNode, mask, name){
-	// Check if it's component
-	var tagName = targetNode.tagName.toLowerCase();
-	if(sf.component.registered[tagName] !== void 0){
-		targetNode.textContent = '';
-		targetNode.remove();
-		return {
-			component:window['$'+capitalizeLetters(tagName.split('-'))],
-			list:targetNode.getAttribute('sf-bind-list')
-		};
-	}
-
-	// Remove repeated list from further process
-	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
-	for (var i = 0; i < backup.length; i++) {
-		var current = backup[i];
-		current.insertAdjacentHTML('afterEnd', '<sfrepeat-this id="'+i+'"></sfrepeat-this>');
-		current.remove();
-	}
-
 	var copy = targetNode.outerHTML;
 
 	// Mask the referenced item
 	if(mask !== null)
 		copy = copy.split('#'+mask).join('_model_');
-	else{ // Replace all masked item
-		copy.replace(/sf-repeat-this="(?:\W+|)(\w+)/g, function(full, match){
-			copy = copy.split('#'+match).join('_model_');
-			copy = copy.replace(RegExp(sf.regex.strictVar+"("+match+")\\b", 'g'), '_model_');
-		});
-	}
+	// else{ // Replace all masked item
+	// 	copy.replace(/sf-repeat-this="(?:\W+|)(\w+)/g, function(full, match){
+	// 		copy = copy.split('#'+match).join('_model_');
+	// 		copy = copy.replace(RegExp(sf.regex.strictVar+"("+match+")\\b", 'g'), '_model_');
+	// 	});
+	// }
 
 	// Extract data to be parsed
 	copy = uniqueDataParser(copy, null, mask, name, '#noEval');
@@ -374,15 +364,12 @@ self.extractPreprocess = function(targetNode, mask, name){
 		return found;
 	}
 
-	// Rebuild element
-	copy = $.parseElement(copy)[0];
+	window.lkj = copy;
 
-	// Restore element repeated list
-	var restore = copy.querySelectorAll('sfrepeat-this');
-	for (var i = 0; i < restore.length; i++) {
-		var current = restore[i];
-		current.parentNode.replaceChild(backup[current.id], current);
-	}
+	// Rebuild element
+	internal.component.skip = true;
+	copy = $.parseElement(copy)[0];
+	internal.component.skip = false;
 
 	// Start addressing
 	var nodes = self.queuePreprocess(copy, true).reverse();
@@ -560,14 +547,25 @@ self.queuePreprocess = function(targetNode, extracting){
 
 		if(currentNode.nodeType === 1){ // Tag
 			if(enclosedHTMLParse === true) continue;
-			var attrs = currentNode.attributes;
 
 			// Skip nested sf-model
-			if(currentNode.tagName === 'SF-MODEL')
+			if(currentNode.tagName === 'SF-M')
 				continue;
 
+			var attrs = currentNode.attributes;
+
 			// Skip element and it's childs that already bound to prevent vulnerability
-			if(attrs['sf-repeat-this'] || attrs['sf-bind-list'] || currentNode.sf$elementReferences !== void 0)
+			if(attrs['sf-bind-list'] !== void 0 || currentNode.sf$elementReferences !== void 0)
+				continue;
+
+			if(attrs['sf-repeat-this'] !== void 0){
+				currentNode.sf$repeatThis = true;
+				temp.push(currentNode);
+				continue;
+			}
+
+			// Skip nested component
+			if(internal.component[currentNode.tagName] !== void 0)
 				continue;
 
 			for (var a = 0; a < attrs.length; a++) {
@@ -615,12 +613,10 @@ self.queuePreprocess = function(targetNode, extracting){
 }
 
 self.parsePreprocess = function(nodes){
+	var repeatedList = [];
 	for (var a = 0; a < nodes.length; a++) {
 		// Get reference for debugging
 		var current = processingElement = nodes[a];
-
-		// if(current.sf$avoidInit)
-		// 	continue;
 
 		var modelElement = sf.controller.modelElement(current);
 		if(modelElement === null)
@@ -636,8 +632,13 @@ self.parsePreprocess = function(nodes){
 		// Double check if the child element already bound to prevent vulnerability
 		if(current.innerHTML.indexOf('sf-bind-list') !== -1){
 			console.error("Can't parse element that already bound");
-			console.log(processingElement.cloneNode(true));
+			console.log(current);
 			return;
+		}
+
+		if(current.sf$repeatThis){
+			repeatedList.push(current);
+			continue;
 		}
 
 		if(current.hasAttribute('sf-bind-ignore') === false)
@@ -653,6 +654,11 @@ self.parsePreprocess = function(nodes){
 				}
 			}
 		}
+	}
+
+	// Process the repeated list
+	for (var i = 0; i < repeatedList.length; i++) {
+		repeatedListBinding(repeatedList[i]);
 	}
 }
 

@@ -117,4 +117,4 @@ class SFModel extends HTMLElement {
 	}
 }
 
-customElements.define('sf-model', SFModel);
+customElements.define('sf-m', SFModel);

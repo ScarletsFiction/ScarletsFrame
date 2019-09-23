@@ -1,6 +1,8 @@
 sf.component = new function(){
 	var self = this;
-	var scope = internal.component = {};
+	var scope = internal.component = {
+		list:{}
+	};
 	self.registered = {};
 	self.available = {};
 
@@ -9,6 +11,9 @@ sf.component = new function(){
 	self.for = function(name, func, extend){
 		if(self.registered[name] === void 0)
 			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
+
+		internal.component[name.toUpperCase()] = true;
+
 		self.registered[name][0] = func;
 		delete sf.controller.pending[name];
 
@@ -49,9 +54,7 @@ sf.component = new function(){
 		if(isCreated === true){
 			if(element.childElementCount === 0){
 				if(self.registered[name][3] === false)
-					return setTimeout(function(){
-						self.new(name, element, $item, isCreated, true);
-					});
+					return;
 			}
 
 			if(element.sf$componentIgnore === true)

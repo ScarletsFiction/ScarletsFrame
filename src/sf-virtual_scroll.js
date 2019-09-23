@@ -5,7 +5,7 @@ sf.internal.virtual_scroll = new function(){
 	// before and after
 	self.prepareCount = 4; // 4, 8, 12, 16, ...
 
-	self.handle = function(list, targetNode, parentNode){
+	self.handle = function(list, parentNode){
 		var dynamicList = false;
 		var virtual = list.$virtual;
 		virtual.reset = function(reinitOnly){
@@ -81,14 +81,14 @@ sf.internal.virtual_scroll = new function(){
 
 			if(parentNode.classList.contains('sf-list-dynamic')){
 				dynamicList = true;
-				dynamicHeight(list, targetNode, parentNode, scroller);
+				dynamicHeight(list, parentNode, scroller);
 			}
-			else staticHeight(list, targetNode, parentNode, scroller);
+			else staticHeight(list, parentNode, scroller);
 		}, 500);
 	}
 
 	// Recommended for a list that have different element height
-	function dynamicHeight(list, targetNode, parentNode, scroller){
+	function dynamicHeight(list, parentNode, scroller){
 		var virtual = list.$virtual;
 		var ceiling = virtual.dCursor.ceiling;
 		var floor = virtual.dCursor.floor;
@@ -299,7 +299,7 @@ sf.internal.virtual_scroll = new function(){
 	}
 
 	// Recommended for a list that have similar element height
-	function staticHeight(list, targetNode, parentNode, scroller){
+	function staticHeight(list, parentNode, scroller){
 		var virtual = list.$virtual;
 		var ceiling = virtual.dCursor.ceiling;
 		var floor = virtual.dCursor.floor;
