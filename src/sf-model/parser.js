@@ -283,7 +283,6 @@ self.extractPreprocess = function(targetNode, mask, name){
 	if(sf.component.registered[tagName] !== void 0){
 		targetNode.textContent = '';
 		targetNode.remove();
-		targetNode.sf$componentIgnore = true;
 		return {
 			component:window['$'+capitalizeLetters(tagName.split('-'))],
 			list:targetNode.getAttribute('sf-bind-list')
@@ -568,7 +567,7 @@ self.queuePreprocess = function(targetNode, extracting){
 				continue;
 
 			// Skip element and it's childs that already bound to prevent vulnerability
-			if(attrs['sf-bind-key'] || attrs['sf-repeat-this'] || attrs['sf-bind-list'] || currentNode.sf$elementReferences !== void 0)
+			if(attrs['sf-repeat-this'] || attrs['sf-bind-list'] || currentNode.sf$elementReferences !== void 0)
 				continue;
 
 			for (var a = 0; a < attrs.length; a++) {
@@ -635,7 +634,7 @@ self.parsePreprocess = function(nodes){
 		var modelRef = self.root[model];
 
 		// Double check if the child element already bound to prevent vulnerability
-		if(/sf-bind-key|sf-bind-list/.test(current.innerHTML)){
+		if(current.innerHTML.indexOf('sf-bind-list') !== -1){
 			console.error("Can't parse element that already bound");
 			console.log(processingElement.cloneNode(true));
 			return;

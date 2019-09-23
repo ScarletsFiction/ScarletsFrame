@@ -212,6 +212,9 @@ sf.component = new function(){
 			var components = sf.component.available[tagName];
 			components.splice(components.indexOf(this.sf$controller), 1);
 
+			if(!this.model)
+				console.log(this);
+
 			if(this.model.destroy)
 				this.model.destroy();
 

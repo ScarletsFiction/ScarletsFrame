@@ -150,7 +150,7 @@ sf.model.for('model-binding', function(self, root){
    setTimeout(function(){
       var self = root('model-binding');
       self.inputBinding1 = 'Two way binding';
-      self.inputBinding2 = 'One way binding';
+      self.inputBinding2 = 123.321;
    }, 4000);
 
    self.onKeyUp = console.warn;

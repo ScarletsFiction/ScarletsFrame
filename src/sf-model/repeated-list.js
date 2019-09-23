@@ -20,7 +20,8 @@ var loopParser = function(name, template, script, targetNode, parentNode){
 			var elem = templateParser(template, items[i]);
 			tempDOM.appendChild(elem);
 
-			syntheticCache(elem, template, items[i]);
+			if(template.component === void 0)
+				syntheticCache(elem, template, items[i]);
 		}
 
 		// Enable element binding
@@ -58,7 +59,8 @@ var loopParser = function(name, template, script, targetNode, parentNode){
 	}
 }
 
-function repeatedListBinding(temp, targetNode, controller_){
+function repeatedListBinding(targetNode){
+	var temp = targetNode.querySelectorAll('[sf-repeat-this]');
 	for (var a = 0; a < temp.length; a++) {
 		var element = temp[a];
 
@@ -88,8 +90,10 @@ function repeatedListBinding(temp, targetNode, controller_){
 		element.removeAttribute('sf-repeat-this');
 
 		// Check if the element was already bound to prevent vulnerability
-		if(/sf-bind-key|sf-bind-list/.test(element.outerHTML))
-			throw "Can't parse element that already bound";
+		if(element.outerHTML.indexOf('sf-bind-list') !== -1){
+			console.error("Can't parse element that already bound");
+			continue;
+		}
 
 		var controller = sf.controller.modelName(element);
 		if(controller === void 0) continue;
@@ -99,6 +103,7 @@ function repeatedListBinding(temp, targetNode, controller_){
 	}
 }
 
+// ToDo: Use class instead of this
 var bindArray = function(template, list, mask, modelName, propertyName, targetNode, parentNode, tempDOM){
 	var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 	var refreshTimer = -1;

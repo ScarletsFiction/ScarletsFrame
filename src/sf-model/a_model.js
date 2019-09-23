@@ -23,7 +23,7 @@ self.init = function(el, modelName){
 		return;
 
 	// Find element for array binding
-	repeatedListBinding($('[sf-repeat-this]', el), el);
+	repeatedListBinding(el);
 }
 
 // Escape the escaped quote
