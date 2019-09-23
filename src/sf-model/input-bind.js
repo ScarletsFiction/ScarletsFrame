@@ -209,9 +209,7 @@ var elementBoundChanges = function(model, property, element, oneWay){
 	modelToViewBinding(model, property, inputBoundRun, element, type);
 }
 
-function bindInput(targetNode){
-	var temp = $('input[sf-bound], textarea[sf-bound], select[sf-bound], input[sf-bind], textarea[sf-bind], select[sf-bind]', targetNode);
-
+function bindInput(temp){
 	for (var i = 0; i < temp.length; i++) {
 		var element = temp[i];
 		var model = sf.controller.modelName(element);

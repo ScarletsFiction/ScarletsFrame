@@ -287,17 +287,20 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 }
 
 self.extractPreprocess = function(targetNode, mask, name){
+	// Remove repeated list from further process
+	// To avoid data parser
+	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
+	for (var i = 0; i < backup.length; i++) {
+		var current = backup[i];
+		current.insertAdjacentHTML('afterEnd', '<sfrepeat-this></sfrepeat-this>');
+		current.remove();
+	}
+
 	var copy = targetNode.outerHTML;
 
 	// Mask the referenced item
 	if(mask !== null)
 		copy = copy.split('#'+mask).join('_model_');
-	// else{ // Replace all masked item
-	// 	copy.replace(/sf-repeat-this="(?:\W+|)(\w+)/g, function(full, match){
-	// 		copy = copy.split('#'+match).join('_model_');
-	// 		copy = copy.replace(RegExp(sf.regex.strictVar+"("+match+")\\b", 'g'), '_model_');
-	// 	});
-	// }
 
 	// Extract data to be parsed
 	copy = uniqueDataParser(copy, null, mask, name, '#noEval');
@@ -364,12 +367,17 @@ self.extractPreprocess = function(targetNode, mask, name){
 		return found;
 	}
 
-	window.lkj = copy;
-
 	// Rebuild element
 	internal.component.skip = true;
 	copy = $.parseElement(copy)[0];
 	internal.component.skip = false;
+
+	// Restore element repeated list
+	var restore = copy.querySelectorAll('sfrepeat-this');
+	for (var i = 0; i < restore.length; i++) {
+		var current = restore[i];
+		current.parentNode.replaceChild(backup[i], current);
+	}
 
 	// Start addressing
 	var nodes = self.queuePreprocess(copy, true).reverse();
@@ -535,7 +543,7 @@ self.extractPreprocess = function(targetNode, mask, name){
 
 var enclosedHTMLParse = false;
 var excludes = ['HTML','HEAD','STYLE','LINK','META','SCRIPT','OBJECT','IFRAME'];
-self.queuePreprocess = function(targetNode, extracting){
+self.queuePreprocess = function(targetNode, extracting, collectOther){
 	var childNodes = (targetNode || document.body).childNodes;
 
 	var temp = [];
@@ -559,8 +567,12 @@ self.queuePreprocess = function(targetNode, extracting){
 				continue;
 
 			if(attrs['sf-repeat-this'] !== void 0){
-				currentNode.sf$repeatThis = true;
-				temp.push(currentNode);
+				collectOther.repeat.push(currentNode);
+				continue;
+			}
+
+			if(attrs['sf-bound'] !== void 0 || attrs['sf-bind'] !== void 0){
+				collectOther.input.push(currentNode);
 				continue;
 			}
 
@@ -575,7 +587,7 @@ self.queuePreprocess = function(targetNode, extracting){
 				}
 			}
 
-			Array.prototype.push.apply(temp, self.queuePreprocess(currentNode, extracting));
+			Array.prototype.push.apply(temp, self.queuePreprocess(currentNode, extracting, collectOther));
 		}
 
 		else if(currentNode.nodeType === 3){ // Text
@@ -613,7 +625,6 @@ self.queuePreprocess = function(targetNode, extracting){
 }
 
 self.parsePreprocess = function(nodes){
-	var repeatedList = [];
 	for (var a = 0; a < nodes.length; a++) {
 		// Get reference for debugging
 		var current = processingElement = nodes[a];
@@ -636,13 +647,8 @@ self.parsePreprocess = function(nodes){
 			return;
 		}
 
-		if(current.sf$repeatThis){
-			repeatedList.push(current);
-			continue;
-		}
-
 		if(current.hasAttribute('sf-bind-ignore') === false)
-			self.bindElement(current);
+			self.bindElement(current, model);
 		else{
 			var temp = uniqueDataParser(current.innerHTML, modelRef, false, model);
 			current.innerHTML = dataParser(temp, modelRef, false, model);
@@ -654,11 +660,6 @@ self.parsePreprocess = function(nodes){
 				}
 			}
 		}
-	}
-
-	// Process the repeated list
-	for (var i = 0; i < repeatedList.length; i++) {
-		repeatedListBinding(repeatedList[i]);
 	}
 }
 

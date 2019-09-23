@@ -59,43 +59,46 @@ var loopParser = function(name, template, script, parentNode){
 	}
 }
 
-function repeatedListBinding(element){
-	var parent = element.parentElement;
+function repeatedListBinding(elements){
+	for (var i = 0; i < elements.length; i++) {
+		var element = elements[i];
+		var parent = element.parentElement;
 
-	if(parent.classList.contains('sf-virtual-list')){
-		var ceiling = document.createElement(element.tagName);
-		ceiling.classList.add('virtual-spacer');
-		var floor = ceiling.cloneNode(true);
+		if(parent.classList.contains('sf-virtual-list')){
+			var ceiling = document.createElement(element.tagName);
+			ceiling.classList.add('virtual-spacer');
+			var floor = ceiling.cloneNode(true);
 
-		ceiling.classList.add('ceiling');
-		parent.insertBefore(ceiling, parent.firstElementChild); // prepend
+			ceiling.classList.add('ceiling');
+			parent.insertBefore(ceiling, parent.firstElementChild); // prepend
 
-		floor.classList.add('floor');
-		parent.appendChild(floor); // append
+			floor.classList.add('floor');
+			parent.appendChild(floor); // append
+		}
+
+		var after = element.nextElementSibling;
+		if(after === null || element === after)
+			after = false;
+
+		var before = element.previousElementSibling;
+		if(before === null || element === before)
+			before = false;
+
+		var script = element.getAttribute('sf-repeat-this');
+		element.removeAttribute('sf-repeat-this');
+
+		// Check if the element was already bound to prevent vulnerability
+		if(element.outerHTML.indexOf('sf-bind-list') !== -1){
+			console.error("Can't parse element that already bound");
+			return;
+		}
+
+		var controller = sf.controller.modelName(element);
+		if(controller === void 0) return;
+
+		loopParser(controller, element, script, parent);
+		element.remove();
 	}
-
-	var after = element.nextElementSibling;
-	if(after === null || element === after)
-		after = false;
-
-	var before = element.previousElementSibling;
-	if(before === null || element === before)
-		before = false;
-
-	var script = element.getAttribute('sf-repeat-this');
-	element.removeAttribute('sf-repeat-this');
-
-	// Check if the element was already bound to prevent vulnerability
-	if(element.outerHTML.indexOf('sf-bind-list') !== -1){
-		console.error("Can't parse element that already bound");
-		return;
-	}
-
-	var controller = sf.controller.modelName(element);
-	if(controller === void 0) return;
-
-	loopParser(controller, element, script, parent);
-	element.remove();
 }
 
 // ToDo: Use class instead of this

@@ -51,6 +51,11 @@ sf.component = new function(){
 		if(internal.component.skip)
 			return;
 
+		if(element.hasAttribute('sf-repeat-this')){
+			element.sf$componentIgnore = true;
+			return;
+		}
+
 		if(isCreated === true){
 			if(element.childElementCount === 0){
 				if(self.registered[name][3] === false)
@@ -118,8 +123,10 @@ sf.component = new function(){
 			componentInit(element, newID, name);
 			element.model = sf.model.root[newID];
 
-			if(element.model.beforeInit)
-				element.model.beforeInit();
+			element.sf$initTriggered = true;
+
+			if(element.model.init)
+				element.model.init();
 			return newID;
 		}
 
@@ -141,18 +148,16 @@ sf.component = new function(){
 			componentInit(element, newID, name);
 			sf.model.init(element, newID);
 
-			if(element.model.beforeInit)
-				element.model.beforeInit();
+			element.sf$initTriggered = true;
 
 			element = tempDOM.firstElementChild;
 			element.remove();
 		}
 		else if(isCreated === true){
-			componentInit(element, newID, name);
+			componentInit(element, newID, name);console.log(876234, element.model, element.sf$controlled);
 			sf.model.init(element, newID);
 
-			if(element.model.beforeInit)
-				element.model.beforeInit();
+			element.sf$initTriggered = true;
 		}
 
 		element.model = sf.model.root[newID];
@@ -198,14 +203,17 @@ sf.component = new function(){
 		func.__proto__ = HTMLElement;
 
 		func.prototype.connectedCallback = function(){
-			if(this.hasAttribute('sf-repeat-this')){
-				this.sf$componentIgnore = true;
-				return;
-			}
-
 			// Maybe it's not the time
 			if(!this.model)
 				return;
+
+			if(this.sf$initTriggered){
+				delete this.sf$initTriggered;
+				return;
+			}
+
+			if(this.model.reinit)
+				this.model.reinit();
 		};
 
 		func.prototype.disconnectedCallback = function(){
@@ -216,7 +224,7 @@ sf.component = new function(){
 			components.splice(components.indexOf(this.sf$controller), 1);
 
 			if(!this.model)
-				console.log(this);
+				return console.log(this);
 
 			if(this.model.destroy)
 				this.model.destroy();

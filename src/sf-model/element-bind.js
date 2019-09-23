@@ -142,10 +142,8 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	});
 }
 
-self.bindElement = function(element){
-	var modelName = sf.controller.modelName(element);
+self.bindElement = function(element, modelName){
 	var model = self.root[modelName];
-	if(!model) return console.error("Model for "+modelName+" was not found while binding:", element);
 
 	var data = self.extractPreprocess(element, null, modelName);
 	templateParser(data, model, true);

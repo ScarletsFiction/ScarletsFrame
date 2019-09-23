@@ -16,8 +16,15 @@ self.init = function(el, modelName){
 	if(model.init !== void 0)
 		model.init(el);
 
-	sf.model.parsePreprocess(sf.model.queuePreprocess(el));
-	bindInput(el);
+	var collectOther = {
+		repeat:[],
+		input:[]
+	};
+
+	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, collectOther));
+
+	repeatedListBinding(collectOther.repeat);
+	bindInput(collectOther.input);
 }
 
 // Escape the escaped quote
