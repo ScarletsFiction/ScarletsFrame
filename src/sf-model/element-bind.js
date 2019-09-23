@@ -145,7 +145,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 self.bindElement = function(element, modelName){
 	var model = self.root[modelName];
 
-	var data = self.extractPreprocess(element, null, modelName);
+	var data = self.extractPreprocess(element, null, model);
 	templateParser(data, model, true);
 	delete data.addresses;
 	element.parentNode.replaceChild(data.html, element);

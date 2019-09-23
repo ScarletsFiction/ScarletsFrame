@@ -2,26 +2,35 @@ var loopParser = function(name, template, script, parentNode){
 	var method = script.split(' in ');
 	var mask = method[0];
 
-	var items = root_(name)[method[1]];
+	var modelRef = root_(name);
+	var items = modelRef[method[1]];
 	if(items === void 0)
-		items = root_(name)[method[1]] = [];
+		items = modelRef[method[1]] = [];
+
+	var isComponent = internal.component[template.tagName] !== void 0 
+		? window['$'+capitalizeLetters(template.tagName.toLowerCase().split('-'))]
+		: false;
 
 	template.setAttribute('sf-bind-list', method[1]);
 
 	// Get reference for debugging
 	processingElement = template;
-	template = self.extractPreprocess(template, mask, name);
+	template = self.extractPreprocess(template, mask, modelRef);
 
 	if(method.length === 2){
 		var tempDOM = document.createElement('div');
-		var modelRef = self.root[name];
 
 		for (var i = 0; i < items.length; i++) {
-			var elem = templateParser(template, items[i]);
-			tempDOM.appendChild(elem);
-
-			if(template.component === void 0)
+			if(isComponent){
+				var elem = new isComponent(items[i]);
+				elem.setAttribute('sf-bind-list', method[1]);
+			}
+			else{
+				var elem = templateParser(template, items[i]);
 				syntheticCache(elem, template, items[i]);
+			}
+
+			tempDOM.appendChild(elem);
 		}
 
 		// Enable element binding
@@ -59,7 +68,7 @@ var loopParser = function(name, template, script, parentNode){
 	}
 }
 
-function repeatedListBinding(elements){
+function repeatedListBinding(elements, controller){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
 		var parent = element.parentElement;
@@ -92,9 +101,6 @@ function repeatedListBinding(elements){
 			console.error("Can't parse element that already bound");
 			return;
 		}
-
-		var controller = sf.controller.modelName(element);
-		if(controller === void 0) return;
 
 		loopParser(controller, element, script, parent);
 		element.remove();

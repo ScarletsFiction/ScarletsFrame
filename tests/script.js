@@ -233,6 +233,14 @@ sf.model.for('components', function(self){
    }
    self.clickOK = function(){
       console.warn("Click OK!");
+      self.items.push(self.items.length+1);
+   }
+});
+
+sf.controller.for('comp-test', function(self, root, item){
+   console.warn('comp-test', item, self.$el);
+   self.init = function(){
+      console.warn("Component init called");
    }
 });
 
@@ -242,14 +250,10 @@ sf.component.for('comp-test', function(self, root, item){
    self.data = 'zxc';
 });
 
-sf.component.html('comp-test', `<div>1. {{ data }}</div><div>item: {{ item }}</div><br>`);
-
-sf.controller.for('comp-test', function(self, root, item){
-   console.warn('comp-test', item, self.$el);
-   self.init = function(){
-      console.warn("Component init called");
-   }
-});
+sf.component.html('comp-test', `<div>1. {{ data }}</div>
+   <div>item: {{ item }}</div>
+   <span sf-repeat-this="num in tries">{{#num}},</span>
+<br>`);
 
 sf(function(){
    var elem2 = new $CompTest('from javascript');

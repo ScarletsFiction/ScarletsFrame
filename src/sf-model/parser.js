@@ -1,13 +1,12 @@
 // For contributor of this library
 // Please be careful when you're passing the eval argument
-var dataParser = function(html, _model_, mask, scope, runEval, preParsedReference){
-	var _modelScope = self.root[scope];
+var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedReference){
 	if(!runEval) runEval = '';
 
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
 	if(modelKeys.length === 0)
-		throw "'"+scope+"' model was not found";
+		throw "'"+1+"' model was not found";
 
 	// Don't match text inside quote, or object keys
 	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
@@ -63,20 +62,20 @@ var dataParser = function(html, _model_, mask, scope, runEval, preParsedReferenc
 
 	if(runEval === '#noEval'){
 		// Clear memory before return
-		preParsed = _modelScope = _model_ = mask = scope = runEval = scopeMask = itemMask = html = null;
+		preParsed = _model_ = mask = runEval = scopeMask = itemMask = html = null;
 		setTimeout(function(){prepared = null});
 	}
 	return prepared;
 }
 
 // Dynamic data parser
-var uniqueDataParser = function(html, _model_, mask, scope, runEval){
+var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	// Get prepared html content
 	var _content_ = {
 		length:0,
 		take:function(passVar, currentIndex){
 			if(passVar === null)
-				return dataParser(this[currentIndex], _model_, mask, scope);
+				return dataParser(this[currentIndex], _model_, mask, _modelScope);
 
 			// Use strict mode and prepare for new variables
 			var strDeclare = '"use strict";var ';
@@ -108,7 +107,7 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 			strDeclare = strDeclare.split('(').join('&#40;').split(')').join('&#41;');
 
 			// Pass to static data parser for another HTML data
-			return dataParser(this[currentIndex], _model_, mask, scope, strDeclare + ';');
+			return dataParser(this[currentIndex], _model_, mask, _modelScope, strDeclare + ';');
 		}
 	};
 
@@ -122,11 +121,10 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 		return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
 	});
 
-	var _modelScope = self.root[scope];
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
 	if(modelKeys.length === 0)
-		throw "'"+scope+"' model was not found";
+		throw "'"+1+"' model was not found";
 
 	// Don't match text inside quote, or object keys
 	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
@@ -278,7 +276,7 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 
 	if(runEval === '#noEval'){
 		// Clear memory before return
-		_modelScope = runEval = scopeMask = itemMask = html = null;
+		runEval = scopeMask = itemMask = html = null;
 		setTimeout(function(){prepared = null});
 		return [prepared, preParsedReference, _content_];
 	}
@@ -286,7 +284,7 @@ var uniqueDataParser = function(html, _model_, mask, scope, runEval){
 	return prepared;
 }
 
-self.extractPreprocess = function(targetNode, mask, name){
+self.extractPreprocess = function(targetNode, mask, modelScope){
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
@@ -303,15 +301,15 @@ self.extractPreprocess = function(targetNode, mask, name){
 		copy = copy.split('#'+mask).join('_model_');
 
 	// Extract data to be parsed
-	copy = uniqueDataParser(copy, null, mask, name, '#noEval');
+	copy = uniqueDataParser(copy, null, mask, modelScope, '#noEval');
 	var preParsed = copy[1];
 	var _content_ = copy[2];
-	copy = dataParser(copy[0], null, mask, name, '#noEval', preParsed);
+	copy = dataParser(copy[0], null, mask, modelScope, '#noEval', preParsed);
 
 	function findModelProperty(){
 		if(mask === null){ // For model items
 			// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
-			var extract = RegExp('(?:{{.*?\\b|_modelScope\\.)('+self.modelKeys(self.root[name]).sort(function(a, b){
+			var extract = RegExp('(?:{{.*?\\b|_modelScope\\.)('+self.modelKeys(modelScope).sort(function(a, b){
 				return b.length - a.length
 			}).join('|')+')(\\b.*?}}|)', 'g');
 		}
@@ -379,8 +377,13 @@ self.extractPreprocess = function(targetNode, mask, name){
 		current.parentNode.replaceChild(backup[i], current);
 	}
 
+	var collectOther = {
+		repeat:[],
+		input:[]
+	};
+
 	// Start addressing
-	var nodes = self.queuePreprocess(copy, true).reverse();
+	var nodes = self.queuePreprocess(copy, true, collectOther).reverse();
 	var addressed = [];
 
 	function addressAttributes(currentNode){
@@ -532,6 +535,7 @@ self.extractPreprocess = function(targetNode, mask, name){
 		asArray.push([keys[i], keys[i].split('.')]);
 	}
 
+	bindInput(collectOther.input, modelScope);
 	return {
 		html:copy,
 		parse:preParsed,
@@ -554,16 +558,17 @@ self.queuePreprocess = function(targetNode, extracting, collectOther){
 			continue;
 
 		if(currentNode.nodeType === 1){ // Tag
-			if(enclosedHTMLParse === true) continue;
+			if(enclosedHTMLParse === true)
+				continue;
 
 			// Skip nested sf-model
-			if(currentNode.tagName === 'SF-M')
+			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled)
 				continue;
 
 			var attrs = currentNode.attributes;
 
 			// Skip element and it's childs that already bound to prevent vulnerability
-			if(attrs['sf-bind-list'] !== void 0 || currentNode.sf$elementReferences !== void 0)
+			if(attrs['sf-bind-list'] !== void 0)
 				continue;
 
 			if(attrs['sf-repeat-this'] !== void 0){

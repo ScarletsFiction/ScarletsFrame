@@ -6,8 +6,6 @@ sf.component = new function(){
 	self.registered = {};
 	self.available = {};
 
-	var bases = {};
-
 	self.for = function(name, func, extend){
 		if(self.registered[name] === void 0)
 			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
@@ -19,16 +17,8 @@ sf.component = new function(){
 
 		defineComponent(name);
 	}
-	self.base = function(name, func){
-		bases[name] = func;
-	}
 
 	self.html = function(name, outerHTML){
-		if(!sf.loader.DOMWasLoaded)
-			return sf(function(){
-				self.html(name, outerHTML);
-			});
-
 		if(self.registered[name] === void 0)
 			self.registered[name] = [false, false, 0, false];
 
@@ -47,7 +37,7 @@ sf.component = new function(){
 	}
 
 	var tempDOM = document.createElement('div');
-	self.new = function(name, element, $item, isCreated, retriggered){
+	self.new = function(name, element, $item){
 		if(internal.component.skip)
 			return;
 
@@ -56,30 +46,27 @@ sf.component = new function(){
 			return;
 		}
 
-		if(isCreated === true){
-			if(element.childElementCount === 0){
-				if(self.registered[name][3] === false)
-					return;
-			}
-
-			if(element.sf$componentIgnore === true)
+		if(element.childElementCount === 0){
+			if(self.registered[name][3] === false)
 				return;
-
-			var avoid = /(^|:)(sf-|class|style)/;
-			var attr = element.attributes;
-
-			if(attr.length !== 0 && $item === void 0)
-				$item = {};
-
-			for (var i = 0; i < attr.length; i++) {
-				if(avoid.test(attr[i].nodeName))
-					continue;
-
-				$item[attr[i].nodeName] = attr[i].value;
-			}
 		}
 
-		var newElement = element === void 0;
+		if(element.sf$componentIgnore === true)
+			return;
+
+		var avoid = /(^|:)(sf-|class|style)/;
+		var attr = element.attributes;
+
+		if(attr.length !== 0 && $item === void 0)
+			$item = {};
+
+		for (var i = 0; i < attr.length; i++) {
+			if(avoid.test(attr[i].nodeName))
+				continue;
+
+			$item[attr[i].nodeName] = attr[i].value;
+		}
+
 		if(element === void 0){
 			if(self.registered[name][3] === false){
 				console.error("HTML content for '"+name+"' was not defined");
@@ -100,35 +87,8 @@ sf.component = new function(){
 
 		self.registered[name][0](newObj, sf.model, $item);
 
-		var extend = self.registered[name][4];
-		if(extend !== void 0){
-			if(extend.constructor === Array){
-				for (var i = 0; i < extend.length; i++) {
-					if(bases[extend[i]] === void 0)
-						return console.error("'"+extend[i]+"' base is not found");
-					bases[extend[i]](newObj, sf.model, $item);
-				}
-			}
-			else{
-				if(bases[extend] === void 0)
-					return console.error("'"+extend+"' base is not found");
-				bases[extend](newObj, sf.model, $item);
-			}
-		}
-
 		if(self.registered[name][1])
 			self.registered[name][1](newObj, sf.model, $item);
-
-		if(newElement !== true && isCreated !== true){
-			componentInit(element, newID, name);
-			element.model = sf.model.root[newID];
-
-			element.sf$initTriggered = true;
-
-			if(element.model.init)
-				element.model.init();
-			return newID;
-		}
 
 		if(element.childElementCount === 0){
 			var temp = self.registered[name][3];
@@ -142,23 +102,10 @@ sf.component = new function(){
 			else element.appendChild(temp.cloneNode(true));
 		}
 
-		if(element.parentNode === null){
-			// Wrap to temporary vDOM
-			tempDOM.appendChild(element);
-			componentInit(element, newID, name);
-			sf.model.init(element, newID);
+		componentInit(element, newID, name);
+		sf.model.init(element, newID);
 
-			element.sf$initTriggered = true;
-
-			element = tempDOM.firstElementChild;
-			element.remove();
-		}
-		else if(isCreated === true){
-			componentInit(element, newID, name);console.log(876234, element.model, element.sf$controlled);
-			sf.model.init(element, newID);
-
-			element.sf$initTriggered = true;
-		}
+		element.sf$initTriggered = true;
 
 		element.model = sf.model.root[newID];
 		element.destroy = function(){
@@ -197,7 +144,7 @@ sf.component = new function(){
 			return console.error("Please use '-' when defining component tags");
 
 		name = capitalizeLetters(name);
-		var func = eval("function "+name+"($item){var he = HTMLElement_wrap.call(this);self.new(tagName, he, $item, true, false);return he}"+name);
+		var func = eval("function "+name+"($item){var he = HTMLElement_wrap.call(this);self.new(tagName, he, $item);return he}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;

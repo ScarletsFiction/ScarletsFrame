@@ -77,12 +77,6 @@ var templateExec = function(parse, item, atIndex){
 }
 
 var templateParser = function(template, item, original){
-	if(template.component !== void 0){
-		var html = new template.component(item);
-		html.setAttribute('sf-bind-list', template.list);
-		return html;
-	}
-
 	processingElement = template.html;
 
 	var html = original === true ? template.html : template.html.cloneNode(true);

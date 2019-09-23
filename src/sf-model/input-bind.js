@@ -209,12 +209,9 @@ var elementBoundChanges = function(model, property, element, oneWay){
 	modelToViewBinding(model, property, inputBoundRun, element, type);
 }
 
-function bindInput(temp){
+function bindInput(temp, modelScope){
 	for (var i = 0; i < temp.length; i++) {
 		var element = temp[i];
-		var model = sf.controller.modelName(element);
-		if(!model) return;
-		var modelScope = self.root[model];
 
 		var oneWay = false;
 		var propertyName = element.getAttribute('sf-bound');
@@ -232,7 +229,7 @@ function bindInput(temp){
 
 		// Get reference
 		if(modelScope[propertyName] === void 0){
-			console.error('Can\'t get property "'+propertyName+'" on model "' + model + '"');
+			console.error('Can\'t get property "'+propertyName+'" on model', modelScope);
 			return;
 		}
 
