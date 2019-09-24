@@ -68,7 +68,7 @@ var loopParser = function(name, template, script, parentNode){
 	}
 }
 
-function repeatedListBinding(elements, controller){
+var repeatedListBinding = internal.model.repeatedListBinding = function(elements, controller){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
 		var parent = element.parentElement;

@@ -62,7 +62,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 
 	if(runEval === '#noEval'){
 		// Clear memory before return
-		preParsed = _model_ = mask = runEval = scopeMask = itemMask = html = null;
+		_modelScope = preParsed = _model_ = mask = runEval = scopeMask = itemMask = html = null;
 		setTimeout(function(){prepared = null});
 	}
 	return prepared;
@@ -73,9 +73,10 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	// Get prepared html content
 	var _content_ = {
 		length:0,
+		_modelScope:_modelScope,
 		take:function(passVar, currentIndex){
 			if(passVar === null)
-				return dataParser(this[currentIndex], _model_, mask, _modelScope);
+				return dataParser(this[currentIndex], _model_, mask, this._modelScope);
 
 			// Use strict mode and prepare for new variables
 			var strDeclare = '"use strict";var ';
@@ -107,7 +108,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 			strDeclare = strDeclare.split('(').join('&#40;').split(')').join('&#41;');
 
 			// Pass to static data parser for another HTML data
-			return dataParser(this[currentIndex], _model_, mask, _modelScope, strDeclare + ';');
+			return dataParser(this[currentIndex], _model_, mask, this._modelScope, strDeclare + ';');
 		}
 	};
 
@@ -276,7 +277,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 
 	if(runEval === '#noEval'){
 		// Clear memory before return
-		runEval = scopeMask = itemMask = html = null;
+		_modelScope = runEval = scopeMask = itemMask = html = null;
 		setTimeout(function(){prepared = null});
 		return [prepared, preParsedReference, _content_];
 	}
@@ -377,13 +378,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		current.parentNode.replaceChild(backup[i], current);
 	}
 
-	var collectOther = {
+	var specialElement = {
 		repeat:[],
 		input:[]
 	};
 
 	// Start addressing
-	var nodes = self.queuePreprocess(copy, true, collectOther).reverse();
+	var nodes = self.queuePreprocess(copy, true, specialElement).reverse();
 	var addressed = [];
 
 	function addressAttributes(currentNode){
@@ -535,18 +536,31 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		asArray.push([keys[i], keys[i].split('.')]);
 	}
 
-	bindInput(collectOther.input, modelScope);
+	// Get the indexes for input bind
+	var specialInput = specialElement.input;
+	for (var i = 0; i < specialInput.length; i++) {
+		specialInput[i] = $.getSelector(specialInput[i], true);
+	}
+
+	// Get the indexes for sf-repeat-this
+	var specialRepeat = specialElement.repeat;
+	for (var i = 0; i < specialRepeat.length; i++) {
+		console.log(specialRepeat[i]);
+		specialRepeat[i] = $.getSelector(specialRepeat[i], true);
+	}
+
 	return {
 		html:copy,
 		parse:preParsed,
 		addresses:addressed,
 		modelReference:modelReference,
-		modelRef_array:asArray
+		modelRef_array:asArray,
+		specialElement:specialElement
 	};
 }
 
 var enclosedHTMLParse = false;
-var excludes = ['HTML','HEAD','STYLE','LINK','META','SCRIPT','OBJECT','IFRAME'];
+var excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
 self.queuePreprocess = function(targetNode, extracting, collectOther){
 	var childNodes = (targetNode || document.body).childNodes;
 
@@ -554,7 +568,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther){
 	for (var i = childNodes.length - 1; i >= 0; i--) {
 		var currentNode = childNodes[i];
 
-		if(extracting === void 0 && excludes.indexOf(currentNode.nodeName) !== -1)
+		if(excludes[currentNode.nodeName] !== void 0)
 			continue;
 
 		if(currentNode.nodeType === 1){ // Tag
@@ -576,7 +590,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther){
 				continue;
 			}
 
-			if(attrs['sf-bound'] !== void 0 || attrs['sf-bind'] !== void 0)
+			if(attrs['sf-into'] !== void 0 || attrs['sf-bind'] !== void 0)
 				collectOther.input.push(currentNode);
 
 			// Skip nested component
@@ -627,21 +641,22 @@ self.queuePreprocess = function(targetNode, extracting, collectOther){
 	return temp;
 }
 
-self.parsePreprocess = function(nodes){
+self.parsePreprocess = function(nodes, model){
+	var binded = [];
 	for (var a = 0; a < nodes.length; a++) {
 		// Get reference for debugging
 		var current = processingElement = nodes[a];
-
-		var modelElement = sf.controller.modelElement(current);
-		if(modelElement === null)
-			continue;
-
-		var model = modelElement.sf$controlled;
 
 		if(internal.modelPending[model] || self.root[model] === undefined)
 			self(model);
 
 		var modelRef = self.root[model];
+
+		if(current.nodeType === 3 && binded.indexOf(current.parentElement) === -1){
+			self.bindElement(current.parentElement, model);
+			binded.push(current.parentElement);
+			continue;
+		}
 
 		// Double check if the child element already bound to prevent vulnerability
 		if(current.innerHTML.indexOf('sf-bind-list') !== -1){

@@ -142,17 +142,19 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	});
 }
 
-self.bindElement = function(element, modelName){
+self.bindElement = function(element, modelName, template){
 	var model = self.root[modelName];
 
-	var data = self.extractPreprocess(element, null, model);
-	templateParser(data, model, true);
-	delete data.addresses;
-	element.parentNode.replaceChild(data.html, element);
+	if(template === void 0){
+		template = self.extractPreprocess(element, null, model);
+		templateParser(template, model, true);
+		delete template.addresses;
+		element.parentNode.replaceChild(template.html, element);
 
-	element = data.html;
+		element = template.html;
+	}
 
-	var properties = data.modelRef_array;
+	var properties = template.modelRef_array;
 	for (var i = 0; i < properties.length; i++) {
 		var propertyName = properties[i][0];
 
@@ -161,7 +163,7 @@ self.bindElement = function(element, modelName){
 
 		modelToViewBinding(model, propertyName, {
 			element:element,
-			template:data
+			template:template
 		});
 	}
 }

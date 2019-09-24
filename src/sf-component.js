@@ -24,7 +24,7 @@ sf.component = new function(){
 
 		var temp = $.parseElement(outerHTML);
 		if(temp.length === 1){
-			self.registered[name][3] = temp[0];
+			self.registered[name][3] = temp;
 			return;
 		}
 
@@ -82,9 +82,7 @@ sf.component = new function(){
 
 		self.available[name].push(newID);
 
-		var newObj = sf.model.root[newID] = {$el:$()};
-		newObj.$el.push(element);
-
+		var newObj = sf.model.root[newID] = {$el:$([element])};
 		self.registered[name][0](newObj, sf.model, $item);
 
 		if(self.registered[name][1])
@@ -92,22 +90,67 @@ sf.component = new function(){
 
 		if(element.childElementCount === 0){
 			var temp = self.registered[name][3];
+			var tempDOM = temp.tempDOM;
 
-			if(temp.tempDOM === true){
-				temp = temp.cloneNode(true).childNodes;
-				for (var i = 0, n = temp.length; i < n; i++) {
-					element.appendChild(temp[0]);
+			// Create template here because we have the sample model
+			if(temp.constructor !== Object){
+				temp = sf.model.extractPreprocess(temp, null, newObj);
+				self.registered[name][3] = temp;
+				temp.tempDOM = tempDOM;
+			}
+
+			var copy = Object.assign({}, temp);
+
+			if(copy.parse.length !== 0){
+				var _content_ = null;
+				copy.parse = copy.parse.slice(0);
+
+				for (var i = 0; i < copy.parse.length; i++) {
+					copy.parse[i] = Object.assign({}, copy.parse[i]);
+					var ref = copy.parse[i].data = copy.parse[i].data.slice(0);
+
+					if(_content_ === null && ref.length === 4){
+						_content_ = Object.assign({}, ref[3]);
+						_content_._modelScope = newObj;
+					}
+
+					ref[2] = newObj;
+					ref[3] = _content_;
 				}
 			}
-			else element.appendChild(temp.cloneNode(true));
+
+			var parsed = internal.model.templateParser(copy, newObj);
+			element.sf$elementReferences = parsed.sf$elementReferences;
+			sf.model.bindElement(element, newID, copy);
+
+			if(tempDOM === true){
+				parsed = parsed.childNodes;
+				for (var i = 0, n = parsed.length; i < n; i++) {
+					element.appendChild(parsed[0]);
+				}
+			}
+			else element.appendChild(parsed);
+		}
+		else{
+			var specialElement = {
+				repeat:[],
+				input:[]
+			};
+
+			var a = sf.model.queuePreprocess(element, true, specialElement);
+			console.log(321, a, element.outerHTML);
+			sf.model.parsePreprocess(a, newID);
+
+			// sf.model.bindElement(element, newID);
+			internal.model.bindInput(specialElement.input, newObj);
+			internal.model.repeatedListBinding(specialElement.repeat, newObj);
 		}
 
+		element.model = newObj;
 		componentInit(element, newID, name);
-		sf.model.init(element, newID);
 
 		element.sf$initTriggered = true;
 
-		element.model = sf.model.root[newID];
 		element.destroy = function(){
 			if(this.parentElement === null)
 				internal.model.DOMNodeRemoved(this);

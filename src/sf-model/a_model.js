@@ -2,6 +2,9 @@
 var self = sf.model;
 
 self.init = function(el, modelName){
+	if(el.sf$controlled !== void 0)
+		return;
+
 	el.sf$controlled = modelName;
 
 	var model = el.model = sf.model.root[modelName] || sf.model(modelName);
@@ -16,15 +19,15 @@ self.init = function(el, modelName){
 	if(model.init !== void 0)
 		model.init(el);
 
-	var collectOther = {
+	var specialElement = {
 		repeat:[],
 		input:[]
 	};
 
-	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, collectOther));
+	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), modelName);
 
-	bindInput(collectOther.input, model);
-	repeatedListBinding(collectOther.repeat, modelName);
+	bindInput(specialElement.input, model);
+	repeatedListBinding(specialElement.repeat, modelName);
 }
 
 // Escape the escaped quote

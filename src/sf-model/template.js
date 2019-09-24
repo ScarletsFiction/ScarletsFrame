@@ -76,15 +76,12 @@ var templateExec = function(parse, item, atIndex){
 	return parsed;
 }
 
-var templateParser = function(template, item, original){
+var templateParser = internal.model.templateParser = function(template, item, original){
 	processingElement = template.html;
 
 	var html = original === true ? template.html : template.html.cloneNode(true);
 	var addresses = template.addresses;
 	var parsed = templateExec(template.parse, item);
-
-	// Save model item reference to node
-	html.model = item;
 
 	var changesReference = [];
 	var pendingInsert = [];
@@ -172,6 +169,9 @@ var templateParser = function(template, item, original){
 		}
 	}
 
+	// Save model item reference to node
+	html.model = item;
+
 	// Save reference to element
 	html.sf$elementReferences = changesReference;
 	// html.sf$modelParsed = parsed;
@@ -191,6 +191,28 @@ var templateParser = function(template, item, original){
 		for (var a = 0; a < tDOM.length; a++) {
 			ref.parentNode.insertBefore(tDOM[a], ref.dynamicFlag);
 		}
+	}
+
+	if(template.specialElement.input.length !== 0){
+		// Process element for input bind
+		var specialInput = template.specialElement.input;
+		var specialInput_ = [];
+		for (var i = 0; i < specialInput.length; i++) {
+			specialInput_.push($.childIndexes(specialInput[i], html));
+		}
+
+		bindInput(specialInput_, item);
+	}
+
+	if(template.specialElement.repeat.length !== 0){
+		// Process element for sf-repeat-this
+		var specialRepeat = template.specialElement.repeat;
+		var specialRepeat_ = [];
+		for (var i = 0; i < specialRepeat.length; i++) {
+			specialRepeat_.push($.childIndexes(specialRepeat[i], html));
+		}
+
+		repeatedListBinding(specialRepeat_, item);
 	}
 
 	return html;
