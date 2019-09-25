@@ -182,7 +182,6 @@ sf.model.for('model-binding', function(self, root){
       {text:'Select 3', val:3},
    ];
    setTimeout(function(){
-      console.error(self.inputBinding6a)
       self.inputBinding6a.push({text:'Select 4', val:4});
    }, 5000);
    self.inputBinding6 = '';
@@ -255,8 +254,9 @@ sf.component.for('comp-test', function(self, root, item){
 });
 
 sf.component.html('comp-test', `<div>1. {{ data }}</div>
+   <input type="text" sf-bind="data"/>
+   <div><span sf-repeat-this="num in tries">{{#num}},</span></div>
    <div>item: {{ item }}</div>
-   <span sf-repeat-this="num in tries">{{#num}},</span>
 <br>`);
 
 sf(function(){

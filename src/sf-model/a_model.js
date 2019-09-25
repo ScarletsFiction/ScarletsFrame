@@ -27,7 +27,7 @@ self.init = function(el, modelName){
 	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), modelName);
 
 	bindInput(specialElement.input, model);
-	repeatedListBinding(specialElement.repeat, modelName);
+	repeatedListBinding(specialElement.repeat, model);
 }
 
 // Escape the escaped quote

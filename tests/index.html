@@ -144,8 +144,8 @@
       <sf-m name="model-binding" id="reinit">
          <span :class="transit {{ bold ? 'bold' : '' }} {{ pink ? 'pink' : '' }}">Change variable on keyboard input</span><br>
 
-         <input type="text" sf-bound="inputBinding1" onkeyup="sf(this).onKeyUp(event)"><br>
-         <input type="text" sf-bound="inputBinding1"><br>
+         <input type="text" sf-bind="inputBinding1" onkeyup="sf(this).onKeyUp(event)"><br>
+         <input type="text" sf-bind="inputBinding1"><br>
          <span id="test">Var Content: {{ inputBinding1 }}</span><br><br>
 
          <span class="bold" style="
@@ -153,23 +153,23 @@
             background-color: {{ pink ? 'pink' : '' }};
          ">Another one</span><br>
 
-         <textarea type="text" sf-bind="inputBinding2" placeholder="will round a number if called from script"></textarea><br>
+         <textarea type="text" sf-into="inputBinding2" placeholder="will round a number if called from script"></textarea><br>
          <input type="text" value="It's {{inputBinding2}}" disabled><br>
          <span>Var Content: {{ inputBinding2 }}</span><br><br>
 
-         <input type="checkbox" value="check1" sf-bound="inputBinding3">Check 1
-         <input type="checkbox" value="check2" sf-bound="inputBinding3">Check 2<br>
-         <input type="radio" name="inputBinding4" value="radio1" sf-bound> Radio 1
-         <input type="radio" name="inputBinding4" value="radio2" sf-bound> Radio 2<br>
-         <select sf-bound="inputBinding5" multiple typedata="number">
+         <input type="checkbox" value="check1" sf-bind="inputBinding3">Check 1
+         <input type="checkbox" value="check2" sf-bind="inputBinding3">Check 2<br>
+         <input type="radio" name="inputBinding4" value="radio1" sf-bind> Radio 1
+         <input type="radio" name="inputBinding4" value="radio2" sf-bind> Radio 2<br>
+         <select sf-bind="inputBinding5" multiple typedata="number">
             <option value="1">Select 1</option>
             <option value="2">Select 2</option>
             <option value="3">Select 3</option>
          </select>
-         <select sf-bound="inputBinding6" typedata="number">
+         <select sf-bind="inputBinding6" typedata="number">
             <option value="{{x.val}}" sf-repeat-this="x in inputBinding6a">{{x.text}}</option>
          </select><br><br>
-         <input type="file" sf-bound="inputBinding7"><br>
+         <input type="file" sf-bind="inputBinding7"><br>
 
          <b>Conditional HTML</b><br>
          <div>

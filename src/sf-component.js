@@ -137,13 +137,7 @@ sf.component = new function(){
 				input:[]
 			};
 
-			var a = sf.model.queuePreprocess(element, true, specialElement);
-			console.log(321, a, element.outerHTML);
-			sf.model.parsePreprocess(a, newID);
-
-			// sf.model.bindElement(element, newID);
-			internal.model.bindInput(specialElement.input, newObj);
-			internal.model.repeatedListBinding(specialElement.repeat, newObj);
+			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newID);
 		}
 
 		element.model = newObj;

@@ -1,8 +1,7 @@
-var loopParser = function(name, template, script, parentNode){
+var loopParser = function(modelRef, template, script, parentNode){
 	var method = script.split(' in ');
 	var mask = method[0];
 
-	var modelRef = root_(name);
 	var items = modelRef[method[1]];
 	if(items === void 0)
 		items = modelRef[method[1]] = [];
@@ -53,7 +52,7 @@ var loopParser = function(name, template, script, parentNode){
 			}
 		});
 
-		bindArray(template, items, mask, name, method[1], parentNode, tempDOM);
+		bindArray(template, items, mask, modelRef, method[1], parentNode, tempDOM);
 
 		// Output to real DOM if not being used for virtual list
 		if(items.$virtual === void 0){
@@ -71,7 +70,7 @@ var loopParser = function(name, template, script, parentNode){
 var repeatedListBinding = internal.model.repeatedListBinding = function(elements, controller){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
-		var parent = element.parentElement;
+		var parent = element.parentElement; // ToDO: fix this for component
 
 		if(parent.classList.contains('sf-virtual-list')){
 			var ceiling = document.createElement(element.tagName);
@@ -108,13 +107,12 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 }
 
 // ToDo: Use class instead of this
-var bindArray = function(template, list, mask, modelName, propertyName, parentNode, tempDOM){
+var bindArray = function(template, list, mask, modelRef, propertyName, parentNode, tempDOM){
 	var editProperty = ['pop', 'push', 'splice', 'shift', 'unshift', 'swap', 'move', 'replace', 'softRefresh', 'hardRefresh'];
 	var refreshTimer = -1;
 	var parentChilds = parentNode.children;
 
 	// Update callback
-	var modelRef = self.root[modelName];
 	var eventVar = 'on$'+propertyName;
 	var callback = modelRef[eventVar];
 
