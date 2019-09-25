@@ -25,12 +25,12 @@ gulp.task('js', function(){
     ]).pipe(sourcemaps.init())
 
     // Save as combined script
-    .pipe(concat('scarletsframe.min.js'))
+    .pipe(concat('scarletsframe.js'))
     .pipe(gulp.dest('dist'))
 
     // Create minified file (This would be little slower)
-    // .pipe(rename('scarletsframe.min.js')).on('error', swallowError)
-    // .pipe(uglify()).on('error', swallowError)
+    .pipe(rename('scarletsframe.min.js')).on('error', swallowError)
+    .pipe(uglify()).on('error', swallowError)
 
     // Add header so developer can know about this script
     .pipe(header(`/*

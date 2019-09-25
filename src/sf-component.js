@@ -195,8 +195,11 @@ sf.component = new function(){
 			if(!this.model)
 				return;
 
-			if(this.sf$destroying !== void 0)
+			if(this.sf$destroying !== void 0){
 				clearTimeout(this.sf$destroying);
+				this.sf$destroying = void 0;
+				return;
+			}
 
 			if(this.sf$initTriggered){
 				delete this.sf$initTriggered;
@@ -226,7 +229,7 @@ sf.component = new function(){
 					that.model.destroy();
 
 				delete sf.model.root[that.sf$controlled];
-			}, 1000);
+			}, 500);
 		};
 
 		try{

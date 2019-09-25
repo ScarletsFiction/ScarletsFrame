@@ -340,13 +340,12 @@ Make sure you write in ES5 because browser doesn't use transpiler.
         {[ <label>i -> {{ i }}</label> ]}
       }
 
-      // alert("Finished"); // Illegal global invocation
-      myAlert('Finished');
-
+      myAlert("hello");
       {[ <br> ]}
 
       // Below will displaying the data without escaping the html
-      // Don't use this if you don't know how to secure your code
+      // Always make sure you have secured the output
+      // And maybe escaping HTML tags
       @return number.join(',');
     }}</span>
 </sf-m>
@@ -357,7 +356,6 @@ sf.model.for('something', function(self, other){
 });
 
 sf.controller.for('something', function(self){
-  // self.myAlert = window.alert; // Illegal scope invocation
   self.myAlert = function(msg){
     window.alert(msg)
   };
@@ -388,34 +386,34 @@ To enable two-way data binding with input element, you need to set model propert
 
 ```html
 <!-- data on the model will be updated if input detected and vice versa -->
-<input sf-bound="myInput" type="text" />
-<textarea sf-bound="myText" type="text"></textarea>
-<input sf-bound="myFiles" type="file" />
-<input sf-bound="myRadio" type="radio" value="radio1" />
-<input sf-bound="myRadio" type="radio" value="radio2" />
+<input sf-bind="myInput" type="text" />
+<textarea sf-bind="myText" type="text"></textarea>
+<input sf-bind="myFiles" type="file" />
+<input sf-bind="myRadio" type="radio" value="radio1" />
+<input sf-bind="myRadio" type="radio" value="radio2" />
 
 <!-- You can also set property in `name` attribute -->
-<input name="myCheckbox" type="checkbox" value="check1" sf-bound />
-<input name="myCheckbox" type="checkbox" value="check2" sf-bound />
+<input name="myCheckbox" type="checkbox" value="check1" sf-bind />
+<input name="myCheckbox" type="checkbox" value="check2" sf-bind />
 
-<select sf-bound="selectInput" typedata="number">
+<select sf-bind="selectInput" typedata="number">
    <option value="1">Select 1</option>
    <option value="2">Select 2</option>
    <option value="3">Select 3</option>
 </select>
 
-<select sf-bound="selectInput" multiple>
+<select sf-bind="selectInput" multiple>
    <option value="{{ x.val }}" sf-repeat-this="x in selectData">
     {{ x.text }}
    </option>
 </select>
 ```
 
-To enable one-way data binding with input element, you need to define model property in `sf-bind` attribute.
+To enable one-way data binding with input element, you need to define model property in `sf-into` attribute.
 ```html
 <!-- 'myInput' on the model will be updated if input detected -->
 <!-- (View -> Model) -->
-<input sf-bind="myInput" type="text" typedata="number"/>
+<input sf-into="myInput" type="text" typedata="number"/>
 
 <!-- input will be updated if 'myInput' on the model was changed -->
 <!-- (Model -> Input) -->
@@ -676,27 +674,22 @@ sf.component.for('model-name', function(self, root, $item){
   // If you're using sf-repeat-this for this component
   // `$item` will have your item value instead of undefined
 
-  self.beforeInit = function(){
+  self.init = function(){
     // When element is being initialized
   }
 
-  self.init = function(){
-    // When element was appended into DOM
+  self.reinit = function(){
+    // When the element was removed but reappended again in the DOM
   }
 
   self.destroy = function(){
     // When element was removed from DOM
+    // This have an delay ~0.5s before invoked
   }
 });
 ```
 
 After it's executed, it will be registered as an model component. And any `controller` will running in different scope on every new component.
-
-If you already inserted the component to the DOM, you can create attach new component model for it.
-
-```js
-sf.component.new('model-name', element = undefined);
-```
 
 If you want to create the component in the DOM, you need to define the HTML content for the component.
 
@@ -711,9 +704,17 @@ document.body.appendChild(myElement);
 // myElement.model.data === 'text'
 ```
 
-Or you can do it directly from DOM like below.
+Or you can do it directly from DOM like below, instead of calling `new $ModelName()`.
 ```html
 <model-name></model-name>
+```
+
+And also, you can flag an custom component structure by adding content into the `<model-name>`.
+
+```html
+<model-name>
+  Something {{ here }}
+</model-name>
 ```
 
 To obtain the model scope of an component, you can do the following:
