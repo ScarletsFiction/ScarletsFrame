@@ -230,7 +230,7 @@ sf.controller.for('model-binding', function(self, root){
 });
 
 sf.model.for('components', function(self){
-   self.items = [1,2,3];
+   self.items = [1];
    self.init = function(){
       console.log("Model init called", self.$el);
    }

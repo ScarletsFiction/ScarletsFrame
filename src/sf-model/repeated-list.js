@@ -10,11 +10,14 @@ var loopParser = function(modelRef, template, script, parentNode){
 		? window['$'+capitalizeLetters(template.tagName.toLowerCase().split('-'))]
 		: false;
 
-	template.setAttribute('sf-bind-list', method[1]);
+	if(!isComponent){
+		template.setAttribute('sf-bind-list', method[1]);
 
-	// Get reference for debugging
-	processingElement = template;
-	template = self.extractPreprocess(template, mask, modelRef);
+		// Get reference for debugging
+		processingElement = template;
+		template = self.extractPreprocess(template, mask, modelRef);
+	}
+	else template = isComponent;
 
 	if(method.length === 2){
 		var tempDOM = document.createElement('div');
@@ -110,6 +113,8 @@ var bindArray = function(template, list, mask, modelRef, propertyName, parentNod
 	var refreshTimer = -1;
 	var parentChilds = parentNode.children;
 
+	var isComponent = template.constructor === Function;
+
 	// Update callback
 	var eventVar = 'on$'+propertyName;
 	var callback = modelRef[eventVar];
@@ -161,15 +166,20 @@ var bindArray = function(template, list, mask, modelRef, propertyName, parentNod
 				var vCursor = list.$virtual.vCursor;
 
 			for (var i = index; i < list.length; i++) {
-				var temp = templateParser(template, list[i]);
+				if(isComponent){
+					var temp = new template(list[i]);
+				}
+				else{
+					var temp = templateParser(template, list[i]);
+					syntheticCache(temp, template, list[i]);
+				}
+				
 				if(list.$virtual){
 					if(vCursor.floor === null && i < vEndRange)
 						parentNode.insertBefore(temp, parentNode.lastElementChild);
 					else list.$virtual.dom.appendChild(temp);
 				}
 				else parentNode.appendChild(temp);
-
-				syntheticCache(temp, template, list[i]);
 			}
 
 			if(list.$virtual && list.$virtual.refreshVirtualSpacer)
@@ -284,8 +294,13 @@ var bindArray = function(template, list, mask, modelRef, propertyName, parentNod
 				if(oldChild === void 0 || list[i] === void 0)
 					break;
 
-				var temp = templateParser(template, list[i]);
-				syntheticCache(temp, template, list[i]);
+				if(isComponent){
+					var temp = new template(list[i]);
+				}
+				else{
+					var temp = templateParser(template, list[i]);
+					syntheticCache(temp, template, list[i]);
+				}
 
 				if(list.$virtual){
 					oldChild.parentNode.replaceChild(temp, oldChild);
@@ -301,8 +316,13 @@ var bindArray = function(template, list, mask, modelRef, propertyName, parentNod
 		var item = list[index];
 		if(item === void 0) return;
 
-		var temp = templateParser(template, item);
-		syntheticCache(temp, template, item);
+		if(isComponent){
+			var temp = new template(item);
+		}
+		else{
+			var temp = templateParser(template, item);
+			syntheticCache(temp, template, item);
+		}
 
 		// Create
 		if(options === 'insertAfter'){
