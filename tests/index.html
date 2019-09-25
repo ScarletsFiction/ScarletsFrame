@@ -200,15 +200,6 @@
                @return noEscapeHTML;
             }}
             {{@exec {[ <br><br>expected error{{vuln}} ]} }}
-            {{@exec 
-               // This must throw error
-               Object.keys
-               ({a:1});
-            }}
-            {{@exec 
-               // This must throw error
-               var a = function(){}
-            }}
             </div>
             <script>console.log("There are must have 2 total error")</script>
          </div>

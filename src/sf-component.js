@@ -24,7 +24,7 @@ sf.component = new function(){
 
 		var temp = $.parseElement(outerHTML);
 		if(temp.length === 1){
-			self.registered[name][3] = temp;
+			self.registered[name][3] = temp[0];
 			return;
 		}
 
@@ -82,7 +82,9 @@ sf.component = new function(){
 
 		self.available[name].push(newID);
 
-		var newObj = sf.model.root[newID] = {$el:$([element])};
+		var newObj = sf.model.root[newID] = {$el:$()};
+		newObj.$el.push(element);
+
 		self.registered[name][0](newObj, sf.model, $item);
 
 		if(self.registered[name][1])
@@ -138,6 +140,8 @@ sf.component = new function(){
 			};
 
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newID);
+			internal.model.bindInput(specialElement.input, newObj);
+			internal.model.repeatedListBinding(specialElement.repeat, newObj);
 		}
 
 		element.model = newObj;
@@ -191,8 +195,14 @@ sf.component = new function(){
 			if(!this.model)
 				return;
 
+			if(this.sf$destroying !== void 0)
+				clearTimeout(this.sf$destroying);
+
 			if(this.sf$initTriggered){
 				delete this.sf$initTriggered;
+
+				if(this.model.init)
+					this.model.init();
 				return;
 			}
 
@@ -207,13 +217,16 @@ sf.component = new function(){
 			var components = sf.component.available[tagName];
 			components.splice(components.indexOf(this.sf$controller), 1);
 
-			if(!this.model)
-				return console.log(this);
+			var that = this;
+			this.sf$destroying = setTimeout(function(){
+				if(!that.model)
+					return console.log(that);
 
-			if(this.model.destroy)
-				this.model.destroy();
+				if(that.model.destroy)
+					that.model.destroy();
 
-			delete self.root[this.sf$controlled];
+				delete sf.model.root[that.sf$controlled];
+			}, 1000);
 		};
 
 		try{

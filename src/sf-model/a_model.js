@@ -57,43 +57,10 @@ function trimIndentation(text){
 }
 
 // Secured evaluation
-var bracketMatch = /([\w.]*?[\S\s])\(/g;
+var bracketMatch = /([\w\n.]*?[\S\s])\(/g;
 var chackValidFunctionCall = sf.regex.validFunctionCall;
 var localEval = function(script, _model_, _modelScope, _content_){
 	"use strict";
-
-	// ==== Security check ====
-	var preventExecution = false;
-
-	// Remove all inner quotes
-	avoidQuotes(script, function(tempScript){
-		// Prevent vulnerability by remove bracket to avoid a function call
-		var check_ = null;
-		while((check_ = bracketMatch.exec(tempScript)) !== null){
-			check_[1] = check_[1].trim();
-
-			if(allowedFunctionEval[check_[1]] || check_[1].split('.')[0] === '_modelScope')
-				continue;
-
-			if(tempScript.indexOf('var '+check_[1]) !== -1 || tempScript.indexOf('let '+check_[1]) !== -1)
-				continue;
-
-			bracketMatch.lastIndex = 0;
-			preventExecution = check_[1];
-			break;
-		}
-	}, true);
-
-	if(preventExecution !== false){
-		console.groupCollapsed("%c<-- Expand the template error", 'color: yellow');
-		console.log(trimIndentation(processingElement.outerHTML).trim());
-		console.log("%c"+trimIndentation(script).trim(), 'color: yellow');
-		console.groupEnd();
-
-		console.error("Trying to executing unrecognized function \""+preventExecution+'"');
-		return '#TemplateError';
-	}
-	// ==== Security check ended ====
 
 	var _result_ = '';
 	try{

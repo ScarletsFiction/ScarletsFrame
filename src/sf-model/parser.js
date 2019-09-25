@@ -545,7 +545,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 	// Get the indexes for sf-repeat-this
 	var specialRepeat = specialElement.repeat;
 	for (var i = 0; i < specialRepeat.length; i++) {
-		console.log(specialRepeat[i]);
 		specialRepeat[i] = $.getSelector(specialRepeat[i], true);
 	}
 
@@ -561,10 +560,15 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 
 var enclosedHTMLParse = false;
 var excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
-self.queuePreprocess = function(targetNode, extracting, collectOther){
+self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 	var childNodes = (targetNode || document.body).childNodes;
+	var firstCall = false;
 
-	var temp = [];
+	if(temp === void 0){
+		temp = new Set();
+		firstCall = true;
+	}
+
 	for (var i = childNodes.length - 1; i >= 0; i--) {
 		var currentNode = childNodes[i];
 
@@ -599,12 +603,12 @@ self.queuePreprocess = function(targetNode, extracting, collectOther){
 
 			for (var a = 0; a < attrs.length; a++) {
 				if(attrs[a].value.indexOf('{{') !== -1){
-					temp.push(currentNode);
+					temp.add(currentNode);
 					break;
 				}
 			}
 
-			Array.prototype.push.apply(temp, self.queuePreprocess(currentNode, extracting, collectOther));
+			self.queuePreprocess(currentNode, extracting, collectOther, temp);
 		}
 
 		else if(currentNode.nodeType === 3){ // Text
@@ -629,16 +633,19 @@ self.queuePreprocess = function(targetNode, extracting, collectOther){
 
 			if(currentNode.nodeValue.indexOf('{{') !== -1){
 				if(extracting === void 0){
-					temp.push(currentNode.parentNode);
+					if(!temp.has(currentNode.parentNode))
+						temp.add(currentNode.parentNode);
 					break;
 				}
 
-				temp.push(currentNode);
+				if(!temp.has(currentNode))
+					temp.add(currentNode);
 			}
 		}
 	}
 
-	return temp;
+	if(firstCall)
+		return Array.from(temp);
 }
 
 self.parsePreprocess = function(nodes, model){

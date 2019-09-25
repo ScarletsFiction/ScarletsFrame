@@ -94,9 +94,19 @@ sf.model = function(scope){
 class SFModel extends HTMLElement {
 	constructor(){
 		super();
+
+		this.sf$firstInit = true;
 	}
 	connectedCallback(){
+		if(this.sf$destroying !== void 0)
+			clearTimeout(this.sf$destroying);
+
+		if(this.sf$firstInit === void 0)
+			return;
+
 		var that = this;
+		delete this.sf$firstInit;
+
 		setTimeout(function(){
 			if(sf.loader.DOMWasLoaded)
 				return sf.model.init(that, that.getAttribute('name'));
@@ -107,13 +117,16 @@ class SFModel extends HTMLElement {
 		});
 	}
 	disconnectedCallback(){
-		if(this.model.$el){
-			var i = this.model.$el.indexOf(this);
-			if(i !== -1)
-				this.model.$el.splice(i)
-		}
+		var that = this;
+		this.sf$destroying = setTimeout(function(){
+			if(that.model.$el){
+				var i = that.model.$el.indexOf(that);
+				if(i !== -1)
+					that.model.$el.splice(i)
+			}
 
-		internal.model.removeModelBinding(model);
+			internal.model.removeModelBinding(that.model);
+		}, 1000);
 	}
 }
 

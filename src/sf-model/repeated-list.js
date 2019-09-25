@@ -70,6 +70,10 @@ var loopParser = function(modelRef, template, script, parentNode){
 var repeatedListBinding = internal.model.repeatedListBinding = function(elements, controller){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
+
+		if(!element.hasAttribute('sf-repeat-this'))
+			continue;
+
 		var parent = element.parentElement; // ToDO: fix this for component
 
 		if(parent.classList.contains('sf-virtual-list')){
@@ -94,12 +98,6 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 		var script = element.getAttribute('sf-repeat-this');
 		element.removeAttribute('sf-repeat-this');
-
-		// Check if the element was already bound to prevent vulnerability
-		if(element.outerHTML.indexOf('sf-bind-list') !== -1){
-			console.error("Can't parse element that already bound");
-			return;
-		}
 
 		loopParser(controller, element, script, parent);
 		element.remove();

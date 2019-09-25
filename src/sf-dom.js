@@ -16,8 +16,7 @@ sf.dom = function(selector, context){
 		return new DOMList(context.querySelectorAll(selector));
 	else if(selector.constructor === String)
 		return new DOMList(document.querySelectorAll(selector));
-	else if(selector.constructor === Array)
-		return new DOMList(selector);
+	return new DOMList(selector);
 }
 
 function DOMList(elements){
