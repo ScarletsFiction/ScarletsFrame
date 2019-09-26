@@ -167,7 +167,9 @@
             <option value="3">Select 3</option>
          </select>
          <select sf-bind="inputBinding6" typedata="number">
-            <option value="{{x.val}}" sf-repeat-this="x in inputBinding6a">{{x.text}}</option>
+            <option value="{{x.value}}" sf-repeat-this="x in inputBinding6a">
+            {{x.text}} - {{text}}
+          </option>
          </select><br><br>
          <input type="file" sf-bind="inputBinding7"><br>
 
@@ -213,6 +215,7 @@
             custom {{data}} {{item}} here
             <span sf-repeat-this="num in tries">{{#num}},</span>
          </comp-test>
+         <comp-test it="async"></comp-test>
          <comp-test sf-repeat-this="item in items"></comp-test>
       </sf-m>
 

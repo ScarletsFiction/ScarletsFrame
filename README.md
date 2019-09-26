@@ -8,6 +8,7 @@ A frontend framework that can help you write a simple web structure with complex
 
 ## Table of contents
  - [Example](#example)
+ - [Migrating from 0.18.5 to 0.20.0](#migration)
  - [Install](#install-with-cdn-link)
  - [Hints](#hints)
  - [Asset Loader](#asset-loader)
@@ -35,8 +36,42 @@ A frontend framework that can help you write a simple web structure with complex
 - [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
-- [Views and Router](https://codesandbox.io/s/viewsrouter-example-1vbdh)
+- [Views and Router](https://1vbdh.csb.app/) | [Source](https://codesandbox.io/s/viewsrouter-example-1vbdh)
 - [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
+
+## Migration
+There are some changes on v0.20.0.
+
+```html
+<!-- The attribute -->
+<div sf-controller="modelName"></div>
+
+<!-- Now replaced with this -->
+<sf-m name="modelName"></sf-m>
+```
+
+------
+
+```html
+<!-- One way binding -->
+<input sf-bind=""></input>
+
+<!-- Now replaced with this -->
+<input sf-into="intoModel"></input>
+<input value="{{ fromModel }}"></input>
+```
+
+------
+
+```html
+<!-- Two way binding -->
+<input sf-bound=""></input>
+
+<!-- Now replaced with this -->
+<input sf-bind=""></input>
+```
+
+If you was found some bugs or something, feel free to contact @StefansArya from github or elsewhere.
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -582,7 +617,11 @@ sf.model.for('music.feedback', function(self, root){
           return true;
        },
        update:function(elem){},
-       create:function(elem){}
+       create:function(elem){},
+
+       // When using virtual scroll
+       hitFloor:function(){},
+       hitCeiling:function(){},
     };
 });
 ```

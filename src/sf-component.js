@@ -3,6 +3,9 @@ sf.component = new function(){
 	var scope = internal.component = {
 		list:{}
 	};
+
+	var waitingHTML = {};
+
 	self.registered = {};
 	self.available = {};
 
@@ -34,6 +37,16 @@ sf.component = new function(){
 			tempDOM.appendChild(temp[i]);
 		}
 		self.registered[name][3] = tempDOM;
+
+		if(waitingHTML[name] === void 0)
+			return;
+
+		var upgrade = waitingHTML[name];
+		delete waitingHTML[name];
+
+		for (var i = upgrade.length - 1; i >= 0; i--) {
+			self.new(name, upgrade[i].el, upgrade[i].item);
+		}
 	}
 
 	var tempDOM = document.createElement('div');
@@ -47,8 +60,13 @@ sf.component = new function(){
 		}
 
 		if(element.childElementCount === 0){
-			if(self.registered[name][3] === false)
+			if(self.registered[name][3] === false){
+				if(waitingHTML[name] === void 0)
+					waitingHTML[name] = [];
+
+				waitingHTML[name].push({el:element, item:$item});
 				return;
+			}
 		}
 
 		if(element.sf$componentIgnore === true)

@@ -176,10 +176,12 @@ sf.model.for('model-binding', function(self, root){
       console.warn("inputBinding2 was modified from:", news, 'to', Math.round(news));
       return Math.round(news);
    };
+
+   self.text = 'main model';
    self.inputBinding6a = [
-      {text:'Select 1', val:1},
-      {text:'Select 2', val:2},
-      {text:'Select 3', val:3},
+      {text:'Select 1', value:1},
+      {text:'Select 2', value:2},
+      {text:'Select 3', value:3},
    ];
    setTimeout(function(){
       self.inputBinding6a.push({text:'Select 4', val:4});
@@ -241,7 +243,7 @@ sf.model.for('components', function(self){
 });
 
 sf.controller.for('comp-test', function(self, root, item){
-   console.warn('comp-test', item, self.$el);
+   console.warn('comp-test', item, self.$el[0]);
    self.init = function(){
       console.warn("Component init called");
    }

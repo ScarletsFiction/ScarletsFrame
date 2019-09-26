@@ -6,7 +6,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
 	if(modelKeys.length === 0)
-		throw "'"+1+"' model was not found";
+		throw "The model was not found";
 
 	// Don't match text inside quote, or object keys
 	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
@@ -36,7 +36,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 			return temp_.replace(scopeMask, function(full, matched){
 				return '_modelScope.'+matched;
 			});
-		});//.split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
+		}).split('_model_._modelScope.').join('_model_.');
 
 		// Evaluate
 		if(runEval === '#noEval'){
@@ -125,7 +125,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
 	if(modelKeys.length === 0)
-		throw "'"+1+"' model was not found";
+		throw "The model was not found";
 
 	// Don't match text inside quote, or object keys
 	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
@@ -151,7 +151,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 			return temp_.replace(scopeMask, function(full, matched){
 				return '_modelScope.'+matched;
 			});
-		});//.split('_model_._modelScope.').join('_model_.').replace(/_modelScope\.$/, '');
+		}).split('_model_._modelScope.').join('_model_.');;
 
 		var result = '';
 		var check = false;
