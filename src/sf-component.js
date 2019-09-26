@@ -26,17 +26,16 @@ sf.component = new function(){
 			self.registered[name] = [false, false, 0, false];
 
 		var temp = $.parseElement(outerHTML);
-		if(temp.length === 1){
+		if(temp.length === 1)
 			self.registered[name][3] = temp[0];
-			return;
+		else{
+			var tempDOM = document.createElement('div');
+			tempDOM.tempDOM = true;
+			for (var i = 0; i < temp.length; i++) {
+				tempDOM.appendChild(temp[i]);
+			}
+			self.registered[name][3] = tempDOM;
 		}
-
-		var tempDOM = document.createElement('div');
-		tempDOM.tempDOM = true;
-		for (var i = 0; i < temp.length; i++) {
-			tempDOM.appendChild(temp[i]);
-		}
-		self.registered[name][3] = tempDOM;
 
 		if(waitingHTML[name] === void 0)
 			return;
@@ -45,7 +44,12 @@ sf.component = new function(){
 		delete waitingHTML[name];
 
 		for (var i = upgrade.length - 1; i >= 0; i--) {
-			self.new(name, upgrade[i].el, upgrade[i].item);
+			var el = upgrade[i].el;
+			self.new(name, el, upgrade[i].item);
+			delete el.sf$initTriggered;
+
+			if(el.model.init)
+				el.model.init();
 		}
 	}
 
