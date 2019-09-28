@@ -1,4 +1,4 @@
-sf.internal.virtual_scroll = new function(){
+internal.virtual_scroll = new function(){
 	var self = this;
 	var scrollingByScript = false;
 
@@ -248,11 +248,6 @@ sf.internal.virtual_scroll = new function(){
 		var bounding = virtual.bounding;
 		refreshScrollBounding(0, bounding, list, parentNode);
 
-		if(virtual.callback_ !== void 0){
-			var callback_ = virtual.callback_;
-			delete virtual.callback_;
-		}
-
 		var updating = false;
 		function checkCursorPosition(){
 			if(updating || scrollingByScript) return;
@@ -272,7 +267,7 @@ sf.internal.virtual_scroll = new function(){
 				// console.warn('front', bounding, scroller.scrollTop, virtual.DOMCursor);
 			}
 
-			if(virtual.callback !== void 0 && list.length !== 0){
+			if(list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null &&
 					scroller.scrollTop + scroller.clientHeight === scroller.scrollHeight
 				){
@@ -281,10 +276,6 @@ sf.internal.virtual_scroll = new function(){
 				else if(virtual.callback.hitCeiling && virtual.vCursor.ceiling === null && scroller.scrollTop === 0){
 					virtual.callback.hitCeiling(virtual.DOMCursor);
 				}
-			}
-			else if(callback_ && callback_.ref[callback_.var]){
-				virtual.callback = callback_.ref[callback_.var];
-				callback_ = null;
 			}
 
 			updating = false;
@@ -347,11 +338,6 @@ sf.internal.virtual_scroll = new function(){
 			refresh(force, list, self.prepareCount, parentNode, scroller, checkCursorPosition, refreshVirtualSpacer);
 		}
 
-		if(virtual.callback_ !== void 0){
-			var callback_ = virtual.callback_;
-			delete virtual.callback_;
-		}
-
 		var updating = false;
 		var fromCeiling = true;
 		var scrollFocused = false;
@@ -408,17 +394,13 @@ sf.internal.virtual_scroll = new function(){
 			refreshScrollBounding(cursor, bounding, list, parentNode);
 			// console.log('a', bounding.ceiling, bounding.floor, scroller.scrollTop);
 
-			if(virtual.callback !== void 0 && list.length !== 0){
+			if(list.length !== 0){
 				if(virtual.callback.hitFloor && virtual.vCursor.floor === null){
 					virtual.callback.hitFloor(cursor);
 				}
 				else if(virtual.callback.hitCeiling && virtual.vCursor.ceiling === null){
 					virtual.callback.hitCeiling(cursor);
 				}
-			}
-			else if(callback_ && callback_.ref[callback_.var]){
-				virtual.callback = callback_.ref[callback_.var];
-				callback_ = null;
 			}
 
 			updating = false;

@@ -1,173 +1,172 @@
-var loopParser = function(modelRef, template, script, parentNode){
-	var method = script.split(' in ');
-	var mask = method[0];
-
-	if(method.length !== 2)
-		return console.error("'", script, "' must match the pattern like `item in items`");
-
-	var items = modelRef[method[1]];
-	if(items === void 0)
-		items = modelRef[method[1]] = [];
-
-	var isComponent = internal.component[template.tagName] !== void 0 
-		? window['$'+capitalizeLetters(template.tagName.toLowerCase().split('-'))]
-		: false;
-
-	if(!parentNode.classList.contains('sf-virtual-list')){
-		var boundary = document.createComment('');
-		template.parentNode.insertBefore(boundary, template);
-	}
-
-	if(!isComponent){
-		template.setAttribute('sf-bind-list', method[1]);
-
-		// Get reference for debugging
-		processingElement = template;
-		template = self.extractPreprocess(template, mask, modelRef);
-	}
-	else template = isComponent;
-
-	// Enable element binding
-	if(modelRef.sf$bindedKey === void 0)
-		initBindingInformation(modelRef);
-
-	if(modelRef.sf$bindedKey[method[1]] === void 0)
-		modelRef.sf$bindedKey[method[1]] = null;
-
-	Object.defineProperty(modelRef, method[1], {
-		enumerable: true,
-		configurable: true,
-		get:function(){
-			return items;
-		},
-		set:function(val){
-			if(val.length === 0)
-				return items.splice(0);
-			return items[replace](val, true);
-		}
-	});
-
-	modelRef[method[1]] = new RepeatedElement(template, items, mask, modelRef, method[1], boundary);
-}
-
-var repeatedListBinding = internal.model.repeatedListBinding = function(elements, controller){
+var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
 
 		if(!element.hasAttribute('sf-repeat-this'))
 			continue;
 
-		var parent = element.parentElement; // ToDO: fix this for component
-
-		if(parent.classList.contains('sf-virtual-list')){
-			var ceiling = document.createElement(element.tagName);
-			ceiling.classList.add('virtual-spacer');
-			var floor = ceiling.cloneNode(true);
-
-			ceiling.classList.add('ceiling');
-			parent.insertBefore(ceiling, parent.firstElementChild); // prepend
-
-			floor.classList.add('floor');
-			parent.appendChild(floor); // append
-		}
-
-		var after = element.nextElementSibling;
-		if(after === null || element === after)
-			after = false;
-
-		var before = element.previousElementSibling;
-		if(before === null || element === before)
-			before = false;
-
 		var script = element.getAttribute('sf-repeat-this');
 		element.removeAttribute('sf-repeat-this');
 
-		loopParser(controller, element, script, parent);
-		element.remove();
+		var refName = script.split(' in ');
+		if(refName.length !== 2)
+			return console.error("'", script, "' must match the pattern like `item in items`");
+
+		if(modelRef[refName[1]] === void 0)
+			modelRef[refName[1]] = [];
+
+		// Enable element binding
+		if(modelRef.sf$bindedKey === void 0)
+			initBindingInformation(modelRef);
+
+		if(modelRef.sf$bindedKey[refName[1]] === void 0)
+			modelRef.sf$bindedKey[refName[1]] = null;
+
+		;(function(){
+			var RE = new RepeatedElement(modelRef, element, refName, element.parentElement);
+			window.asd = RE;
+			Object.defineProperty(modelRef, refName[1], {
+				enumerable: true,
+				configurable: true,
+				get:function(){
+					return RE;
+				},
+				set:function(val){
+					if(val.length === 0)
+						return RE.splice(0);
+					return RE.replace(val, true);
+				}
+			});
+		})();
 	}
 }
 
 var _double_zero = [0,0]; // For arguments
 class RepeatedElement extends Array{
-	constructor(template, list, mask, modelRef, propertyName, boundary){
-		hiddenProperty(this, '$internal', {
-			EM:new ElementManipulator(template, this, modelRef, boundary)
-		});
+	constructor(modelRef, element, refName, parentNode){
+		if(modelRef.constructor === Number)
+			return Array(modelRef);
 
-		if(boundary.parentNode && boundary.parentNode.classList.contains('sf-virtual-list'))
-			hiddenProperty(this, '$virtual', {});
+		var list = modelRef[refName[1]];
+
+		super(list.length);
 
 		if(list.length !== 0)
-			this[replace](list);
+			for (var i = 0; i < list.length; i++) {
+				this[i] = list[i];
+			}
 
 		list = null;
 
-		var self = this.$internal;
+		var alone = (parentNode.children.length <= 1 || parentNode.textContent.trim().length === 0);
 
-		self.refreshTimer = -1;
-		self.parentChilds = boundary.children;
+		var callback = {};
+		Object.defineProperty(modelRef, 'on$'+refName[1], {
+			enumerable: true,
+			configurable: true,
+			get:function(){
+				return callback;
+			},
+			set:function(val){
+				Object.assign(callback, val);
+			}
+		});
 
-		self.isComponent = template.constructor === Function;
+		var isComponent = internal.component[element.tagName] !== void 0 
+			? window['$'+capitalizeLetters(element.tagName.toLowerCase().split('-'))]
+			: false;
+
+		var template;
+		if(!isComponent){
+			element.setAttribute('sf-bind-list', refName[1]);
+
+			// Get reference for debugging
+			processingElement = element;
+			template = self.extractPreprocess(element, refName[0], modelRef);
+		}
+
+		hiddenProperty(this, '$EM', new ElementManipulator());
+		this.$EM.template = isComponent || template;
+		this.$EM.list = this;
+		this.$EM.parentNode = parentNode;
+		this.$EM.modelRef = modelRef;
+		this.$EM.refName = refName;
 
 		// Update callback
-		self.eventVar = 'on$'+propertyName;
-		self.callback = modelRef[eventVar];
+		this.$EM.callback = callback;
 
-		if(boundary && boundary.classList.contains('sf-virtual-list')){
+		var that = this;
+		function injectElements(tempDOM, beforeChild){
+			for (var i = 0; i < that.length; i++) {
+				if(isComponent){
+					var elem = new isComponent(that[i]);
+					// elem.setAttribute('sf-bind-list', refName[1]);
+				}
+				else{
+					var elem = templateParser(template, that[i]);
+					syntheticCache(elem, template, that[i]);
+				}
+
+				if(beforeChild === void 0)
+					tempDOM.appendChild(elem);
+				else{
+					that.$EM.elements.push(elem);
+					tempDOM.insertBefore(elem, beforeChild);
+				}
+			}
+		}
+
+		if(parentNode.classList.contains('sf-virtual-list')){
+			var ceiling = document.createElement(element.tagName);
+			ceiling.classList.add('virtual-spacer');
+			var floor = ceiling.cloneNode(true);
+
+			ceiling.classList.add('ceiling');
+			parentNode.insertBefore(ceiling, parentNode.firstElementChild); // prepend
+
+			floor.classList.add('floor');
+			parentNode.appendChild(floor); // append
+
+			hiddenProperty(this, '$virtual', {});
+
+			if(!alone)
+				console.warn("Virtual list was initialized when the container has another child that was not sf-repeated element.", parentNode);
+
+			var tempDOM = document.createElement('div');
+			injectElements(tempDOM);
+
 			// Transfer virtual DOM
 			this.$virtual.dom = tempDOM;
-			if(callback !== void 0)
-				this.$virtual.callback = callback;
-			else this.$virtual.callback_ = {ref:modelRef, var:eventVar};
+			this.$virtual.callback = callback;
 
-			boundary.replaceChild(template.html, parentChilds[1]);
-			sf.internal.virtual_scroll.handle(this, boundary);
-			template.html.remove();
+			// Put the html example for obtaining it's size
+			parentNode.replaceChild(template.html, parentNode.children[1]);
+			internal.virtual_scroll.handle(this, parentNode);
+			template.html.remove(); // And remove it
 		}
-
-		var tempDOM = document.createElement('div');
-
-		// Output to real DOM if not being used for virtual list
-		if(items.$virtual === void 0){
-			for (var i = 0; i < items.length; i++) {
-				if(isComponent){
-					var elem = new isComponent(items[i]);
-					elem.setAttribute('sf-bind-list', method[1]);
-				}
-				else{
-					var elem = templateParser(template, items[i]);
-					syntheticCache(elem, template, items[i]);
-				}
-
-				tempDOM.appendChild(elem);
-			}
-
-			var children = tempDOM.children;
-			for (var i = 0, n = children.length; i < n; i++) {
-				parentNode.appendChild(children[0]);
-			}
-
-			tempDOM.remove();
-			tempDOM = null;
+		else if(alone){
+			// Output to real DOM if not being used for virtual list
+			injectElements(parentNode);
+			this.$EM.parentChilds = parentNode.children;
 		}
 		else{
-			for (var i = 0; i < items.length; i++) {
-				if(isComponent){
-					var elem = new isComponent(items[i]);
-					elem.setAttribute('sf-bind-list', method[1]);
-				}
-				else{
-					var elem = templateParser(template, items[i]);
-					syntheticCache(elem, template, items[i]);
-				}
+			this.$EM.bound_end = document.createComment('');
+			this.$EM.bound_start = document.createComment('');
 
-				tempDOM.appendChild(elem);
-			}
+			parentNode.insertBefore(this.$EM.bound_start, element);
+			parentNode.insertBefore(this.$EM.bound_end, element);
+
+			this.$EM.elements = Array(this.length);
+
+			// Output to real DOM if not being used for virtual list
+			injectElements(parentNode, this.$EM.bound_end);
 		}
 
+		element.remove();
+
+		// Wait for scroll plugin initialization
 		setTimeout(function(){
 			var scroller = internal.findScrollerElement(parentNode);
-
 			if(scroller === null) return;
 
 			var computed = getComputedStyle(scroller);
@@ -179,43 +178,40 @@ class RepeatedElement extends Array{
 		}, 1000);
 
 		// Todo: Enable auto item binding
-		if(false && list.auto !== false){
-			// for (var i = 0; i < list.length; i++) {
-			// 	list[i]
-			// }
-		}
-
-		return self;
 	}
 
 	pop(){
-		this.EM.remove(this.length);
+		this.$EM.remove(this.length);
 		Array.prototype.pop.apply(this, arguments);
 	}
 
 	push(){
 		var lastLength = this.length;
+		this.length += arguments.length;
+
+		var n = 0;
+		for (var i = lastLength; i < this.length; i++) {
+			this[i] = arguments[n++];
+		}
+
 		if(arguments.length === 1)
-			this.EM.append(lastLength);
+			this.$EM.append(lastLength);
 		else{
 			for (var i = 0; i < arguments.length; i++) {
-				this.EM.append(lastLength + i);
+				this.$EM.append(lastLength + i);
 			}
 		}
-		Array.prototype.push.apply(this, arguments);
 	}
 
 	splice(){
 		if(arguments[0] === 0 && arguments[1] === void 0){
-			this.EM.clear(0);
-			return Array.prototype.splice.apply(this, arguments);
+			this.$EM.clear(0);
+			this.length = 0;
+			return;
 		}
 
 		var lastLength = this.length;
 		Array.prototype.splice.apply(this, arguments);
-
-		if(arguments[0] === 0 && arguments[1] === void 0)
-			return temp;
 
 		// Removing data
 		var real = arguments[0];
@@ -225,11 +221,11 @@ class RepeatedElement extends Array{
 		if(!limit && limit !== 0) limit = this.length;
 
 		for (var i = limit - 1; i >= 0; i--) {
-			this.EM.remove(real + i);
+			this.$EM.remove(real + i);
 		}
 
-		if(list.$virtual && list.$virtual.DOMCursor >= real)
-			list.$virtual.DOMCursor = real - limit;
+		if(this.$virtual && this.$virtual.DOMCursor >= real)
+			this.$virtual.DOMCursor = real - limit;
 
 		if(arguments.length >= 3){ // Inserting data
 			limit = arguments.length - 2;
@@ -239,56 +235,53 @@ class RepeatedElement extends Array{
 				real = this.length - 1;
 
 			for (var i = 0; i < limit; i++) {
-				this.EM.insertAfter(real + i);
+				this.$EM.insertAfter(real + i);
 			}
 
-			if(list.$virtual && list.$virtual.DOMCursor >= real)
-				list.$virtual.DOMCursor += limit;
+			if(this.$virtual && this.$virtual.DOMCursor >= real)
+				this.$virtual.DOMCursor += limit;
 		}
 	}
 
 	shift(){
-		var lastLength = this.length;
 		Array.prototype.shift.apply(this, arguments);
 
-		this.EM.remove(0);
-		if(list.$virtual && list.$virtual.DOMCursor > 0){
-			list.$virtual.DOMCursor--;
-			list.$virtual.reinitCursor();
+		this.$EM.remove(0);
+		if(this.$virtual && this.$virtual.DOMCursor > 0){
+			this.$virtual.DOMCursor--;
+			this.$virtual.reinitCursor();
 		}
 	}
 
 	unshift(){
-		var lastLength = this.length;
 		Array.prototype.unshift.apply(this, arguments);
 
 		if(arguments.length === 1)
-			this.EM.prepend(0);
+			this.$EM.prepend(0);
 		else{
 			for (var i = arguments.length - 1; i >= 0; i--) {
-				this.EM.prepend(i);
+				this.$EM.prepend(i);
 			}
 		}
 
-		if(list.$virtual && list.$virtual.DOMCursor !== 0){
-			list.$virtual.DOMCursor += arguments.length;
-			list.$virtual.reinitCursor();
+		if(this.$virtual && this.$virtual.DOMCursor !== 0){
+			this.$virtual.DOMCursor += arguments.length;
+			this.$virtual.reinitCursor();
 		}
 	}
 
-	replace(){
+	replace(newList, atMiddle){
 		var lastLength = this.length;
 
-		if(list.$virtual)
-			list.$virtual.resetViewport();
+		if(this.$virtual)
+			this.$virtual.resetViewport();
 
 		// Check if item has same reference
-		if(arguments[0].length >= lastLength && lastLength !== 0){
+		if(newList.length >= lastLength && lastLength !== 0){
 			var matchLeft = lastLength;
-			var ref = arguments[0];
 
 			for (var i = 0; i < lastLength; i++) {
-				if(ref[i] === this[i]){
+				if(newList[i] === this[i]){
 					matchLeft--;
 					continue;
 				}
@@ -297,9 +290,9 @@ class RepeatedElement extends Array{
 
 			// Add new element at the end
 			if(matchLeft === 0){
-				if(ref.length === lastLength) return;
+				if(newList.length === lastLength) return;
 
-				var temp = arguments[0].slice(lastLength);
+				var temp = newList.slice(lastLength);
 				temp.unshift(lastLength, 0);
 				this.splice.apply(this, temp);
 				return;
@@ -307,12 +300,12 @@ class RepeatedElement extends Array{
 
 			// Add new element at the middle
 			else if(matchLeft !== lastLength){
-				if(arguments[1] === true){
-					var temp = arguments[0].slice(i);
+				if(atMiddle === true){
+					var temp = newList.slice(i);
 					temp.unshift(i, lastLength - i);
 					Array.prototype.splice.apply(this, temp);
 
-					list.refresh(i, lastLength);
+					this.refresh(i, lastLength);
 				}
 				return;
 			}
@@ -321,7 +314,7 @@ class RepeatedElement extends Array{
 		// Build from zero
 		if(lastLength === 0){
 			Array.prototype.push.apply(this, arguments[0]);
-			this.EM.hardRefresh(0);
+			this.$EM.hardRefresh(0);
 			return;
 		}
 
@@ -332,144 +325,147 @@ class RepeatedElement extends Array{
 
 		// Rebuild all element
 		if(arguments[1] !== true){
-			this.EM.clear(0);
-			this.EM.hardRefresh(0);
+			this.$EM.clear(0);
+			this.$EM.hardRefresh(0);
 		}
 
 		// Reuse some element
 		else{
 			// Clear unused element if current array < last array
 			if(this.length < lastLength)
-				this.EM.removeRange(this.length, lastLength);
+				this.$EM.removeRange(this.length, lastLength);
 
 			// And start refreshing
-			list.refresh(0, this.length);
+			this.refresh(0, this.length);
 
-			if(list.$virtual && list.$virtual.refreshVirtualSpacer)
-				list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
+			if(this.$virtual && this.$virtual.refreshVirtualSpacer)
+				this.$virtual.refreshVirtualSpacer(this.$virtual.DOMCursor);
 		}
 
-		// Reset virtual list
-		if(list.$virtual)
-			list.$virtual.reset();
+		// Reset virtual this
+		if(this.$virtual)
+			this.$virtual.reset();
 
 		return this;
 	}
 
-	swap(){
-		var i = arguments[0];
-		var o = arguments[1];
+	swap(i, o){
 		if(i === o) return;
-		this.EM.swap(i, o);
+		this.$EM.swap(i, o);
 		var temp = this[i];
 		this[i] = this[o];
 		this[o] = temp;
 	}
 
-	move(){
-		var from = arguments[0];
-		var to = arguments[1];
+	move(from, to, count){
 		if(from === to) return;
-		var count = arguments[2] || 1;
-		this.EM.move(from, to, count);
+
+		if(count === void 0)
+			count = 1;
+
+		this.$EM.move(from, to, count);
 
 		var temp = Array.prototype.splice.apply(this, [from, count]);
 		temp.unshift(to, 0);
 		Array.prototype.splice.apply(this, temp);
 
 		// Reset virtual ceiling and floor
-		if(list.$virtual)
-			list.$virtual.reinitCursor();
+		if(this.$virtual)
+			this.$virtual.reinitCursor();
 	}
 
-	getElement(){
+	getElement(index){
+		if(this.$virtual !== null){
+			var virtualChilds = this.$virtual.dom.children;
 
-		if(virtualChilds !== null){
-			var ret = void 0;
-			if(index < list.$virtual.DOMCursor)
-				return virtualChilds[index];
-			else {
-				index -= list.$virtual.DOMCursor;
-				var childElement = parentNode.childElementCount - 2;
+			if(index >= this.$virtual.DOMCursor) {
+				index -= this.$virtual.DOMCursor;
+				var childElement = this.$EM.parentNode.childElementCount - 2;
 
 				if(index < childElement)
-					return parentChilds[index + 1];
+					return this.$EM.parentNode.children[index + 1];
 				else
-					return virtualChilds[index - childElement + list.$virtual.DOMCursor];
+					return virtualChilds[index - childElement + this.$virtual.DOMCursor];
 			}
 
-			return void 0;
+			return virtualChilds[index];
 		}
 
-		return parentChilds[index];
+		if(this.$EM.bound_start !== void 0){
+			var current = this.$EM.bound_start;
+			for (var i = 0; i < index; i++) {
+				current = current.nextElementSibling;
+
+				if(current === null)
+					return null;
+			}
+
+			return current;
+		}
+
+		return this.$EM.parentChilds[index];
 	}
 
-	refresh(){
+	refresh(index, length, property){
 		if(index === void 0 || index.constructor === String){
 			property = index;
 			index = 0;
-			length = list.length;
+			length = this.length;
 		}
 		else if(length === void 0) length = index + 1;
 		else if(length.constructor === String){
 			property = length;
 			length = index + 1;
 		}
-		else if(length < 0) length = list.length + length;
+		else if(length < 0) length = this.length + length;
 		else length += index;
 
 		// Trim length
-		var overflow = list.length - length;
+		var overflow = this.length - length;
 		if(overflow < 0) length = length + overflow;
 
 		for (var i = index; i < length; i++) {
-			var elem = list.getElement(i);
+			var elem = this.getElement(i);
 
 			// Create element if not exist
 			if(elem === void 0){
-				list.hardRefresh(i);
+				this.hardRefresh(i);
 				break;
 			}
-			else if(syntheticTemplate(elem, template, property, list[i]) === false)
+			else if(syntheticTemplate(elem, this.$EM.template, property, this[i]) === false)
 				continue; // Continue if no update
 
-			if(elem.model !== list[i])
-				elem.model = list[i];
+			if(elem.model !== this[i])
+				elem.model = this[i];
 
-			if(callback !== void 0 && callback.update)
-				callback.update(elem, 'replace');
+			if(this.$EM.callback.update)
+				this.$EM.callback.update(elem, 'replace');
 		}
+	}
+
+	softRefresh(i, o){
+		this.$EM.update(i, o);
+
+		if(this.$virtual && this.$virtual.DOMCursor)
+			this.$virtual.reinitCursor();
+	}
+
+	hardRefresh(i){
+		this.$EM.hardRefresh(i || 0);
+
+		if(this.$virtual)
+			this.$virtual.DOMCursor = i || 0;
 	}
 }
 
-var virtualChilds = null;
-	if(list.$virtual)
-		virtualChilds = list.$virtual.dom.children;
-
-	// else if(name === 'softRefresh'){
-	// 	this.EM.update(arguments[0], arguments[1]);
-
-	// 	if(list.$virtual && list.$virtual.DOMCursor)
-	// 		list.$virtual.reinitCursor();
-	// }
-
-	// else if(name === 'hardRefresh'){
-	// 	this.EM.hardRefresh(arguments[0] || 0);
-
-	// 	if(list.$virtual)
-	// 		list.$virtual.DOMCursor = arguments[0] || 0;
-	// }
-
 class ElementManipulator{
-	constructor(template, list, modelRef, parentNode){
-
-	}
-
-	createElement(){
-		var item = list[index];
+	createElement(index){
+		var item = this.list[index];
 		if(item === void 0) return;
 
-		if(isComponent)
+		var template = this.template;
+
+		if(template.constructor === Function)
 			return new template(item);
 		else{
 			var temp = templateParser(template, item);
@@ -479,20 +475,28 @@ class ElementManipulator{
 	}
 
 	virtualRefresh(){
-		if(list.$virtual){
-			clearTimeout(refreshTimer);
-			refreshTimer = setTimeout(function(){
-				if(list.$virtual) // Somewhat it's uninitialized
-					list.$virtual.reinitScroll();
-			}, 100);
+		var that = this;
 
-			var exist = list.$virtual.elements();
-		}
-		else exist = parentChilds;
+		clearTimeout(this.refreshTimer);
+		this.refreshTimer = setTimeout(function(){
+			if(that.list.$virtual) // Somewhat it's uninitialized
+				that.list.$virtual.reinitScroll();
+		}, 100);
+
+		return this.list.$virtual.elements();
 	}
 
-	hardRefresh(){
-		var exist = self.virtualRefresh();
+	// Recreate the item element after the index
+	hardRefresh(index){
+		var list = this.list;
+		var isComponent = this.template.constructor === Function;
+
+		if(list.$virtual){
+			var vStartRange = list.$virtual.DOMCursor;
+			var vEndRange = vStartRange + list.$virtual.preparedLength;
+		}
+
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
 		// Clear siblings after the index
 		for (var i = index; i < exist.length; i++) {
@@ -504,44 +508,49 @@ class ElementManipulator{
 
 		for (var i = index; i < list.length; i++) {
 			if(isComponent){
-				var temp = new template(list[i]);
+				var temp = new this.template(list[i]);
 			}
 			else{
-				var temp = templateParser(template, list[i]);
-				syntheticCache(temp, template, list[i]);
+				var temp = templateParser(this.template, list[i]);
+				syntheticCache(temp, this.template, list[i]);
 			}
 			
-			if(list.$virtual){
+			if(this.list.$virtual){
 				if(vCursor.floor === null && i < vEndRange)
-					parentNode.insertBefore(temp, parentNode.lastElementChild);
+					this.parentNode.insertBefore(temp, this.parentNode.lastElementChild);
 				else list.$virtual.dom.appendChild(temp);
 			}
-			else parentNode.appendChild(temp);
+			else this.parentNode.appendChild(temp);
 		}
 
 		if(list.$virtual && list.$virtual.refreshVirtualSpacer)
 			list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
 	}
 
-	move(){
-		var exist = self.virtualRefresh();
+	move(from, to, count){
+		if(this.list.$virtual){
+			var vStartRange = this.list.$virtual.DOMCursor;
+			var vEndRange = vStartRange + this.list.$virtual.preparedLength;
+		}
 
-		var overflow = list.length - index - count;
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+
+		var overflow = this.list.length - from - count;
 		if(overflow < 0)
 			count += overflow;
 
 		// Move to virtual DOM
 		var vDOM = document.createElement('div');
 		for (var i = 0; i < count; i++) {
-			vDOM.appendChild(exist[index + i]);
+			vDOM.appendChild(exist[from + i]);
 		}
 
-		var nextSibling = exist[other] || null;
+		var nextSibling = exist[to] || null;
 		var theParent = nextSibling && nextSibling.parentNode;
 
 		if(theParent === false){
-			if(list.$virtual && list.length >= vEndRange)
-				theParent = list.$virtual.dom;
+			if(this.list.$virtual && this.list.length >= vEndRange)
+				theParent = this.list.$virtual.dom;
 			else theParent = parentNode;
 		}
 
@@ -549,13 +558,13 @@ class ElementManipulator{
 		for (var i = 0; i < count; i++) {
 			theParent.insertBefore(vDOM.firstElementChild, nextSibling);
 
-			if(callback !== void 0 && callback.update)
-				callback.update(exist[index + i], 'move');
+			if(this.callback.update)
+				this.callback.update(exist[from + i], 'move');
 		}
 	}
 
-	swap(){
-		var exist = self.virtualRefresh();
+	swap(index, other){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
 		if(index > other){
 			var index_a = exist[other];
@@ -568,22 +577,22 @@ class ElementManipulator{
 
 		var other_sibling = other.nextSibling;
 		var other_parent = other.parentNode;
-		 index.parentNode.insertBefore(other, index.nextSibling);
-		 other_parent.insertBefore(index, other_sibling);
+		index.parentNode.insertBefore(other, index.nextSibling);
+		other_parent.insertBefore(index, other_sibling);
 
-		if(callback !== void 0 && callback.update){
-			callback.update(exist[other], 'swap');
-			callback.update(exist[index], 'swap');
+		if(this.callback.update){
+			this.callback.update(exist[other], 'swap');
+			this.callback.update(exist[index], 'swap');
 		}
 	}
 
-	remove(){
-		var exist = self.virtualRefresh();
+	remove(index){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
 		if(exist[index]){
 			var currentEl = exist[index];
 
-			if(callback !== void 0 && callback.remove){
+			if(this.callback.remove){
 				var currentRemoved = false;
 				var startRemove = function(){
 					if(currentRemoved) return;
@@ -593,7 +602,7 @@ class ElementManipulator{
 				};
 
 				// Auto remove if return false
-				if(!callback.remove(exist[index], startRemove))
+				if(!this.callback.remove(currentEl, startRemove))
 					startRemove();
 			}
 
@@ -602,8 +611,11 @@ class ElementManipulator{
 		}
 	}
 
-	update(){
-		var exist = self.virtualRefresh();
+	update(index, other){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+		var list = this.list;
+		var template = this.template;
+		var isComponent = template.constructor === Function;
 
 		if(index === void 0){
 			index = 0;
@@ -630,19 +642,19 @@ class ElementManipulator{
 				syntheticCache(temp, template, list[i]);
 			}
 
-			if(list.$virtual){
+			if(this.list.$virtual){
 				oldChild.parentNode.replaceChild(temp, oldChild);
 				continue;
 			}
 
 			parentNode.replaceChild(temp, oldChild);
-			if(callback !== void 0 && callback.update)
-				callback.update(temp, 'replace');
+			if(this.callback.update)
+				this.callback.update(temp, 'replace');
 		}
 	}
 
-	removeRange(){
-		var exist = self.virtualRefresh();
+	removeRange(index, other){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
 		for (var i = index; i < other; i++) {
 			exist[i].remove();
@@ -650,57 +662,69 @@ class ElementManipulator{
 	}
 
 	clear(){
-		if(list.$virtual)
+		var parentNode = this.parentNode;
+
+		if(this.list.$virtual)
 			var spacer = [parentNode.firstElementChild, parentNode.lastElementChild];
 
 		parentNode.textContent = '';
 
-		if(list.$virtual){
+		if(this.list.$virtual){
 			parentNode.appendChild(spacer[0]);
 			parentNode.appendChild(spacer[1]);
-			list.$virtual.dom.textContent = '';
+
+			this.list.$virtual.dom.textContent = '';
+
 			spacer[1].style.height = 
 			spacer[0].style.height = 0;
-			list.$virtual.reset(true);
+
+			this.list.$virtual.reset(true);
 		}
 	}
 
-	insertAfter(){
-		var exist = self.virtualRefresh();
-		var temp = self.createElement();
+	insertAfter(index){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+		var temp = this.createElement(index);
 
 		if(exist.length === 0)
-			parentNode.insertBefore(temp, parentNode.lastElementChild);
+			this.parentNode.insertBefore(temp, this.parentNode.lastElementChild);
 		else{
 			var referenceNode = exist[index - 1];
 			referenceNode.parentNode.insertBefore(temp, referenceNode.nextSibling);
 		}
 
-		if(callback !== void 0 && callback.create)
-			callback.create(temp);
+		if(this.callback.create)
+			this.callback.create(temp);
 	}
 
-	prepend(){
-		var exist = self.virtualRefresh();
-		var temp = self.createElement();
+	prepend(index){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+		var temp = this.createElement(index);
 
 		var referenceNode = exist[0];
 		if(referenceNode !== void 0){
 			referenceNode.parentNode.insertBefore(temp, referenceNode);
 
-			if(callback !== void 0 && callback.create)
-				callback.create(temp);
+			if(this.callback.create)
+				this.callback.create(temp);
 		}
 		else this.append();
 	}
 
-	append(){
-		var exist = self.virtualRefresh();
-		var temp = self.createElement();
+	append(index){
+		var list = this.list;
+
+		if(list.$virtual){
+			var vStartRange = list.$virtual.DOMCursor;
+			var vEndRange = vStartRange + list.$virtual.preparedLength;
+		}
+
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+		var temp = this.createElement(index);
 
 		if(list.$virtual){
 			if(index === 0) // Add before virtual scroller
-				parentNode.insertBefore(temp, parentNode.lastElementChild);
+				this.parentNode.insertBefore(temp, this.parentNode.lastElementChild);
 			else if(index >= vEndRange){ // To virtual DOM
 				if(list.$virtual.vCursor.floor === null)
 					list.$virtual.vCursor.floor = temp;
@@ -710,19 +734,22 @@ class ElementManipulator{
 			else // To real DOM
 				exist[index-1].insertAdjacentElement('afterEnd', temp);
 
-			if(callback !== void 0 && callback.create)
-				callback.create(temp);
+			if(this.callback.create)
+				this.callback.create(temp);
 			return;
 		}
 
-		parentNode.appendChild(temp);
-		if(callback !== void 0 && callback.create)
-			callback.create(temp);
+		this.parentNode.appendChild(temp);
+		if(this.callback.create)
+			this.callback.create(temp);
 	}
 
-	replace(){
+	// Deprecated?
+	replace(index){
+		var list = this.list;
 		var elRef = list.getElement(index).sf$elementReferences;
 		var process = template.modelReference[key];
+
 		if(process === void 0){
 			console.error("Can't found binding for '"+key+"'");
 			return;
