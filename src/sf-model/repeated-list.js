@@ -60,7 +60,7 @@ class RepeatedElement extends Array{
 
 		var alone = (parentNode.children.length <= 1 || parentNode.textContent.trim().length === 0);
 
-		var callback = {};
+		var callback = modelRef['on$'+refName[1]] || {};
 		Object.defineProperty(modelRef, 'on$'+refName[1], {
 			enumerable: true,
 			configurable: true,
