@@ -53,7 +53,7 @@ sf.internal.virtual_scroll = new function(){
 			virtual.dom.innerHTML = '';
 			offElementResize(parentNode);
 
-			delete list.$virtual;
+			list.$virtual = void 0;
 		}
 
 		virtual.resetViewport = function(){

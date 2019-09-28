@@ -27,7 +27,7 @@ internal.model.removeModelBinding = function(ref){
 		else if(ref[key].constructor === Array){
 			if(ref[key].$virtual){
 				ref[key].$virtual.destroy();
-				delete ref[key].$virtual;
+				ref[key].$virtual = void 0;
 			}
 
 			// Reset property without copying the array
