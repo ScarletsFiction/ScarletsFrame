@@ -276,7 +276,7 @@ myView.data; // {username:'myself'}
 
 ### Set page view cache
 This feature will cache the page view on the DOM and let it invisible.<br>
-The default limit is set to 2 page view.
+The default limit is set to 3 page view.
 ```js
 myView.maxCache = 10;
 ```
@@ -569,10 +569,10 @@ When you make changes into `x.cartID`, `x.item`, and call the refresh function i
 myArray.refresh(index, length, 'item');
 ```
 
-### softRefresh
+### hardRefresh
 Rebuild element for the model. If `index` or `length` was not defined, it will rebuild all element.
 ```js
-myArray.softRefresh(index = 0, length = 1);
+myArray.hardRefresh(index = 0, length = 1);
 ```
 
 ### swap

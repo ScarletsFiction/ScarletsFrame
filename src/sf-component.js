@@ -247,10 +247,10 @@ sf.component = new function(){
 				if(!that.model)
 					return console.log(that);
 
+				delete sf.model.root[that.sf$controlled];
+
 				if(that.model.destroy)
 					that.model.destroy();
-
-				delete sf.model.root[that.sf$controlled];
 			}, 500);
 		};
 

@@ -218,7 +218,7 @@ var self = sf.views = function View(selector, name){
 	self.relatedDOM = [];
 	self.data = {};
 
-	self.maxCache = 2;
+	self.maxCache = 3;
 
 	var rootDOM = {};
 	self.selector = function(selector_, isChild, currentPath){
