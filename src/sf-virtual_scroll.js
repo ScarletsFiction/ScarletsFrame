@@ -65,13 +65,17 @@ internal.virtual_scroll = new function(){
 		}
 
 		setTimeout(function(){
-			if(list.$virtual === undefined || !parentNode.isConnected)
+			if(!list.$virtual || !parentNode.isConnected)
 				return; // Somewhat it's uninitialized
 
 			scroller = internal.findScrollerElement(parentNode);
-			scroller.classList.add('sf-scroll-element');
-			internal.addScrollerStyle();
+			if(scroller === null){
+				scroller = parentNode;
+				console.warn("Virtual List need scrollable container", parentNode);
+			}
+			else scroller.classList.add('sf-scroll-element');
 
+			internal.addScrollerStyle();
 			virtual.resetViewport();
 
 			if(parentNode.hasAttribute('scroll-reduce-floor')){
@@ -438,6 +442,9 @@ internal.virtual_scroll = new function(){
 		if(list.$virtual.preparedLength !== void 0 && cursor >= list.length - list.$virtual.preparedLength)
 			bounding.floor = list.$virtual.dCursor.floor.offsetTop + list.$virtual.scrollHeight*2;
 		else{
+			if(parentNode.childElementCount <= self.prepareCount + 3)
+				return;
+
 			bounding.floor = parentNode.children[self.prepareCount + 3].offsetTop; // +2 element
 
 			if(parentNode.sf$scroll_reduce_floor){

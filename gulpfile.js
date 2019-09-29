@@ -26,9 +26,9 @@ gulp.task('js', function(){
 
     // Save as combined script
     .pipe(concat('scarletsframe.js'))
-    .pipe(gulp.dest('dist'))
-
+    
     // Create minified file (This would be little slower)
+    .pipe(gulp.dest('dist'))
     .pipe(rename('scarletsframe.min.js')).on('error', swallowError)
     .pipe(uglify()).on('error', swallowError)
 
@@ -65,7 +65,7 @@ function swallowError(error){
 function removeOldMap(path){
   fs.readdir(path, function(err, files){
      for (var i = 0, len = files.length; i < len; i++) {
-        if(files[i].match(/.*\.min.*\.(js|css)\.map/) !== null)
+        if(files[i].match(/.*\.(js|css)\.map/) !== null)
           fs.unlinkSync(path+files[i]);
      }
   });

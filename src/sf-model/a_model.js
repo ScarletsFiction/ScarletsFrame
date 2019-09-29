@@ -16,9 +16,6 @@ self.init = function(el, modelName){
 	if(sf.controller.pending[modelName] !== void 0)
 		sf.controller.run(modelName);
 
-	if(model.init !== void 0)
-		model.init(el);
-
 	var specialElement = {
 		repeat:[],
 		input:[]
@@ -28,6 +25,9 @@ self.init = function(el, modelName){
 
 	bindInput(specialElement.input, model);
 	repeatedListBinding(specialElement.repeat, model);
+
+	if(model.init !== void 0)
+		model.init(el);
 }
 
 // Escape the escaped quote

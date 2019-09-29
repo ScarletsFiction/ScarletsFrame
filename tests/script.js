@@ -1,4 +1,20 @@
 var $ = sf.dom;
+var vul = '';
+
+if(0){
+   vul = '\'\"><script id="vull">alert("Heya")</script><a z=\'\"';
+   
+   var ckz = 0;
+   var checkz = setInterval(function(){
+      if($('#vull').length)
+         alert("Vulnerability found!");
+
+      if(ckz++ > 20){
+         console.log("Vulnerability check finished");
+         clearInterval(checkz);
+      }
+   }, 1000);
+}
 
 // ===== Virtual List =====
 
@@ -6,15 +22,21 @@ var test = null;
 sf.model.for('virtual-scroll', function(self, root){
    test = self;
 
-   self.vul = "this shouldn't be visible";
+   self.vul = "this shouldn't be visible"+vul;
    self.list1 = [];
    self.list1b = [];
-   self.one = 'first';
+   self.one = 'first'+vul;
 
    for (var i = 1; i <= 50; i++) {
       self.list1b.push({
-         id: 'item-' + i,
+         id: 'item-' + i+vul,
       });
+   }
+
+   self.init = function(el){
+      self.list1.unshift({id:'first thing'});
+      self.list1.push({id:'second thing'});
+      console.warn(el, "Element when init called", self.list1.getElement(0), self.list1.getElement(1));
    }
 
    self.list2 = [];
@@ -109,7 +131,7 @@ sf(function(){
 
       setTimeout(function(){
          list.list1.move(5, 4); // move index 5 after index 4
-         list.list1.softRefresh(1); // Refresh second index
+         list.list1.refresh(1); // Refresh second index
       }, 2000);
       setTimeout(function(){
          list.list1.swap(3, 4); // swap / up one more time
@@ -124,7 +146,7 @@ sf(function(){
 
       setTimeout(function(){
          list.list1[8].id = 'Element refresh';
-         list.list1.softRefresh(8);
+         list.list1.hardRefresh(8);
 
          if(list.list1.getElement(7).sf$cache){ // Non-keyed cache
 	         if(list.list1.getElement(7).sf$cache.id !== list.list1[7].id)
@@ -149,25 +171,25 @@ sf.model.for('model-binding', function(self, root){
 
    setTimeout(function(){
       var self = root('model-binding');
-      self.inputBinding1 = 'Two way binding';
-      self.inputBinding2 = 123.321;
+      self.inputBinding1 = 'Two way binding'+vul;
+      self.inputBinding2 = 123.321+vul;
    }, 4000);
 
    self.onKeyUp = console.warn;
 
    self.bold = true;
    self.pink = false;
-   self.inputBinding1 = '';
-   self.inputBinding2 = '';
-   self.inputBinding3 = false;
-   self.inputBinding4 = '';
+   self.inputBinding1 = ''+vul;
+   self.inputBinding2 = ''+vul;
+   self.inputBinding3 = vul;
+   self.inputBinding4 = ''+vul;
    self.m2v$inputBinding4 = function(old, news){
       console.warn("inputBinding4 (Model -> View)", old, news);
    };
    self.v2m$inputBinding4 = function(old, news){
       console.log("inputBinding4 (View -> Model) will be revert from:", news, 'to', old);
       setTimeout(function(){
-         self.inputBinding4 = old;
+         self.inputBinding4 = old+vul;
          console.log("Reverted");
       }, 4000);
    };
@@ -179,24 +201,24 @@ sf.model.for('model-binding', function(self, root){
 
    self.text = 'main model';
    self.inputBinding6a = [
-      {text:'Select 1', value:1},
-      {text:'Select 2', value:2},
-      {text:'Select 3', value:3},
+      {text:'Select 1'+vul, value:1+vul},
+      {text:'Select 2'+vul, value:2+vul},
+      {text:'Select 3'+vul, value:3+vul},
    ];
    setTimeout(function(){
-      self.inputBinding6a.push({text:'Select 4', val:4});
+      self.inputBinding6a.push({text:'Select 4'+vul, val:4+vul});
    }, 5000);
    self.inputBinding6 = '';
    self.on$inputBinding6 = function(old, news){
       console.warn("inputBinding6 was updated from:", old, 'to', news);
    };
-   self.inputBinding7 = '';
+   self.inputBinding7 = ''+vul;
    self.showHTML = false;
-   self.prefix = 'i -> ';
-   self.stuff = '(text from the model)';
-   self.stuffes = ' and stuff';
-   self.vuln = "{{self.vul}}{{@exec console.error('something not gud')}}";
-   self.vul = "this musn't being visible";
+   self.prefix = 'i -> '+vul;
+   self.stuff = '(text from the model)'+vul;
+   self.stuffes = ' and stuff'+vul;
+   self.vuln = "{{self.vul}}{{@exec console.error('something not gud')}}"+vul;
+   self.vul = "this musn't being visible"+vul;
    setTimeout(function(){sf.model.init(reinit)}, 1000);
 });
 sf.controller.for('model-binding', function(self, root){
@@ -251,13 +273,16 @@ sf.controller.for('comp-test', function(self, root, item){
 
 sf.component.for('comp-test', function(self, root, item){
    self.item = item;
-   self.tries = [1,2,3];
-   self.data = 'zxc';
+   self.tries = [1,2,3+vul];
+   self.data = 'zxc'+vul;
+   self.init = function(){
+      console.log(self.tries.getElement(0));
+   }
 });
 
 sf.component.html('comp-test', `<div>1. {{ data }}</div>
    <input type="text" sf-bind="data"/>
-   <div><span sf-repeat-this="num in tries">{{#num}},</span></div>
+   <div class="sf-virtual-list"><span sf-repeat-this="num in tries">{{#num}},</span></div>
    <div>item: {{ item }}</div>
 <br>`);
 

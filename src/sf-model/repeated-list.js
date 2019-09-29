@@ -375,7 +375,7 @@ class RepeatedElement extends Array{
 	}
 
 	getElement(index){
-		if(this.$virtual !== null){
+		if(this.$virtual){
 			var virtualChilds = this.$virtual.dom.children;
 
 			if(index >= this.$virtual.DOMCursor) {
@@ -391,17 +391,8 @@ class RepeatedElement extends Array{
 			return virtualChilds[index];
 		}
 
-		if(this.$EM.bound_start !== void 0){
-			var current = this.$EM.bound_start;
-			for (var i = 0; i < index; i++) {
-				current = current.nextElementSibling;
-
-				if(current === null)
-					return null;
-			}
-
-			return current;
-		}
+		if(this.$EM.elements)
+			return this.$EM.elements[index];
 
 		return this.$EM.parentChilds[index];
 	}
@@ -429,7 +420,10 @@ class RepeatedElement extends Array{
 
 			// Create element if not exist
 			if(elem === void 0){
-				this.hardRefresh(i);
+				this.$EM.hardRefresh(i || 0);
+
+				if(this.$virtual)
+					this.$virtual.DOMCursor = i || 0;
 				break;
 			}
 			else if(syntheticTemplate(elem, this.$EM.template, property, this[i]) === false)
@@ -443,18 +437,11 @@ class RepeatedElement extends Array{
 		}
 	}
 
-	softRefresh(i, o){
+	hardRefresh(i, o){
 		this.$EM.update(i, o);
 
 		if(this.$virtual && this.$virtual.DOMCursor)
 			this.$virtual.reinitCursor();
-	}
-
-	hardRefresh(i){
-		this.$EM.hardRefresh(i || 0);
-
-		if(this.$virtual)
-			this.$virtual.DOMCursor = i || 0;
 	}
 }
 
@@ -647,7 +634,7 @@ class ElementManipulator{
 				continue;
 			}
 
-			parentNode.replaceChild(temp, oldChild);
+			this.parentNode.replaceChild(temp, oldChild);
 			if(this.callback.update)
 				this.callback.update(temp, 'replace');
 		}
@@ -708,7 +695,7 @@ class ElementManipulator{
 			if(this.callback.create)
 				this.callback.create(temp);
 		}
-		else this.append();
+		else this.parentNode.insertBefore(temp, this.parentNode.lastElementChild);
 	}
 
 	append(index){

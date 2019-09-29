@@ -173,7 +173,7 @@ sf.component = new function(){
 
 		element.destroy = function(){
 			if(this.parentElement === null)
-				internal.model.DOMNodeRemoved(this);
+				internal.model.removeModelBinding(newObj);
 			else this.remove();
 		}
 		return element;
