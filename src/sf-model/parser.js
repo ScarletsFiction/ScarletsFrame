@@ -561,12 +561,20 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 var enclosedHTMLParse = false;
 var excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
 self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
-	var childNodes = (targetNode || document.body).childNodes;
+	var childNodes = targetNode.childNodes;
 	var firstCall = false;
 
 	if(temp === void 0){
 		temp = new Set();
 		firstCall = true;
+		
+		var attrs = targetNode.attributes;
+		for (var a = 0; a < attrs.length; a++) {
+			if(attrs[a].value.indexOf('{{') !== -1){
+				temp.add(targetNode);
+				break;
+			}
+		}
 	}
 
 	for (var i = childNodes.length - 1; i >= 0; i--) {
@@ -666,7 +674,7 @@ self.parsePreprocess = function(nodes, model){
 		}
 
 		// Double check if the child element already bound to prevent vulnerability
-		if(current.innerHTML.indexOf('sf-bind-list') !== -1){
+		if(current.innerHTML.indexOf('sf-bind-list') !== -1 && current.tagName !== 'SF-M'){
 			console.error("Can't parse element that already bound");
 			console.log(current);
 			return;

@@ -107,6 +107,9 @@ sf.controller = new function(){
 			return;
 		}
 
+		if(!method || method.constructor !== Function)
+			return;
+
 		// Take the argument list
 		script = script.join('(');
 		script = script.split(')');
