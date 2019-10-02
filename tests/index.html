@@ -41,7 +41,7 @@
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
       <style type="text/css">
         img{
-          width: 50px;
+          width: 100px;
           position: fixed;
         }
         .sf-dom-queued{
@@ -81,13 +81,13 @@
       </style>
    </head>
    <body class="body">
-      <sf-m name="image">
+      <sf-m name="image" style="position: fixed;left:40vw;top:40vh">
         <img
           src="/tests/img.jpg"
           :style="transform:{{trans}}"
           .@dragmove="dragmove"
-          @gesture="gesture"
-          .@taphold="taphold"
+          .@gesture="gesture"
+          @taphold="taphold"
         >
       </sf-m>
 

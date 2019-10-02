@@ -159,7 +159,7 @@ var specialEvent = {
 		}
 
 		function callbackMove(ev){
-			if(Math.abs(evStart.screenX - ev.screenX) > 1 || Math.abs(evStart.screenY - ev.screenY) > 1){
+			if(Math.abs(evStart.clientX - ev.clientX) > 1 || Math.abs(evStart.clientY - ev.clientY) > 1){
 				clearTimeout(timer);
 				set.delete(ev.pointerId);
 				that.removeEventListener('pointerup', callbackEnd, {once:true});
@@ -276,9 +276,20 @@ function touchGesture(that, callback){
 		ev.preventDefault();
 		findAnd(0, ev);
 
+		if(pointers.length === 1){
+			if(force)
+				pointers.unshift({
+					pointerId:'custom',
+					clientX:that.offsetLeft + that.offsetWidth/2,
+					clientY:that.offsetTop + that.offsetHeight/2
+				});
+
+			document.addEventListener('pointerup', callbackEnd);
+		}
+
 		if(pointers.length === 2){
-			var dx = pointers[1].x - pointers[0].x;
-			var dy = pointers[1].y - pointers[0].y;
+			var dx = pointers[1].clientX - pointers[0].clientX;
+			var dy = pointers[1].clientY - pointers[0].clientY;
 
 			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 			lastAngle = startAngle = Math.atan2(dy, dx) * 180/Math.PI;
@@ -286,17 +297,14 @@ function touchGesture(that, callback){
 			document.addEventListener('pointermove', callbackMove);
 		}
 		else document.removeEventListener('pointermove', callbackMove);
-
-		if(pointers.length === 1)
-			document.addEventListener('pointerend', callbackEnd);
 	}
 
 	var callbackMove = function(ev){
 		ev.preventDefault();
 		findAnd(1, ev);
 
-		var dx = pointers[1].x - pointers[0].x;
-		var dy = pointers[1].y - pointers[0].y;
+		var dx = pointers[1].clientX - pointers[0].clientX;
+		var dy = pointers[1].clientY - pointers[0].clientY;
 
 		var currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 		var currentAngle = Math.atan2(dy, dx) * 180/Math.PI;
@@ -317,39 +325,39 @@ function touchGesture(that, callback){
 		findAnd(2, ev);
 
 		if(pointers.length <= 1){
-			document.removeEventListener('pointerend', callbackEnd);
+			if(pointers.length === 0)
+				document.removeEventListener('pointerup', callbackEnd);
+
 			document.removeEventListener('pointermove', callbackMove);
 		}
 		else{
-			document.addEventListener('pointerend', callbackEnd);
+			document.addEventListener('pointerup', callbackEnd);
 
 			if(pointers.length === 2)
 				document.removeEventListener('pointermove', callbackMove);
 		}
 	}
 
-	that.addEventListener('pointerstart', callbackStart);
-
-	if(navigator.maxTouchPoints > 1)
-		return;
+	that.addEventListener('pointerdown', callbackStart);
 
 	var keyEnd = function(ev){
-		ev.preventDefault();
-		if(ev.ctrlKey)
+		if(!force || ev.ctrlKey)
 			return;
 
 		force = false;
-		that.removeEventListener('keyup', keyEnd);
+		pointers.length = 0;
+
+		document.removeEventListener('pointermove', callbackMove);
+		document.removeEventListener('keyup', keyEnd);
 	}
 
 	var keyStart = function(ev){
-		ev.preventDefault();
 		if(!ev.ctrlKey)
 			return;
 
 		force = true;
-		that.addEventListener('keyup', keyEnd);
+		document.addEventListener('keyup', keyEnd);
 	}
 
-	that.addEventListener('keydown', keyStart);
+	document.addEventListener('keydown', keyStart);
 }

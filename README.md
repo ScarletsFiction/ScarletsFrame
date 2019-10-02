@@ -8,7 +8,7 @@ A frontend framework that can help you write a simple web structure with complex
 
 ## Table of contents
  - [Example](#example)
- - [Migrating from 0.18.5 to 0.20.0](#migration)
+ - [Migrating from 0.18.5 to 0.21.0](#migration)
  - [Install](#install-with-cdn-link)
  - [Hints](#hints)
  - [Asset Loader](#asset-loader)
@@ -40,7 +40,7 @@ A frontend framework that can help you write a simple web structure with complex
 - [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
 
 ## Migration
-There are some changes on v0.20.0.
+There are some changes on v0.21.0.
 
 ```html
 <!-- The attribute -->
@@ -70,6 +70,33 @@ There are some changes on v0.20.0.
 <!-- Now replaced with this -->
 <input sf-bind=""></input>
 ```
+
+------
+
+```html
+<!-- Event Listener for current scope -->
+<a sf-click="func"></a>
+
+<!-- Now replaced with below -->
+<a @click="func"></a>
+<a @mouseup.left="func"></a>
+
+<!-- With control button -->
+<a @mouseup.ctrl.left="func"></a>
+
+<!-- Keyboard key must be started with UpperCase-->
+<input type="text" @keyup.ctrl.Enter="func"/>
+<input type="text" @keyup.ArrowUp.once="func"/> 
+
+once, prevent, stop, passive, capture are available
+
+<!-- Letters are case sensitive -->
+<input type="text" @keyup.Z="func"/> UpperCase `Z`
+<input type="text" @keyup.z="func"/> LowerCase `z`
+```
+
+Almost all event are supported like keyup, mousedown, touchup, scroll, etc.
+Addional event: `taphold, gesture, dragmove`
 
 If you was found some bugs or something, feel free to contact @StefansArya from github or elsewhere.
 

@@ -1,3 +1,11 @@
+/*
+  ScarletsFrame
+  A frontend library for Scarlets Framework that support
+  lazy page load and element binding that can help
+  simplify your code
+
+  https://github.com/ScarletsFiction/ScarletsFrame
+*/
 (function(global, factory){
   if(window.customElements === void 0){
     console.error("This browser was not supported");
@@ -1291,10 +1299,10 @@ sf.component = new function(){
 				if(!that.model)
 					return console.log(that);
 
+				delete sf.model.root[that.sf$controlled];
+
 				if(that.model.destroy)
 					that.model.destroy();
-
-				delete sf.model.root[that.sf$controlled];
 			}, 500);
 		};
 
@@ -1703,6 +1711,369 @@ self.bindElement = function(element, modelName, template){
 			template:template
 		});
 	}
+}
+function eventHandler(that, data, _modelScope){
+	var modelKeys = sf.model.modelKeys(_modelScope).join('|');
+
+	var direct = false;
+	var script = data.value;
+	script = avoidQuotes(script, function(script_){
+		if(/[ =(+-]/.test(script_) === false)
+			direct = true;
+
+		// Replace variable to refer to current scope
+		return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
+			return '_modelScope.'+matched;
+		})
+
+		// Replace this to refer to the element
+		.replace(/,this|\[this/g, function(found){
+			return 'sf_that';
+		});
+	});
+
+	// Get function reference
+	if(direct)
+		script = eval(script);
+
+	var containSingleChar = false;
+	var keys = data.name.slice(1).split('.');
+	var eventName = keys.shift();
+
+	if(eventName === 'unfocus')
+		eventName = 'blur';
+
+	for (var i = keys.length - 1; i >= 0; i--) {
+		if(keys[i].length === 1){
+			containSingleChar = true;
+			break;
+		}
+	}
+
+	keys = new Set(keys);
+
+	var options = {};
+	if(keys.has('once')){
+		options.once = true;
+		keys.delete('once');
+	}
+
+	if(keys.has('passive')){
+		if(keys.has('prevent'))
+			console.error("Can't preventDefault when using passive listener", that);
+
+		options.passive = true;
+		keys.delete('passive');
+	}
+
+	// https://dev.to/clickys/bubble-vs-capture--3b19
+	if(keys.has('capture')){
+		options.capture = true;
+		keys.delete('capture');
+	}
+
+	if(eventName.indexOf('mouse') === 0){
+		eventName = 'pointer'+eventName.slice(5);
+
+		// Prevent context menu on mouse event
+		if(keys.has('right'))
+			that.addEventListener('contextmenu', function(ev){
+				ev.preventDefault();
+			}, options);
+	}
+
+
+	if(specialEvent[eventName]){
+		specialEvent[eventName](that, keys, script, _modelScope);
+		return;
+	}
+
+	if(direct && keys.size === 0)
+		var callback = script;
+	else{
+		var callback = function(ev){
+			if(!keys.has('bot') && ev.isTrusted === false)
+				return;
+
+			if(keys.has('stop'))
+				ev.stopPropagation();
+
+			if(ev.ctrlKey !== void 0){
+				if(ev.ctrlKey !== keys.has('ctrl')
+					|| ev.altKey !== keys.has('alt')
+					|| ev.shiftKey !== keys.has('shift')
+					|| ev.metaKey !== keys.has('meta'))
+					return;
+			}
+
+			if(ev.constructor === KeyboardEvent){
+				if(containSingleChar && !keys.has(ev.key))
+					return;
+
+				ev.preventDefault();
+			}
+
+			/*
+			0 : No button or un-initialized
+			1 : Primary button (usually the left button)
+			2 : Secondary button (usually the right button)
+			4 : Auxilary button (usually the mouse wheel button or middle button)
+			8 : 4th button (typically the "Browser Back" button)
+			16 : 5th button (typically the "Browser Forward" button)
+			*/
+			else if(ev.constructor === PointerEvent){
+				if(!(ev.buttons & 1) && keys.has('left')
+					|| !(ev.buttons & 2) && keys.has('right')
+					|| !(ev.buttons & 4) && keys.has('middle')
+					|| !(ev.buttons & 8) && keys.has('4th')
+					|| !(ev.buttons & 16) && keys.has('5th'))
+					return;
+
+				ev.preventDefault();
+			}
+
+			else if(ev.constructor === TouchEvent){
+				if(containSingleChar && !keys.has(ev.touches.length))
+					return;
+
+				ev.preventDefault();
+			}
+
+			else if(keys.has('prevent'))
+				ev.preventDefault();
+
+			if(direct)
+				return script.call(this, ev);
+
+			eval(script);
+		}
+	}
+
+	that.addEventListener(eventName, callback, options);
+
+	that.sf$eventDestroy = function(){
+		that.removeEventListener(eventName, callback, options);
+	}
+}
+
+var specialEvent = {
+	taphold:function(that, keys, script, _modelScope){
+		var set = new Set();
+		var evStart = null;
+
+		function callback(){
+			that.removeEventListener('pointerup', callbackEnd, {once:true});
+			document.removeEventListener('pointermove', callbackMove);
+			set.delete(evStart.pointerId);
+
+			if(script.constructor === Function)
+				return script.call(that, evStart);
+
+			eval(script);
+		}
+
+		function callbackMove(ev){
+			if(Math.abs(evStart.clientX - ev.clientX) > 1 || Math.abs(evStart.clientY - ev.clientY) > 1){
+				clearTimeout(timer);
+				set.delete(ev.pointerId);
+				that.removeEventListener('pointerup', callbackEnd, {once:true});
+				document.removeEventListener('pointermove', callbackMove);
+
+				evStart = null;
+			}
+		}
+
+		var timer = 0;
+
+		function callbackStart(ev){
+			clearTimeout(timer);
+
+			set.add(ev.pointerId);
+			if(set.size > 1){
+				that.removeEventListener('pointerup', callbackEnd, {once:true});
+				document.removeEventListener('pointermove', callbackMove);
+				return;
+			}
+
+			evStart = ev;
+			timer = setTimeout(callback, 700);
+
+			that.addEventListener('pointerup', callbackEnd, {once:true});
+			document.addEventListener('pointermove', callbackMove);
+		}
+
+		function callbackEnd(ev){
+			document.removeEventListener('pointermove', callbackMove);
+			evStart = null;
+
+			set.delete(ev.pointerId);
+			clearTimeout(timer);
+		}
+
+		that.addEventListener('pointerdown', callbackStart);
+	},
+	gesture:function(that, keys, script, _modelScope){
+		touchGesture(that, function callback(data){
+			if(script.constructor === Function)
+				return script.call(that, data);
+
+			eval(script);
+		});
+	},
+	dragmove:function(that, keys, script, _modelScope){
+		var length = 0;
+		function callbackMove(ev){
+			ev.stopPropagation();
+			ev.preventDefault();
+
+			if(script.constructor === Function)
+				return script.call(that, ev);
+
+			eval(script);
+		}
+
+		var callbackStart = function(ev){
+			ev.preventDefault();
+
+			if(++length !== 1){
+				document.removeEventListener('pointermove', callbackMove);
+				document.removeEventListener('pointerup', callbackEnd, {once:true});
+				return;
+			}
+
+			document.addEventListener('pointermove', callbackMove);
+			document.addEventListener('pointerup', callbackEnd, {once:true});
+		}
+
+		var callbackEnd = function(ev){
+			ev.preventDefault();
+
+			if(--length === 1){
+				document.addEventListener('pointermove', callbackMove);
+				document.addEventListener('pointerup', callbackEnd, {once:true});
+				return;
+			}
+
+			document.removeEventListener('pointermove', callbackMove);
+			that.addEventListener('pointerdown', callbackStart, {once:true});
+		}
+
+		that.addEventListener('pointerdown', callbackStart, {once:true});
+	}
+};
+
+function touchGesture(that, callback){
+	var startScale = 0;
+	var startAngle = 0;
+	var lastScale = 0;
+	var lastAngle = 0;
+
+	var force = false;
+	var pointers = [];
+
+	function findAnd(action, ev){
+		for (var i = 0; i < pointers.length; i++) {
+			if(pointers[i].pointerId === ev.pointerId){
+				if(action === 2) // delete
+					pointers.splice(i, 1);
+				else if(action === 1) // replace
+					pointers.splice(i, 1, ev);
+				return;
+			}
+		}
+
+		if(action === 0) // add
+			pointers.push(ev);
+	}
+
+	var callbackStart = function(ev){
+		ev.preventDefault();
+		findAnd(0, ev);
+
+		if(pointers.length === 1){
+			if(force)
+				pointers.unshift({
+					pointerId:'custom',
+					clientX:that.offsetLeft + that.offsetWidth/2,
+					clientY:that.offsetTop + that.offsetHeight/2
+				});
+
+			document.addEventListener('pointerup', callbackEnd);
+		}
+
+		if(pointers.length === 2){
+			var dx = pointers[1].clientX - pointers[0].clientX;
+			var dy = pointers[1].clientY - pointers[0].clientY;
+
+			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
+			lastAngle = startAngle = Math.atan2(dy, dx) * 180/Math.PI;
+
+			document.addEventListener('pointermove', callbackMove);
+		}
+		else document.removeEventListener('pointermove', callbackMove);
+	}
+
+	var callbackMove = function(ev){
+		ev.preventDefault();
+		findAnd(1, ev);
+
+		var dx = pointers[1].clientX - pointers[0].clientX;
+		var dy = pointers[1].clientY - pointers[0].clientY;
+
+		var currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
+		var currentAngle = Math.atan2(dy, dx) * 180/Math.PI;
+
+		callback({
+			scale:currentScale - startScale,
+			angle:currentAngle - startAngle,
+			deltaScale:currentScale - lastScale,
+			deltaAngle:currentAngle - lastAngle,
+		});
+
+		lastScale = currentScale;
+		lastAngle = currentAngle;
+	}
+
+	var callbackEnd = function(ev){
+		ev.preventDefault();
+		findAnd(2, ev);
+
+		if(pointers.length <= 1){
+			if(pointers.length === 0)
+				document.removeEventListener('pointerup', callbackEnd);
+
+			document.removeEventListener('pointermove', callbackMove);
+		}
+		else{
+			document.addEventListener('pointerup', callbackEnd);
+
+			if(pointers.length === 2)
+				document.removeEventListener('pointermove', callbackMove);
+		}
+	}
+
+	that.addEventListener('pointerdown', callbackStart);
+
+	var keyEnd = function(ev){
+		if(!force || ev.ctrlKey)
+			return;
+
+		force = false;
+		pointers.length = 0;
+
+		document.removeEventListener('pointermove', callbackMove);
+		document.removeEventListener('keyup', keyEnd);
+	}
+
+	var keyStart = function(ev){
+		if(!ev.ctrlKey)
+			return;
+
+		force = true;
+		document.addEventListener('keyup', keyEnd);
+	}
+
+	document.addEventListener('keydown', keyStart);
 }
 var callInputListener = function(model, property, value){
 	var on = model['on$'+property];
@@ -2348,6 +2719,23 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		var indexes = 0;
 		for (var a = 0; a < attrs.length; a++) {
 			var found = attrs[a].value.split('{{%=');
+			if(attrs[a].name[0] === '@'){
+				// No template processing for this
+				if(found.length !== 1){
+					console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
+					continue;
+				}
+
+				keys.push({
+					name:attrs[a].name,
+					value:attrs[a].value,
+					event:true
+				});
+
+				currentNode.removeAttribute(attrs[a].name);
+				continue;
+			}
+
 			if(found.length !== 1){
 				if(attrs[a].name[0] === ':'){
 					var key = {
@@ -2516,12 +2904,20 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 var enclosedHTMLParse = false;
 var excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
 self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
-	var childNodes = (targetNode || document.body).childNodes;
+	var childNodes = targetNode.childNodes;
 	var firstCall = false;
 
 	if(temp === void 0){
 		temp = new Set();
 		firstCall = true;
+		
+		var attrs = targetNode.attributes;
+		for (var a = 0; a < attrs.length; a++) {
+			if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
+				temp.add(targetNode);
+				break;
+			}
+		}
 	}
 
 	for (var i = childNodes.length - 1; i >= 0; i--) {
@@ -2557,7 +2953,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				continue;
 
 			for (var a = 0; a < attrs.length; a++) {
-				if(attrs[a].value.indexOf('{{') !== -1){
+				if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
 					temp.add(currentNode);
 					break;
 				}
@@ -2621,7 +3017,7 @@ self.parsePreprocess = function(nodes, model){
 		}
 
 		// Double check if the child element already bound to prevent vulnerability
-		if(current.innerHTML.indexOf('sf-bind-list') !== -1){
+		if(current.innerHTML.indexOf('sf-bind-list') !== -1 && current.tagName !== 'SF-M'){
 			console.error("Can't parse element that already bound");
 			console.log(current);
 			return;
@@ -3526,6 +3922,12 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			for(var a = 0; a < refA.length; a++){
 				var refB = refA[a];
 
+				// Pass to event handler
+				if(refB.event){
+					eventHandler(current, refB, item);
+					continue;
+				}
+
 				var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
 					(current.tagName === 'INPUT' && /checkbox|radio|hidden/.test(current.type) === false)
 				));
@@ -3992,65 +4394,6 @@ sf.controller = new function(){
 		return name;
 	}
 
-	var listenSFClick = function(e){
-		var element = e.target;
-		var script = element.getAttribute('sf-click');
-
-		if(!script){
-			element = $.parent(element, '[sf-click]');
-			script = element.getAttribute('sf-click');
-		}
-
-		var model = $.parentHasProperty(element, 'sf$controlled');
-		var _modelScope = model.model;
-		model = model.sf$controlled;
-
-		if(_modelScope === void 0)
-			return console.error("Couldn't find model for '"+model+"' that was called from sf-click");
-
-		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
-		script = avoidQuotes(script, function(script_){
-			return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
-				return '_modelScope.'+matched;
-			});
-		});
-
-		script = script.split('(');
-
-		var method = script.shift();
-		var method_ = method;
-
-		// Get method reference
-		try{
-			method = eval(method);
-		} catch(err) {
-			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element, err);
-			return;
-		}
-
-		// Take the argument list
-		script = script.join('(');
-		script = script.split(')');
-		script.pop();
-		script = script.join('(');
-
-		// Turn argument as array
-		if(script.length !== 0){
-			// Replace `this` to `element`
-			script = eval(('['+script+']').replace(/,this|\[this/g, function(found){
-				return found[0] + 'element';
-			}));
-		}
-		else script = [e];
-
-		try{
-			method.apply(element, script);
-			e.preventDefault();
-		} catch(e) {
-			console.error("Error on sf-click for model: " + model + '\n', element, '\n', e);
-		}
-	}
-
 	self.run = function(name, func){
 		if(sf.component.registered[name])
 			return console.error("'"+name+"' is registered as a component");
@@ -4086,12 +4429,6 @@ sf.controller = new function(){
 			self.run(temp[i].sf$controlled);
 		}
 	}
-
-	// Create listener for sf-click
-	document.addEventListener('DOMContentLoaded', function(){
-		$.on(document.body, 'click', '[sf-click]', listenSFClick);
-		// self.init();
-	}, {capture:true, once:true});
 }
 
 var root_ = function(scope){
@@ -5175,7 +5512,7 @@ var self = sf.views = function View(selector, name){
 	self.relatedDOM = [];
 	self.data = {};
 
-	self.maxCache = 2;
+	self.maxCache = 3;
 
 	var rootDOM = {};
 	self.selector = function(selector_, isChild, currentPath){
@@ -5960,7 +6297,7 @@ internal.virtual_scroll = new function(){
 				virtual.scrollTo(0);
 		}
 
-		$.on(scroller, 'scroll', checkCursorPosition);
+		scroller.addEventListener('scroll', checkCursorPosition, {capture:true, passive:true});
 		onElementResize(parentNode, function(){
 			refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
 		});
@@ -6083,7 +6420,7 @@ internal.virtual_scroll = new function(){
 			updating = false;
 		}
 
-		$.on(scroller, 'scroll', checkCursorPosition);
+		scroller.addEventListener('scroll', checkCursorPosition, {capture:true, passive:true});
 
 		// For preventing scroll jump if scrolling over than viewport
 		if(scroller === parentNode && navigator.userAgent.indexOf('Chrom') !== -1){
@@ -6460,3 +6797,4 @@ return sf;
 
 // ===== Module End =====
 })));
+//# sourceMappingURL=scarletsframe.1570023584435.js.map

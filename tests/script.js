@@ -17,16 +17,21 @@ if(0){
 }
 
 sf.model.for('image', function(self, root){
-   self.trans = "translate(80vw, 10px)";
+   self.trans = "translate(0)";
 
    self.dragmove = function(ev){
       console.log('dragmove called');
       self.trans = `translate(${ev.x-this.offsetWidth/2}px, ${ev.y-this.offsetHeight/2}px)`;
    }
 
+   var scale = 1;
+   var angle = 0;
    self.gesture = function(ev){
-      console.log('gesture called');
-      self.trans = `scale(${ev.scale}, ${ev.scale}) rotate(${ev.angle}, ${ev.angle})`;
+      scale += ev.deltaScale;
+      angle += ev.deltaAngle;
+
+      // console.log('gesture called');
+      self.trans = `scale(${scale}) rotate(${angle}deg)`;
    }
 
    self.taphold = function(ev){
