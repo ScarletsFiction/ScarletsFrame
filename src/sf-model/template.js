@@ -97,6 +97,12 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			for(var a = 0; a < refA.length; a++){
 				var refB = refA[a];
 
+				// Pass to event handler
+				if(refB.event){
+					eventHandler(current, refB, item);
+					continue;
+				}
+
 				var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
 					(current.tagName === 'INPUT' && /checkbox|radio|hidden/.test(current.type) === false)
 				));

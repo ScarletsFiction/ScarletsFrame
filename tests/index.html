@@ -40,6 +40,10 @@
       </script>
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
       <style type="text/css">
+        img{
+          width: 50px;
+          position: fixed;
+        }
         .sf-dom-queued{
           color: transparent;
           background-color: gainsboro;
@@ -77,7 +81,15 @@
       </style>
    </head>
    <body class="body">
-      <img src="/tests/img.jpg" alt="" style="width: 50px;float: right;">
+      <sf-m name="image">
+        <img
+          src="/tests/img.jpg"
+          :style="transform:{{trans}}"
+          .@dragmove="dragmove"
+          @gesture="gesture"
+          .@taphold="taphold"
+        >
+      </sf-m>
 
       <!-- Dynamic Page -->
       <div>
@@ -204,13 +216,12 @@
             }}
             {{@exec {[ <br><br>expected error{{vuln}} ]} }}
             </div>
-            <script>console.log("There are must have 2 total error")</script>
          </div>
       </sf-m>
 
       <!-- Components -->
       <sf-m name="components" id='components'>
-         <a sf-click="clickOK()">test click</a><br>
+         <a @mousedown.right.ctrl="clickOK">test click</a><br>
          <comp-test id="henlos">
             <input type="text" sf-bind="data"/>
             custom {{data}} {{item}} here

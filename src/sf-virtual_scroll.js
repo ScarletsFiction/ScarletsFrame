@@ -287,7 +287,7 @@ internal.virtual_scroll = new function(){
 				virtual.scrollTo(0);
 		}
 
-		$.on(scroller, 'scroll', checkCursorPosition);
+		scroller.addEventListener('scroll', checkCursorPosition, {capture:true, passive:true});
 		onElementResize(parentNode, function(){
 			refreshScrollBounding(virtual.DOMCursor, bounding, list, parentNode);
 		});
@@ -410,7 +410,7 @@ internal.virtual_scroll = new function(){
 			updating = false;
 		}
 
-		$.on(scroller, 'scroll', checkCursorPosition);
+		scroller.addEventListener('scroll', checkCursorPosition, {capture:true, passive:true});
 
 		// For preventing scroll jump if scrolling over than viewport
 		if(scroller === parentNode && navigator.userAgent.indexOf('Chrom') !== -1){

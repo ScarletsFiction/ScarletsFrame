@@ -71,68 +71,6 @@ sf.controller = new function(){
 		return name;
 	}
 
-	var listenSFClick = function(e){
-		var element = e.target;
-		var script = element.getAttribute('sf-click');
-
-		if(!script){
-			element = $.parent(element, '[sf-click]');
-			script = element.getAttribute('sf-click');
-		}
-
-		var model = $.parentHasProperty(element, 'sf$controlled');
-		var _modelScope = model.model;
-		model = model.sf$controlled;
-
-		if(_modelScope === void 0)
-			return console.error("Couldn't find model for '"+model+"' that was called from sf-click");
-
-		var modelKeys = sf.model.modelKeys(_modelScope).join('|');
-		script = avoidQuotes(script, function(script_){
-			return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
-				return '_modelScope.'+matched;
-			});
-		});
-
-		script = script.split('(');
-
-		var method = script.shift();
-		var method_ = method;
-
-		// Get method reference
-		try{
-			method = eval(method);
-		} catch(err) {
-			console.error("Error on sf-click for model: " + model + ' [Cannot call `'+method_+'`]\n', element, err);
-			return;
-		}
-
-		if(!method || method.constructor !== Function)
-			return;
-
-		// Take the argument list
-		script = script.join('(');
-		script = script.split(')');
-		script.pop();
-		script = script.join('(');
-
-		// Turn argument as array
-		if(script.length !== 0){
-			// Replace `this` to `element`
-			script = eval(('['+script+']').replace(/,this|\[this/g, function(found){
-				return found[0] + 'element';
-			}));
-		}
-		else script = [e];
-
-		try{
-			method.apply(element, script);
-			e.preventDefault();
-		} catch(e) {
-			console.error("Error on sf-click for model: " + model + '\n', element, '\n', e);
-		}
-	}
-
 	self.run = function(name, func){
 		if(sf.component.registered[name])
 			return console.error("'"+name+"' is registered as a component");
@@ -168,12 +106,6 @@ sf.controller = new function(){
 			self.run(temp[i].sf$controlled);
 		}
 	}
-
-	// Create listener for sf-click
-	document.addEventListener('DOMContentLoaded', function(){
-		$.on(document.body, 'click', '[sf-click]', listenSFClick);
-		// self.init();
-	}, {capture:true, once:true});
 }
 
 var root_ = function(scope){

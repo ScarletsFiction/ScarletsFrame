@@ -393,6 +393,23 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		var indexes = 0;
 		for (var a = 0; a < attrs.length; a++) {
 			var found = attrs[a].value.split('{{%=');
+			if(attrs[a].name[0] === '@'){
+				// No template processing for this
+				if(found.length !== 1){
+					console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
+					continue;
+				}
+
+				keys.push({
+					name:attrs[a].name,
+					value:attrs[a].value,
+					event:true
+				});
+
+				currentNode.removeAttribute(attrs[a].name);
+				continue;
+			}
+
 			if(found.length !== 1){
 				if(attrs[a].name[0] === ':'){
 					var key = {
@@ -570,7 +587,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 		
 		var attrs = targetNode.attributes;
 		for (var a = 0; a < attrs.length; a++) {
-			if(attrs[a].value.indexOf('{{') !== -1){
+			if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
 				temp.add(targetNode);
 				break;
 			}
@@ -610,7 +627,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				continue;
 
 			for (var a = 0; a < attrs.length; a++) {
-				if(attrs[a].value.indexOf('{{') !== -1){
+				if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
 					temp.add(currentNode);
 					break;
 				}

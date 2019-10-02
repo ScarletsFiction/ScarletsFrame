@@ -16,6 +16,24 @@ if(0){
    }, 1000);
 }
 
+sf.model.for('image', function(self, root){
+   self.trans = "translate(80vw, 10px)";
+
+   self.dragmove = function(ev){
+      console.log('dragmove called');
+      self.trans = `translate(${ev.x-this.offsetWidth/2}px, ${ev.y-this.offsetHeight/2}px)`;
+   }
+
+   self.gesture = function(ev){
+      console.log('gesture called');
+      self.trans = `scale(${ev.scale}, ${ev.scale}) rotate(${ev.angle}, ${ev.angle})`;
+   }
+
+   self.taphold = function(ev){
+      console.log('taphold called');
+   }
+});
+
 // ===== Virtual List =====
 
 var test = null;
@@ -60,7 +78,7 @@ sf.model.for('virtual-scroll', function(self, root){
 });
 
 var aList = null;
-sf(function(){
+sf(function(){return;
    var list = aList = sf.model('virtual-scroll');
 
    setTimeout(function(){
@@ -289,17 +307,6 @@ sf.component.html('comp-test', `<div>1. {{ data }}</div>
 sf(function(){
    var elem2 = new $CompTest('from javascript');
    components.appendChild(elem2);
-});
-
-sf(function(){return;
-   var testElement = document.getElementById('test');
-   if(sf.controller.modelName(testElement) !== 'model-binding')
-      console.error("Can't obtain correct 'modelName'");
-
-   sf.controller.modelScope(testElement, function(self){
-      if(!self.addition)
-         console.error("Can't access model scope with 'modelScope' function");
-   });
 });
 
 // ===== Dynamic Loader =====
