@@ -170,12 +170,6 @@ sf.component = new function(){
 		componentInit(element, newID, name);
 
 		element.sf$initTriggered = true;
-
-		element.destroy = function(){
-			if(this.parentElement === null)
-				internal.model.removeModelBinding(newObj);
-			else this.remove();
-		}
 		return element;
 	}
 
@@ -247,10 +241,13 @@ sf.component = new function(){
 				if(!that.model)
 					return console.log(that);
 
-				delete sf.model.root[that.sf$controlled];
-
 				if(that.model.destroy)
 					that.model.destroy();
+
+				internal.model.removeModelBinding(that.model, true);
+				that.model.$el = null;
+
+				delete sf.model.root[that.sf$controlled];
 			}, 500);
 		};
 

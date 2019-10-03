@@ -1,4 +1,4 @@
-internal.model.removeModelBinding = function(ref){
+internal.model.removeModelBinding = function(ref, noBackup){
 	if(ref === void 0)
 		return;
 
@@ -31,9 +31,12 @@ internal.model.removeModelBinding = function(ref){
 			}
 
 			// Reset property without copying the array
-			temp = ref[key].splice('obtain');
-			delete ref[key];
-			ref[key] = temp;
+			if(noBackup === void 0){
+				temp = ref[key].splice('obtain');
+				delete ref[key];
+				ref[key] = temp;
+			}
+			else delete ref[key];
 		}
 		else continue;
 
@@ -44,9 +47,12 @@ internal.model.removeModelBinding = function(ref){
 				continue;
 
 			// Reconfigure / Remove property descriptor
-			var temp = ref[key];
-			delete ref[key];
-			ref[key] = temp;
+			if(noBackup === void 0){
+				var temp = ref[key];
+				delete ref[key];
+				ref[key] = temp;
+			}
+			else delete ref[key];
 		}
 	}
 }
