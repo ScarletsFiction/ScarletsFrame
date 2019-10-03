@@ -149,6 +149,8 @@ var specialEvent = {
 
 		function callback(){
 			that.removeEventListener('pointerup', callbackEnd, {once:true});
+			that.removeEventListener('pointercancel', callbackEnd, {once:true});
+
 			document.removeEventListener('pointermove', callbackMove);
 			set.delete(evStart.pointerId);
 
@@ -163,6 +165,7 @@ var specialEvent = {
 				clearTimeout(timer);
 				set.delete(ev.pointerId);
 				that.removeEventListener('pointerup', callbackEnd, {once:true});
+				that.removeEventListener('pointercancel', callbackEnd, {once:true});
 				document.removeEventListener('pointermove', callbackMove);
 
 				evStart = null;
@@ -177,6 +180,7 @@ var specialEvent = {
 			set.add(ev.pointerId);
 			if(set.size > 1){
 				that.removeEventListener('pointerup', callbackEnd, {once:true});
+				that.removeEventListener('pointercancel', callbackEnd, {once:true});
 				document.removeEventListener('pointermove', callbackMove);
 				return;
 			}
@@ -185,6 +189,7 @@ var specialEvent = {
 			timer = setTimeout(callback, 700);
 
 			that.addEventListener('pointerup', callbackEnd, {once:true});
+			that.addEventListener('pointercancel', callbackEnd, {once:true});
 			document.addEventListener('pointermove', callbackMove);
 		}
 
@@ -208,6 +213,7 @@ var specialEvent = {
 	},
 	dragmove:function(that, keys, script, _modelScope){
 		var length = 0;
+		var actionBackup = '';
 		function callbackMove(ev){
 			ev.stopPropagation();
 			ev.preventDefault();
@@ -224,11 +230,16 @@ var specialEvent = {
 			if(++length !== 1){
 				document.removeEventListener('pointermove', callbackMove);
 				document.removeEventListener('pointerup', callbackEnd, {once:true});
+				document.removeEventListener('pointercancel', callbackEnd, {once:true});
 				return;
 			}
 
+			actionBackup = that.style.touchAction;
+			that.style.touchAction = 'none';
+
 			document.addEventListener('pointermove', callbackMove);
 			document.addEventListener('pointerup', callbackEnd, {once:true});
+			document.addEventListener('pointercancel', callbackEnd, {once:true});
 		}
 
 		var callbackEnd = function(ev){
@@ -237,8 +248,11 @@ var specialEvent = {
 			if(--length === 1){
 				document.addEventListener('pointermove', callbackMove);
 				document.addEventListener('pointerup', callbackEnd, {once:true});
+				document.addEventListener('pointercancel', callbackEnd, {once:true});
 				return;
 			}
+
+			that.style.touchAction = actionBackup;
 
 			document.removeEventListener('pointermove', callbackMove);
 			that.addEventListener('pointerdown', callbackStart, {once:true});
@@ -253,6 +267,7 @@ function touchGesture(that, callback){
 	var startAngle = 0;
 	var lastScale = 0;
 	var lastAngle = 0;
+	var actionBackup = '';
 
 	var force = false;
 	var pointers = [];
@@ -284,10 +299,16 @@ function touchGesture(that, callback){
 					clientY:that.offsetTop + that.offsetHeight/2
 				});
 
+			actionBackup = that.style.touchAction;
+			that.style.touchAction = 'none';
+
 			document.addEventListener('pointerup', callbackEnd);
+			document.addEventListener('pointercancel', callbackEnd);
 		}
 
 		if(pointers.length === 2){
+			ev.stopPropagation();
+
 			var dx = pointers[1].clientX - pointers[0].clientX;
 			var dy = pointers[1].clientY - pointers[0].clientY;
 
@@ -301,6 +322,7 @@ function touchGesture(that, callback){
 
 	var callbackMove = function(ev){
 		ev.preventDefault();
+		ev.stopPropagation();
 		findAnd(1, ev);
 
 		var dx = pointers[1].clientX - pointers[0].clientX;
@@ -310,10 +332,10 @@ function touchGesture(that, callback){
 		var currentAngle = Math.atan2(dy, dx) * 180/Math.PI;
 
 		callback({
-			scale:currentScale - startScale,
-			angle:currentAngle - startAngle,
-			deltaScale:currentScale - lastScale,
-			deltaAngle:currentAngle - lastAngle,
+			scale:currentScale - lastScale,
+			angle:currentAngle - lastAngle,
+			totalScale:currentScale - startScale,
+			totalAngle:currentAngle - startAngle,
 		});
 
 		lastScale = currentScale;
@@ -325,13 +347,18 @@ function touchGesture(that, callback){
 		findAnd(2, ev);
 
 		if(pointers.length <= 1){
-			if(pointers.length === 0)
+			if(pointers.length === 0){
 				document.removeEventListener('pointerup', callbackEnd);
+				document.removeEventListener('pointercancel', callbackEnd);
+			}
+
+			that.style.touchAction = actionBackup;
 
 			document.removeEventListener('pointermove', callbackMove);
 		}
 		else{
 			document.addEventListener('pointerup', callbackEnd);
+			document.addEventListener('pointercancel', callbackEnd);
 
 			if(pointers.length === 2)
 				document.removeEventListener('pointermove', callbackMove);

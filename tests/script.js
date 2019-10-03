@@ -27,8 +27,8 @@ sf.model.for('image', function(self, root){
    var scale = 1;
    var angle = 0;
    self.gesture = function(ev){
-      scale += ev.deltaScale;
-      angle += ev.deltaAngle;
+      scale += ev.scale;
+      angle += ev.angle;
 
       // console.log('gesture called');
       self.trans = `scale(${scale}) rotate(${angle}deg)`;
@@ -83,7 +83,7 @@ sf.model.for('virtual-scroll', function(self, root){
 });
 
 var aList = null;
-sf(function(){return;
+sf(function(){
    var list = aList = sf.model('virtual-scroll');
 
    setTimeout(function(){
