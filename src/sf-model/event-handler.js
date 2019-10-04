@@ -14,7 +14,7 @@ function eventHandler(that, data, _modelScope){
 
 		// Replace this to refer to the element
 		.replace(/,this|\[this/g, function(found){
-			return 'sf_that';
+			return 'that';
 		});
 	});
 
@@ -131,6 +131,7 @@ function eventHandler(that, data, _modelScope){
 			if(direct)
 				return script.call(this, ev);
 
+			var that = this;
 			eval(script);
 		}
 	}

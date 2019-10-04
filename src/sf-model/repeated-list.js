@@ -103,7 +103,7 @@ class RepeatedElement extends Array{
 					// elem.setAttribute('sf-bind-list', refName[1]);
 				}
 				else{
-					var elem = templateParser(template, that[i]);
+					var elem = templateParser(template, that[i], false, that.modelRef);
 					syntheticCache(elem, template, that[i]);
 				}
 
@@ -455,7 +455,7 @@ class ElementManipulator{
 		if(template.constructor === Function)
 			return new template(item);
 		else{
-			var temp = templateParser(template, item);
+			var temp = templateParser(template, item, false, this.modelRef);
 			syntheticCache(temp, template, item);
 			return temp;
 		}
@@ -498,7 +498,7 @@ class ElementManipulator{
 				var temp = new this.template(list[i]);
 			}
 			else{
-				var temp = templateParser(this.template, list[i]);
+				var temp = templateParser(this.template, list[i], false, this.modelRef);
 				syntheticCache(temp, this.template, list[i]);
 			}
 			
@@ -625,7 +625,7 @@ class ElementManipulator{
 				var temp = new template(list[i]);
 			}
 			else{
-				var temp = templateParser(template, list[i]);
+				var temp = templateParser(template, list[i], false, this.modelRef);
 				syntheticCache(temp, template, list[i]);
 			}
 

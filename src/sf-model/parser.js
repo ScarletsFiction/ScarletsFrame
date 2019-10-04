@@ -391,7 +391,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		var attrs = currentNode.attributes;
 		var keys = [];
 		var indexes = 0;
-		for (var a = 0; a < attrs.length; a++) {
+		for (var a = attrs.length - 1; a >= 0; a--) {
 			var found = attrs[a].value.split('{{%=');
 			if(attrs[a].name[0] === '@'){
 				// No template processing for this
@@ -407,7 +407,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 				});
 
 				currentNode.removeAttribute(attrs[a].name);
-				continue;
 			}
 
 			if(found.length !== 1){

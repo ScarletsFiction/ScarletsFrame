@@ -76,7 +76,7 @@ var templateExec = function(parse, item, atIndex){
 	return parsed;
 }
 
-var templateParser = internal.model.templateParser = function(template, item, original){
+var templateParser = internal.model.templateParser = function(template, item, original, modelRef){
 	processingElement = template.html;
 
 	var html = original === true ? template.html : template.html.cloneNode(true);
@@ -99,7 +99,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 				// Pass to event handler
 				if(refB.event){
-					eventHandler(current, refB, item);
+					eventHandler(current, refB, modelRef || item);
 					continue;
 				}
 
