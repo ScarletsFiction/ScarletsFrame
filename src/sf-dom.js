@@ -44,7 +44,7 @@ var $ = sf.dom; // Shortcut
 ;(function(){
 	var self = sf.dom;
 
-	var css_str = /\-[a-z0-9]/;
+	var css_str = /\-([a-z0-9])/;
 	var css_strRep = function(f, m){return m.toUpperCase()};
 
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
@@ -169,7 +169,7 @@ var $ = sf.dom; // Shortcut
 		},
 		css:function(name, value){
 			if(value === void 0 && name.constructor === String)
-				return this[0].style[name];
+				return this[0] !== void 0? this[0].style[name] : '';
 
 			if(name.constructor === Object){
 				var keys = Object.keys(name);
@@ -195,13 +195,28 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		on:function(event, selector, callback){
-			for (var i = 0; i < this.length; i++)
+			for (var i = 0; i < this.length; i++){
+				if(internal.model.specialEvent[event] !== void 0){
+					internal.model.specialEvent[event](this[i], null, callback);
+					continue;
+				}
+
 				self.on(this[i], event, selector, callback);
+			}
+
 			return this;
 		},
 		off:function(event, selector, callback){
-			for (var i = 0; i < this.length; i++)
+			for (var i = 0; i < this.length; i++){
+				if(internal.model.specialEvent[event] !== void 0){
+					if(this[i]['sf$eventDestroy_'+event] !== void 0)
+						this[i]['sf$eventDestroy_'+event]();
+
+					continue;
+				}
+
 				self.off(this[i], event, selector, callback);
+			}
 			return this;
 		},
 		once:function(event, selector, callback){
@@ -616,7 +631,7 @@ var $ = sf.dom; // Shortcut
 
 		setTimeout(function(){
 			if(!element.isConnected){
-				if(callback !== void 0) callback();
+				if(callback !== void 0) callback.call(element);
 				return;
 			}
 
@@ -638,10 +653,10 @@ var $ = sf.dom; // Shortcut
 
 						var parentStyle = element.parentElement.style;
 						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+
+						if(callback !== void 0) callback.call(element);
 					}
 				});
-
-				if(callback !== void 0) callback();
 			});
 		});
 	}

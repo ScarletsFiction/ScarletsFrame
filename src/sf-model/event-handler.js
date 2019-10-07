@@ -68,7 +68,6 @@ function eventHandler(that, data, _modelScope){
 			}, options);
 	}
 
-
 	if(specialEvent[eventName]){
 		specialEvent[eventName](that, keys, script, _modelScope);
 		return;
@@ -138,12 +137,14 @@ function eventHandler(that, data, _modelScope){
 
 	that.addEventListener(eventName, callback, options);
 
-	that.sf$eventDestroy = function(){
-		that.removeEventListener(eventName, callback, options);
+	if(!options.once){
+		that['sf$eventDestroy_'+eventName] = function(){
+			that.removeEventListener(eventName, callback, options);
+		}
 	}
 }
 
-var specialEvent = {
+var specialEvent = internal.model.specialEvent = {
 	taphold:function(that, keys, script, _modelScope){
 		var set = new Set();
 		var evStart = null;
@@ -203,6 +204,10 @@ var specialEvent = {
 		}
 
 		that.addEventListener('pointerdown', callbackStart);
+
+		that['sf$eventDestroy_taphold'] = function(){
+			that.removeEventListener('pointerdown', callbackStart);
+		}
 	},
 	gesture:function(that, keys, script, _modelScope){
 		touchGesture(that, function callback(data){
@@ -260,6 +265,13 @@ var specialEvent = {
 		}
 
 		that.addEventListener('pointerdown', callbackStart, {once:true});
+
+		that['sf$eventDestroy_dragmove'] = function(){
+			that.removeEventListener('pointerdown', callbackStart, {once:true});
+			that.removeEventListener('pointermove', callbackMove);
+			that.removeEventListener('pointercancel', callbackEnd, {once:true});
+			that.removeEventListener('pointerup', callbackEnd, {once:true});
+		}
 	}
 };
 
@@ -367,6 +379,11 @@ function touchGesture(that, callback){
 	}
 
 	that.addEventListener('pointerdown', callbackStart);
+
+	that['sf$eventDestroy_gesture'] = function(){
+		that.removeEventListener('pointerdown', callbackStart);
+		document.removeEventListener('keydown', keyStart);
+	}
 
 	var keyEnd = function(ev){
 		if(!force || ev.ctrlKey)
