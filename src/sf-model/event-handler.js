@@ -163,6 +163,9 @@ var specialEvent = internal.model.specialEvent = {
 		}
 
 		function callbackMove(ev){
+			ev.preventDefault();
+			ev.stopPropagation();
+
 			if(Math.abs(evStart.clientX - ev.clientX) > 1 || Math.abs(evStart.clientY - ev.clientY) > 1){
 				clearTimeout(timer);
 				set.delete(ev.pointerId);
@@ -181,6 +184,9 @@ var specialEvent = internal.model.specialEvent = {
 
 			set.add(ev.pointerId);
 			if(set.size > 1){
+				ev.preventDefault();
+				ev.stopPropagation();
+
 				that.removeEventListener('pointerup', callbackEnd, {once:true});
 				that.removeEventListener('pointercancel', callbackEnd, {once:true});
 				document.removeEventListener('pointermove', callbackMove);
