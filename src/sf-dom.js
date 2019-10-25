@@ -572,6 +572,17 @@ var $ = sf.dom; // Shortcut
 			duration = void 0;
 		}
 
+		if(duration === void 0 || duration.constructor === Number)
+			duration = {
+				duration:duration && duration.constructor === Number ? duration : 0.6,
+				ease:'ease',
+				fill:'both'
+			};
+
+		if(duration.skipOnHidden && (
+			element.offsetParent === null || window.getComputedStyle(element).visibility === 'hidden'
+		)) return;
+
 		var animationEnd = null;
 
 		if(element.style.animation !== void 0)
@@ -582,13 +593,6 @@ var $ = sf.dom; // Shortcut
 
 	  	var style = element.style;
 		var arrange = animationName;
-
-		if(duration === void 0 || duration.constructor === Number)
-			duration = {
-				duration:duration && duration.constructor === Number ? duration : 0.6,
-				ease:'ease',
-				fill:'both'
-			};
 
 		if(duration.duration !== void 0)
 			arrange += ' '+duration.duration+'s';

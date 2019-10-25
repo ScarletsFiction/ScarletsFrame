@@ -222,6 +222,7 @@ Before the view can being used, you must specify the available routes.
 
 ```js
 myView.addRoute([
+  // Route: with callback when leaving or visited
   {
     path:'/',
     url:'/',
@@ -234,12 +235,20 @@ myView.addRoute([
         console.log('leaving from / route');
       },
     },
-  },{
+  },
+  
+  // Route: normal
+  {
     path:'/login',
     url:'/login'
-  },{
+  },
+  
+  // Route: with dynamic path
+  {
     // Dynamic path depend on the pattern
     path:'/about/:page',
+
+    // Callback before routing
     beforeRoute:function(data){
       this.url = '/about/static/'+data.page+'.html';
     },
@@ -251,7 +260,10 @@ myView.addRoute([
         ...
       }
     ]
-  },{
+  },
+
+  // Route: inside of specified element selector
+  {
     // You can obtain username from routeFinish's event or myView.data
     path:'/:username',
     url:'/home',
@@ -261,6 +273,14 @@ myView.addRoute([
       path:'/gallery',
       url:'/user/gallery'
     }]
+  },
+
+  // Route: with written template
+  {
+    path:'/home',
+    html:`
+    <span>Home</span>
+`
   }
 ]);
 ```
