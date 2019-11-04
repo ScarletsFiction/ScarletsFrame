@@ -145,7 +145,7 @@ var $ = sf.dom; // Shortcut
 		},
 		prop:function(name, value){
 			if(value === void 0)
-				return this[0][name];
+				return this.length !== 0 ? this[0][name] : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i][name] = value;
@@ -154,7 +154,7 @@ var $ = sf.dom; // Shortcut
 		},
 		attr:function(name, value){
 			if(value === void 0)
-				return this[0].getAttribute(name);
+				return this.length !== 0 ? this[0].getAttribute(name) : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].setAttribute(name, value);
@@ -169,7 +169,7 @@ var $ = sf.dom; // Shortcut
 		},
 		css:function(name, value){
 			if(value === void 0 && name.constructor === String)
-				return this[0] !== void 0? this[0].style[name] : '';
+				return this.length !== 0 ? this[0].style[name] : '';
 
 			if(name.constructor === Object){
 				var keys = Object.keys(name);
@@ -255,12 +255,12 @@ var $ = sf.dom; // Shortcut
 		},
 		each:function(callback){
 			for (var i = 0; i < this.length; i++)
-				callback(this[i], i, this);
+				callback.call(this[i], i, this);
 			return this;
 		},
 		data:function(key, value){
 			if(value === void 0)
-				return this[0].$data ? this[0].$data[key] : void 0;
+				return this.length !== 0 && this[0].$data ? this[0].$data[key] : void 0;
 
 			for (var i = 0; i < this.length; i++){
 				if(this[i].$data === void 0)
@@ -322,7 +322,7 @@ var $ = sf.dom; // Shortcut
 
 		text:function(text){
 			if(text === void 0)
-				return this[0].innerText;
+				return this.length !== 0 ? this[0].innerText : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].innerText = text;
@@ -330,7 +330,7 @@ var $ = sf.dom; // Shortcut
 		},
 		html:function(text){
 			if(text === void 0)
-				return this[0].innerHTML;
+				return this.length !== 0 ? this[0].innerHTML : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].innerHTML = text;
@@ -338,7 +338,7 @@ var $ = sf.dom; // Shortcut
 		},
 		val:function(text){
 			if(text === void 0)
-				return this[0].value;
+				return this.length !== 0 ? this[0].value : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].text = text;
@@ -457,6 +457,14 @@ var $ = sf.dom; // Shortcut
 			callback = selector;
 			selector = event;
 			event = element;
+		}
+
+		if(event.indexOf(' ') !== -1){
+			event = event.split(' ');
+			for (var i = 0; i < event.length; i++) {
+				self.on(element, event[i], selector, callback, once);
+			}
+			return;
 		}
 
 		if(typeof selector === 'function'){
