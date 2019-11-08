@@ -10,17 +10,17 @@ function eventHandler(that, data, _modelScope){
 		// Replace variable to refer to current scope
 		return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
 			return '_modelScope.'+matched;
-		})
-
-		// Replace this to refer to the element
-		.replace(/,this|\[this/g, function(found){
-			return 'that';
 		});
 	});
 
 	// Get function reference
 	if(direct)
 		script = eval(script);
+
+	// Wrap into a function
+	else
+		script = (new Function('var event = arguments[1];'+script.split('_modelScope.').join('arguments[0].')))
+			.bind(that, _modelScope);
 
 	var containSingleChar = false;
 	var keys = data.name.slice(1).split('.');
@@ -127,11 +127,7 @@ function eventHandler(that, data, _modelScope){
 			else if(keys.has('prevent'))
 				ev.preventDefault();
 
-			if(direct)
-				return script.call(this, ev);
-
-			var that = this;
-			eval(script);
+			script.call(this, ev);
 		}
 	}
 
@@ -156,10 +152,7 @@ var specialEvent = internal.model.specialEvent = {
 			document.removeEventListener('pointermove', callbackMove);
 			set.delete(evStart.pointerId);
 
-			if(script.constructor === Function)
-				return script.call(that, evStart);
-
-			eval(script);
+			script.call(that, evStart);
 		}
 
 		function callbackMove(ev){
@@ -217,10 +210,7 @@ var specialEvent = internal.model.specialEvent = {
 	},
 	gesture:function(that, keys, script, _modelScope){
 		touchGesture(that, function callback(data){
-			if(script.constructor === Function)
-				return script.call(that, data);
-
-			eval(script);
+			script.call(that, data);
 		});
 	},
 	dragmove:function(that, keys, script, _modelScope){
@@ -230,10 +220,7 @@ var specialEvent = internal.model.specialEvent = {
 			ev.stopPropagation();
 			ev.preventDefault();
 
-			if(script.constructor === Function)
-				return script.call(that, ev);
-
-			eval(script);
+			script.call(that, ev);
 		}
 
 		var callbackStart = function(ev){

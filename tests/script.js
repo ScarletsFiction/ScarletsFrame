@@ -21,21 +21,21 @@ sf.model.for('image', function(self, root){
 
    self.dragmove = function(ev){
       console.log('dragmove called');
-      self.trans = 'translate('+'ev.x-this.offsetWidth/2'+'px, '+'ev.y-this.offsetHeight/2'+'px)';
+      self.trans = 'translate('+ev.x-this.offsetWidth/2+'px, '+ev.y-this.offsetHeight/2+'px)';
    }
 
    var scale = 1;
    var angle = 0;
-   self.gesture = function(ev){
+   self.gesture = function(dummy, ev){
       scale += ev.scale;
       angle += ev.angle;
 
       // console.log('gesture called');
-      self.trans = 'scale('+'scale'+') rotate('+'angle'+'deg)';
+      self.trans = 'scale('+scale+') rotate('+angle+'deg)';
    }
 
-   self.taphold = function(ev){
-      console.log('taphold called');
+   self.taphold = function(el, ev){
+      console.log('taphold called', el, ev);
    }
 });
 

@@ -55,6 +55,8 @@ gulp.task('js', function(){
       if(!fast)
       ret = ret.pipe(uglify()).on('error', swallowError);
     }
+    else 
+      ret = ret.pipe(rename('scarletsframe.min.js'));
 
     // Add header so developer can know about this script
     return ret.pipe(header(`/*

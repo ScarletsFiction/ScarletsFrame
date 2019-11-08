@@ -29,7 +29,7 @@
     "serberries": "^1.4.5"
   },
   "scripts": {
-    "publish": "gulp compile && npm publish"
+    "publish": "gulp compile & npm publish"
   },
   "main": "dist/scarletsframe.js",
   "keywords": [
