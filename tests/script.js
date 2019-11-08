@@ -2,7 +2,7 @@ var $ = sf.dom;
 var vul = '';
 
 if(0){
-   vul = '\'\"><script id="vull">alert("Heya")</script><a z=\'\"';
+   vul = '\'\"><script id="vull">alert("Heya")</script>{{@exec console.error("Vul") }}<a z=\'\"';
    
    var ckz = 0;
    var checkz = setInterval(function(){
@@ -19,9 +19,10 @@ if(0){
 sf.model.for('image', function(self, root){
    self.trans = "translate(0)";
 
+   var x=0, y=0;
    self.dragmove = function(ev){
-      console.log('dragmove called', ev);
-      self.trans = 'translate('+(ev.x-this.offsetWidth/2)+'px, '+(ev.y-this.offsetHeight/2)+'px)';
+      // console.log('dragmove called', ev);
+      self.trans = 'translate('+(x += ev.movementX)+'px, '+(y += ev.movementY)+'px)';
    }
 
    var scale = 1;

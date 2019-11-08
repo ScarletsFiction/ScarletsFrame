@@ -216,6 +216,8 @@ var specialEvent = internal.model.specialEvent = {
 	dragmove:function(that, keys, script, _modelScope){
 		var length = 0;
 		var actionBackup = '';
+		var startEv = null;
+
 		function callbackMove(ev){
 			ev.stopPropagation();
 			ev.preventDefault();
@@ -232,6 +234,9 @@ var specialEvent = internal.model.specialEvent = {
 				document.removeEventListener('pointercancel', callbackEnd, {once:true});
 				return;
 			}
+
+			script.call(that, ev);
+			startEv = ev;
 
 			actionBackup = that.style.touchAction;
 			that.style.touchAction = 'none';
@@ -250,6 +255,9 @@ var specialEvent = internal.model.specialEvent = {
 				document.addEventListener('pointercancel', callbackEnd, {once:true});
 				return;
 			}
+
+			script.call(that, ev);
+			startEv = null;
 
 			that.style.touchAction = actionBackup;
 
@@ -321,6 +329,12 @@ function touchGesture(that, callback){
 			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 			lastAngle = startAngle = Math.atan2(dy, dx) * 180/Math.PI;
 
+			ev.scale = 
+			ev.angle = 
+			ev.totalScale = 
+			ev.totalAngle = 0;
+
+			callback(ev);
 			document.addEventListener('pointermove', callbackMove);
 		}
 		else document.removeEventListener('pointermove', callbackMove);
@@ -337,12 +351,12 @@ function touchGesture(that, callback){
 		var currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 		var currentAngle = Math.atan2(dy, dx) * 180/Math.PI;
 
-		callback({
-			scale:currentScale - lastScale,
-			angle:currentAngle - lastAngle,
-			totalScale:currentScale - startScale,
-			totalAngle:currentAngle - startAngle,
-		});
+		ev.scale = currentScale - lastScale;
+		ev.angle = currentAngle - lastAngle;
+		ev.totalScale = currentScale - startScale;
+		ev.totalAngle = currentAngle - startAngle;
+
+		callback(ev);
 
 		lastScale = currentScale;
 		lastAngle = currentAngle;
@@ -361,13 +375,22 @@ function touchGesture(that, callback){
 			that.style.touchAction = actionBackup;
 
 			document.removeEventListener('pointermove', callbackMove);
+
+			ev.scale = ev.angle = 0;
+			ev.totalScale = lastScale - startScale;
+			ev.totalAngle = lastAngle - startAngle;
+			callback(ev);
 		}
 		else{
 			document.addEventListener('pointerup', callbackEnd);
 			document.addEventListener('pointercancel', callbackEnd);
 
-			if(pointers.length === 2)
+			if(pointers.length === 2){
 				document.removeEventListener('pointermove', callbackMove);
+
+				ev.scale = ev.angle = 0;
+				callback(ev);
+			}
 		}
 	}
 

@@ -42,7 +42,7 @@ if(!Element.prototype.matches)
   else global.sf = factory(global, routerEval);
 }(typeof window !== "undefined" ? window : this, (function(window, routerEval){
 
-//'use strict';
+'use strict';
 
 if(typeof document === void 0)
 	document = window.document;
@@ -136,14 +136,15 @@ function capitalizeLetters(name){
 	}
 	return name.join('');
 }
+var IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
+
 sf.dom = function(selector, context){
 	if(!selector){
 		if(selector === void 0){
-			var temp = function(sel) {return temp.find(sel)};
-			
-			// We need to support IE 11
-			temp.length = 0;
-			// Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
+			var temp = function(sel){return temp.find(sel)};
+
+			if(IE11 === false)
+				Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
 
 			return Object.assign(temp, DOMList.prototype);
 		}
@@ -191,7 +192,10 @@ var $ = sf.dom; // Shortcut
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
 	self.fn = DOMList.prototype = {
 		push:function(el){
-			this[this.length++] = el;
+			if(IE11)
+				this[0] = el;
+			else
+				this[this.length++] = el;
 		},
 		indexOf:function(el){
 			var keys = Object.keys(this);
@@ -1240,12 +1244,12 @@ sf.component = new function(){
 					var ref = copy.parse[i].data = copy.parse[i].data.slice(0);
 
 					if(_content_ === null && ref.length === 4){
-						_content_ = Object.assign({}, ref[3]);
+						_content_ = Object.assign({}, ref[2]);
 						_content_._modelScope = newObj;
 					}
 
-					ref[2] = newObj;
-					ref[3] = _content_;
+					ref[1] = newObj;
+					ref[2] = _content_;
 				}
 			}
 
@@ -1593,6 +1597,24 @@ var localEval = function(script, _model_, _modelScope, _content_){
 
 	if(_result_ !== '') return _result_;
 	return _evaled_;
+}
+
+var modelScript_ = /_result_|return/;
+function modelScript(script){
+	var which = script.match(modelScript_);
+
+	if(which === null)
+		script = 'return '+script;
+	else if(which[0] === '_result_')
+		script = 'var _result_="";'+script+';return _result_';
+
+	script = script
+		.split('_model_').join('arguments[0]').split('arguments[0]:t').join('_model_:t')
+		.split('_modelScope').join('arguments[1]')
+		.split('_content_').join('arguments[2]')
+		.split('@return').join('return');
+
+	return new Function(script);
 }
 internal.model.removeModelBinding = function(ref, noBackup){
 	if(ref === void 0)
@@ -1989,6 +2011,8 @@ var specialEvent = internal.model.specialEvent = {
 	dragmove:function(that, keys, script, _modelScope){
 		var length = 0;
 		var actionBackup = '';
+		var startEv = null;
+
 		function callbackMove(ev){
 			ev.stopPropagation();
 			ev.preventDefault();
@@ -2005,6 +2029,9 @@ var specialEvent = internal.model.specialEvent = {
 				document.removeEventListener('pointercancel', callbackEnd, {once:true});
 				return;
 			}
+
+			script.call(that, ev);
+			startEv = ev;
 
 			actionBackup = that.style.touchAction;
 			that.style.touchAction = 'none';
@@ -2023,6 +2050,9 @@ var specialEvent = internal.model.specialEvent = {
 				document.addEventListener('pointercancel', callbackEnd, {once:true});
 				return;
 			}
+
+			script.call(that, ev);
+			startEv = null;
 
 			that.style.touchAction = actionBackup;
 
@@ -2094,6 +2124,12 @@ function touchGesture(that, callback){
 			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 			lastAngle = startAngle = Math.atan2(dy, dx) * 180/Math.PI;
 
+			ev.scale = 
+			ev.angle = 
+			ev.totalScale = 
+			ev.totalAngle = 0;
+
+			callback(ev);
 			document.addEventListener('pointermove', callbackMove);
 		}
 		else document.removeEventListener('pointermove', callbackMove);
@@ -2110,12 +2146,12 @@ function touchGesture(that, callback){
 		var currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 		var currentAngle = Math.atan2(dy, dx) * 180/Math.PI;
 
-		callback({
-			scale:currentScale - lastScale,
-			angle:currentAngle - lastAngle,
-			totalScale:currentScale - startScale,
-			totalAngle:currentAngle - startAngle,
-		});
+		ev.scale = currentScale - lastScale;
+		ev.angle = currentAngle - lastAngle;
+		ev.totalScale = currentScale - startScale;
+		ev.totalAngle = currentAngle - startAngle;
+
+		callback(ev);
 
 		lastScale = currentScale;
 		lastAngle = currentAngle;
@@ -2134,13 +2170,22 @@ function touchGesture(that, callback){
 			that.style.touchAction = actionBackup;
 
 			document.removeEventListener('pointermove', callbackMove);
+
+			ev.scale = ev.angle = 0;
+			ev.totalScale = lastScale - startScale;
+			ev.totalAngle = lastAngle - startAngle;
+			callback(ev);
 		}
 		else{
 			document.addEventListener('pointerup', callbackEnd);
 			document.addEventListener('pointercancel', callbackEnd);
 
-			if(pointers.length === 2)
+			if(pointers.length === 2){
 				document.removeEventListener('pointermove', callbackMove);
+
+				ev.scale = ev.angle = 0;
+				callback(ev);
+			}
 		}
 	}
 
@@ -2649,7 +2694,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 				var condition = check.shift();
 				var elseIf = findElse(check);
 				elseIf.type = REF_IF;
-				elseIf.data = [null, _model_, _modelScope, _content_];
+				elseIf.data = [_model_, _modelScope, _content_];
 
 				// Trim Data
 				elseIf.if = [condition.trim(), elseIf.if.trim()];
@@ -2744,7 +2789,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 			var current = preParsed[i];
 
 			// Text or attribute
-			if(current.type === 0){
+			if(current.type === REF_DIRECT){
 				current.data[0].split('"').join("'").replace(extract, function(full, match){
 					match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
 						return '.'+match_;
@@ -2754,22 +2799,37 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 					else if(found[match].indexOf(i) === -1)
 						found[match].push(i);
 				});
+
+				// Convert to function
+				current.get = modelScript(current.data.shift());
 				continue;
 			}
 
 			// Dynamic data
-			if(current.type === 1){
+			if(current.type === REF_IF){
 				var checkList = current.if.join(';');
+				current.if[0] = modelScript(current.if[0]);
+				current.if[1] = modelScript(current.if[1]);
 
-				if(current.elseValue !== null)
+				if(current.elseValue !== null){
 					checkList += ';' + current.elseValue;
+					current.elseValue = modelScript(current.elseValue);
+				}
 
 				for (var a = 0; a < current.elseIf.length; a++) {
-					checkList += current.elseIf[a].join(';');
+					var refElif = current.elseIf[a];
+
+					checkList += refElif.join(';');
+					refElif[0] = modelScript(refElif[0]);
+					refElif[1] = modelScript(refElif[1]);
 				}
 			}
-			else if(current.type === 2)
-				var checkList = current.data[0];
+			else if(current.type === REF_EXEC){
+				var checkList = current.data.shift();
+
+				// Convert to function
+				current.get = modelScript(checkList);
+			}
 
 			checkList = checkList.replace(/_result_ \+= _content_\.take\(.*?, ([0-9]+)\);/g, function(full, match){
 				return _content_[match];
@@ -3925,21 +3985,18 @@ function elseIfHandle(else_, scopes){
 	// Else if
 	for (var i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		scopes[0] = elseIf[i][0];
-		if(!localEval.apply(self.root, scopes))
+		if(!elseIf[i][0].apply(self.root, scopes))
 			continue;
 
 		// Get the value
-		scopes[0] = elseIf[i][1];
-		return localEval.apply(self.root, scopes);
+		return elseIf[i][1].apply(self.root, scopes);
 	}
 
 	// Else
 	if(else_.elseValue === null)
 		return '';
 
-	scopes[0] = else_.elseValue;
-	return localEval.apply(self.root, scopes);
+	return else_.elseValue.apply(self.root, scopes);
 }
 
 // ==== Template parser ====
@@ -3955,13 +4012,13 @@ var templateExec = function(parse, item, atIndex){
 			continue;
 
 		var ref = parse[i];
-		ref.data[1] = item;
+		ref.data[0] = item;
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
-			temp = localEval.apply(self.root, ref.data);
+			temp = ref.get.apply(self.root, ref.data);
 			if(temp === void 0)
-				temp = ''; // console.error('`'+ref.data[0]+'` was not defined');
+				temp = '';
 			else{
 				if(temp.constructor === Object)
 					temp = JSON.stringify(temp);
@@ -3974,7 +4031,7 @@ var templateExec = function(parse, item, atIndex){
 		}
 
 		if(ref.type === REF_EXEC){
-			parsed[i] = {type:ref.type, data:localEval.apply(self.root, ref.data)};
+			parsed[i] = {type:ref.type, data:ref.get.apply(self.root, ref.data)};
 			continue;
 		}
 
@@ -3982,16 +4039,14 @@ var templateExec = function(parse, item, atIndex){
 		if(ref.type === REF_IF){
 			var scopes = ref.data;
 			parsed[i] = {type:ref.type, data:''};
-			scopes[0] = ref.if[0];
 
 			// If condition was not meet
-			if(!localEval.apply(self.root, scopes)){
+			if(!ref.if[0].apply(self.root, scopes)){
 				parsed[i].data = elseIfHandle(ref, scopes);
 				continue;
 			}
 
-			scopes[0] = ref.if[1];
-			parsed[i].data = localEval.apply(self.root, scopes);
+			parsed[i].data = ref.if[1].apply(self.root, scopes);
 		}
 	}
 	return parsed;
@@ -4201,6 +4256,8 @@ function syntheticTemplate(element, template, property, item){
 
 		if(changes.length === 0) return false;
 	}
+
+	// console.log(542, template.parse, item);
 
 	var parsed = templateExec(template.parse, item, changes);
 	function checkRelatedChanges(parseIndex){
