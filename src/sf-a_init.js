@@ -20,7 +20,7 @@
   else global.sf = factory(global, routerEval);
 }(typeof window !== "undefined" ? window : this, (function(window, routerEval){
 
-//'use strict';
+'use strict';
 
 if(typeof document === void 0)
 	document = window.document;

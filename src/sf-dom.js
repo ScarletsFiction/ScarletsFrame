@@ -1,11 +1,12 @@
+var IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
+
 sf.dom = function(selector, context){
 	if(!selector){
 		if(selector === void 0){
-			var temp = function(sel) {return temp.find(sel)};
-			
-			// We need to support IE 11
-			temp.length = 0;
-			// Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
+			var temp = function(sel){return temp.find(sel)};
+
+			if(IE11 === false)
+				Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
 
 			return Object.assign(temp, DOMList.prototype);
 		}
@@ -53,7 +54,10 @@ var $ = sf.dom; // Shortcut
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
 	self.fn = DOMList.prototype = {
 		push:function(el){
-			this[this.length++] = el;
+			if(IE11)
+				this[0] = el;
+			else
+				this[this.length++] = el;
 		},
 		indexOf:function(el){
 			var keys = Object.keys(this);
