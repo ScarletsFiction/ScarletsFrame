@@ -2,7 +2,10 @@ sf.dom = function(selector, context){
 	if(!selector){
 		if(selector === void 0){
 			var temp = function(sel) {return temp.find(sel)};
-			Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
+			
+			// We need to support IE 11
+			temp.length = 0;
+			// Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
 
 			return Object.assign(temp, DOMList.prototype);
 		}
@@ -84,7 +87,7 @@ var $ = sf.dom; // Shortcut
 			if(this.length === 1){
 				if(selector)
 					return new DOMList(self.parent(this[0], selector));
-				return new DOMList(this[0].parentElement);
+				return new DOMList(this[0].parentNode);
 			}
 
 			var t = [];
@@ -306,7 +309,7 @@ var $ = sf.dom; // Shortcut
 			return new DOMList(this[i]);
 		},
 		insertAfter:function(el){
-			var parent = el.parentElement;
+			var parent = el.parentNode;
 			parent.insertBefore(this[0], el.nextSibling);
 
 			for (var i = 1; i < this.length; i++)
@@ -314,7 +317,7 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		insertBefore:function(el){
-			var parent = el.parentElement;
+			var parent = el.parentNode;
 			for (var i = 0; i < this.length; i++)
 				parent.insertBefore(this[i], el);
 			return this;
@@ -393,7 +396,7 @@ var $ = sf.dom; // Shortcut
 			if(element[propertyName] !== void 0)
 				return element;
 
-			element = element.parentElement;
+			element = element.parentNode;
 		} while (element !== null);
 		return null;
 	}
@@ -402,10 +405,13 @@ var $ = sf.dom; // Shortcut
 		if(element.closest) return element.closest(selector);
 
 		do {
+			if(element === document)
+				return null;
+
 			if(element.matches(selector) === true)
 				return element;
 
-			element = element.parentElement;
+			element = element.parentNode;
 		} while (element !== null);
 
 		return null;
@@ -649,21 +655,21 @@ var $ = sf.dom; // Shortcut
 
 			element.classList.add('anim-element');
 
-			if(element.parentElement !== null){
+			if(element.parentNode !== null){
 				var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
-				var parentStyle = element.parentElement.style;
-				element.parentElement.classList.add('anim-parent');
+				var parentStyle = element.parentNode.style;
+				element.parentNode.classList.add('anim-parent');
 				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
 			}
 
 			self.once(element, animationEnd, function(){
 				setTimeout(function(){
-					if(element.parentElement !== null){
+					if(element.parentNode !== null){
 						style.visibility = '';
 						element.classList.remove('anim-element');
 						style.webkitAnimation = style.animation = '';
 
-						var parentStyle = element.parentElement.style;
+						var parentStyle = element.parentNode.style;
 						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
 
 						if(callback !== void 0) callback.call(element);
@@ -720,7 +726,7 @@ var $ = sf.dom; // Shortcut
 	var documentElement = null;
 	setTimeout(function(){
 		sf.loader.domReady(function(){
-			documentElement = document.body.parentElement;
+			documentElement = document.body.parentNode;
 		});
 	});
 

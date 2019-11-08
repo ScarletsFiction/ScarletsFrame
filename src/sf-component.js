@@ -201,6 +201,8 @@ sf.component = new function(){
 			return console.error("Please use '-' when defining component tags");
 
 		name = capitalizeLetters(name);
+
+		// Create function at current scope
 		var func = eval("function "+name+"($item){var he = HTMLElement_wrap.call(this);self.new(tagName, he, $item);return he}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;

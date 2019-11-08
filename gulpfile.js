@@ -1,19 +1,24 @@
 var gulp = require('gulp');
 var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
-var uglify = require('gulp-uglify-es').default;
 var header = require('gulp-header');
 var rename = require('gulp-rename');
 var fs = require('fs');
 var notifier = require('node-notifier');
 
-require('./tests/server.js');
+var compile, uglify, babel, fast;
+function enableCompile(){
+  uglify = require('gulp-uglify-es').default;
+  babel = require("gulp-babel");
+  compile = true;
+}
 
 gulp.task('js', function(){
   removeOldMap('dist/');
 
   // Set the order
-  return gulp.src([
+  var ret = gulp.src([
+      'src/sf-polyfill.js',
       'src/sf-a_init.js',
       'src/sf-dom.js',
       'src/sf-loader.js',
@@ -26,14 +31,33 @@ gulp.task('js', function(){
 
     // Save as combined script
     .pipe(concat('scarletsframe.js'))
-    
+    .pipe(gulp.dest('dist'));
+
     // Create minified file (This would be little slower)
-    .pipe(gulp.dest('dist'))
-    .pipe(rename('scarletsframe.min.js')).on('error', swallowError)
-    .pipe(uglify()).on('error', swallowError)
+    if(compile){
+      ret = ret.pipe(babel({
+        babelrc: false,
+        presets: [
+          [
+            "@babel/preset-env",
+            {
+              targets: {
+                ie: "11"
+              },
+              modules: false,
+              loose: true
+            }
+          ]
+        ]
+      }))
+      .pipe(rename('scarletsframe.min.js'));
+
+      if(!fast)
+      ret = ret.pipe(uglify()).on('error', swallowError);
+    }
 
     // Add header so developer can know about this script
-    .pipe(header(`/*
+    return ret.pipe(header(`/*
   ScarletsFrame
   A frontend library for Scarlets Framework that support
   lazy page load and element binding that can help
@@ -54,7 +78,28 @@ gulp.task('js', function(){
 });
 
 gulp.task('default', function(){
+  require('./tests/server.js');
   gulp.watch(['src/**/*.js'], gulp.series('js'));
+});
+
+function ie11(){
+  require('./tests/server.js');
+
+  enableCompile();
+  gulp.watch(['src/**/*.js'], gulp.series('js'));
+}
+
+gulp.task('ie11', ie11);
+
+gulp.task('ie11Fast', function(){
+  fast = true;
+  ie11();
+});
+
+gulp.task('compile', async function(done){
+  enableCompile();
+  console.log("Please wait a few seconds");
+  gulp.task('js')();
 });
 
 function swallowError(error){

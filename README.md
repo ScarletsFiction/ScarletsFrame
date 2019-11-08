@@ -107,6 +107,19 @@ You can download minified js from this repository or use this CDN link
 <script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest'></script>
 ```
 
+If you want to support IE11 and some old browser, you need to add some polyfill before the framework.
+```html
+<script type="text/javascript">
+  // Polyfill for Old Browser
+  (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
+    if(window.Reflect === void 0)
+        z('https://unpkg.com/core-js-bundle@latest/minified.js');
+    if(window.customElements === void 0)
+        z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+  })();
+</script>
+```
+
 This framework still being developed and may have breaking changes before the release, make sure you specify the version instead using `latest`. Please help the development of this framework >.<
 
 If you have separated files for the model and controllers, you can use this library's `gulpfile.js` to combine and compile your js files. To obtain fast compilation in development environment, you can deactivate uglify/minify/babel in `gulpfile.js`.

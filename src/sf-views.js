@@ -361,12 +361,12 @@ var self = sf.views = function View(selector, name){
 	function toBeShowed(element, event, path, data){
 		var relatedPage = [element];
 
-		var parent = element.parentElement;
+		var parent = element.parentNode;
 		while(parent !== rootDOM && parent !== null){
 			if(parent.nodeName === pageViewNodeName)
 				relatedPage.unshift(parent);
 
-			parent = parent.parentElement;
+			parent = parent.parentNode;
 		}
 
 		var lastSibling = void 0;
@@ -376,7 +376,7 @@ var self = sf.views = function View(selector, name){
 			if(relatedPage.indexOf(self.relatedDOM[i]) === -1){
 				if(lastSibling === void 0){
 					lastSibling = self.relatedDOM[i];
-					parentSimilarity = lastSibling.parentElement;
+					parentSimilarity = lastSibling.parentNode;
 				}
 
 				self.relatedDOM[i].classList.remove('page-current');
@@ -385,7 +385,7 @@ var self = sf.views = function View(selector, name){
 
 		var showedSibling = void 0;
 		for (var i = 0; i < relatedPage.length; i++) {
-			if(showedSibling === void 0 && relatedPage[i].parentElement === parentSimilarity)
+			if(showedSibling === void 0 && relatedPage[i].parentNode === parentSimilarity)
 				showedSibling = relatedPage[i];
 
 			relatedPage[i].classList.add('page-current');
@@ -439,9 +439,9 @@ var self = sf.views = function View(selector, name){
 			if(onEvent['routeStart'][i](self.currentPath, path)) return;
 		}
 
-		function insertLoadedElement(DOMReference, dom, parentElement, pendingShowed){
-			if(parentElement)
-				dom.parentPageElement = parentElement;
+		function insertLoadedElement(DOMReference, dom, parentNode, pendingShowed){
+			if(parentNode)
+				dom.parentPageElement = parentNode;
 
 			dom.routerData = {};
 			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
@@ -563,13 +563,13 @@ var self = sf.views = function View(selector, name){
 					else{
 						// Try to load parent router first
 						var newPath = path.match(url.parent.forChild)[0];
-						return self.goto(newPath, false, method, function(parentElement){
-							DOMReference = parentElement.sf$viewSelector[selectorName];
-							insertLoadedElement(DOMReference, dom, parentElement);
+						return self.goto(newPath, false, method, function(parentNode){
+							DOMReference = parentNode.sf$viewSelector[selectorName];
+							insertLoadedElement(DOMReference, dom, parentNode);
 
 							if(_callback) return _callback(dom);
 
-							var defaultViewContent = dom.parentElement.defaultViewContent;
+							var defaultViewContent = dom.parentNode.defaultViewContent;
 							if(defaultViewContent.routePath !== path)
 								defaultViewContent.classList.remove('page-current');
 						});

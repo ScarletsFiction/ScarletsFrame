@@ -21,7 +21,7 @@ sf.model.for('image', function(self, root){
 
    self.dragmove = function(ev){
       console.log('dragmove called');
-      self.trans = `translate(${ev.x-this.offsetWidth/2}px, ${ev.y-this.offsetHeight/2}px)`;
+      self.trans = 'translate('+'ev.x-this.offsetWidth/2'+'px, '+'ev.y-this.offsetHeight/2'+'px)';
    }
 
    var scale = 1;
@@ -31,7 +31,7 @@ sf.model.for('image', function(self, root){
       angle += ev.angle;
 
       // console.log('gesture called');
-      self.trans = `scale(${scale}) rotate(${angle}deg)`;
+      self.trans = 'scale('+'scale'+') rotate('+'angle'+'deg)';
    }
 
    self.taphold = function(ev){
@@ -303,11 +303,11 @@ sf.component.for('comp-test', function(self, root, item){
    }
 });
 
-sf.component.html('comp-test', `<div>1. {{ data }}</div>
-   <input type="text" sf-bind="data"/>
-   <div class="sf-virtual-list"><span sf-repeat-this="num in tries">{{#num}},</span></div>
-   <div>item: {{ item }}</div>
-<br>`);
+sf.component.html('comp-test', '<div>1. {{ data }}</div>\
+   <input type="text" sf-bind="data"/>\
+   <div class="sf-virtual-list"><span sf-repeat-this="num in tries">{{#num}},</span></div>\
+   <div>item: {{ item }}</div>\
+<br>');
 
 sf(function(){
    var elem2 = new $CompTest('from javascript');

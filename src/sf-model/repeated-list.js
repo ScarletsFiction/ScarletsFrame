@@ -23,7 +23,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 			modelRef.sf$bindedKey[refName[1]] = null;
 
 		;(function(){
-			var RE = new RepeatedElement(modelRef, element, refName, element.parentElement);
+			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode);
 			window.asd = RE;
 			Object.defineProperty(modelRef, refName[1], {
 				enumerable: true,

@@ -1,12 +1,37 @@
+if(Element.prototype.remove === undefined || CharacterData.prototype.remove === undefined || DocumentType.prototype.remove === undefined){
+  (function (arr) {
+    arr.forEach(function (item) {
+      if (item.hasOwnProperty('remove')) {
+        return;
+      }
+      Object.defineProperty(item, 'remove', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: function remove() {
+          if (this.parentNode !== null)
+            this.parentNode.removeChild(this);
+        }
+      });
+    });
+  })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
+}
+
+if(!Element.prototype.matches)
+  Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+
 (function(global, factory){
-  if(window.customElements === void 0){
-    console.error("This browser was not supported");
-  
-    if(window.onOldBrowser)
-    	return window.onOldBrowser();
-  
-    console.error("Please make an callback in 'window.onOldBrowser' to create a custom fallback");
-    return alert("This browser was not supported");
+  // Check browser feature
+  if(HTMLElement.prototype.remove === void 0 || window.customElements === void 0 || window.Reflect === void 0){
+  	console.error("This browser was not supported");
+
+  	if(window.customElements === void 0)
+    	console.warn("This can be fixed by adding 'https://unpkg.com/@webcomponents/webcomponentsjs@2.3.0/webcomponents-loader.js' before loading 'scarletsframe.js'");
+
+    if(window.Reflect === void 0)
+    	console.warn("This can be fixed by adding 'https://unpkg.com/core-js-bundle@3.4.0/minified.js' before loading 'scarletsframe.js'");
+
+    alert("This browser was not supported");
   }
 
   // Dynamic script when using router to load template
@@ -15,9 +40,13 @@
 
   if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global, routerEval);
   else global.sf = factory(global, routerEval);
-}(typeof window !== "undefined" ? window : this, (function(window, routerEval){'use strict';
+}(typeof window !== "undefined" ? window : this, (function(window, routerEval){
+
+//'use strict';
+
 if(typeof document === void 0)
 	document = window.document;
+
 // ===== Module Init =====
 var internal = {};
 
@@ -111,7 +140,10 @@ sf.dom = function(selector, context){
 	if(!selector){
 		if(selector === void 0){
 			var temp = function(sel) {return temp.find(sel)};
-			Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
+			
+			// We need to support IE 11
+			temp.length = 0;
+			// Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
 
 			return Object.assign(temp, DOMList.prototype);
 		}
@@ -153,7 +185,7 @@ var $ = sf.dom; // Shortcut
 ;(function(){
 	var self = sf.dom;
 
-	var css_str = /\-[a-z0-9]/;
+	var css_str = /\-([a-z0-9])/;
 	var css_strRep = function(f, m){return m.toUpperCase()};
 
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
@@ -193,7 +225,7 @@ var $ = sf.dom; // Shortcut
 			if(this.length === 1){
 				if(selector)
 					return new DOMList(self.parent(this[0], selector));
-				return new DOMList(this[0].parentElement);
+				return new DOMList(this[0].parentNode);
 			}
 
 			var t = [];
@@ -254,7 +286,7 @@ var $ = sf.dom; // Shortcut
 		},
 		prop:function(name, value){
 			if(value === void 0)
-				return this[0][name];
+				return this.length !== 0 ? this[0][name] : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i][name] = value;
@@ -263,7 +295,7 @@ var $ = sf.dom; // Shortcut
 		},
 		attr:function(name, value){
 			if(value === void 0)
-				return this[0].getAttribute(name);
+				return this.length !== 0 ? this[0].getAttribute(name) : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].setAttribute(name, value);
@@ -278,7 +310,7 @@ var $ = sf.dom; // Shortcut
 		},
 		css:function(name, value){
 			if(value === void 0 && name.constructor === String)
-				return this[0].style[name];
+				return this.length !== 0 ? this[0].style[name] : '';
 
 			if(name.constructor === Object){
 				var keys = Object.keys(name);
@@ -304,13 +336,28 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		on:function(event, selector, callback){
-			for (var i = 0; i < this.length; i++)
+			for (var i = 0; i < this.length; i++){
+				if(internal.model.specialEvent[event] !== void 0){
+					internal.model.specialEvent[event](this[i], null, callback);
+					continue;
+				}
+
 				self.on(this[i], event, selector, callback);
+			}
+
 			return this;
 		},
 		off:function(event, selector, callback){
-			for (var i = 0; i < this.length; i++)
+			for (var i = 0; i < this.length; i++){
+				if(internal.model.specialEvent[event] !== void 0){
+					if(this[i]['sf$eventDestroy_'+event] !== void 0)
+						this[i]['sf$eventDestroy_'+event]();
+
+					continue;
+				}
+
 				self.off(this[i], event, selector, callback);
+			}
 			return this;
 		},
 		once:function(event, selector, callback){
@@ -349,12 +396,12 @@ var $ = sf.dom; // Shortcut
 		},
 		each:function(callback){
 			for (var i = 0; i < this.length; i++)
-				callback(this[i], i, this);
+				callback.call(this[i], i, this);
 			return this;
 		},
 		data:function(key, value){
 			if(value === void 0)
-				return this[0].$data ? this[0].$data[key] : void 0;
+				return this.length !== 0 && this[0].$data ? this[0].$data[key] : void 0;
 
 			for (var i = 0; i < this.length; i++){
 				if(this[i].$data === void 0)
@@ -400,7 +447,7 @@ var $ = sf.dom; // Shortcut
 			return new DOMList(this[i]);
 		},
 		insertAfter:function(el){
-			var parent = el.parentElement;
+			var parent = el.parentNode;
 			parent.insertBefore(this[0], el.nextSibling);
 
 			for (var i = 1; i < this.length; i++)
@@ -408,7 +455,7 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		insertBefore:function(el){
-			var parent = el.parentElement;
+			var parent = el.parentNode;
 			for (var i = 0; i < this.length; i++)
 				parent.insertBefore(this[i], el);
 			return this;
@@ -416,7 +463,7 @@ var $ = sf.dom; // Shortcut
 
 		text:function(text){
 			if(text === void 0)
-				return this[0].innerText;
+				return this.length !== 0 ? this[0].innerText : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].innerText = text;
@@ -424,7 +471,7 @@ var $ = sf.dom; // Shortcut
 		},
 		html:function(text){
 			if(text === void 0)
-				return this[0].innerHTML;
+				return this.length !== 0 ? this[0].innerHTML : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].innerHTML = text;
@@ -432,7 +479,7 @@ var $ = sf.dom; // Shortcut
 		},
 		val:function(text){
 			if(text === void 0)
-				return this[0].value;
+				return this.length !== 0 ? this[0].value : '';
 
 			for (var i = 0; i < this.length; i++)
 				this[i].text = text;
@@ -487,7 +534,7 @@ var $ = sf.dom; // Shortcut
 			if(element[propertyName] !== void 0)
 				return element;
 
-			element = element.parentElement;
+			element = element.parentNode;
 		} while (element !== null);
 		return null;
 	}
@@ -496,10 +543,13 @@ var $ = sf.dom; // Shortcut
 		if(element.closest) return element.closest(selector);
 
 		do {
+			if(element === document)
+				return null;
+
 			if(element.matches(selector) === true)
 				return element;
 
-			element = element.parentElement;
+			element = element.parentNode;
 		} while (element !== null);
 
 		return null;
@@ -551,6 +601,14 @@ var $ = sf.dom; // Shortcut
 			callback = selector;
 			selector = event;
 			event = element;
+		}
+
+		if(event.indexOf(' ') !== -1){
+			event = event.split(' ');
+			for (var i = 0; i < event.length; i++) {
+				self.on(element, event[i], selector, callback, once);
+			}
+			return;
 		}
 
 		if(typeof selector === 'function'){
@@ -666,6 +724,17 @@ var $ = sf.dom; // Shortcut
 			duration = void 0;
 		}
 
+		if(duration === void 0 || duration.constructor === Number)
+			duration = {
+				duration:duration && duration.constructor === Number ? duration : 0.6,
+				ease:'ease',
+				fill:'both'
+			};
+
+		if(duration.skipOnHidden && (
+			element.offsetParent === null || window.getComputedStyle(element).visibility === 'hidden'
+		)) return;
+
 		var animationEnd = null;
 
 		if(element.style.animation !== void 0)
@@ -676,13 +745,6 @@ var $ = sf.dom; // Shortcut
 
 	  	var style = element.style;
 		var arrange = animationName;
-
-		if(duration === void 0 || duration.constructor === Number)
-			duration = {
-				duration:duration && duration.constructor === Number ? duration : 0.6,
-				ease:'ease',
-				fill:'both'
-			};
 
 		if(duration.duration !== void 0)
 			arrange += ' '+duration.duration+'s';
@@ -725,32 +787,32 @@ var $ = sf.dom; // Shortcut
 
 		setTimeout(function(){
 			if(!element.isConnected){
-				if(callback !== void 0) callback();
+				if(callback !== void 0) callback.call(element);
 				return;
 			}
 
 			element.classList.add('anim-element');
 
-			if(element.parentElement !== null){
+			if(element.parentNode !== null){
 				var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
-				var parentStyle = element.parentElement.style;
-				element.parentElement.classList.add('anim-parent');
+				var parentStyle = element.parentNode.style;
+				element.parentNode.classList.add('anim-parent');
 				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
 			}
 
 			self.once(element, animationEnd, function(){
 				setTimeout(function(){
-					if(element.parentElement !== null){
+					if(element.parentNode !== null){
 						style.visibility = '';
 						element.classList.remove('anim-element');
 						style.webkitAnimation = style.animation = '';
 
-						var parentStyle = element.parentElement.style;
+						var parentStyle = element.parentNode.style;
 						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+
+						if(callback !== void 0) callback.call(element);
 					}
 				});
-
-				if(callback !== void 0) callback();
 			});
 		});
 	}
@@ -802,7 +864,7 @@ var $ = sf.dom; // Shortcut
 	var documentElement = null;
 	setTimeout(function(){
 		sf.loader.domReady(function(){
-			documentElement = document.body.parentElement;
+			documentElement = document.body.parentNode;
 		});
 	});
 
@@ -1214,12 +1276,6 @@ sf.component = new function(){
 		componentInit(element, newID, name);
 
 		element.sf$initTriggered = true;
-
-		element.destroy = function(){
-			if(this.parentElement === null)
-				internal.model.removeModelBinding(newObj);
-			else this.remove();
-		}
 		return element;
 	}
 
@@ -1251,6 +1307,8 @@ sf.component = new function(){
 			return console.error("Please use '-' when defining component tags");
 
 		name = capitalizeLetters(name);
+
+		// Create function at current scope
 		var func = eval("function "+name+"($item){var he = HTMLElement_wrap.call(this);self.new(tagName, he, $item);return he}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;
@@ -1291,10 +1349,13 @@ sf.component = new function(){
 				if(!that.model)
 					return console.log(that);
 
-				delete sf.model.root[that.sf$controlled];
-
 				if(that.model.destroy)
 					that.model.destroy();
+
+				internal.model.removeModelBinding(that.model, true);
+				that.model.$el = null;
+
+				delete sf.model.root[that.sf$controlled];
 			}, 500);
 		};
 
@@ -1533,7 +1594,7 @@ var localEval = function(script, _model_, _modelScope, _content_){
 	if(_result_ !== '') return _result_;
 	return _evaled_;
 }
-internal.model.removeModelBinding = function(ref){
+internal.model.removeModelBinding = function(ref, noBackup){
 	if(ref === void 0)
 		return;
 
@@ -1566,9 +1627,12 @@ internal.model.removeModelBinding = function(ref){
 			}
 
 			// Reset property without copying the array
-			temp = ref[key].splice('obtain');
-			delete ref[key];
-			ref[key] = temp;
+			if(noBackup === void 0){
+				temp = ref[key].splice('obtain');
+				delete ref[key];
+				ref[key] = temp;
+			}
+			else delete ref[key];
 		}
 		else continue;
 
@@ -1579,9 +1643,12 @@ internal.model.removeModelBinding = function(ref){
 				continue;
 
 			// Reconfigure / Remove property descriptor
-			var temp = ref[key];
-			delete ref[key];
-			ref[key] = temp;
+			if(noBackup === void 0){
+				var temp = ref[key];
+				delete ref[key];
+				ref[key] = temp;
+			}
+			else delete ref[key];
 		}
 	}
 }
@@ -1720,7 +1787,7 @@ function eventHandler(that, data, _modelScope){
 
 		// Replace this to refer to the element
 		.replace(/,this|\[this/g, function(found){
-			return 'sf_that';
+			return 'that';
 		});
 	});
 
@@ -1773,7 +1840,6 @@ function eventHandler(that, data, _modelScope){
 				ev.preventDefault();
 			}, options);
 	}
-
 
 	if(specialEvent[eventName]){
 		specialEvent[eventName](that, keys, script, _modelScope);
@@ -1837,18 +1903,21 @@ function eventHandler(that, data, _modelScope){
 			if(direct)
 				return script.call(this, ev);
 
+			var that = this;
 			eval(script);
 		}
 	}
 
 	that.addEventListener(eventName, callback, options);
 
-	that.sf$eventDestroy = function(){
-		that.removeEventListener(eventName, callback, options);
+	if(!options.once){
+		that['sf$eventDestroy_'+eventName] = function(){
+			that.removeEventListener(eventName, callback, options);
+		}
 	}
 }
 
-var specialEvent = {
+var specialEvent = internal.model.specialEvent = {
 	taphold:function(that, keys, script, _modelScope){
 		var set = new Set();
 		var evStart = null;
@@ -1867,6 +1936,9 @@ var specialEvent = {
 		}
 
 		function callbackMove(ev){
+			ev.preventDefault();
+			ev.stopPropagation();
+
 			if(Math.abs(evStart.clientX - ev.clientX) > 1 || Math.abs(evStart.clientY - ev.clientY) > 1){
 				clearTimeout(timer);
 				set.delete(ev.pointerId);
@@ -1885,6 +1957,9 @@ var specialEvent = {
 
 			set.add(ev.pointerId);
 			if(set.size > 1){
+				ev.preventDefault();
+				ev.stopPropagation();
+
 				that.removeEventListener('pointerup', callbackEnd, {once:true});
 				that.removeEventListener('pointercancel', callbackEnd, {once:true});
 				document.removeEventListener('pointermove', callbackMove);
@@ -1908,6 +1983,10 @@ var specialEvent = {
 		}
 
 		that.addEventListener('pointerdown', callbackStart);
+
+		that['sf$eventDestroy_taphold'] = function(){
+			that.removeEventListener('pointerdown', callbackStart);
+		}
 	},
 	gesture:function(that, keys, script, _modelScope){
 		touchGesture(that, function callback(data){
@@ -1965,6 +2044,13 @@ var specialEvent = {
 		}
 
 		that.addEventListener('pointerdown', callbackStart, {once:true});
+
+		that['sf$eventDestroy_dragmove'] = function(){
+			that.removeEventListener('pointerdown', callbackStart, {once:true});
+			that.removeEventListener('pointermove', callbackMove);
+			that.removeEventListener('pointercancel', callbackEnd, {once:true});
+			that.removeEventListener('pointerup', callbackEnd, {once:true});
+		}
 	}
 };
 
@@ -2072,6 +2158,11 @@ function touchGesture(that, callback){
 	}
 
 	that.addEventListener('pointerdown', callbackStart);
+
+	that['sf$eventDestroy_gesture'] = function(){
+		that.removeEventListener('pointerdown', callbackStart);
+		document.removeEventListener('keydown', keyStart);
+	}
 
 	var keyEnd = function(ev){
 		if(!force || ev.ctrlKey)
@@ -2736,7 +2827,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		var attrs = currentNode.attributes;
 		var keys = [];
 		var indexes = 0;
-		for (var a = 0; a < attrs.length; a++) {
+		for (var a = attrs.length - 1; a >= 0; a--) {
 			var found = attrs[a].value.split('{{%=');
 			if(attrs[a].name[0] === '@'){
 				// No template processing for this
@@ -2752,7 +2843,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 				});
 
 				currentNode.removeAttribute(attrs[a].name);
-				continue;
 			}
 
 			if(found.length !== 1){
@@ -3029,9 +3119,9 @@ self.parsePreprocess = function(nodes, model){
 
 		var modelRef = self.root[model];
 
-		if(current.nodeType === 3 && binded.indexOf(current.parentElement) === -1){
-			self.bindElement(current.parentElement, model);
-			binded.push(current.parentElement);
+		if(current.nodeType === 3 && binded.indexOf(current.parentNode) === -1){
+			self.bindElement(current.parentNode, model);
+			binded.push(current.parentNode);
 			continue;
 		}
 
@@ -3095,7 +3185,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 			modelRef.sf$bindedKey[refName[1]] = null;
 
 		;(function(){
-			var RE = new RepeatedElement(modelRef, element, refName, element.parentElement);
+			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode);
 			window.asd = RE;
 			Object.defineProperty(modelRef, refName[1], {
 				enumerable: true,
@@ -3175,7 +3265,7 @@ class RepeatedElement extends Array{
 					// elem.setAttribute('sf-bind-list', refName[1]);
 				}
 				else{
-					var elem = templateParser(template, that[i]);
+					var elem = templateParser(template, that[i], false, that.modelRef);
 					syntheticCache(elem, template, that[i]);
 				}
 
@@ -3527,7 +3617,7 @@ class ElementManipulator{
 		if(template.constructor === Function)
 			return new template(item);
 		else{
-			var temp = templateParser(template, item);
+			var temp = templateParser(template, item, false, this.modelRef);
 			syntheticCache(temp, template, item);
 			return temp;
 		}
@@ -3570,7 +3660,7 @@ class ElementManipulator{
 				var temp = new this.template(list[i]);
 			}
 			else{
-				var temp = templateParser(this.template, list[i]);
+				var temp = templateParser(this.template, list[i], false, this.modelRef);
 				syntheticCache(temp, this.template, list[i]);
 			}
 			
@@ -3697,7 +3787,7 @@ class ElementManipulator{
 				var temp = new template(list[i]);
 			}
 			else{
-				var temp = templateParser(template, list[i]);
+				var temp = templateParser(template, list[i], false, this.modelRef);
 				syntheticCache(temp, template, list[i]);
 			}
 
@@ -3920,7 +4010,7 @@ var templateExec = function(parse, item, atIndex){
 	return parsed;
 }
 
-var templateParser = internal.model.templateParser = function(template, item, original){
+var templateParser = internal.model.templateParser = function(template, item, original, modelRef){
 	processingElement = template.html;
 
 	var html = original === true ? template.html : template.html.cloneNode(true);
@@ -3943,7 +4033,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 				// Pass to event handler
 				if(refB.event){
-					eventHandler(current, refB, item);
+					eventHandler(current, refB, modelRef || item);
 					continue;
 				}
 
@@ -5674,12 +5764,12 @@ var self = sf.views = function View(selector, name){
 	function toBeShowed(element, event, path, data){
 		var relatedPage = [element];
 
-		var parent = element.parentElement;
+		var parent = element.parentNode;
 		while(parent !== rootDOM && parent !== null){
 			if(parent.nodeName === pageViewNodeName)
 				relatedPage.unshift(parent);
 
-			parent = parent.parentElement;
+			parent = parent.parentNode;
 		}
 
 		var lastSibling = void 0;
@@ -5689,7 +5779,7 @@ var self = sf.views = function View(selector, name){
 			if(relatedPage.indexOf(self.relatedDOM[i]) === -1){
 				if(lastSibling === void 0){
 					lastSibling = self.relatedDOM[i];
-					parentSimilarity = lastSibling.parentElement;
+					parentSimilarity = lastSibling.parentNode;
 				}
 
 				self.relatedDOM[i].classList.remove('page-current');
@@ -5698,7 +5788,7 @@ var self = sf.views = function View(selector, name){
 
 		var showedSibling = void 0;
 		for (var i = 0; i < relatedPage.length; i++) {
-			if(showedSibling === void 0 && relatedPage[i].parentElement === parentSimilarity)
+			if(showedSibling === void 0 && relatedPage[i].parentNode === parentSimilarity)
 				showedSibling = relatedPage[i];
 
 			relatedPage[i].classList.add('page-current');
@@ -5752,9 +5842,9 @@ var self = sf.views = function View(selector, name){
 			if(onEvent['routeStart'][i](self.currentPath, path)) return;
 		}
 
-		function insertLoadedElement(DOMReference, dom, parentElement, pendingShowed){
-			if(parentElement)
-				dom.parentPageElement = parentElement;
+		function insertLoadedElement(DOMReference, dom, parentNode, pendingShowed){
+			if(parentNode)
+				dom.parentPageElement = parentNode;
 
 			dom.routerData = {};
 			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
@@ -5876,13 +5966,13 @@ var self = sf.views = function View(selector, name){
 					else{
 						// Try to load parent router first
 						var newPath = path.match(url.parent.forChild)[0];
-						return self.goto(newPath, false, method, function(parentElement){
-							DOMReference = parentElement.sf$viewSelector[selectorName];
-							insertLoadedElement(DOMReference, dom, parentElement);
+						return self.goto(newPath, false, method, function(parentNode){
+							DOMReference = parentNode.sf$viewSelector[selectorName];
+							insertLoadedElement(DOMReference, dom, parentNode);
 
 							if(_callback) return _callback(dom);
 
-							var defaultViewContent = dom.parentElement.defaultViewContent;
+							var defaultViewContent = dom.parentNode.defaultViewContent;
 							if(defaultViewContent.routePath !== path)
 								defaultViewContent.classList.remove('page-current');
 						});
@@ -6804,7 +6894,7 @@ internal.virtual_scroll = new function(){
 	var isScroller = /auto|scroll|overlay|hidden/;
 	internal.findScrollerElement = function(el){
 		while(el !== null && isScroller.test(getComputedStyle(el).overflow) === false){
-			el = el.parentElement;
+			el = el.parentNode;
 			if(el === document.body)
 				return null;
 		};

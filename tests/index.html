@@ -1,7 +1,17 @@
 <!DOCTYPE html>
 <html>
    <head>
-      <script src='/dist/scarletsframe.js'></script>
+      <script type="text/javascript">
+        // Polyfill for Old Browser
+        (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
+          if(window.Reflect === void 0)
+              z('https://unpkg.com/core-js-bundle@latest/minified.js');
+          if(window.customElements === void 0)
+              z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+        })();
+      </script>
+
+      <script src='/dist/scarletsframe.min.js'></script>
 
       <meta charset="utf-8">
       <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">

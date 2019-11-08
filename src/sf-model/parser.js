@@ -683,9 +683,9 @@ self.parsePreprocess = function(nodes, model){
 
 		var modelRef = self.root[model];
 
-		if(current.nodeType === 3 && binded.indexOf(current.parentElement) === -1){
-			self.bindElement(current.parentElement, model);
-			binded.push(current.parentElement);
+		if(current.nodeType === 3 && binded.indexOf(current.parentNode) === -1){
+			self.bindElement(current.parentNode, model);
+			binded.push(current.parentNode);
 			continue;
 		}
 

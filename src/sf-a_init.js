@@ -1,12 +1,15 @@
 (function(global, factory){
-  if(window.customElements === void 0){
-    console.error("This browser was not supported");
-  
-    if(window.onOldBrowser)
-    	return window.onOldBrowser();
-  
-    console.error("Please make an callback in 'window.onOldBrowser' to create a custom fallback");
-    return alert("This browser was not supported");
+  // Check browser feature
+  if(HTMLElement.prototype.remove === void 0 || window.customElements === void 0 || window.Reflect === void 0){
+  	console.error("This browser was not supported");
+
+  	if(window.customElements === void 0)
+    	console.warn("This can be fixed by adding 'https://unpkg.com/@webcomponents/webcomponentsjs@2.3.0/webcomponents-loader.js' before loading 'scarletsframe.js'");
+
+    if(window.Reflect === void 0)
+    	console.warn("This can be fixed by adding 'https://unpkg.com/core-js-bundle@3.4.0/minified.js' before loading 'scarletsframe.js'");
+
+    alert("This browser was not supported");
   }
 
   // Dynamic script when using router to load template
@@ -15,9 +18,13 @@
 
   if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global, routerEval);
   else global.sf = factory(global, routerEval);
-}(typeof window !== "undefined" ? window : this, (function(window, routerEval){'use strict';
+}(typeof window !== "undefined" ? window : this, (function(window, routerEval){
+
+//'use strict';
+
 if(typeof document === void 0)
 	document = window.document;
+
 // ===== Module Init =====
 var internal = {};
 

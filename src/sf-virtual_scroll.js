@@ -775,7 +775,7 @@ internal.virtual_scroll = new function(){
 	var isScroller = /auto|scroll|overlay|hidden/;
 	internal.findScrollerElement = function(el){
 		while(el !== null && isScroller.test(getComputedStyle(el).overflow) === false){
-			el = el.parentElement;
+			el = el.parentNode;
 			if(el === document.body)
 				return null;
 		};
