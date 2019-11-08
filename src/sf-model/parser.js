@@ -226,7 +226,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 				var condition = check.shift();
 				var elseIf = findElse(check);
 				elseIf.type = REF_IF;
-				elseIf.data = [null, _model_, _modelScope, _content_];
+				elseIf.data = [_model_, _modelScope, _content_];
 
 				// Trim Data
 				elseIf.if = [condition.trim(), elseIf.if.trim()];
@@ -321,7 +321,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 			var current = preParsed[i];
 
 			// Text or attribute
-			if(current.type === 0){
+			if(current.type === REF_DIRECT){
 				current.data[0].split('"').join("'").replace(extract, function(full, match){
 					match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
 						return '.'+match_;
@@ -331,22 +331,37 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 					else if(found[match].indexOf(i) === -1)
 						found[match].push(i);
 				});
+
+				// Convert to function
+				current.get = modelScript(current.data.shift());
 				continue;
 			}
 
 			// Dynamic data
-			if(current.type === 1){
+			if(current.type === REF_IF){
 				var checkList = current.if.join(';');
+				current.if[0] = modelScript(current.if[0]);
+				current.if[1] = modelScript(current.if[1]);
 
-				if(current.elseValue !== null)
+				if(current.elseValue !== null){
 					checkList += ';' + current.elseValue;
+					current.elseValue = modelScript(current.elseValue);
+				}
 
 				for (var a = 0; a < current.elseIf.length; a++) {
-					checkList += current.elseIf[a].join(';');
+					var refElif = current.elseIf[a];
+
+					checkList += refElif.join(';');
+					refElif[0] = modelScript(refElif[0]);
+					refElif[1] = modelScript(refElif[1]);
 				}
 			}
-			else if(current.type === 2)
+			else if(current.type === REF_EXEC){
 				var checkList = current.data[0];
+
+				// Convert to function
+				current.get = modelScript(current.data.shift());
+			}
 
 			checkList = checkList.replace(/_result_ \+= _content_\.take\(.*?, ([0-9]+)\);/g, function(full, match){
 				return _content_[match];

@@ -4,21 +4,18 @@ function elseIfHandle(else_, scopes){
 	// Else if
 	for (var i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		scopes[0] = elseIf[i][0];
-		if(!localEval.apply(self.root, scopes))
+		if(!elseIf[i][0].apply(self.root, scopes))
 			continue;
 
 		// Get the value
-		scopes[0] = elseIf[i][1];
-		return localEval.apply(self.root, scopes);
+		return elseIf[i][1].apply(self.root, scopes);
 	}
 
 	// Else
 	if(else_.elseValue === null)
 		return '';
 
-	scopes[0] = else_.elseValue;
-	return localEval.apply(self.root, scopes);
+	return else_.elseValue.apply(self.root, scopes);
 }
 
 // ==== Template parser ====
@@ -34,11 +31,11 @@ var templateExec = function(parse, item, atIndex){
 			continue;
 
 		var ref = parse[i];
-		ref.data[1] = item;
+		ref.data[0] = item;
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
-			temp = localEval.apply(self.root, ref.data);
+			temp = ref.get.apply(self.root, ref.data);
 			if(temp === void 0)
 				temp = ''; // console.error('`'+ref.data[0]+'` was not defined');
 			else{
@@ -53,7 +50,7 @@ var templateExec = function(parse, item, atIndex){
 		}
 
 		if(ref.type === REF_EXEC){
-			parsed[i] = {type:ref.type, data:localEval.apply(self.root, ref.data)};
+			parsed[i] = {type:ref.type, data:ref.get.apply(self.root, ref.data)};
 			continue;
 		}
 
@@ -61,16 +58,14 @@ var templateExec = function(parse, item, atIndex){
 		if(ref.type === REF_IF){
 			var scopes = ref.data;
 			parsed[i] = {type:ref.type, data:''};
-			scopes[0] = ref.if[0];
 
 			// If condition was not meet
-			if(!localEval.apply(self.root, scopes)){
+			if(!ref.if[0].apply(self.root, scopes)){
 				parsed[i].data = elseIfHandle(ref, scopes);
 				continue;
 			}
 
-			scopes[0] = ref.if[1];
-			parsed[i].data = localEval.apply(self.root, scopes);
+			parsed[i].data = ref.if[1].apply(self.root, scopes);
 		}
 	}
 	return parsed;

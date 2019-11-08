@@ -93,3 +93,21 @@ var localEval = function(script, _model_, _modelScope, _content_){
 	if(_result_ !== '') return _result_;
 	return _evaled_;
 }
+
+var modelScript_ = /_result_|return/;
+function modelScript(script){
+	var which = script.match(modelScript_);
+
+	if(which === null)
+		script = 'return '+script;
+	else if(which[0] === '_result_')
+		script = 'var _result_="";'+script+';return _result_';
+
+	script = script
+		.split('_model_').join('arguments[0]').split('arguments[0]:t').join('_model_:t')
+		.split('_modelScope').join('arguments[1]')
+		.split('_content_').join('arguments[2]')
+		.split('@return').join('return');
+
+	return new Function(script);
+}
