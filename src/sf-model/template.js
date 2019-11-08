@@ -37,7 +37,7 @@ var templateExec = function(parse, item, atIndex){
 		if(ref.type === REF_DIRECT){
 			temp = ref.get.apply(self.root, ref.data);
 			if(temp === void 0)
-				temp = ''; // console.error('`'+ref.data[0]+'` was not defined');
+				temp = '';
 			else{
 				if(temp.constructor === Object)
 					temp = JSON.stringify(temp);
@@ -275,6 +275,8 @@ function syntheticTemplate(element, template, property, item){
 
 		if(changes.length === 0) return false;
 	}
+
+	// console.log(542, template.parse, item);
 
 	var parsed = templateExec(template.parse, item, changes);
 	function checkRelatedChanges(parseIndex){

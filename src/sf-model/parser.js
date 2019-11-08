@@ -357,10 +357,10 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 				}
 			}
 			else if(current.type === REF_EXEC){
-				var checkList = current.data[0];
+				var checkList = current.data.shift();
 
 				// Convert to function
-				current.get = modelScript(current.data.shift());
+				current.get = modelScript(checkList);
 			}
 
 			checkList = checkList.replace(/_result_ \+= _content_\.take\(.*?, ([0-9]+)\);/g, function(full, match){

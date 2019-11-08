@@ -134,12 +134,12 @@ sf.component = new function(){
 					var ref = copy.parse[i].data = copy.parse[i].data.slice(0);
 
 					if(_content_ === null && ref.length === 4){
-						_content_ = Object.assign({}, ref[3]);
+						_content_ = Object.assign({}, ref[2]);
 						_content_._modelScope = newObj;
 					}
 
-					ref[2] = newObj;
-					ref[3] = _content_;
+					ref[1] = newObj;
+					ref[2] = _content_;
 				}
 			}
 

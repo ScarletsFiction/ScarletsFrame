@@ -20,8 +20,8 @@ sf.model.for('image', function(self, root){
    self.trans = "translate(0)";
 
    self.dragmove = function(ev){
-      console.log('dragmove called');
-      self.trans = 'translate('+ev.x-this.offsetWidth/2+'px, '+ev.y-this.offsetHeight/2+'px)';
+      console.log('dragmove called', ev);
+      self.trans = 'translate('+(ev.x-this.offsetWidth/2)+'px, '+(ev.y-this.offsetHeight/2)+'px)';
    }
 
    var scale = 1;
