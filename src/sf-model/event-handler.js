@@ -273,6 +273,31 @@ var specialEvent = internal.model.specialEvent = {
 			that.removeEventListener('pointercancel', callbackEnd, {once:true});
 			that.removeEventListener('pointerup', callbackEnd, {once:true});
 		}
+	},
+	filedrop:function(that, keys, script, _modelScope){
+		that.addEventListener('dragover', function dragover(ev){
+			ev.preventDefault();
+		});
+
+		that.addEventListener('drop', function drop(ev){
+			ev.preventDefault();
+
+			if(ev.dataTransfer.items) {
+				var found = [];
+				for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+					if (ev.dataTransfer.items[i].kind === 'file')
+						found.push(ev.dataTransfer.items[i].getAsFile());
+				}
+
+				script.call(that, found);
+			}
+			else script.call(that, ev.dataTransfer.files);
+		});
+
+		that['sf$eventDestroy_filedrop'] = function(){
+			that.removeEventListener('dragover', dragover);
+			that.removeEventListener('drop', drop);
+		}
 	}
 };
 

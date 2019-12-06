@@ -100,8 +100,8 @@ gulp.task('ie11Fast', function(){
 
 gulp.task('compile', async function(done){
   enableCompile();
-  console.log("Please wait a few seconds");
   gulp.task('js')();
+  console.log("Please wait a few seconds");
 });
 
 function swallowError(error){

@@ -97,7 +97,7 @@ once, prevent, stop, passive, capture are available
 ```
 
 Almost all event are supported like keyup, mousedown, touchup, scroll, etc.
-Addional event: `taphold, gesture, dragmove`
+Addional event: `taphold, gesture, dragmove, filedrop`
 
 If you was found some bugs or something, feel free to contact @StefansArya from github or elsewhere.
 

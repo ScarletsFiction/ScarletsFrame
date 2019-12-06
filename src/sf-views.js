@@ -234,43 +234,40 @@ var self = sf.views = function View(selector, name){
 		if(collection === null)
 			collection = DOM.getElementsByTagName('sf-page-view');
 
+		// if(selector_)
+		// 	selector = selector_;
+
 		// Create listener for link click
-		if(DOM){
-			if(selector_)
-				selector = selector_;
+		var temp = null;
 
-			var temp = null;
+		// Bring the content to an sf-page-view element
+		if(DOM.childNodes.length !== 0){
+			if(DOM.childNodes.length === 1 && DOM.firstChild.nodeName === '#text' && DOM.firstChild.textContent.trim() === '')
+				DOM.firstChild.remove();
+			else{
+				temp = document.createElement('sf-page-view');
+				DOM.insertBefore(temp, DOM.firstChild);
 
-			// Bring the content to an sf-page-view element
-			if(DOM.childNodes.length !== 0){
-				if(DOM.childNodes.length === 1 && DOM.firstChild.nodeName === '#text' && DOM.firstChild.textContent.trim() === '')
-					DOM.firstChild.remove();
-				else{
-					temp = document.createElement('sf-page-view');
-					DOM.insertBefore(temp, DOM.firstChild);
-
-					for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
-						temp.appendChild(DOM.childNodes[1]);
-					}
-
-					temp.routePath = currentPath || self.currentPath;
-					temp.routeCached = routes.findRoute(temp.routePath);
-					temp.classList.add('page-current');
-					DOM.defaultViewContent = temp;
+				for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
+					temp.appendChild(DOM.childNodes[1]);
 				}
+
+				temp.routePath = currentPath || self.currentPath;
+				temp.routeCached = routes.findRoute(temp.routePath);
+				temp.classList.add('page-current');
+				DOM.defaultViewContent = temp;
 			}
-
-			DOM.sf$viewInitialized = true;
-
-			if(!isChild){
-				self.currentDOM = temp;
-				rootDOM = DOM;
-				return true;
-			}
-
-			return DOM;
 		}
-		return false;
+
+		DOM.sf$viewInitialized = true;
+
+		if(!isChild){
+			self.currentDOM = temp;
+			rootDOM = DOM;
+			return true;
+		}
+
+		return DOM;
 	}
 
     var selectorList = [selector];
