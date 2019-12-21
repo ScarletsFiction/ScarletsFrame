@@ -25,7 +25,13 @@ self.changeDefault = function(defaultLang){
 
 var interpolate_ = /{(.*?)}/;
 function interpolate(text, obj){
+	var once = false;
 	return text.replace(interpolate_, function(full, match){
+		if(once === false && (obj.constructor === String || obj.constructor === Number)){
+			once = true;
+			return obj;
+		}
+
 		if(obj[match] !== void 0)
 			return obj[match].constructor === Function ? obj[match]() : obj[match];
 
@@ -384,7 +390,7 @@ function elementReferencesRefresh(elem){
 		if(value === void 0){
 			if(pending === false)
 				pending = {};
-			    
+
 			diveObject(pending, key, 1);
 			pendingElement.push(elem);
 			continue;
