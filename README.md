@@ -17,7 +17,7 @@ A frontend framework that can help you write a simple web structure with complex
    - [Views event](#views-event)
    - [Page cache](#set-page-view-cache)
    - [Page transition](#page-transition)
- - [Define Model](#initialize-define-model)
+ - [Define Model](#initializedefine-model)
    - [Model & Template](#model--template-feature)
    - [Views and Model data binding](#views-and-model-data-binding)
  - [Controller](#controller)

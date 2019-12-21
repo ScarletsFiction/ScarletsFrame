@@ -178,7 +178,7 @@
 
          <input type="text" sf-bind="inputBinding1" onkeyup="sf(this).onKeyUp(event)"><br>
          <input type="text" sf-bind="inputBinding1"><br>
-         <span id="test">Var Content: {{ inputBinding1 }}</span><br><br>
+         <span id="test" sf-lang="custom.el.iB1">Var Content: {{ inputBinding1 }}</span><br><br>
 
          <span class="bold" style="
             font-weight: {{ bold ? 'bold' : 'unset' }};
@@ -204,6 +204,11 @@
           </option>
          </select><br><br>
          <input type="file" sf-bind="inputBinding7"><br>
+         <select sf-bind="inputBinding8">
+            <option value="en_US">en_US</option>
+            <option value="id_ID">id_ID</option>
+            <option value="jp_JP">jp_JP</option>
+         </select><br>
 
          <b>Conditional HTML</b><br>
          <div>
@@ -254,8 +259,8 @@
       <div id="lang-test">
         <script>
           sf(function(){
-            sf.lang.default = 'en';
-            sf.lang.add('en', {
+            sf.lang.default = 'en_US';
+            sf.lang.add('en_US', {
               hello:{
                 other:{
                   side:"Hello from the other side"
@@ -263,6 +268,25 @@
               },
               "i'm":{
                 here:"I'm on here!"
+              },
+              custom:{
+                el:{
+                  iB1:"Variable Content: {inputBinding1}"
+                }
+              }
+            });
+            sf.lang.add('id_ID', {
+              custom:{
+                el:{
+                  iB1:"Isi Variabel: {inputBinding1}"
+                }
+              }
+            });
+            sf.lang.add('jp_JP', {
+              custom:{
+                el:{
+                  iB1:"可変コンテンツ：{inputBinding1}"
+                }
               }
             });
             sf.lang.serverURL = '/test/lang';

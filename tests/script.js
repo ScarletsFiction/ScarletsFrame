@@ -85,7 +85,7 @@ sf.model.for('virtual-scroll', function(self, root){
 
 var aList = null;
 sf(function(){
-   var list = aList = sf.model('virtual-scroll');
+   var list = aList = sf.model('virtual-scroll');return;
 
    setTimeout(function(){
       list.list1.splice(5, 0, {id:"I'm at pos 2"});
@@ -222,6 +222,12 @@ sf.model.for('model-binding', function(self, root){
       console.warn("inputBinding2 was modified from:", news, 'to', Math.round(news));
       return Math.round(news);
    };
+
+   self.inputBinding8 = '';
+   self.v2m$inputBinding8 = function(old, news){
+      sf.lang.changeDefault(news);
+   }
+
 
    self.text = 'main model';
    self.inputBinding6a = [

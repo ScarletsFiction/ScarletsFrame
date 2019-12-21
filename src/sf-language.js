@@ -16,6 +16,11 @@ self.add = function(lang, obj){
 	diveFill(self.list[lang], obj);
 }
 
+self.changeDefault = function(defaultLang){
+	self.default = defaultLang;
+	console.log(defaultLang);
+}
+
 var interpolate_ = /{(.*?)}/;
 function interpolate(text, obj){
 	return text.replace(interpolate_, function(full, match){
@@ -139,8 +144,7 @@ function getMany(paths, obj, callback){
 		for (var i = 0; i < missing.length; i++) {
 			var temp = diveObject(default_, missing[i]);
 
-			if(temp)
-				value[missing[i]] = temp;
+			diveObject(value, missing[i], temp);
 		}
 
 		return callback(value);
@@ -163,7 +167,7 @@ self.assign = function(model, keyPath, obj, callback){
 
 	getMany(vals, obj, function(values){
 		for (var i = 0; i < keys.length; i++) {
-			model[keys[i]] = values[vals[i]];
+			model[keys[i]] = diveObject(values, vals[i]);
 		}
 
 		if(callback)
