@@ -382,8 +382,11 @@ function elementReferencesRefresh(elem){
 		var value = diveObject(self.list[self.default], key);
 
 		if(value === void 0){
-			console.log(diveObject, self.default, key);
-			console.error(key, "wasn't found");
+			if(pending === false)
+				pending = {};
+			    
+			diveObject(pending, key, 1);
+			pendingElement.push(elem);
 			continue;
 		}
 

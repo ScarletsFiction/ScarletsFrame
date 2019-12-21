@@ -44,6 +44,7 @@ myserver.on('httpstatus', function(code, callback){
 });
  
 myserver.on('navigation', function(data){
+    if(data === null)return;
     console.log("Navigation to '"+data.path+"'");
     console.log('  - '+data.headers['user-agent']);
 });

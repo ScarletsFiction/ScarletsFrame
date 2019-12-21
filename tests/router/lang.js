@@ -12,6 +12,27 @@ var languages = {
             day:'Sunday!',
             friend:'Aliz!',
         },
+    },
+    ja_JP:{
+        second:'第二!',
+        my:{
+            test:'私のテスト!'
+        },
+        stuff:{
+            chicken:'オンドリ!',
+            game:'中秋の名月!',
+        },
+        another:{
+            day:'日曜日!',
+            friend:'Aliz!',
+        },
+        custom:{
+          el:{
+            iB1:"可変コンテンツ：{inputBinding1}",
+            iB2:"上記のコンテンツ：{inputBinding1}",
+            iB3:"それは{input}です"
+          }
+        }
     }
 };
 
@@ -37,6 +58,9 @@ module.exports = {
 
         if(json.second)
             obj.second = lang.second;
+
+        if(json.custom)
+            obj.custom = lang.custom;
 
         if(json.stuff){
             obj.stuff = {};
