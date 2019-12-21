@@ -456,13 +456,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		return keys;
 	}
 
-	var currentElement = addressAttributes(copy);
-	if(currentElement.length !== 0)
-		addressed.push({
-			nodeType:1,
-			address:[0],
-			attributes:currentElement
-		});
+	// var currentElement = addressAttributes(copy);
+	// if(currentElement.length !== 0)
+	// 	addressed.push({
+	// 		nodeType:1,
+	// 		address:[0],
+	// 		attributes:currentElement
+	// 	});
 
 	for (var i = 0; i < nodes.length; i++) {
 		var temp = {

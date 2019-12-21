@@ -346,16 +346,19 @@ function refreshLang(list, noPending){
 			var ref = model.sf$bindedKey[keys[z]];
 
 			for (var i = 0; i < ref.length; i++) {
-				var elem = ref[i].element || ref[i].attribute || ref[i].parentElement;
-				if(elem.hasAttribute('sf-lang') !== false){
+				if(ref[i].constructor === Function){
+					ref[i](model[keys[z]], ref.input);
+					continue;
+				}
+
+				var elem = ref[i].element;
+				if(elem.nodeType === 1 && elem.hasAttribute('sf-lang') !== false){
 					if(appliedElement.has(elem))
 						continue;
 
 					appliedElement.add(elem);
 					if(internal.model.syntheticTemplate(elem, ref[i].template, void 0, model) === false)
 						0; //No update
-
-					continue;
 				}
 			}
 		}
@@ -366,11 +369,12 @@ function elementReferencesRefresh(elem){
 	var eRef = elem.sf$elementReferences;
 
 	for (var i = 0; i < eRef.length; i++) {
-		console.log(3213123, eRef[i]);
-		if(eRef[i].textContent === void 0)
-			continue;
+		if(eRef[i].textContent !== void 0)
+			var parent = eRef[i].textContent.parentElement;
+		else if(eRef[i].attribute !== void 0)
+			var parent = eRef[i].attribute;
+		else continue;
 
-		var parent = eRef[i].textContent.parentElement;
 		if(!parent.hasAttribute('sf-lang'))
 			continue;
 
@@ -387,7 +391,6 @@ function elementReferencesRefresh(elem){
 		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
 			return '{{%='+(z++);
 		});
-		console.warn(3212131, eRef[i].ref);
 	}
 }
 

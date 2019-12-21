@@ -19,8 +19,8 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		if(modelRef.sf$bindedKey === void 0)
 			initBindingInformation(modelRef);
 
-		if(modelRef.sf$bindedKey[refName[1]] === void 0)
-			modelRef.sf$bindedKey[refName[1]] = null;
+		// if(modelRef.sf$bindedKey[refName[1]] === void 0)
+		// 	modelRef.sf$bindedKey[refName[1]] = null;
 
 		;(function(){
 			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode);
