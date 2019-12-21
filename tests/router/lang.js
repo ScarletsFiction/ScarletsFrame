@@ -1,5 +1,5 @@
 var languages = {
-    en:{
+    en_US:{
         second:'Second!',
         my:{
             test:'My Test!'

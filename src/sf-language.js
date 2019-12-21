@@ -9,6 +9,8 @@ self.default = 'en';
 self.serverURL = false;
 self.interpolate = {}
 
+internal.language = {};
+
 self.add = function(lang, obj){
 	if(self.list[lang] === void 0)
 		self.list[lang] = {};
@@ -18,7 +20,7 @@ self.add = function(lang, obj){
 
 self.changeDefault = function(defaultLang){
 	self.default = defaultLang;
-	console.log(defaultLang);
+	self.init(document.body);
 }
 
 var interpolate_ = /{(.*?)}/;
@@ -196,6 +198,8 @@ self.onError = false;
 
 self.init = function(el){
 	var list = el.querySelectorAll('[sf-lang]');
+	if(list.length === 0)
+		return;
 
 	if(self.list[self.default] === void 0)
 		self.list[self.default] = {};
@@ -244,8 +248,35 @@ function diveObject(obj, path, setValue){
     return obj;
 }
 
+internal.language.refreshLang = function(el){
+	if(el.constructor === Array){
+		var arr = [];
+		for (var i = 0; i < el.length; i++) {
+			if(el[i].hasAttribute === void 0)
+				continue;
+
+			if(el[i].hasAttribute('sf-lang'))
+				arr.push(el[i]);
+		}
+		return refreshLang(arr);
+	}
+
+	if(el.hasAttribute === void 0)
+		return;
+
+	if(el.hasAttribute('sf-lang'))
+		return refreshLang([el]);
+
+	el = el.querySelectorAll('[sf-lang]');
+	if(el.length === 0)
+		return;
+
+	refreshLang(el);
+};
+
 function refreshLang(list, noPending){
 	var defaultLang = self.list[self.default];
+	var parentElement = new Set();
 
 	for (var i = list.length-1; i >= 0; i--) {
 		if(list[i].sf_lang === self.default && noPending === true){
@@ -254,6 +285,28 @@ function refreshLang(list, noPending){
 		}
 
 		var elem = list[i];
+
+		// Preserve model/component binding
+		if(elem.sf$elementReferences !== void 0){
+			elementReferencesRefresh(elem);
+			parentElement.add(elem);
+			continue;
+		}
+		else{
+			var modelElement = sf.controller.modelElement(elem);
+			if(modelElement !== null){
+				if(modelElement.tagName !== 'SF-M'){
+					if(parentElement.has(modelElement))
+						continue;
+
+					// Run below once
+					elementReferencesRefresh(modelElement);
+					parentElement.add(modelElement);
+				}
+				continue;
+			}
+		}
+
 		var target = elem.getAttribute('sf-lang');
 		var value = diveObject(defaultLang, target);
 
@@ -277,6 +330,64 @@ function refreshLang(list, noPending){
 		else
 			elem.textContent = value;
 		elem.sf_lang = self.default;
+	}
+
+	if(parentElement.size === 0)
+		return;
+
+	parentElement = Array.from(parentElement);
+	var appliedElement = new Set();
+
+	// Reapply template
+	for (var a = 0; a < parentElement.length; a++) {
+		var model = parentElement[a].model;
+		var keys = Object.keys(model.sf$bindedKey);
+		for (var z = 0; z < keys.length; z++) {
+			var ref = model.sf$bindedKey[keys[z]];
+
+			for (var i = 0; i < ref.length; i++) {
+				var elem = ref[i].element || ref[i].attribute || ref[i].parentElement;
+				if(elem.hasAttribute('sf-lang') !== false){
+					if(appliedElement.has(elem))
+						continue;
+
+					appliedElement.add(elem);
+					if(internal.model.syntheticTemplate(elem, ref[i].template, void 0, model) === false)
+						0; //No update
+
+					continue;
+				}
+			}
+		}
+	}
+}
+
+function elementReferencesRefresh(elem){
+	var eRef = elem.sf$elementReferences;
+
+	for (var i = 0; i < eRef.length; i++) {
+		console.log(3213123, eRef[i]);
+		if(eRef[i].textContent === void 0)
+			continue;
+
+		var parent = eRef[i].textContent.parentElement;
+		if(!parent.hasAttribute('sf-lang'))
+			continue;
+
+		var key = parent.getAttribute('sf-lang');
+		var value = diveObject(self.list[self.default], key);
+
+		if(value === void 0){
+			console.log(diveObject, self.default, key);
+			console.error(key, "wasn't found");
+			continue;
+		}
+
+		var z = 0;
+		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
+			return '{{%='+(z++);
+		});
+		console.warn(3212131, eRef[i].ref);
 	}
 }
 

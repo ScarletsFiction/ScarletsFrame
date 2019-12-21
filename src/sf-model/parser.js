@@ -579,6 +579,8 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		specialRepeat[i] = $.getSelector(specialRepeat[i], true);
 	}
 
+	// internal.language.refreshLang(copy);
+
 	return {
 		html:copy,
 		parse:preParsed,

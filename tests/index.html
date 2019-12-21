@@ -178,7 +178,7 @@
 
          <input type="text" sf-bind="inputBinding1" onkeyup="sf(this).onKeyUp(event)"><br>
          <input type="text" sf-bind="inputBinding1"><br>
-         <span id="test" sf-lang="custom.el.iB1">Var Content: {{ inputBinding1 }}</span><br><br>
+         <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }}</span><br><br>
 
          <span class="bold" style="
             font-weight: {{ bold ? 'bold' : 'unset' }};
@@ -186,8 +186,13 @@
          ">Another one</span><br>
 
          <textarea type="text" sf-into="inputBinding2" placeholder="will round a number if called from script"></textarea><br>
-         <input type="text" value="It's {{inputBinding2}}" disabled><br>
-         <span>Var Content: {{ inputBinding2 }}</span><br><br>
+         <input type="text" value="It's {{inputBinding2}}" sf-lang="custom.el.iB3" disabled><br>
+         <span sf-lang="custom.el.iB2">Above Content: {{ inputBinding2 }}</span><br><br>
+         <select sf-bind="inputBinding8">
+            <option value="en_US">en_US</option>
+            <option value="id_ID">id_ID</option>
+            <option value="jp_JP">jp_JP</option>
+         </select><br>
 
          <input type="checkbox" value="check1" sf-bind="inputBinding3">Check 1
          <input type="checkbox" value="check2" sf-bind="inputBinding3">Check 2<br>
@@ -204,11 +209,6 @@
           </option>
          </select><br><br>
          <input type="file" sf-bind="inputBinding7"><br>
-         <select sf-bind="inputBinding8">
-            <option value="en_US">en_US</option>
-            <option value="id_ID">id_ID</option>
-            <option value="jp_JP">jp_JP</option>
-         </select><br>
 
          <b>Conditional HTML</b><br>
          <div>
@@ -271,21 +271,27 @@
               },
               custom:{
                 el:{
-                  iB1:"Variable Content: {inputBinding1}"
+                  iB1:"Variable content: {inputBinding1}",
+                  iB2:"Above content: {inputBinding1}",
+                  iB3:"It's {input}"
                 }
               }
             });
             sf.lang.add('id_ID', {
               custom:{
                 el:{
-                  iB1:"Isi Variabel: {inputBinding1}"
+                  iB1:"Kontent variabel: {inputBinding1}",
+                  iB2:"Kontent diatas: {inputBinding1}",
+                  iB3:"Itu adalah {input}"
                 }
               }
             });
             sf.lang.add('jp_JP', {
               custom:{
                 el:{
-                  iB1:"可変コンテンツ：{inputBinding1}"
+                  iB1:"可変コンテンツ：{inputBinding1}",
+                  iB2:"可変コンテンツ：{inputBinding1}",
+                  iB3:"それは{input}です"
                 }
               }
             });

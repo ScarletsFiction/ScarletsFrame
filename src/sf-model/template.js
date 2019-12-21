@@ -175,6 +175,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 	// Save reference to element
 	html.sf$elementReferences = changesReference;
+	internal.language.refreshLang(html);
 	// html.sf$modelParsed = parsed;
 
 	// Run the pending element
@@ -232,7 +233,7 @@ function syntheticCache(element, template, item){
 	}
 }
 
-function syntheticTemplate(element, template, property, item){
+var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item){
 	var cache = element.sf$cache;
 	var modelRef_array = template.modelRef_array;
 
@@ -312,12 +313,15 @@ function syntheticTemplate(element, template, property, item){
 				var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 				var notExist = false;
 
+				// internal.language.refreshLang(tDOM);
+
 				// Replace if exist, skip if similar
 				for (var a = 0; a < tDOM.length; a++) {
 					if(currentDOM[a] === void 0){
 						notExist = true;
 						break;
 					}
+
 					if(currentDOM[a].isEqualNode(tDOM[a]) === false)
 						cRef.parentNode.replaceChild(tDOM[a], currentDOM[a]);
 				}
