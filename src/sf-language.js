@@ -5,7 +5,7 @@ var self = sf.lang = function(el){
 }
 
 self.list = {};
-self.default = 'en';
+self.default = 'en_US';
 self.serverURL = false;
 self.interpolate = {}
 
@@ -49,6 +49,9 @@ self.get = function(path, obj, callback){
 		callback = obj;
 		obj = void 0;
 	}
+
+	if(self.list[self.default] === void 0)
+		self.list[self.default] = {};
 
 	if(path.constructor === String)
 		return getSingle(path, obj, callback);
@@ -165,6 +168,9 @@ function getMany(paths, obj, callback){
 }
 
 self.assign = function(model, keyPath, obj, callback){
+	if(self.list[self.default] === void 0)
+		self.list[self.default] = {};
+
 	var keys = Object.keys(keyPath);
 	var vals = Object.values(keyPath);
 
@@ -284,6 +290,9 @@ function refreshLang(list, noPending){
 	var defaultLang = self.list[self.default];
 	var parentElement = new Set();
 
+	if(defaultLang === void 0)
+		defaultLang = self.list[self.default] = {};
+
 	for (var i = list.length-1; i >= 0; i--) {
 		if(list[i].sf_lang === self.default && noPending === true){
 			list.splice(i, 1);
@@ -300,16 +309,16 @@ function refreshLang(list, noPending){
 		}
 		else{
 			var modelElement = sf.controller.modelElement(elem);
-			if(modelElement !== null){
-				if(modelElement.tagName !== 'SF-M'){
-					if(parentElement.has(modelElement))
-						continue;
+			if(modelElement !== null && modelElement.tagName !== 'SF-M'){
+				if(parentElement.has(modelElement))
+					continue;
 
-					// Run below once
+				// Run below once
+				if(modelElement.sf$elementReferences !== void 0){
 					elementReferencesRefresh(modelElement);
 					parentElement.add(modelElement);
+					continue;
 				}
-				continue;
 			}
 		}
 
