@@ -16,6 +16,20 @@ self.add = function(lang, obj){
 		self.list[lang] = {};
 
 	diveFill(self.list[lang], obj);
+
+	pending = false;
+	if(pendingCallback.length === 0)
+		return;
+
+	var defaultLang = self.list[self.default];
+	for (var i = 0; i < pendingCallback.length; i++) {
+		if(pendingCallback[i].callbackOnly === void 0)
+			pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
+		else
+			pendingCallback[i]();
+	}
+
+	pendingCallback.length = 0;
 }
 
 self.changeDefault = function(defaultLang){
@@ -60,7 +74,8 @@ self.get = function(path, obj, callback){
 }
 
 function startRequest(){
-	if(pending === false) return;
+	if(pending === false || self.serverURL === false)
+		return;
 
 	// Request to server after 500ms
 	// To avoid multiple request
@@ -80,16 +95,6 @@ function startRequest(){
 			success:function(obj){
 				pending = false;
 				self.add(self.default, obj);
-
-				var defaultLang = self.list[self.default];
-				for (var i = 0; i < pendingCallback.length; i++) {
-					if(pendingCallback[i].callbackOnly === void 0)
-						pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
-					else
-						pendingCallback[i]();
-				}
-
-				pendingCallback.length = 0;
 			},
 			error:self.onError,
 		});
@@ -231,7 +236,7 @@ self.init = function(el){
 	}
 
 	if(pending !== false && self.serverURL === false)
-		console.warn("Some language was not found, and the serverURL was set to false");
+		console.warn("Some language was not found, and the serverURL was set to false", pending);
 }
 
 function diveObject(obj, path, setValue){
