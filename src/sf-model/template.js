@@ -102,10 +102,15 @@ var templateParser = internal.model.templateParser = function(template, item, or
 					(current.tagName === 'INPUT' && /checkbox|radio|hidden/.test(current.type) === false)
 				));
 
-				changesReference.push({
+				var temp = {
 					attribute:isValueInput === true ? current : current.attributes[refB.name],
 					ref:refB
-				});
+				};
+
+				if(current.hasAttribute('sf-lang'))
+					temp.sf_lang = current;
+
+				changesReference.push(temp);
 
 				if(refB.direct !== void 0){
 					if(refB.name === 'value' && isValueInput === true){

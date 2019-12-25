@@ -345,8 +345,8 @@ function refreshLang(list, noPending){
 		if(noPending === true)
 			list.splice(i, 1);
 
-		if(elem.tagName === 'INPUT')
-			elem.placeholder = value;
+		if(elem.hasAttribute('placeholder'))
+			elem.setAttribute('placeholder', value);
 		else
 			elem.textContent = value;
 		elem.sf_lang = self.default;
@@ -361,6 +361,9 @@ function refreshLang(list, noPending){
 	// Reapply template
 	for (var a = 0; a < parentElement.length; a++) {
 		var model = parentElement[a].model;
+		if(!model.sf$bindedKey) // Doesn't have template
+			continue;
+
 		var keys = Object.keys(model.sf$bindedKey);
 		for (var z = 0; z < keys.length; z++) {
 			var ref = model.sf$bindedKey[keys[z]];
@@ -389,16 +392,20 @@ function elementReferencesRefresh(elem){
 	var eRef = elem.sf$elementReferences;
 
 	for (var i = 0; i < eRef.length; i++) {
-		if(eRef[i].textContent !== void 0)
+		if(eRef[i].textContent !== void 0){
 			var parent = eRef[i].textContent.parentElement;
-		else if(eRef[i].attribute !== void 0)
-			var parent = eRef[i].attribute;
+
+			if(!parent.hasAttribute('sf-lang'))
+				continue;
+
+			var key = parent.getAttribute('sf-lang');
+		}
+		else if(eRef[i].sf_lang !== void 0){
+			var parent = eRef[i].sf_lang;
+			var key = eRef[i].sf_lang.getAttribute('sf-lang');
+		}
 		else continue;
 
-		if(!parent.hasAttribute('sf-lang'))
-			continue;
-
-		var key = parent.getAttribute('sf-lang');
 		var value = diveObject(self.list[self.default], key);
 
 		if(value === void 0){
