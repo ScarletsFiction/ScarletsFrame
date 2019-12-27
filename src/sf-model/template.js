@@ -179,7 +179,9 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	html.model = item;
 
 	// Save reference to element
-	html.sf$elementReferences = changesReference;
+	if(changesReference.length !== 0)
+		html.sf$elementReferences = changesReference;
+
 	internal.language.refreshLang(html);
 	// html.sf$modelParsed = parsed;
 
