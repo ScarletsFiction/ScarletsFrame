@@ -224,12 +224,12 @@ var self = sf.views = function View(selector, name){
 	self.selector = function(selector_, isChild, currentPath){
 		initialized = true;
 
-		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document)).querySelector(selector_ || selector);
+		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document.body)).getElementsByTagName(selector_ || selector);
+		if(DOM.length === 0) return false;
 
-		if(!DOM) return false;
+		DOM = DOM[0];
 
-		if(DOM.sf$viewInitialized)
-			return false;
+		if(DOM.sf$viewInitialized) return false;
 
 		if(collection === null)
 			collection = DOM.getElementsByTagName('sf-page-view');
@@ -422,7 +422,7 @@ var self = sf.views = function View(selector, name){
 			if(rootDOM.nodeType !== void 0)
 				rootDOM = {};
 
-			if(!self.selector());
+			if(self.selector() === false)
 				return console.error(name, "can't route to", path, "because element with selector '"+selector+"' was not found");
 		}
 

@@ -347,8 +347,25 @@ function refreshLang(list, noPending){
 
 		if(elem.hasAttribute('placeholder'))
 			elem.setAttribute('placeholder', value);
-		else
-			elem.textContent = value;
+		else{
+			if(value.indexOf('[') !== -1){
+				var deep = [];
+				value = value.replace(/\[(.*?)\]/g, function(full, match){
+					deep.push(match);
+					return '*#';
+				}).split('*#');
+
+				var nodes = elem.childNodes;
+				for (var a = 0; a < nodes.length; a++) {
+					if(nodes[a].nodeType === 3 && value.length !== 0) // text
+						nodes[a].textContent = value.shift();
+
+					else if(nodes[a].nodeType === 1 && deep.length !== 0) // element
+						nodes[a].textContent = deep.shift();
+				}
+			}
+			else elem.textContent = value;
+		}
 		elem.sf_lang = self.default;
 	}
 
