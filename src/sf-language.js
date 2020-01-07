@@ -221,7 +221,7 @@ self.init = function(el){
 	if(self.list[self.default] === void 0)
 		self.list[self.default] = {};
 
-	refreshLang(list);
+	refreshLang(Array.from(list));
 
 	if(pending !== false && self.serverURL !== false){
 		var callback = function(){
@@ -288,7 +288,7 @@ internal.language.refreshLang = function(el){
 	if(el.length === 0)
 		return;
 
-	refreshLang(el);
+	refreshLang(Array.from(el));
 };
 
 function refreshLang(list, noPending){
@@ -299,7 +299,7 @@ function refreshLang(list, noPending){
 		defaultLang = self.list[self.default] = {};
 
 	for (var i = list.length-1; i >= 0; i--) {
-		if(list[i].sf_lang === self.default && noPending === true){
+		if((list[i].sf_lang === self.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
 			list.splice(i, 1);
 			continue;
 		}
