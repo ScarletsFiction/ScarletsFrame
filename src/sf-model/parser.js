@@ -388,7 +388,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 
 	// Restore element repeated list
 	var restore = copy.querySelectorAll('sfrepeat-this');
-	for (var i = 0; i < restore.length; i++) {
+	for (var i = 0; i < backup.length; i++) {
 		var current = restore[i];
 		current.parentNode.replaceChild(backup[i], current);
 	}
