@@ -1,5 +1,18 @@
-sf.component = new function(){
-	var self = this;
+sf.component = function(scope){
+	var list = sf.component.available[scope];
+	if(list === void 0)
+		return [];
+
+	var ret = [];
+	for (var i = 0; i < list.length; i++) {
+		ret.push(sf.model.root[list[i]]);
+	}
+
+	return ret;
+}
+
+;(function(){
+	var self = sf.component;
 	var scope = internal.component = {
 		list:{}
 	};
@@ -259,4 +272,4 @@ sf.component = new function(){
 
 		window['$'+name] = func;
 	}
-};
+})();
