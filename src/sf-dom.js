@@ -113,8 +113,15 @@ var $ = sf.dom; // Shortcut
 		},
 		children:function(selector){
 			var t = [];
-			for (var i = 0; i < this.length; i++)
-				t.push.apply(t, this[i].children);
+
+			for (var a = 0; a < this.length; a++) {
+				var child = this[a].children;
+
+				for (var i = 0; i < child.length; i++){
+					if(child[i].matches(selector))
+						t.push(child[i]);
+				}
+			}
 			return new DOMList(t);
 		},
 
