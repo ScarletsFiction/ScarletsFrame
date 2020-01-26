@@ -509,6 +509,15 @@ var self = sf.views = function View(selector, name){
 					else if(parent.childElementCount > 1)
 						parent.firstElementChild.nextElementSibling.remove();
 				}
+
+				if(url.on !== void 0 && url.on.showed)
+					url.on.showed(self.data);
+
+				if(tempDOM !== null){
+					// Old route
+					if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.hidden)
+						tempDOM.routeCached.on.hidden(path, url);
+				}
 			});
 		}
 
@@ -656,6 +665,7 @@ var self = sf.views = function View(selector, name){
 		if(cachedDOM === false)
 			return false;
 
+		var lastDOM = self.currentDOM;
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
 			self.currentDOM.routeCached.on.leaving();
 
@@ -674,6 +684,12 @@ var self = sf.views = function View(selector, name){
 
 		self.lastPath = self.currentPath;
 		self.currentPath = self.currentDOM.routePath;
+
+		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.showed)
+			self.currentDOM.routeCached.on.showed();
+
+		if(lastDOM.routeCached.on !== void 0 && lastDOM.routeCached.on.hidden)
+			lastDOM.routeCached.on.hidden();
 
 		return true;
 	}
