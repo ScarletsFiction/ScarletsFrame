@@ -60,8 +60,11 @@ internal.virtual_scroll = new function(){
 			virtual.visibleLength = Math.floor(scroller.clientHeight / virtual.scrollHeight);
 			virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
 
-			if(virtual.preparedLength < 18)
-				virtual.preparedLength = 18;
+			// ToDo: virtual scroll of dynamic component
+			// console.warn(scroller, virtual.visibleLength, virtual.preparedLength, scroller.clientHeight, virtual.scrollHeight);
+
+			if(virtual.preparedLength < 18 || virtual.preparedLength === NaN)
+				virtual.visibleLength = virtual.preparedLength = 18;
 		}
 
 		setTimeout(function(){
@@ -120,8 +123,8 @@ internal.virtual_scroll = new function(){
 		virtual.visibleLength = parentNode.childElementCount - 2;
 		virtual.preparedLength = virtual.visibleLength + self.prepareCount * 2;
 
-		if(virtual.preparedLength < 18)
-			virtual.preparedLength = 18;
+		if(virtual.preparedLength < 18 || virtual.preparedLength === NaN)
+			virtual.visibleLength = virtual.preparedLength = 18;
 
 		for (var i = 0; i < self.prepareCount; i++) {
 			var temp = vCursor.floor;
