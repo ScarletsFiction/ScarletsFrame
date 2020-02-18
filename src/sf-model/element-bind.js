@@ -9,6 +9,9 @@ internal.model.removeModelBinding = function(ref, noBackup){
 			continue;
 
 		for (var i = bindedKey[key].length-1; i >= 0; i--) {
+			if(bindedKey[key][i].constructor === Function)
+				continue;
+
 			if(!bindedKey[key][i].element.isConnected)
 				bindedKey[key].splice(i, 1);
 		}
