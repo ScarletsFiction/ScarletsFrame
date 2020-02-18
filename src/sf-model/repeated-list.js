@@ -24,7 +24,6 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 		;(function(){
 			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode);
-			window.asd = RE;
 			Object.defineProperty(modelRef, refName[1], {
 				enumerable: true,
 				configurable: true,
