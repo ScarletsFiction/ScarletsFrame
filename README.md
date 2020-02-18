@@ -9,7 +9,7 @@ A frontend framework that can help you write a simple web structure with complex
 ## Table of contents
  - [Example](#example)
  - [Migrating from 0.18.5 to 0.21.0](#migration)
- - [Install](#install-with-cdn-link)
+ - [Install](#install-from-template)
  - [Hints](#hints)
  - [Asset Loader](#asset-loader)
  - [Router / Views](#router--views)
@@ -100,6 +100,9 @@ Almost all event are supported like keyup, mousedown, touchup, scroll, etc.
 Addional event: `taphold, gesture, dragmove, filedrop`
 
 If you was found some bugs or something, feel free to contact @StefansArya from github or elsewhere.
+
+## Install from template
+For easily starting the development environment, you can fork or clone from [default template](https://github.com/StefansArya/scarletsframe-default).
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -250,12 +253,6 @@ myView.addRoute([
     },
   },
   
-  // Route: normal
-  {
-    path:'/login',
-    url:'/login'
-  },
-  
   // Route: with dynamic path
   {
     // Dynamic path depend on the pattern
@@ -286,17 +283,23 @@ myView.addRoute([
       path:'/gallery',
       url:'/user/gallery'
     }]
-  },
-
-  // Route: with written template
-  {
-    path:'/home',
-    html:`
-    <span>Home</span>
-`
   }
 ]);
 ```
+
+There are another options too:
+| property | description |
+|---|---|
+| path | Route URL that will be used for `view.goto()` |
+| url | Route into dynamic URL |
+| template | Use `window.templates` property if exist |
+| templateURL | Use template from an URL |
+| html | Use template from HTML string |
+| on | Callback for `coming` and `leaving` |
+| routes | Nested route for current path |
+| beforeRoute | Callback before starting the router |
+| defaultData | Object that will be passed as default data |
+| cache | Keep the current DOM on the DOM tree |
 
 These route will valid for your current tab, and can also being called like
 ```html
