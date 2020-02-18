@@ -76,7 +76,7 @@ internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	var routes = [];
 	var pattern = /\/:([^/]+)/g;
-    var knownKeys = /^(path|url|templateURL|html|on|routes|beforeRoute|defaultData|cache)$/;
+    var knownKeys = /^(path|url|template|templateURL|html|on|routes|beforeRoute|defaultData|cache)$/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -104,15 +104,20 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			else if(ref.templateURL !== void 0)
 				route.templateURL = ref.templateURL;
 
+			else if(ref.template !== void 0)
+				route.template = ref.template;
+
 			else if(ref.html !== void 0){
 				// Create new element
 				var dom = route.html = document.createElement('sf-page-view');
+				internal.component.skip = true;
 
 				if(ref.html.constructor === String)
 					dom.innerHTML = ref.html;
 				else
 					dom.appendChild(ref.html);
 
+				internal.component.skip = false;
 				dom.classList.add('page-prepare');
 			}
 
@@ -400,6 +405,8 @@ var self = sf.views = function View(selector, name){
 		if(self.currentPath === path)
 			return;
 
+		pendingAutoRoute = false;
+
 		// Get template URL
 		var url = routes.findRoute(path);
 		if(!url) return;
@@ -436,6 +443,8 @@ var self = sf.views = function View(selector, name){
 			if(onEvent['routeStart'][i](self.currentPath, path)) return;
 		}
 
+		self.data = url.data;
+
 		function insertLoadedElement(DOMReference, dom, parentNode, pendingShowed){
 			if(parentNode)
 				dom.parentPageElement = parentNode;
@@ -446,10 +455,10 @@ var self = sf.views = function View(selector, name){
 				dom.firstChild.remove();
 			}
 
+			Object.assign(self.data, dom.routerData)
+
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
-			Object.assign(dom.routerData, url.data)
-			self.data = dom.routerData;
 
 			if(self.dynamicScript !== false){
 				var scripts = dom.getElementsByTagName('script');
@@ -591,6 +600,19 @@ var self = sf.views = function View(selector, name){
 		if(url.templateURL !== void 0 && cachedURL[url.templateURL] !== void 0){
 			afterDOMLoaded(cachedURL[url.templateURL].cloneNode(true));
 			return true;
+		}
+
+		if(url.template && url.html === void 0){
+			if(window.templates === void 0)
+				return console.error("`window.templates` was not found");
+			internal.component.skip = true;
+
+			// Create new element
+			url.html = document.createElement('sf-page-view');
+			url.html.innerHTML = window.templates[url.template+'.html'];
+
+			internal.component.skip = false;
+			url.html.classList.add('page-prepare');
 		}
 
 		if(url.html){
