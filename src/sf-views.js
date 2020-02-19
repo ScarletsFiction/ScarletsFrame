@@ -5,7 +5,6 @@ routerEval = void 0; // Avoid this function being invoked out of scope
 var rejectResponse = /<html/;
 
 // Save reference
-var aHashes = sf.url.hashes;
 var slash = '/';
 
 var routingError = false;
@@ -346,8 +345,8 @@ var self = sf.views = function View(selector, name){
 				}
 
 				if(pendingAutoRoute){
-					if(aHashes[name] !== void 0)
-						firstRouted = self.goto(aHashes[name]);
+					if(sf.url.hashes[name] !== void 0)
+						firstRouted = self.goto(sf.url.hashes[name]);
 					else
 						firstRouted = self.goto('/');
 
@@ -451,17 +450,17 @@ var self = sf.views = function View(selector, name){
 		routes.splice(i, 1);
 	}
 
-	self.goto = function(path, data, method, _callback){
+	self.goto = function(path, data, method, callback, _disableHistory){
 		if(self.currentPath === path)
 			return;
 
 		if(data !== void 0 && data.constructor === Function){
-			_callback = data;
+			callback = data;
 			data = void 0;
 		}
 
 		if(method !== void 0 && method.constructor === Function){
-			_callback = method;
+			callback = method;
 			method = void 0;
 		}
 
@@ -478,10 +477,10 @@ var self = sf.views = function View(selector, name){
 		if(name === slash)
 			sf.url.paths = path;
 		else if(name)
-			aHashes[name] = path;
+			sf.url.hashes[name] = path;
 
 		// This won't trigger popstate event
-		if(!disableHistoryPush && !_callback)
+		if(!disableHistoryPush && _disableHistory === void 0)
 			sf.url.push();
 
 		// Check if view was exist
@@ -642,18 +641,18 @@ var self = sf.views = function View(selector, name){
 							DOMReference = parentNode.sf$viewSelector[selectorName];
 							insertLoadedElement(DOMReference, dom, parentNode);
 
-							if(_callback) return _callback(dom);
+							if(callback) return callback(dom);
 
 							var defaultViewContent = dom.parentNode.defaultViewContent;
-							if(defaultViewContent.routePath !== path)
+							if(defaultViewContent !== void 0 && defaultViewContent.routePath !== path)
 								defaultViewContent.classList.remove('page-current');
-						});
+						}, true);
 					}
 				}
 			}
 
 			insertLoadedElement(DOMReference, dom, false, pendingShowed);
-			if(_callback) _callback(dom);
+			if(callback) callback(dom);
 		}
 
 		//(url.url || path)
@@ -714,7 +713,7 @@ var self = sf.views = function View(selector, name){
 		return true;
 	}
 
-	// Use to cache if exist
+	// Use cache if exist
 	function tryCache(path){
 		var cachedDOM = false;
 
