@@ -316,7 +316,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.dynamicFlag !== void 0){ // Dynamic data
 			if(parsed[cRef.direct] !== void 0){
-				var tDOM = $.parseElement(parsed[cRef.direct].data, true).reverse();
+				var tDOM = Array.from($.parseElement(parsed[cRef.direct].data, true)).reverse();
 				var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 				var notExist = false;
 

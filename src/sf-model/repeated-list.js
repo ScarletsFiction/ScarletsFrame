@@ -71,7 +71,12 @@ class RepeatedElement extends Array{
 			}
 		});
 
-		var isComponent = internal.component[element.tagName] !== void 0 
+		if(internal.component[element.tagName] === 0){
+			internal.component[element.tagName] = 1;
+			sf.component.registered[element.tagName.toLowerCase()][3] = element;
+		}
+
+		var isComponent = internal.component[element.tagName] !== void 0
 			? window['$'+capitalizeLetters(element.tagName.toLowerCase().split('-'))]
 			: false;
 
