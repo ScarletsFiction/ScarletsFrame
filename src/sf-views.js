@@ -164,6 +164,9 @@ internal.router.parseRoutes = function(obj_, selectorList){
 		}
 	}
 
+	if(obj_.constructor !== Array)
+		obj_ = [obj_];
+
     addRoutes(obj_, '', '');
 	return routes;
 }
@@ -195,12 +198,8 @@ var self = sf.views = function View(selector, name){
 
 	var self = this;
 
-	if(name){
-		if(sf.views.list[name] === void 0)
-			sf.views.list[name] = [];
-
-		sf.views.list[name].push(self);
-	}
+	if(name)
+		sf.views.list[name] = self;
 
 	var pendingAutoRoute = false;
 
@@ -276,7 +275,7 @@ var self = sf.views = function View(selector, name){
 	}
 
     var selectorList = [selector];
-	var routes = [];
+	var routes = self.routes = [];
 	routes.findRoute = internal.router.findRoute;
 
 	internal.router.enabled = true;
@@ -289,11 +288,45 @@ var self = sf.views = function View(selector, name){
 	};
 
 	self.on = function(event, func){
+		if(event.indexOf(' ') !== -1){
+			event = event.split(' ');
+			for (var i = 0; i < event.length; i++) {
+				self.on(event[i], func);
+			}
+
+			return;
+		}
+
 		if(onEvent[event] === void 0)
 			return console.error("Event '"+event+"' was not exist");
 
 		if(onEvent[event].indexOf(func) === -1)
 			onEvent[event].push(func);
+	}
+
+	self.off = function(event, func){
+		if(event.indexOf(' ') !== -1){
+			event = event.split(' ');
+			for (var i = 0; i < event.length; i++) {
+				self.off(event[i], func);
+			}
+
+			return;
+		}
+
+		if(onEvent[event] === void 0)
+			return console.error("Event '"+event+"' was not exist");
+
+		if(func === void 0){
+			onEvent[event].length = 0;
+			return;
+		}
+
+		var i = onEvent[event].indexOf(func);
+		if(i === -1)
+			return;
+
+		onEvent[event].splice(i, 1);
 	}
 
 	self.addRoute = function(obj){
@@ -401,9 +434,36 @@ var self = sf.views = function View(selector, name){
 		self.relatedDOM = relatedPage;
 	}
 
+	self.removeRoute = function(path){
+		var found = routes.findRoute(path);
+		if(found === false)
+			return;
+
+		for (var i = 0; i < rootDOM.children.length; i++) {
+			if(rootDOM.children[i].routePath.match(found))
+				rootDOM.children[i].remove();
+		}
+
+		var i = routes.indexOf(found);
+		if(i === -1)
+			return;
+
+		routes.splice(i, 1);
+	}
+
 	self.goto = function(path, data, method, _callback){
 		if(self.currentPath === path)
 			return;
+
+		if(data !== void 0 && data.constructor === Function){
+			_callback = data;
+			data = void 0;
+		}
+
+		if(method !== void 0 && method.constructor === Function){
+			_callback = method;
+			method = void 0;
+		}
 
 		pendingAutoRoute = false;
 
@@ -724,27 +784,23 @@ self.goto = function(url){
 	var parsed = sf.url.parse(url);
 	sf.url.data = parsed.data;
 
-	var list = self.list;
+	var views = self.list;
 
-	// For root path
-	if(list[slash] !== void 0){
-		var ref = list[slash];
-		for (var a = 0; a < ref.length; a++) {
-			if(ref[a].currentPath !== parsed.paths)
-				ref[a].goto(parsed.paths);
+	var list = Object.keys(self.list);
+	for (var i = 0; i < list.length; i++) {
+		// For root path
+		if(list[i] === slash){
+			var ref = views[slash];
+			for (var a = 0; a < ref.length; a++) {
+				if(ref[a].currentPath !== parsed.paths)
+					ref[a].goto(parsed.paths);
+			}
+			continue;
 		}
-	}
 
-	// For hash path
-	var view = Object.keys(parsed.hashes);
-	for (var i = 0; i < view.length; i++) {
-		var ref = list[view[i]];
-		if(ref === void 0) continue;
-
-		for (var a = 0; a < ref.length; a++) {
-			if(ref[a].currentPath !== parsed.hashes[view[i]])
-				ref[a].goto(parsed.hashes[view[i]]);
-		}
+		// For hash path
+		if(parsed.hashes[list[i]] !== views[list[i]].currentPath)
+			views[list[i]].goto(parsed.hashes[list[i]] || '/');
 	}
 }
 

@@ -102,7 +102,20 @@ Addional event: `taphold, gesture, dragmove, filedrop`
 If you was found some bugs or something, feel free to contact @StefansArya from github or elsewhere.
 
 ## Install from template
-For easily starting the development environment, you can fork or clone from [default template](https://github.com/StefansArya/scarletsframe-default).
+For starting the development environment, let's use the [default template](https://github.com/StefansArya/scarletsframe-default).
+
+```sh
+$ npm i -g scarletsframe-cli
+
+# Download template to current directory
+$ scarletsframe init default
+
+# Compile the default template
+$ npm compile
+
+# Starting the server
+$ npm start
+```
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
@@ -330,6 +343,9 @@ myView.on('routeCached', function(current, target) {
 myView.on('routeError', function(statusCode) {
     console.log("Navigation failed", statusCode);
 });
+
+// To remove listener
+myView.off('routeError');
 ```
 
 After/when these event you can obtain the route data by using:
@@ -380,6 +396,15 @@ sf-page-view.page-current{
 sf-page-view.page-prepare{
   display: none;
 }
+```
+
+### Remove route
+```js
+// Route somewhere before removing
+myView.goto('/', function(){
+  // Remove route and the page from DOM
+  myView.removeRoute('/path');
+});
 ```
 
 ### Initialize/Define Model

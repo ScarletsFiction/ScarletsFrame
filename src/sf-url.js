@@ -13,7 +13,7 @@ var self = sf.url = function(){
 }
 
 var hashes = self.hashes = {};
-self.data = {};
+self.data = [];
 self.paths = '/';
 
 // Push into latest history
@@ -58,6 +58,7 @@ self.parse = function(url){
 	self.data = window.location.hash.split('|');
 	var hashes_ = self.data.shift().split('#');
 
+	hashes = self.hashes = {};
 	for (var i = 1; i < hashes_.length; i++) {
 		var temp = hashes_[i].split('/');
 		hashes[temp.shift()] = '/'+temp.join('/');
