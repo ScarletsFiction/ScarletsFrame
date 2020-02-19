@@ -808,11 +808,9 @@ self.goto = function(url){
 	for (var i = 0; i < list.length; i++) {
 		// For root path
 		if(list[i] === slash){
-			var ref = views[slash];
-			for (var a = 0; a < ref.length; a++) {
-				if(ref[a].currentPath !== parsed.paths)
-					ref[a].goto(parsed.paths);
-			}
+			if(views[slash].currentPath !== parsed.paths)
+				views[slash].goto(parsed.paths);
+
 			continue;
 		}
 
