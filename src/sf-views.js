@@ -111,10 +111,12 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				var dom = route.html = document.createElement('sf-page-view');
 				internal.component.skip = true;
 
-				if(ref.html.constructor === String)
-					dom.innerHTML = ref.html;
-				else
-					dom.appendChild(ref.html);
+				if(ref.html.constructor === String){
+					route.html = sf.dom.parseElement('<template>'+ref.html+'<template>')[0];
+					internal.component.skip = false;
+					return;
+				}
+				else dom.appendChild(ref.html);
 
 				internal.component.skip = false;
 				dom.classList.add('page-prepare');
@@ -664,17 +666,25 @@ var self = sf.views = function View(selector, name){
 		if(url.template && url.html === void 0){
 			if(window.templates === void 0)
 				return console.error("`window.templates` was not found");
-			internal.component.skip = true;
 
 			// Create new element
-			url.html = document.createElement('sf-page-view');
-			url.html.innerHTML = window.templates[url.template+'.html'];
-
-			internal.component.skip = false;
-			url.html.classList.add('page-prepare');
+			url.html = sf.dom.parseElement('<template>'+window.templates[url.template+'.html']+'<template>')[0];
 		}
 
 		if(url.html){
+			if(url.html.nodeName === 'TEMPLATE'){
+				var node = document.createElement('sf-page-view');
+				node.classList.add('page-prepare');
+
+				var clone = url.html.cloneNode(true).content.childNodes;
+				for(var p=0, n=clone.length; p < n; p++){
+					node.insertBefore(clone[0], null);
+				}
+
+				afterDOMLoaded(node);
+				return true;
+			}
+
 			afterDOMLoaded(url.html.cloneNode(true));
 			return true;
 		}
@@ -693,15 +703,24 @@ var self = sf.views = function View(selector, name){
 
 				// Create new element
 				var dom = document.createElement('sf-page-view');
-				dom.innerHTML = html_content;
 				dom.classList.add('page-prepare');
+
+				var elements = sf.dom.parseElement(html_content, true);
+				for(var p=0, n=elements.length; p < n; p++){
+					dom.insertBefore(elements[0], null);
+				}
 
 				// Same as above but without the component initialization
 				if(url.templateURL !== void 0){
 					internal.component.skip = true;
 					var temp = document.createElement('sf-page-view');
-					temp.innerHTML = html_content;
 					temp.classList.add('page-prepare');
+
+					var elements = sf.dom.parseElement(html_content, true);
+					for(var p=0, n=elements.length; p < n; p++){
+						temp.insertBefore(elements[0], null);
+					}
+
 					cachedURL[url.templateURL] = temp;
 					internal.component.skip = false;
 				}
