@@ -26,7 +26,7 @@ sf.component = function(scope){
 		if(self.registered[name] === void 0)
 			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
 
-		internal.component[name.toUpperCase()] = true;
+		internal.component[name.toUpperCase()] = 0;
 
 		self.registered[name][0] = func;
 		delete sf.controller.pending[name];
@@ -52,6 +52,8 @@ sf.component = function(scope){
 
 		if(waitingHTML[name] === void 0)
 			return;
+
+		internal.component[name.toUpperCase()] = 1;
 
 		var upgrade = waitingHTML[name];
 		delete waitingHTML[name];

@@ -690,33 +690,10 @@ var $ = sf.dom; // Shortcut
 		});
 	}
 
-	var emptyDOM = {
-		div:document.createElement('div'),
-		ul:document.createElement('ul'),
-		tbody:document.createElement('tbody'),
-		tr:document.createElement('tr'),
-		table:document.createElement('table'),
-		select:document.createElement('select'),
-	};
+	var emptyDOM = document.createElement('div');
 	self.parseElement = function(html, returnNode){
-		var result = [];
-		var tempDOM = emptyDOM.div;
-
-        if(html.indexOf('<li') === 0) tempDOM = emptyDOM.ul;
-        if(html.indexOf('<tr') === 0) tempDOM = emptyDOM.tbody;
-        if(html.indexOf('<td') === 0 || html.indexOf('<th') === 0) tempDOM = emptyDOM.tr;
-        if(html.indexOf('<tbody') === 0) tempDOM = emptyDOM.table;
-        if(html.indexOf('<option') === 0) tempDOM = emptyDOM.select;
-
-		tempDOM.textContent = '';
-		tempDOM.insertAdjacentHTML('afterBegin', html);
-
-		var ref = tempDOM[returnNode ? 'childNodes' : 'children'];
-		for (var i = 0; i < ref.length; i++) {
-			result.push(ref.item(i));
-		}
-
-		return result;
+		emptyDOM.innerHTML = '<template>'+html+'</template>';
+		return emptyDOM.children[0].content[returnNode ? 'childNodes' : 'children'];
 	}
 
 	self.escapeText = function(text){
