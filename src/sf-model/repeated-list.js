@@ -107,14 +107,28 @@ class RepeatedElement extends Array{
 				if(elem === void 0){
 					if(isComponent){
 						elem = new isComponent(that[i]);
+						that[i] = elem.model;
 						// elem.setAttribute('sf-bind-list', refName[1]);
 					}
 					else{
-						elem = templateParser(template, that[i], false, that.modelRef);
+						elem = templateParser(template, that[i], false, modelRef);
 						syntheticCache(elem, template, that[i]);
+
+						// Check if this is a component container
+						if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
+							that[i] = elem.model = elem.children[0].model;
 					}
 
 					that.$EM.elementRef.set(that[i], elem);
+				}
+				else if(elem.model.$el === void 0){
+					// This is not a component, lets check if all property are equal
+					if(compareObject(elem.model, that[i])){
+						elem = templateParser(template, that[i], false, modelRef);
+						syntheticCache(elem, template, that[i]);
+
+						that.$EM.elementRef.set(that[i], elem);
+					}
 				}
 
 				if(beforeChild === void 0)
@@ -216,12 +230,11 @@ class RepeatedElement extends Array{
 	splice(){
 		if(arguments[0] === 0 && arguments[1] === void 0){
 			this.$EM.clear(0);
-			this.length = 0;
-			return;
+			return Array.prototype.splice.apply(this, arguments);
 		}
 
 		var lastLength = this.length;
-		Array.prototype.splice.apply(this, arguments);
+		var ret = Array.prototype.splice.apply(this, arguments);
 
 		// Removing data
 		var real = arguments[0];
@@ -251,6 +264,8 @@ class RepeatedElement extends Array{
 			if(this.$virtual && this.$virtual.DOMCursor >= real)
 				this.$virtual.DOMCursor += limit;
 		}
+
+		return ret;
 	}
 
 	shift(){
@@ -385,26 +400,7 @@ class RepeatedElement extends Array{
 	}
 
 	getElement(index){
-		if(this.$virtual){
-			var virtualChilds = this.$virtual.dom.children;
-
-			if(index >= this.$virtual.DOMCursor) {
-				index -= this.$virtual.DOMCursor;
-				var childElement = this.$EM.parentNode.childElementCount - 2;
-
-				if(index < childElement)
-					return this.$EM.parentNode.children[index + 1];
-				else
-					return virtualChilds[index - childElement + this.$virtual.DOMCursor];
-			}
-
-			return virtualChilds[index];
-		}
-
-		if(this.$EM.elements)
-			return this.$EM.elements[index];
-
-		return this.$EM.parentChilds[index];
+		return this.$EM.elementRef.get(this[index]);
 	}
 
 	refresh(index, length, property){
@@ -464,11 +460,28 @@ class ElementManipulator{
 		var template = this.template;
 		var temp = this.elementRef.get(item);
 
-		if(temp !== void 0)
-			return temp;
+		if(temp !== void 0){
+			if(temp.model.$el === void 0){
+				// This is not a component, lets check if all property are equal
+				if(compareObject(temp.model, item)){
+					temp = templateParser(template, item, false, this.modelRef);
+					syntheticCache(temp, template, item);
 
-		if(template.constructor === Function)
+					// Check if this is a component container
+					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
+						item = temp.model = temp.children[0].model;
+
+					this.elementRef.set(item, temp);
+				}
+			}
+
+			return temp;
+		}
+
+		if(template.constructor === Function){
 			var temp = new template(item);
+			this.list[index] = temp.model;
+		}
 		else{
 			var temp = templateParser(template, item, false, this.modelRef);
 			syntheticCache(temp, template, item);
@@ -513,14 +526,29 @@ class ElementManipulator{
 		for (var i = index; i < list.length; i++) {
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
-				if(isComponent)
+				if(isComponent){
 					temp = new this.template(list[i]);
+					list[i] = temp.model;
+				}
 				else{
 					temp = templateParser(this.template, list[i], false, this.modelRef);
 					syntheticCache(temp, this.template, list[i]);
+
+					// Check if this is a component container
+					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
+						list[i] = temp.model = temp.children[0].model;
 				}
 
 				this.elementRef.set(list[i], temp);
+			}
+			else if(temp.model.$el === void 0){
+				// This is not a component, lets check if all property are equal
+				if(compareObject(temp.model, list[i])){
+					temp = templateParser(template, list[i], false, this.modelRef);
+					syntheticCache(temp, template, list[i]);
+
+					this.elementRef.set(list[i], temp);
+				}
 			}
 			
 			if(this.list.$virtual){
@@ -644,14 +672,29 @@ class ElementManipulator{
 
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
-				if(isComponent)
+				if(isComponent){
 					temp = new template(list[i]);
+					list[i] = temp.model;
+				}
 				else{
 					temp = templateParser(template, list[i], false, this.modelRef);
 					syntheticCache(temp, template, list[i]);
+
+					// Check if this is a component container
+					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
+						list[i] = temp.model = temp.children[0].model;
 				}
 
 				this.elementRef.set(list[i], temp);
+			}
+			else if(temp.model.$el === void 0){
+				// This is not a component, lets check if all property are equal
+				if(compareObject(temp.model, list[i])){
+					temp = templateParser(template, list[i], false, this.modelRef);
+					syntheticCache(temp, template, list[i]);
+
+					this.elementRef.set(list[i], temp);
+				}
 			}
 
 			if(this.list.$virtual){

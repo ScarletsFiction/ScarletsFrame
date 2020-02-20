@@ -82,13 +82,36 @@ function isEmptyObject(obj){
 }
 
 function compareObject(obj1, obj2){
+	if(obj1 === obj2)
+		return true;
+
 	if(!obj1 || !obj2)
 		return false;
 
-	for(var i in obj1){
-		if(typeof obj1[i] !== 'object' && obj1[i] !== obj2[i])
+	if(obj1.constructor === Array){
+		if(obj1.length !== obj2.length)
+			return false;
+
+		for (var i = 0; i < obj1.length; i++) {
+			if(obj1[i] !== obj2[i])
+				return false;
+		}
+
+		return true;
+	}
+
+	var o1 = Object.keys(obj1);
+	var o2 = Object.keys(obj2);
+
+	if(o1.length !== o2.length)
+		return false;
+
+	var n = o1.length < o2.length ? o2 : o1;
+	for (var i = 0; i < n.length; i++) {
+		if(obj1[n[i]] !== obj2[n[i]])
 			return false;
 	}
+
 	return true;
 }
 

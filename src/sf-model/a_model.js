@@ -109,5 +109,9 @@ function modelScript(script){
 		.split('_content_').join('arguments[2]')
 		.split('@return').join('return');
 
-	return new Function(script);
+	try{
+		return new Function(script);
+	} catch(e){
+		console.error(e, script);
+	}
 }
