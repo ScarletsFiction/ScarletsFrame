@@ -102,13 +102,19 @@ class RepeatedElement extends Array{
 		var that = this;
 		function injectElements(tempDOM, beforeChild){
 			for (var i = 0; i < that.length; i++) {
-				if(isComponent){
-					var elem = new isComponent(that[i]);
-					// elem.setAttribute('sf-bind-list', refName[1]);
-				}
-				else{
-					var elem = templateParser(template, that[i], false, that.modelRef);
-					syntheticCache(elem, template, that[i]);
+				var elem = that.$EM.elementRef.get(that[i]);
+
+				if(elem === void 0){
+					if(isComponent){
+						elem = new isComponent(that[i]);
+						// elem.setAttribute('sf-bind-list', refName[1]);
+					}
+					else{
+						elem = templateParser(template, that[i], false, that.modelRef);
+						syntheticCache(elem, template, that[i]);
+					}
+
+					that.$EM.elementRef.set(that[i], elem);
 				}
 
 				if(beforeChild === void 0)
@@ -450,19 +456,26 @@ class RepeatedElement extends Array{
 }
 
 class ElementManipulator{
+	elementRef = new WeakMap();
 	createElement(index){
 		var item = this.list[index];
 		if(item === void 0) return;
 
 		var template = this.template;
+		var temp = this.elementRef.get(item);
+
+		if(temp !== void 0)
+			return temp;
 
 		if(template.constructor === Function)
-			return new template(item);
+			var temp = new template(item);
 		else{
 			var temp = templateParser(template, item, false, this.modelRef);
 			syntheticCache(temp, template, item);
-			return temp;
 		}
+
+		this.elementRef.set(item, temp);
+		return temp;
 	}
 
 	virtualRefresh(){
@@ -498,12 +511,16 @@ class ElementManipulator{
 			var vCursor = list.$virtual.vCursor;
 
 		for (var i = index; i < list.length; i++) {
-			if(isComponent){
-				var temp = new this.template(list[i]);
-			}
-			else{
-				var temp = templateParser(this.template, list[i], false, this.modelRef);
-				syntheticCache(temp, this.template, list[i]);
+			var temp = this.elementRef.get(list[i]);
+			if(temp === void 0){
+				if(isComponent)
+					temp = new this.template(list[i]);
+				else{
+					temp = templateParser(this.template, list[i], false, this.modelRef);
+					syntheticCache(temp, this.template, list[i]);
+				}
+
+				this.elementRef.set(list[i], temp);
 			}
 			
 			if(this.list.$virtual){
@@ -625,12 +642,16 @@ class ElementManipulator{
 			if(oldChild === void 0 || list[i] === void 0)
 				break;
 
-			if(isComponent){
-				var temp = new template(list[i]);
-			}
-			else{
-				var temp = templateParser(template, list[i], false, this.modelRef);
-				syntheticCache(temp, template, list[i]);
+			var temp = this.elementRef.get(list[i]);
+			if(temp === void 0){
+				if(isComponent)
+					temp = new template(list[i]);
+				else{
+					temp = templateParser(template, list[i], false, this.modelRef);
+					syntheticCache(temp, template, list[i]);
+				}
+
+				this.elementRef.set(list[i], temp);
 			}
 
 			if(this.list.$virtual){
