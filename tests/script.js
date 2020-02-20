@@ -85,10 +85,12 @@ sf.model.for('virtual-scroll', function(self, root){
 
 var aList = null;
 sf(function(){
-   var list = aList = sf.model('virtual-scroll');return;
+   var list = aList = sf.model('virtual-scroll');
 
    setTimeout(function(){
-      list.list1.splice(5, 0, {id:"I'm at pos 2"});
+      list.list1.splice(0);
+
+      list.list1.splice(1, 0, {id:"I'm at pos 2"});
       list.list1.unshift({id:"I'm inserted on first index"});
       list.list1.push({id:"I'm inserted on last index"});
       list.list1.splice(2, 0, {id:"I'm at pos 3"});

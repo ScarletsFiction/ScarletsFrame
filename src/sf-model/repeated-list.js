@@ -119,7 +119,8 @@ class RepeatedElement extends Array{
 							that[i] = elem.model = elem.children[0].model;
 					}
 
-					that.$EM.elementRef.set(that[i], elem);
+					if(typeof that[i] === "object")
+						that.$EM.elementRef.set(that[i], elem);
 				}
 				else if(elem.model.$el === void 0){
 					// This is not a component, lets check if all property are equal
@@ -127,7 +128,8 @@ class RepeatedElement extends Array{
 						elem = templateParser(template, that[i], false, modelRef);
 						syntheticCache(elem, template, that[i]);
 
-						that.$EM.elementRef.set(that[i], elem);
+						if(typeof that[i] === "object")
+							that.$EM.elementRef.set(that[i], elem);
 					}
 				}
 
@@ -471,7 +473,8 @@ class ElementManipulator{
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
 						item = temp.model = temp.children[0].model;
 
-					this.elementRef.set(item, temp);
+					if(typeof item === "object")
+						this.elementRef.set(item, temp);
 				}
 			}
 
@@ -487,7 +490,8 @@ class ElementManipulator{
 			syntheticCache(temp, template, item);
 		}
 
-		this.elementRef.set(item, temp);
+		if(typeof item === "object")
+			this.elementRef.set(item, temp);
 		return temp;
 	}
 
@@ -539,15 +543,17 @@ class ElementManipulator{
 						list[i] = temp.model = temp.children[0].model;
 				}
 
-				this.elementRef.set(list[i], temp);
+				if(typeof list[i] === "object")
+					this.elementRef.set(list[i], temp);
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
 				if(compareObject(temp.model, list[i])){
-					temp = templateParser(template, list[i], false, this.modelRef);
-					syntheticCache(temp, template, list[i]);
+					temp = templateParser(this.template, list[i], false, this.modelRef);
+					syntheticCache(temp, this.template, list[i]);
 
-					this.elementRef.set(list[i], temp);
+					if(typeof list[i] === "object")
+						this.elementRef.set(list[i], temp);
 				}
 			}
 			
@@ -685,7 +691,8 @@ class ElementManipulator{
 						list[i] = temp.model = temp.children[0].model;
 				}
 
-				this.elementRef.set(list[i], temp);
+				if(typeof list[i] === "object")
+					this.elementRef.set(list[i], temp);
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -693,7 +700,8 @@ class ElementManipulator{
 					temp = templateParser(template, list[i], false, this.modelRef);
 					syntheticCache(temp, template, list[i]);
 
-					this.elementRef.set(list[i], temp);
+					if(typeof list[i] === "object")
+						this.elementRef.set(list[i], temp);
 				}
 			}
 
