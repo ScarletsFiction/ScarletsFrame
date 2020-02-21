@@ -210,7 +210,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			specialInput_.push($.childIndexes(specialInput[i], html));
 		}
 
-		bindInput(specialInput_, item);
+		bindInput(specialInput_, item, template.mask, modelRef);
 	}
 
 	if(template.specialElement.repeat.length !== 0){

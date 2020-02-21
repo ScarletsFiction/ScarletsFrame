@@ -151,9 +151,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	});
 }
 
-self.bindElement = function(element, modelName, template){
-	var model = self.root[modelName];
-
+self.bindElement = function(element, model, template){
 	if(template === void 0){
 		template = self.extractPreprocess(element, null, model);
 		templateParser(template, model, true);

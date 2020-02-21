@@ -701,7 +701,7 @@ self.parsePreprocess = function(nodes, model){
 		var modelRef = self.root[model];
 
 		if(current.nodeType === 3 && binded.indexOf(current.parentNode) === -1){
-			self.bindElement(current.parentNode, model);
+			self.bindElement(current.parentNode, modelRef);
 			binded.push(current.parentNode);
 			continue;
 		}
@@ -714,7 +714,9 @@ self.parsePreprocess = function(nodes, model){
 		}
 
 		if(current.hasAttribute('sf-bind-ignore') === false)
-			self.bindElement(current, model);
+			self.bindElement(current, modelRef);
+
+		// Deprecate
 		else{
 			var temp = uniqueDataParser(current.innerHTML, modelRef, false, model);
 			current.innerHTML = dataParser(temp, modelRef, false, model);

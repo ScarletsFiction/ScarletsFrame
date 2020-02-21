@@ -160,7 +160,7 @@ sf.component = function(scope){
 
 			var parsed = internal.model.templateParser(copy, newObj);
 			element.sf$elementReferences = parsed.sf$elementReferences;
-			sf.model.bindElement(element, newID, copy);
+			sf.model.bindElement(element, newObj, copy);
 
 			if(tempDOM === true){
 				parsed = parsed.childNodes;
