@@ -47,10 +47,31 @@ sf.regex = {
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 
-	arrayItemsObserve:/\b_model_\.([_a-zA-Z0-9.['\]]+)(?:$|[^'\]])/g,
+	itemsObserve:/\b(_model_|_modelScope)\.(.*?)(?=[ <>+=\-/\\:*&(,?]|$)/g,
+	parsePropertyPath:/(?:\[(.*?)\]|\.(.*?))(?=[\.[]|$)/g,
 };
 
 var allowedFunctionEval = {'for':true, 'if':true, 'while':true, '_content_.take':true, 'console.log':true};
+
+function parsePropertyPath(str){
+	var temp = [];
+	temp.unshift(str.replace(sf.regex.parsePropertyPath, function(full, g1, g2){
+		if(g1 !== void 0){
+			if(isNaN(g1) === false)
+				g1 = Number(g1);
+			else if(g1[0] === '"' || g1[0] === "'")
+				g1 = g1.slice(1, -1);
+          
+        	temp.push(g1);
+			return '';
+		}
+
+		temp.push(g2);
+		return '';
+	}));
+
+	return temp;
+}
 
 function avoidQuotes(str, func, noReturn){
 	var temp = [];

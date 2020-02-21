@@ -296,10 +296,15 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 	}
 
 	var copy = targetNode.outerHTML;
+	var modelRef = null;
+	var modelRef_array = null;
 
 	// Mask the referenced item
-	if(mask !== null)
+	if(mask !== null){
+		modelRef = {};
+		modelRef_array = [];
 		copy = copy.split('#'+mask).join('_model_');
+	}
 
 	// Extract data to be parsed
 	copy = uniqueDataParser(copy, null, mask, modelScope, '#noEval');
@@ -307,29 +312,39 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 	var _content_ = copy[2];
 	copy = dataParser(copy[0], null, mask, modelScope, '#noEval', preParsed);
 
+	var modelRefRoot = {};
+	var modelRefRoot_array = [];
 	function findModelProperty(){
-		if(mask === null){ // For model items
-			// Get model keys and sort by text length, make sure the longer one is from first index to avoid wrong match
-			var extract = RegExp('(?:{{.*?\\b|_modelScope\\.)('+self.modelKeys(modelScope).sort(function(a, b){
-				return b.length - a.length
-			}).join('|')+')(\\b.*?}}|)', 'g');
-		}
-		else var extract = sf.regex.arrayItemsObserve; // For array items
-		var found = {};
-
 		for (var i = 0; i < preParsed.length; i++) {
 			var current = preParsed[i];
 
 			// Text or attribute
 			if(current.type === REF_DIRECT){
-				current.data[0].split('"').join("'").replace(extract, function(full, match){
-					match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
-						return '.'+match_;
-					});
+				current.data[0] = current.data[0].replace(sf.regex.itemsObserve, function(full, model, properties){
+					var place = model === '_model_' ? modelRef : modelRefRoot;
 
-					if(found[match] === void 0) found[match] = [i];
-					else if(found[match].indexOf(i) === -1)
-						found[match].push(i);
+					// Get property name
+					if(place[properties] === void 0){
+						place[properties] = [i];
+
+						var paths = parsePropertyPath(properties);
+						if(paths.length !== 1)
+							place[properties].deep = paths[paths.length-1];
+
+						if(place === modelRef)
+							modelRef_array.push([properties, paths]);
+						else
+							modelRefRoot_array.push([properties, parsePropertyPath(properties)]);
+					}
+					else if(place[properties].indexOf(i) === -1)
+						place[properties].push(i);
+
+					if(place[properties].deep !== void 0 && model === '_model_'){
+						console.log(657, model+'.'+place[properties].deep); // it return undefined because _modelScope
+						return model+'.'+place[properties].deep;
+					}
+
+					return full;
 				});
 
 				// Convert to function
@@ -367,18 +382,22 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 				return _content_[match];
 			});
 
-			checkList.split('"').join("'").replace(extract, function(full, match){
-				match = match.replace(/\['(.*?)'\]/g, function(full_, match_){
-					return '.'+match_;
-				});
+			checkList.split('"').join("'").replace(sf.regex.itemsObserve, function(full, model, properties){
+				var place = model === '_model_' ? modelRef : modelRefRoot;
 
-				if(found[match] === void 0) found[match] = [i];
-				else if(found[match].indexOf(i) === -1)
-					found[match].push(i);
+				// Get property name
+				if(place[properties] === void 0){
+					place[properties] = [i];
+
+					if(place === modelRef)
+						modelRef_array.push([properties, parsePropertyPath(properties)]);
+					else
+						modelRefRoot_array.push([properties, parsePropertyPath(properties)]);
+				}
+				else if(place[properties].indexOf(i) === -1)
+					place[properties].push(i);
 			});
 		}
-
-		return found;
 	}
 
 	// Rebuild element
@@ -455,14 +474,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		}
 		return keys;
 	}
-
-	// var currentElement = addressAttributes(copy);
-	// if(currentElement.length !== 0)
-	// 	addressed.push({
-	// 		nodeType:1,
-	// 		address:[0],
-	// 		attributes:currentElement
-	// 	});
 
 	for (var i = 0; i < nodes.length; i++) {
 		var temp = {
@@ -560,12 +571,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		addressed.push(temp);
 	}
 
-	var modelReference = findModelProperty();
-	var keys = Object.keys(modelReference);
-	var asArray = [];
-	for (var i = 0; i < keys.length; i++) {
-		asArray.push([keys[i], keys[i].split('.')]);
-	}
+	findModelProperty(); console.log(modelRef, modelRefRoot, modelRef_array, modelRefRoot_array);
 
 	// Get the indexes for input bind
 	var specialInput = specialElement.input;
@@ -585,8 +591,10 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		html:copy,
 		parse:preParsed,
 		addresses:addressed,
-		modelReference:modelReference,
-		modelRef_array:asArray,
+		modelRef:modelRef,
+		modelRefRoot:modelRefRoot,
+		modelRefRoot_array:modelRefRoot_array,
+		modelRef_array:modelRef_array,
 		specialElement:specialElement
 	};
 }

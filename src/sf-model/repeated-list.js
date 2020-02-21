@@ -87,6 +87,7 @@ class RepeatedElement extends Array{
 			// Get reference for debugging
 			processingElement = element;
 			template = self.extractPreprocess(element, refName[0], modelRef);
+			console.log(template);
 		}
 
 		hiddenProperty(this, '$EM', new ElementManipulator());
@@ -122,7 +123,7 @@ class RepeatedElement extends Array{
 					}
 
 					if(typeof that[i] === "object"){
-						self.bindElement(elem, that[i], template);
+						self.bindElement(elem, modelRef, template, that[i]);
 						that.$EM.elementRef.set(that[i], elem);
 					}
 				}
@@ -132,7 +133,7 @@ class RepeatedElement extends Array{
 						elem = templateParser(template, that[i], false, modelRef);
 
 						if(typeof that[i] === "object"){
-							self.bindElement(elem, that[i], template);
+							self.bindElement(elem, modelRef, template, that[i]);
 							that.$EM.elementRef.set(that[i], elem);
 						}
 					}
@@ -477,7 +478,7 @@ class ElementManipulator{
 						item = temp.model = temp.children[0].model;
 
 					if(typeof item === "object"){
-						self.bindElement(temp, item, template);
+						self.bindElement(temp, this.modelRef, template, item);
 						this.elementRef.set(item, temp);
 					}
 				}
@@ -495,7 +496,7 @@ class ElementManipulator{
 		}
 
 		if(typeof item === "object"){
-			self.bindElement(temp, item, template);
+			self.bindElement(temp, this.modelRef, template, item);
 			this.elementRef.set(item, temp);
 		}
 
@@ -550,7 +551,7 @@ class ElementManipulator{
 				}
 
 				if(typeof list[i] === "object"){
-					self.bindElement(temp, list[i], this.template);
+					self.bindElement(temp, this.modelRef, this.template, list[i]);
 					this.elementRef.set(list[i], temp);
 				}
 			}
@@ -560,7 +561,7 @@ class ElementManipulator{
 					temp = templateParser(this.template, list[i], false, this.modelRef);
 
 					if(typeof list[i] === "object"){
-						self.bindElement(temp, list[i], this.template);
+						self.bindElement(temp, this.modelRef, this.template, list[i]);
 						this.elementRef.set(list[i], temp);
 					}
 				}
@@ -700,7 +701,7 @@ class ElementManipulator{
 				}
 
 				if(typeof list[i] === "object"){
-					self.bindElement(temp, list[i], template);
+					self.bindElement(temp, this.modelRef, template, list[i]);
 					this.elementRef.set(list[i], temp);
 				}
 			}
@@ -710,7 +711,7 @@ class ElementManipulator{
 					temp = templateParser(template, list[i], false, this.modelRef);
 
 					if(typeof list[i] === "object"){
-						self.bindElement(temp, list[i], template);
+						self.bindElement(temp, this.modelRef, template, list[i]);
 						this.elementRef.set(list[i], temp);
 					}
 				}
@@ -822,7 +823,7 @@ class ElementManipulator{
 	replace(index){
 		var list = this.list;
 		var elRef = list.getElement(index).sf$elementReferences;
-		var process = template.modelReference[key];
+		var process = template.modelRef[key];
 
 		if(process === void 0){
 			console.error("Can't found binding for '"+key+"'");

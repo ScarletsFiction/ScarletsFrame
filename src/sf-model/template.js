@@ -35,6 +35,7 @@ var templateExec = function(parse, item, atIndex){
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
+			console.log(21, parse, item, atIndex, ref.data);
 			temp = ref.get.apply(self.root, ref.data);
 			if(temp === void 0)
 				temp = '';
@@ -228,10 +229,8 @@ var templateParser = internal.model.templateParser = function(template, item, or
 }
 
 var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item){
-	var modelRef_array = template.modelRef_array;
-
 	if(property !== void 0){
-		var changes = template.modelReference[property];
+		var changes = template.modelRef[property];
 		if(changes === void 0 || changes.length === 0){
 			console.log(element, template, property, item);
 			console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
@@ -240,8 +239,17 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 	}
 	else{
 		var changes = [];
-		for (var i = 0; i < modelRef_array.length; i++) {
-			Array.prototype.push.apply(changes, template.modelReference[modelRef_array[i][0]]);
+
+		var ref = template.modelRefRoot_array;
+		for (var i = 0; i < ref.length; i++) {
+			Array.prototype.push.apply(changes, template.modelRefRoot[ref[i][0]]);
+		}
+
+		if(template.modelRef_array !== null){
+			ref = template.modelRef_array;
+			for (var i = 0; i < ref.length; i++) {
+				Array.prototype.push.apply(changes, template.modelRef[ref[i][0]]);
+			}
 		}
 
 		if(changes.length === 0) return false;

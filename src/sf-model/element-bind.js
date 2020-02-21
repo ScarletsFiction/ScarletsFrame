@@ -61,6 +61,33 @@ internal.model.removeModelBinding = function(ref, noBackup){
 }
 
 function modelToViewBinding(model, propertyName, callback, elementBind, type){
+	// Dive to the last object, create if not exist
+	if(propertyName.constructor === Array){
+		if(propertyName.length === 1)
+			propertyName = propertyName[0];
+		else{
+			// Register every path as fixed object (where any property replacement will being assigned)
+			for (var i = 0; i < propertyName.length-1; i++) {
+				let value = model[propertyName[i]];
+				Object.defineProperty(model, propertyName[i], {
+					enumerable: true,
+					configurable: true,
+					get:function(){
+						return value;
+					},
+					set:function(val){
+						Object.assign(value, val);
+						return val;
+					}
+				});
+
+				model = value;
+			}
+
+			propertyName = propertyName[propertyName.length-1];
+		}
+	}
+
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);
@@ -92,11 +119,11 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	if(Object.getOwnPropertyDescriptor(model, propertyName).set !== void 0)
 		return;
 
-	var objValue = model[propertyName]; // Object value
+	var objValue = model[propertyName] || ''; // Object value
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,
-		get:function(getAssigner){
+		get:function(){
 			return objValue;
 		},
 		set:function(val){
@@ -151,26 +178,31 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	});
 }
 
-self.bindElement = function(element, model, template){
+self.bindElement = function(element, modelScope, template, localModel){
 	if(template === void 0){
-		template = self.extractPreprocess(element, null, model);
-		templateParser(template, model, true);
+		template = self.extractPreprocess(element, null, modelScope);
+		templateParser(template, modelScope, true);
 		delete template.addresses;
 
 		element.parentNode.replaceChild(template.html, element);
 		element = template.html;
 	}
 
-	var properties = template.modelRef_array;
+	var properties = template.modelRefRoot_array;
 	for (var i = 0; i < properties.length; i++) {
-		var propertyName = properties[i][0];
-
-		if(model[propertyName] === void 0)
-			model[propertyName] = '';
-
-		modelToViewBinding(model, propertyName, {
+		modelToViewBinding(modelScope, properties[i][1], {
 			element:element,
 			template:template
 		});
+	}
+
+	if(template.modelRef_array !== null){
+		properties = template.modelRef_array;
+		for (var i = 0; i < properties.length; i++) {
+			modelToViewBinding(localModel, properties[i][1], {
+				element:element,
+				template:template
+			});
+		}
 	}
 }
