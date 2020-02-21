@@ -209,7 +209,7 @@ var elementBoundChanges = function(model, property, element, oneWay){
 	modelToViewBinding(model, property, inputBoundRun, element, type);
 }
 
-var bindInput = internal.model.bindInput = function(temp, modelScope){
+var bindInput = internal.model.bindInput = function(temp, model, mask, modelScope){
 	for (var i = 0; i < temp.length; i++) {
 		var element = temp[i];
 
@@ -219,6 +219,7 @@ var bindInput = internal.model.bindInput = function(temp, modelScope){
 			propertyName = element.getAttribute('sf-into');
 			oneWay = true;
 		}
+
 		if(propertyName === "")
 			propertyName = element.getAttribute('name');
 
@@ -227,14 +228,33 @@ var bindInput = internal.model.bindInput = function(temp, modelScope){
 			continue;
 		}
 
+		if(mask !== void 0){
+			if(propertyName.indexOf(mask+'.') === 0)
+				propertyName = propertyName.replace(/\w+\./, '');
+			else
+				model = modelScope;
+		}
+
 		// Get reference
-		if(modelScope[propertyName] === void 0){
-			console.error('Can\'t get property "'+propertyName+'" on model', modelScope);
-			return;
+		if(model[propertyName] === void 0){
+			var deepScope = propertyName.split('.');
+			if(deepScope.length !== 1){
+				var property = deepScope.pop();
+				deepScope = deepProperty(model, deepScope);
+			}
+			else deepScope = void 0;
+
+			if(deepScope === void 0){
+				console.error('Can\'t get property "'+propertyName+'" on model', model);
+				return;
+			}
+
+			model = deepScope;
+			propertyName = property;
 		}
 
 		element.sfBounded = propertyName;
-		element.sfModel = modelScope;
+		element.sfModel = model;
 		if(oneWay === false){
 			element.setAttribute('sf-bound', '');
 			element.removeAttribute('sf-bind');
@@ -244,6 +264,6 @@ var bindInput = internal.model.bindInput = function(temp, modelScope){
 			element.removeAttribute('sf-into');
 		}
 
-		elementBoundChanges(modelScope, propertyName, element, oneWay);
+		elementBoundChanges(model, propertyName, element, oneWay);
 	}
 }

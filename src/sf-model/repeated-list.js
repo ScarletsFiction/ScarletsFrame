@@ -95,6 +95,9 @@ class RepeatedElement extends Array{
 		this.$EM.parentNode = parentNode;
 		this.$EM.modelRef = modelRef;
 		this.$EM.refName = refName;
+		this.$EM.elementRef = new WeakMap();
+
+		this.$EM.template.mask = refName[0];
 
 		// Update callback
 		this.$EM.callback = callback;
@@ -119,8 +122,10 @@ class RepeatedElement extends Array{
 							that[i] = elem.model = elem.children[0].model;
 					}
 
-					if(typeof that[i] === "object")
+					if(typeof that[i] === "object"){
+						self.bindElement(elem, that[i], template);
 						that.$EM.elementRef.set(that[i], elem);
+					}
 				}
 				else if(elem.model.$el === void 0){
 					// This is not a component, lets check if all property are equal
@@ -128,8 +133,10 @@ class RepeatedElement extends Array{
 						elem = templateParser(template, that[i], false, modelRef);
 						syntheticCache(elem, template, that[i]);
 
-						if(typeof that[i] === "object")
+						if(typeof that[i] === "object"){
+							self.bindElement(elem, that[i], template);
 							that.$EM.elementRef.set(that[i], elem);
+						}
 					}
 				}
 
@@ -454,7 +461,6 @@ class RepeatedElement extends Array{
 }
 
 class ElementManipulator{
-	elementRef = new WeakMap();
 	createElement(index){
 		var item = this.list[index];
 		if(item === void 0) return;
@@ -473,8 +479,10 @@ class ElementManipulator{
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
 						item = temp.model = temp.children[0].model;
 
-					if(typeof item === "object")
+					if(typeof item === "object"){
+						self.bindElement(temp, item, template);
 						this.elementRef.set(item, temp);
+					}
 				}
 			}
 
@@ -490,8 +498,11 @@ class ElementManipulator{
 			syntheticCache(temp, template, item);
 		}
 
-		if(typeof item === "object")
+		if(typeof item === "object"){
+			self.bindElement(temp, item, template);
 			this.elementRef.set(item, temp);
+		}
+
 		return temp;
 	}
 
@@ -543,8 +554,10 @@ class ElementManipulator{
 						list[i] = temp.model = temp.children[0].model;
 				}
 
-				if(typeof list[i] === "object")
+				if(typeof list[i] === "object"){
+					self.bindElement(temp, list[i], this.template);
 					this.elementRef.set(list[i], temp);
+				}
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -552,8 +565,10 @@ class ElementManipulator{
 					temp = templateParser(this.template, list[i], false, this.modelRef);
 					syntheticCache(temp, this.template, list[i]);
 
-					if(typeof list[i] === "object")
+					if(typeof list[i] === "object"){
+						self.bindElement(temp, list[i], this.template);
 						this.elementRef.set(list[i], temp);
+					}
 				}
 			}
 			
@@ -691,8 +706,10 @@ class ElementManipulator{
 						list[i] = temp.model = temp.children[0].model;
 				}
 
-				if(typeof list[i] === "object")
+				if(typeof list[i] === "object"){
+					self.bindElement(temp, list[i], template);
 					this.elementRef.set(list[i], temp);
+				}
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -700,8 +717,10 @@ class ElementManipulator{
 					temp = templateParser(template, list[i], false, this.modelRef);
 					syntheticCache(temp, template, list[i]);
 
-					if(typeof list[i] === "object")
+					if(typeof list[i] === "object"){
+						self.bindElement(temp, list[i], template);
 						this.elementRef.set(list[i], temp);
+					}
 				}
 			}
 
