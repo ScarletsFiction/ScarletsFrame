@@ -227,21 +227,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	return html;
 }
 
-function syntheticCache(element, template, item){
-	if(element.sf$cache === void 0)
-		element.sf$cache = {};
-
-	var cache = element.sf$cache;
-	var modelRef_array = template.modelRef_array;
-
-	for (var i = 0; i < modelRef_array.length; i++) {
-		var ref = modelRef_array[i];
-		cache[ref[0]] = deepProperty(item, ref[1]);
-	}
-}
-
 var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item){
-	var cache = element.sf$cache;
 	var modelRef_array = template.modelRef_array;
 
 	if(property !== void 0){
@@ -251,34 +237,11 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 			console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 			return false;
 		}
-
-		if(cache)
-			for (var i = 0; i < modelRef_array.length; i++) {
-				var ref = modelRef_array[i];
-				if(ref[0] !== property) continue;
-
-				var newData = deepProperty(item, ref[1]);
-
-				// Check if data was different
-				if(cache[ref[0]] !== newData)
-					cache[ref[0]] = newData;
-			}
 	}
 	else{
 		var changes = [];
 		for (var i = 0; i < modelRef_array.length; i++) {
-			var ref = modelRef_array[i];
-			if(cache === void 0){
-				Array.prototype.push.apply(changes, template.modelReference[ref[0]]);
-				continue;
-			}
-			var newData = deepProperty(item, ref[1]);
-
-			// Check if data was different
-			if(cache[ref[0]] !== newData){
-				Array.prototype.push.apply(changes, template.modelReference[ref[0]]);
-				cache[ref[0]] = newData;
-			}
+			Array.prototype.push.apply(changes, template.modelReference[modelRef_array[i][0]]);
 		}
 
 		if(changes.length === 0) return false;

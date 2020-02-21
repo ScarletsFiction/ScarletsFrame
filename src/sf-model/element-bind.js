@@ -157,9 +157,7 @@ self.bindElement = function(element, model, template){
 		templateParser(template, model, true);
 		delete template.addresses;
 
-		// console.warn(42, template.html, element);
 		element.parentNode.replaceChild(template.html, element);
-
 		element = template.html;
 	}
 
