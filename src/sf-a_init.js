@@ -51,8 +51,6 @@ sf.regex = {
 	parsePropertyPath:/(?:\[(.*?)\]|\.(.*?))(?=[\.[]|$)/g,
 };
 
-var allowedFunctionEval = {'for':true, 'if':true, 'while':true, '_content_.take':true, 'console.log':true};
-
 function parsePropertyPath(str){
 	var temp = [];
 	temp.unshift(str.replace(sf.regex.parsePropertyPath, function(full, g1, g2){

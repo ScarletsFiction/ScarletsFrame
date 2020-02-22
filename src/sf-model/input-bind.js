@@ -145,7 +145,7 @@ var triggerInputEvent = function(e){
 	e.target.dispatchEvent(new Event('input'));
 }
 
-var elementBoundChanges = function(model, property, element, oneWay){
+var elementBoundChanges = function(model, property, element, oneWay, modelLocal, propertyNameLocal){
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);
@@ -206,10 +206,10 @@ var elementBoundChanges = function(model, property, element, oneWay){
 	}
 
 	if(oneWay === true) return;
-	modelToViewBinding(model, property, inputBoundRun, element, type);
+	modelToViewBinding(modelLocal, propertyNameLocal || property, inputBoundRun, element, type);
 }
 
-var bindInput = internal.model.bindInput = function(temp, model, mask, modelScope){
+var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, modelScope){
 	for (var i = 0; i < temp.length; i++) {
 		var element = temp[i];
 
@@ -228,16 +228,21 @@ var bindInput = internal.model.bindInput = function(temp, model, mask, modelScop
 			continue;
 		}
 
+		var model = modelLocal;
+		var currentModel = modelLocal;
 		if(mask !== void 0){
 			if(propertyName.indexOf(mask+'.') === 0)
 				propertyName = propertyName.replace(/\w+\./, '');
 			else
-				model = modelScope;
+				currentModel = model = modelScope;
 		}
 
 		// Get reference
+		var propertyNameLocal = null;
 		if(model[propertyName] === void 0){
-			var deepScope = propertyName.split('.');
+			var deepScope = parsePropertyPath(propertyName);
+			propertyNameLocal = deepScope.slice();
+
 			if(deepScope.length !== 1){
 				var property = deepScope.pop();
 				deepScope = deepProperty(model, deepScope);
@@ -264,6 +269,6 @@ var bindInput = internal.model.bindInput = function(temp, model, mask, modelScop
 			element.removeAttribute('sf-into');
 		}
 
-		elementBoundChanges(model, propertyName, element, oneWay);
+		elementBoundChanges(model, propertyName, element, oneWay, currentModel, propertyNameLocal);
 	}
 }

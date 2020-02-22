@@ -35,7 +35,6 @@ var templateExec = function(parse, item, atIndex){
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
-			console.log(21, parse, item, atIndex, ref.data);
 			temp = ref.get.apply(self.root, ref.data);
 			if(temp === void 0)
 				temp = '';
@@ -230,14 +229,14 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item){
 	if(property !== void 0){
-		var changes = template.modelRef[property];
-		if(changes === void 0 || changes.length === 0){
+		var changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
+		if(changes === void 0 || changes === null || changes.length === 0){
 			console.log(element, template, property, item);
 			console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 			return false;
 		}
 	}
-	else{
+	else{ // This will trying to update all binding
 		var changes = [];
 
 		var ref = template.modelRefRoot_array;
@@ -254,8 +253,6 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(changes.length === 0) return false;
 	}
-
-	// console.log(542, template.parse, item);
 
 	var parsed = templateExec(template.parse, item, changes);
 	function checkRelatedChanges(parseIndex){
