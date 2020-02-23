@@ -295,6 +295,9 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		current.remove();
 	}
 
+	if(targetNode.model !== void 0)
+		return console.error('[Violation] template extraction aborted', targetNode, mask, modelScope);
+
 	var copy = targetNode.outerHTML;
 	var modelRef = null;
 	var modelRef_array = null;
@@ -586,7 +589,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 	if(temp === void 0){
 		temp = new Set();
 		firstCall = true;
-		
+
 		var attrs = targetNode.attributes;
 		for (var a = 0; a < attrs.length; a++) {
 			if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
@@ -694,7 +697,7 @@ self.parsePreprocess = function(nodes, model){
 
 		// Double check if the child element already bound to prevent vulnerability
 		if(current.innerHTML.indexOf('sf-bind-list') !== -1 && current.tagName !== 'SF-M'){
-			console.error("Can't parse element that already bound");
+			console.error("Can't parse element that already have any binded element/component");
 			console.log(current);
 			return;
 		}

@@ -100,6 +100,7 @@ class RepeatedElement extends Array{
 		this.$EM.modelRef = modelRef;
 		this.$EM.refName = refName;
 		this.$EM.elementRef = new WeakMap();
+		this.$EM.isComponent = isComponent !== false;
 
 		this.$EM.template.mask = refName[0];
 
@@ -126,7 +127,9 @@ class RepeatedElement extends Array{
 					}
 
 					if(typeof that[i] === "object"){
-						self.bindElement(elem, modelRef, template, that[i]);
+						if(isComponent === false)
+							self.bindElement(elem, modelRef, template, that[i]);
+
 						that.$EM.elementRef.set(that[i], elem);
 					}
 				}
@@ -136,7 +139,9 @@ class RepeatedElement extends Array{
 						elem = templateParser(template, that[i], false, modelRef);
 
 						if(typeof that[i] === "object"){
-							self.bindElement(elem, modelRef, template, that[i]);
+							if(isComponent === false)
+								self.bindElement(elem, modelRef, template, that[i]);
+	
 							that.$EM.elementRef.set(that[i], elem);
 						}
 					}
@@ -498,7 +503,9 @@ class ElementManipulator{
 						item = temp.model = temp.children[0].model;
 
 					if(typeof item === "object"){
-						self.bindElement(temp, this.modelRef, template, item);
+						if(this.isComponent === false)
+							self.bindElement(temp, this.modelRef, template, item);
+	
 						this.elementRef.set(item, temp);
 					}
 				}
@@ -514,7 +521,9 @@ class ElementManipulator{
 		else temp = templateParser(template, item, false, this.modelRef);
 
 		if(typeof item === "object"){
-			self.bindElement(temp, this.modelRef, template, item);
+			if(this.isComponent === false)
+				self.bindElement(temp, this.modelRef, template, item);
+	
 			this.elementRef.set(item, temp);
 		}
 
@@ -536,7 +545,6 @@ class ElementManipulator{
 	// Recreate the item element after the index
 	hardRefresh(index){
 		var list = this.list;
-		var isComponent = this.template.constructor === Function;
 
 		if(list.$virtual){
 			var vStartRange = list.$virtual.DOMCursor;
@@ -556,7 +564,7 @@ class ElementManipulator{
 		for (var i = index; i < list.length; i++) {
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
-				if(isComponent){
+				if(this.isComponent === false){
 					temp = new this.template(list[i]);
 					list[i] = temp.model;
 				}
@@ -569,7 +577,9 @@ class ElementManipulator{
 				}
 
 				if(typeof list[i] === "object"){
-					self.bindElement(temp, this.modelRef, this.template, list[i]);
+					if(this.isComponent === false)
+						self.bindElement(temp, this.modelRef, this.template, list[i]);
+
 					this.elementRef.set(list[i], temp);
 				}
 			}
@@ -579,7 +589,9 @@ class ElementManipulator{
 					temp = templateParser(this.template, list[i], false, this.modelRef);
 
 					if(typeof list[i] === "object"){
-						self.bindElement(temp, this.modelRef, this.template, list[i]);
+						if(this.isComponent === false)
+							self.bindElement(temp, this.modelRef, this.template, list[i]);
+
 						this.elementRef.set(list[i], temp);
 					}
 				}
@@ -685,7 +697,6 @@ class ElementManipulator{
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 		var list = this.list;
 		var template = this.template;
-		var isComponent = template.constructor === Function;
 
 		if(index === void 0){
 			index = 0;
@@ -706,7 +717,7 @@ class ElementManipulator{
 
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
-				if(isComponent){
+				if(this.isComponent === false){
 					temp = new template(list[i]);
 					list[i] = temp.model;
 				}
@@ -719,7 +730,9 @@ class ElementManipulator{
 				}
 
 				if(typeof list[i] === "object"){
-					self.bindElement(temp, this.modelRef, template, list[i]);
+					if(this.isComponent === false)
+						self.bindElement(temp, this.modelRef, template, list[i]);
+
 					this.elementRef.set(list[i], temp);
 				}
 			}
@@ -729,7 +742,9 @@ class ElementManipulator{
 					temp = templateParser(template, list[i], false, this.modelRef);
 
 					if(typeof list[i] === "object"){
-						self.bindElement(temp, this.modelRef, template, list[i]);
+						if(this.isComponent === false)
+							self.bindElement(temp, this.modelRef, template, list[i]);
+
 						this.elementRef.set(list[i], temp);
 					}
 				}
