@@ -100,7 +100,7 @@ class RepeatedElement extends Array{
 		this.$EM.modelRef = modelRef;
 		this.$EM.refName = refName;
 		this.$EM.elementRef = new WeakMap();
-		this.$EM.isComponent = isComponent !== false;
+		this.$EM.isComponent = !!isComponent;
 
 		this.$EM.template.mask = refName[0];
 
@@ -564,7 +564,7 @@ class ElementManipulator{
 		for (var i = index; i < list.length; i++) {
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
-				if(this.isComponent === false){
+				if(this.isComponent){
 					temp = new this.template(list[i]);
 					list[i] = temp.model;
 				}
@@ -717,7 +717,7 @@ class ElementManipulator{
 
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
-				if(this.isComponent === false){
+				if(this.isComponent){
 					temp = new template(list[i]);
 					list[i] = temp.model;
 				}

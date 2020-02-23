@@ -97,6 +97,9 @@
         custom-view > sf-page-view:first-child{
          display: block;
         }
+        sf-m, comp-test{
+          display: block;
+        }
       </style>
    </head>
    <body class="body">
@@ -113,7 +116,7 @@
       <!-- Dynamic Page -->
       <div>
          <b>Dynamic Page Navigation</b><br>
-         <i>Note: the url also changed, if you hit refresh you will be redirected to other page. This feature is supposed for Scarlets Framework on PHP.</i><br><br>
+         <i>Note: the url also changed, if you hit refresh you will be redirected to other page.</i><br><br>
          <custom-view>
             View place<br>
             <a href="/test/page1">Go to page 1</a> || Nest->
@@ -147,25 +150,25 @@
 
          <b>Virtual Scroll - Static Height & Scroll on parent</b>
          <div data-simplebar style="height: 200px;">
-            <ul class="sf-virtual-list" scroll-parent-index="2">
-               <li sf-repeat-this="x in list1" data-id="{{x.id}}">
-                  <label>{{ x.id }}</label>
+            <ul class="sf-virtual-list" scroll-parent-index="2" @click="handleClick(event, 1)">
+              <li sf-repeat-this="x in list1" data-id="{{x.id}}">
+                <label>{{ x.id }}</label>
 
-                  {{@if #x === list1[0]:
-                     x.first = true;
-                     {[<span> - Am I the ({{ one }}) one?</span>]}
+                {{@if #x === list1[0]:
+                   x.first = true;
+                   {[<span> - Am I the ({{ one }}) one?</span>]}
 
-                  @elseif x.first && #x !== list1[0]:
-                     delete x.first;
-                     {[<span> - I'm no longer the {{ one }} one..</span>]}
-                  }}
-               </li>
+                @elseif x.first && #x !== list1[0]:
+                   delete x.first;
+                   {[<span> - I'm no longer the {{ one }} one..</span>]}
+                }}
+              </li>
             </ul>
          </div><br>
 
          <b>Virtual Scroll - Dynamic Height</b>
          <i>Automatically scroll to item-11</i>
-         <ul class="scroller sf-virtual-list sf-list-dynamic">
+         <ul class="scroller sf-virtual-list sf-list-dynamic" @click="handleClick(event, 2)">
             <li sf-repeat-this="x in list2" data-id="{{x.id}}">
                <label>{{x.id}}</label>
             </li>
@@ -245,14 +248,20 @@
 
       <!-- Components -->
       <sf-m name="components" id='components'>
+        <div id="nyam" @click="handleClick" test="{{ test }}">
          <a @click="clickOK">test click</a><br>
          <comp-test id="henlos">
             <input type="text" sf-bind="data"/>
             custom {{data}} {{item}} here
             <span sf-repeat-this="num in tries">{{#num}},</span>
+            <comp-test id="deepTest">
+              Deep repeat yeah
+              <comp-test id="deepRepeat" sf-repeat-this="item in items"></comp-test>
+            </comp-test>
          </comp-test>
-         <comp-test it="async"></comp-test>
-         <comp-test sf-repeat-this="item in items"></comp-test>
+         <comp-test id="async"></comp-test>
+         <comp-test id="repeat" sf-repeat-this="item in items"></comp-test>
+       </div>
       </sf-m>
 
       <!-- Language -->

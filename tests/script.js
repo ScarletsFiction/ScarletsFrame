@@ -1,19 +1,21 @@
 var $ = sf.dom;
 var vul = '';
 
+// This framework is vulnerable if any alert displayed
+// or console.error is being outputted
 if(0){
-   vul = '\'\"><script id="vull">alert("Heya")</script>{{@exec console.error("Vul") }}<a z=\'\"';
-   
+   vul = '\'\"><script id="vull">alert("Heya")</script>{{@exec console.error("Vulnerablility detected!", _modelScope.$el[0]) }}<a z=\'\"';
+
    var ckz = 0;
    var checkz = setInterval(function(){
       if($('#vull').length)
          alert("Vulnerability found!");
 
-      if(ckz++ > 20){
+      if(ckz++ > 100){
          console.log("Vulnerability check finished");
          clearInterval(checkz);
       }
-   }, 1000);
+   }, 200);
 }
 
 sf.model.for('image', function(self, root){
@@ -46,6 +48,16 @@ var test = null;
 sf.model.for('virtual-scroll', function(self, root){
    test = self;
 
+   self.handleClick = function(e, which){
+      // e.target.model ==> the item{}
+      // but let's try get from the index first
+
+      if(which === 2)
+         return console.log('list clicked 2', self.list2[self.list2.indexOf(e.target)]);
+
+      console.log('list clicked 1', self.list1[self.list1.indexOf(e.target)]);
+   }
+
    self.vul = "this shouldn't be visible"+vul;
    self.list1 = [];
    self.list1b = [];
@@ -58,8 +70,8 @@ sf.model.for('virtual-scroll', function(self, root){
    }
 
    self.init = function(el){
-      self.list1.unshift({id:'first thing'});
-      self.list1.push({id:'second thing'});
+      self.list1.unshift({id:'first thing'+vul});
+      self.list1.push({id:'second thing'+vul});
       console.warn(el, "Element when init called", self.list1.getElement(0), self.list1.getElement(1));
    }
 
@@ -74,7 +86,7 @@ sf.model.for('virtual-scroll', function(self, root){
          // Test infinity load for static scroll
          if(added === false){
             added = true;
-            self.list1.push({id:"Added on scroll end - 1"}, {id:"Added on scroll end - 2"}, {id:"Added on scroll end - 3"});
+            self.list1.push({id:"Added on scroll end - 1"+vul}, {id:"Added on scroll end - 2"}, {id:"Added on scroll end - 3"});
          }
       },
       hitCeiling:function(){
@@ -90,10 +102,10 @@ sf(function(){
    setTimeout(function(){
       list.list1.splice(0);
 
-      list.list1.splice(1, 0, {id:"I'm at pos 2"});
-      list.list1.unshift({id:"I'm inserted on first index"});
-      list.list1.push({id:"I'm inserted on last index"});
-      list.list1.splice(2, 0, {id:"I'm at pos 3"});
+      list.list1.splice(1, 0, {id:"I'm at pos 2"+vul});
+      list.list1.unshift({id:"I'm inserted on first index"+vul});
+      list.list1.push({id:"I'm inserted on last index"+vul});
+      list.list1.splice(2, 0, {id:"I'm at pos 3"+vul});
    }, 1000);
 
    setTimeout(function(){
@@ -167,22 +179,14 @@ sf(function(){
       list.list1.getElement(7).dummy = true;
       list.list1.getElement(8).dummy = true;
 
-      list.list1[7].id = 'Partial refresh';
-      list.list1.refresh(7, 'id');
+      list.list1[7].id = 'Partial refresh'+vul;
+      // list.list1.refresh(7, 'id');
 
       setTimeout(function(){
-         list.list1[8].id = 'Element refresh';
+         list.list1[8].id = 'Element refresh'+vul;
          list.list1.hardRefresh(8);
 
-         if(list.list1.getElement(7).sf$cache){ // Non-keyed cache
-	         if(list.list1.getElement(7).sf$cache.id !== list.list1[7].id)
-	            console.error("Partial refresh not working");
-	         if(list.list1.getElement(8).sf$cache.id !== list.list1[8].id)
-	            console.error("Element refresh not working");
-	        
-         	if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing");
-         }
-
+         if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing");
          if(list.list1.getElement(8).dummy) console.error("Data on element refresh was exist");
       }, 1000);
 
@@ -287,8 +291,18 @@ sf.controller.for('model-binding', function(self, root){
 
 sf.model.for('components', function(self){
    self.items = [1];
+   self.test = 'this must getting changed'+vul;
+   self.handleClick = function(e){
+      console.log(e.target);
+   }
    self.init = function(){
       console.log("Model init called", self.$el);
+
+      setTimeout(function(){
+         self.test = 'OK'+vul;
+         if(self.$el('#nyam').attr('test') !== 'OK'+vul)
+            console.error("Attribute is not changed", self.$el('#nyam')[0]);
+      }, 1000);
    }
    self.clickOK = function(){
       console.warn("Click OK!");
@@ -307,6 +321,9 @@ sf.component.for('comp-test', function(self, root, item){
    self.item = item;
    self.tries = [1,2,3+vul];
    self.data = 'zxc'+vul;
+   self.select = function(zx){
+      console.log('selected', zx);
+   }
    self.init = function(){
       console.log(self.tries.getElement(0));
    }
@@ -314,7 +331,7 @@ sf.component.for('comp-test', function(self, root, item){
 
 sf.component.html('comp-test', '<div>1. {{ data }}</div>\
    <input type="text" sf-bind="data"/>\
-   <div class="sf-virtual-list"><span sf-repeat-this="num in tries">{{#num}},</span></div>\
+   <div class="sf-virtual-list"><span sf-repeat-this="num in tries"><a @click="select(#num)">{{#num}}</a>,</span></div>\
    <div>item: {{ item }}</div>\
 <br>');
 
