@@ -1,3 +1,7 @@
+// ToDo: repeated list that using root binding may have memory leak on sf$elementReference (because I haven't check it)
+// this may happen when list are removed (splice, pop, shift, hardRefresh)
+// and using property from root model (not the list property)
+
 var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
@@ -71,7 +75,7 @@ class RepeatedElement extends Array{
 			}
 		});
 
-		if(internal.component[element.tagName] === 0){
+		if(internal.component[element.tagName] === 0 && element.childNodes.length !== 0){
 			internal.component[element.tagName] = 1;
 			sf.component.registered[element.tagName.toLowerCase()][3] = element;
 		}
@@ -87,7 +91,6 @@ class RepeatedElement extends Array{
 			// Get reference for debugging
 			processingElement = element;
 			template = self.extractPreprocess(element, refName[0], modelRef);
-			console.log(template);
 		}
 
 		hiddenProperty(this, '$EM', new ElementManipulator());
@@ -408,7 +411,10 @@ class RepeatedElement extends Array{
 	}
 
 	getElement(index){
-		return this.$EM.elementRef.get(this[index]);
+		if(index.constructor === Number)
+			return this.$EM.elementRef.get(this[index]);
+
+		return this.$EM.elementRef.get(index);
 	}
 
 	refresh(index, length, property){
@@ -451,6 +457,20 @@ class RepeatedElement extends Array{
 		}
 	}
 
+	indexOf(item){
+		if(item.children !== void 0 && item.children.constructor === HTMLCollection){
+			if(item.hasAttribute('sf-bind-list') === false)
+				item = sf.dom.parent(item, '[sf-bind-list]');
+
+			if(item === null)
+				return -1;
+
+			arguments[0] = item.model;
+		}
+
+		return Array.prototype.indexOf.apply(this, arguments);
+	}
+
 	hardRefresh(i, o){
 		this.$EM.update(i, o);
 
@@ -488,12 +508,10 @@ class ElementManipulator{
 		}
 
 		if(template.constructor === Function){
-			var temp = new template(item);
+			temp = new template(item);
 			this.list[index] = temp.model;
 		}
-		else{
-			var temp = templateParser(template, item, false, this.modelRef);
-		}
+		else temp = templateParser(template, item, false, this.modelRef);
 
 		if(typeof item === "object"){
 			self.bindElement(temp, this.modelRef, template, item);
@@ -504,9 +522,9 @@ class ElementManipulator{
 	}
 
 	virtualRefresh(){
-		var that = this;
-
 		clearTimeout(this.refreshTimer);
+
+		var that = this;
 		this.refreshTimer = setTimeout(function(){
 			if(that.list.$virtual) // Somewhat it's uninitialized
 				that.list.$virtual.reinitScroll();
