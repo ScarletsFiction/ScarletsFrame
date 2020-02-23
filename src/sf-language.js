@@ -349,7 +349,7 @@ function refreshLang(list, noPending){
 		if(noPending === true)
 			list.splice(i, 1);
 
-		if(elem.hasAttribute('placeholder'))
+		if(elem.placeholder !== void 0)
 			elem.setAttribute('placeholder', value);
 		else{
 			if(value.indexOf('[') !== -1){
