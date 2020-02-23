@@ -265,30 +265,34 @@ function diveObject(obj, path, setValue){
     return obj;
 }
 
+var pending_refreshLang = 0;
 internal.language.refreshLang = function(el){
-	if(el.constructor === Array){
-		var arr = [];
-		for (var i = 0; i < el.length; i++) {
-			if(el[i].hasAttribute === void 0)
-				continue;
+	cancelAnimationFrame(pending_refreshLang);
+	pending_refreshLang = requestAnimationFrame(function(){
+		if(el.constructor === Array){
+			var arr = [];
+			for (var i = 0; i < el.length; i++) {
+				if(el[i].hasAttribute === void 0)
+					continue;
 
-			if(el[i].hasAttribute('sf-lang'))
-				arr.push(el[i]);
+				if(el[i].hasAttribute('sf-lang'))
+					arr.push(el[i]);
+			}
+			return refreshLang(arr);
 		}
-		return refreshLang(arr);
-	}
 
-	if(el.hasAttribute === void 0)
-		return;
+		if(el.hasAttribute === void 0)
+			return;
 
-	if(el.hasAttribute('sf-lang'))
-		return refreshLang([el]);
+		if(el.hasAttribute('sf-lang'))
+			return refreshLang([el]);
 
-	el = el.querySelectorAll('[sf-lang]');
-	if(el.length === 0)
-		return;
+		el = el.querySelectorAll('[sf-lang]');
+		if(el.length === 0)
+			return;
 
-	refreshLang(Array.from(el));
+		refreshLang(Array.from(el));
+	});
 };
 
 function refreshLang(list, noPending){

@@ -336,10 +336,10 @@ var $ = sf.dom; // Shortcut
 
 		text:function(text){
 			if(text === void 0)
-				return this.length !== 0 ? this[0].innerText : '';
+				return this.length !== 0 ? this[0].textContent : '';
 
 			for (var i = 0; i < this.length; i++)
-				this[i].innerText = text;
+				this[i].textContent = text;
 			return this;
 		},
 		html:function(text){

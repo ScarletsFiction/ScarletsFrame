@@ -74,17 +74,20 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			// Register every path as fixed object (where any property replacement will being assigned)
 			for (var i = 0; i < propertyName.length-1; i++) {
 				let value = model[propertyName[i]];
-				Object.defineProperty(model, propertyName[i], {
-					enumerable: true,
-					configurable: true,
-					get:function(){
-						return value;
-					},
-					set:function(val){
-						Object.assign(value, val);
-						return val;
-					}
-				});
+
+				// Only apply if this is an Object/Array
+				if(value.constructor === Object || value.constructor === Array)
+					Object.defineProperty(model, propertyName[i], {
+						enumerable: true,
+						configurable: true,
+						get:function(){
+							return value;
+						},
+						set:function(val){
+							Object.assign(value, val);
+							return val;
+						}
+					});
 
 				model = value;
 			}
@@ -121,7 +124,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	}
 
 	// Proxy property
-	if(Object.getOwnPropertyDescriptor(model, propertyName).set !== void 0)
+	if(model[propertyName] !== void 0 && Object.getOwnPropertyDescriptor(model, propertyName).set !== void 0)
 		return;
 
 	var objValue = model[propertyName] || ''; // Object value
@@ -189,7 +192,9 @@ self.bindElement = function(element, modelScope, template, localModel){
 		templateParser(template, modelScope, true);
 		delete template.addresses;
 
-		element.parentNode.replaceChild(template.html, element);
+		if(element.parentNode !== null)
+			element.parentNode.replaceChild(template.html, element);
+
 		element = template.html;
 	}
 
