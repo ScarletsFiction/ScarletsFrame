@@ -62,11 +62,11 @@ internal.model.removeModelBinding = function(ref, noBackup){
 
 function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	var originalModel = model;
-	var originalpropertyName = propertyName;
+	var originalPropertyName = propertyName;
 
 	// Dive to the last object, create if not exist
 	if(propertyName.constructor === Array){
-		originalpropertyName = originalpropertyName.join('.');
+		originalPropertyName = originalPropertyName.join('.');
 
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];
@@ -172,7 +172,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 						continue;
 					}
 
-					if(syntheticTemplate(ref[i].element, ref[i].template, originalpropertyName, originalModel) === false)
+					if(syntheticTemplate(ref[i].element, ref[i].template, originalPropertyName, originalModel) === false)
 						0; //No update
 				}
 
@@ -192,8 +192,13 @@ self.bindElement = function(element, modelScope, template, localModel){
 		templateParser(template, modelScope, true);
 		delete template.addresses;
 
-		if(element.parentNode !== null)
-			element.parentNode.replaceChild(template.html, element);
+		if(element.parentNode !== null){
+			var newElem = template.html;
+			if(newElem.tagName.indexOf('-') !== -1 && sf.component.registered[newElem.tagName.toLowerCase()] !== void 0)
+				newElem.sf$componentIgnore = true;
+
+			element.parentNode.replaceChild(newElem, element);
+		}
 
 		element = template.html;
 	}

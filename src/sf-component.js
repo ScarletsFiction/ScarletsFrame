@@ -73,23 +73,21 @@ sf.component = function(scope){
 		if(internal.component.skip)
 			return;
 
+		if(element.sf$componentIgnore === true)
+			return;
+
 		if(element.hasAttribute('sf-repeat-this')){
 			element.sf$componentIgnore = true;
 			return;
 		}
 
-		if(element.childElementCount === 0){
-			if(self.registered[name][3] === false){
-				if(waitingHTML[name] === void 0)
-					waitingHTML[name] = [];
+		if(element.childNodes.length === 0 && self.registered[name][3] === false){
+			if(waitingHTML[name] === void 0)
+				waitingHTML[name] = [];
 
-				waitingHTML[name].push({el:element, item:$item});
-				return;
-			}
-		}
-
-		if(element.sf$componentIgnore === true)
+			waitingHTML[name].push({el:element, item:$item});
 			return;
+		}
 
 		var avoid = /(^|:)(sf-|class|style)/;
 		var attr = element.attributes;
@@ -102,14 +100,6 @@ sf.component = function(scope){
 				continue;
 
 			$item[attr[i].nodeName] = attr[i].value;
-		}
-
-		if(element === void 0){
-			if(self.registered[name][3] === false){
-				console.error("HTML content for '"+name+"' was not defined");
-				return;
-			}
-			element = self.registered[name][3].cloneNode(true);
 		}
 
 		var newID = name+'@'+(self.registered[name][2]++);
@@ -127,7 +117,7 @@ sf.component = function(scope){
 		if(self.registered[name][1])
 			self.registered[name][1](newObj, sf.model, $item);
 
-		if(element.childElementCount === 0){
+		if(element.childNodes.length === 0){
 			var temp = self.registered[name][3];
 			var tempDOM = temp.tempDOM;
 
@@ -208,6 +198,9 @@ sf.component = function(scope){
 	function defineComponent(name){
 		if(customElements.get(name))
 			return;
+
+		if(name.toLowerCase() !== name)
+			return console.error("Please use lower case when defining component name");
 
 		name = name.replace(/[^\w-]+/g, '');
 		var tagName = name;
