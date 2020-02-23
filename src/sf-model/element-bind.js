@@ -187,12 +187,12 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 }
 
 self.bindElement = function(element, modelScope, template, localModel){
-	if(element.model !== void 0){
-		console.warn('Unexpected rebinding', element);
-		return;
-	}
-
 	if(template === void 0){
+		if(element.model !== void 0){
+			console.warn('Unexpected rebinding', element);
+			return;
+		}
+
 		template = self.extractPreprocess(element, null, modelScope);
 		templateParser(template, modelScope, true);
 		delete template.addresses;

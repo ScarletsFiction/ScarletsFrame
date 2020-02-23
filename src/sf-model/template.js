@@ -71,6 +71,55 @@ var templateExec = function(parse, item, atIndex){
 	return parsed;
 }
 
+function parserForAttribute(current, ref, item, modelRef, parsed, changesReference){
+	for(var a = 0; a < ref.length; a++){
+		var refB = ref[a];
+
+		// Pass to event handler
+		if(refB.event){
+			eventHandler(current, refB, modelRef || item);
+			continue;
+		}
+
+		var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
+			(current.tagName === 'INPUT' && /checkbox|radio|hidden/.test(current.type) === false)
+		));
+
+		var temp = {
+			attribute:isValueInput === true ? current : current.attributes[refB.name],
+			ref:refB
+		};
+
+		if(current.hasAttribute('sf-lang'))
+			temp.sf_lang = current;
+
+		changesReference.push(temp);
+
+		if(refB.direct !== void 0){
+			if(refB.name === 'value' && isValueInput === true){
+				current.value = parsed[refB.direct].data;
+				current.removeAttribute('value');
+				continue;
+			}
+			current.setAttribute(refB.name, parsed[refB.direct].data);
+			continue;
+		}
+
+		// Below is used for multiple data
+		if(refB.name === 'value' && isValueInput === true){
+			var temp = current.value;
+			current.removeAttribute('value');
+			current.value = temp;
+			current.value = current.value.replace(templateParser_regex, function(full, match){
+				return parsed[match].data;
+			});
+		}
+		else current.setAttribute(refB.name, (refB.value || current.value).replace(templateParser_regex, function(full, match){
+				return parsed[match].data;
+			}));
+	}
+}
+
 var templateParser = internal.model.templateParser = function(template, item, original, modelRef){
 	processingElement = template.html;
 
@@ -88,55 +137,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
-			var refA = ref.attributes;
-			for(var a = 0; a < refA.length; a++){
-				var refB = refA[a];
-
-				// Pass to event handler
-				if(refB.event){
-					eventHandler(current, refB, modelRef || item);
-					continue;
-				}
-
-				var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
-					(current.tagName === 'INPUT' && /checkbox|radio|hidden/.test(current.type) === false)
-				));
-
-				var temp = {
-					attribute:isValueInput === true ? current : current.attributes[refB.name],
-					ref:refB
-				};
-
-				if(current.hasAttribute('sf-lang'))
-					temp.sf_lang = current;
-
-				changesReference.push(temp);
-
-				if(refB.direct !== void 0){
-					if(refB.name === 'value' && isValueInput === true){
-						current.value = parsed[refB.direct].data;
-						current.removeAttribute('value');
-						continue;
-					}
-					current.setAttribute(refB.name, parsed[refB.direct].data);
-					continue;
-				}
-
-				// Below is used for multiple data
-				if(refB.name === 'value' && isValueInput === true){
-					var temp = current.value;
-					current.removeAttribute('value');
-					current.value = temp;
-					current.value = current.value.replace(templateParser_regex, function(full, match){
-						return parsed[match].data;
-					});
-				}
-				else{
-					current.setAttribute(refB.name, (refB.value || current.value).replace(templateParser_regex, function(full, match){
-						return parsed[match].data;
-					}));
-				}
-			}
+			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference);
 			continue;
 		}
 

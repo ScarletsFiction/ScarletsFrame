@@ -285,6 +285,60 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	return prepared;
 }
 
+function addressAttributes(currentNode){
+	var attrs = currentNode.attributes;
+	var keys = [];
+	var indexes = 0;
+	for (var a = attrs.length - 1; a >= 0; a--) {
+		var found = attrs[a].value.split('{{%=');
+		if(attrs[a].name[0] === '@'){
+			// No template processing for this
+			if(found.length !== 1){
+				console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
+				continue;
+			}
+
+			keys.push({
+				name:attrs[a].name,
+				value:attrs[a].value,
+				event:true
+			});
+
+			currentNode.removeAttribute(attrs[a].name);
+		}
+
+		if(found.length !== 1){
+			if(attrs[a].name[0] === ':'){
+				var key = {
+					name:attrs[a].name.slice(1),
+					value:attrs[a].value
+				};
+
+				currentNode.removeAttribute(attrs[a].name);
+				currentNode.setAttribute(key.name, '');
+			}
+			else var key = {
+				name:attrs[a].name,
+				value:attrs[a].value
+			};
+
+			indexes = [];
+			found = key.value.replace(/{{%=([0-9]+)/g, function(full, match){
+				indexes.push(Number(match));
+				return '';
+			});
+
+			if(found === '' && indexes.length === 1)
+				key.direct = indexes[0];
+			else
+				key.parse_index = indexes;
+
+			keys.push(key);
+		}
+	}
+	return keys;
+}
+
 self.extractPreprocess = function(targetNode, mask, modelScope){
 	// Remove repeated list from further process
 	// To avoid data parser
@@ -401,60 +455,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 	// Start addressing
 	var nodes = self.queuePreprocess(copy, true, specialElement).reverse();
 	var addressed = [];
-
-	function addressAttributes(currentNode){
-		var attrs = currentNode.attributes;
-		var keys = [];
-		var indexes = 0;
-		for (var a = attrs.length - 1; a >= 0; a--) {
-			var found = attrs[a].value.split('{{%=');
-			if(attrs[a].name[0] === '@'){
-				// No template processing for this
-				if(found.length !== 1){
-					console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
-					continue;
-				}
-
-				keys.push({
-					name:attrs[a].name,
-					value:attrs[a].value,
-					event:true
-				});
-
-				currentNode.removeAttribute(attrs[a].name);
-			}
-
-			if(found.length !== 1){
-				if(attrs[a].name[0] === ':'){
-					var key = {
-						name:attrs[a].name.slice(1),
-						value:attrs[a].value
-					};
-
-					currentNode.removeAttribute(attrs[a].name);
-					currentNode.setAttribute(key.name, '');
-				}
-				else var key = {
-					name:attrs[a].name,
-					value:attrs[a].value
-				};
-
-				indexes = [];
-				found = key.value.replace(/{{%=([0-9]+)/g, function(full, match){
-					indexes.push(Number(match));
-					return '';
-				});
-
-				if(found === '' && indexes.length === 1)
-					key.direct = indexes[0];
-				else
-					key.parse_index = indexes;
-
-				keys.push(key);
-			}
-		}
-		return keys;
-	}
 
 	for (var i = 0; i < nodes.length; i++) {
 		var temp = {
@@ -594,6 +594,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 		for (var a = 0; a < attrs.length; a++) {
 			if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
 				temp.add(targetNode);
+				targetNode.sf$onlyAttribute = true;
 				break;
 			}
 		}
@@ -634,6 +635,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			for (var a = 0; a < attrs.length; a++) {
 				if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
 					temp.add(currentNode);
+					currentNode.sf$onlyAttribute = true;
 					break;
 				}
 			}
@@ -663,13 +665,21 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			if(currentNode.nodeValue.indexOf('{{') !== -1){
 				if(extracting === void 0){
-					if(!temp.has(currentNode.parentNode))
+					if(!temp.has(currentNode.parentNode)){
 						temp.add(currentNode.parentNode);
+
+						if(currentNode.parentNode.sf$onlyAttribute !== void 0)
+							delete currentNode.parentNode.sf$onlyAttribute;
+					}
 					break;
 				}
 
-				if(!temp.has(currentNode))
+				if(!temp.has(currentNode)){
 					temp.add(currentNode);
+
+					if(currentNode.sf$onlyAttribute !== void 0)
+						delete currentNode.sf$onlyAttribute;
+				}
 			}
 		}
 	}
@@ -695,11 +705,47 @@ self.parsePreprocess = function(nodes, model){
 			continue;
 		}
 
+		if(current.sf$onlyAttribute !== void 0){
+			var preParsedRef = [];
+
+			var attrs = current.attributes;
+			for (var i = 0; i < attrs.length; i++) {
+				var attr = attrs[i];
+
+				if(attr.value.indexOf('{{') !== -1)
+					attr.value = dataParser(attr.value, null, false, modelRef, '#noEval', preParsedRef);
+			}
+
+			// Create as function
+			for (var i = 0; i < preParsedRef.length; i++) {
+				var ref = preParsedRef[i];
+
+				if(ref.type === REF_DIRECT){
+					// Convert to function
+					ref.get = modelScript(ref.data.shift());
+					continue;
+				}
+			}
+
+			var address = addressAttributes(current);
+			var parsed = templateExec(preParsedRef, modelRef);
+			var currentRef = [];
+			parserForAttribute(current, address, null, modelRef, parsed, currentRef);
+
+			// Save reference to element
+			if(currentRef.length !== 0)
+				current.sf$elementReferences = currentRef;
+
+			delete current.sf$onlyAttribute;
+			continue;
+		}
+
 		// Double check if the child element already bound to prevent vulnerability
 		if(current.innerHTML.indexOf('sf-bind-list') !== -1 && current.tagName !== 'SF-M'){
-			console.error("Can't parse element that already have any binded element/component");
-			console.log(current);
-			return;
+			console.error("Can't parse element that already parsed with other component", current);
+			console.log("To fix this, the sf-m element need to be initialized before the component-element");
+			console.log(nodes);
+			continue;
 		}
 
 		if(current.hasAttribute('sf-bind-ignore') === false)

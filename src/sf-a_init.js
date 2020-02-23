@@ -87,6 +87,9 @@ function avoidQuotes(str, func, noReturn){
 
 	str = func(str);
 
+	// Fix unexpected _modelScope replacement
+	str =  str.split('<%$@>_modelScope.').join('<%$@>');
+
 	for (var i = 0; i < temp.length; i++) {
 		str = str.replace(es+i+es, temp[i]);
 	}
