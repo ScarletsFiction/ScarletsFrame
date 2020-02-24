@@ -104,16 +104,17 @@ class SFModel extends HTMLElement {
 		if(this.sf$firstInit === void 0)
 			return;
 
-		internal.language.refreshLang(this);
-
 		var that = this;
 		delete this.sf$firstInit;
 
 		setTimeout(function(){
-			if(sf.loader.DOMWasLoaded)
+			if(sf.loader.DOMWasLoaded){
+				internal.language.refreshLang(that);
 				return sf.model.init(that, that.getAttribute('name'));
+			}
 
 			sf.loader.onFinish(function(){
+				internal.language.refreshLang(that);
 				sf.model.init(that, that.getAttribute('name'));
 			});
 		});
