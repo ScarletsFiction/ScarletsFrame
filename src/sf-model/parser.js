@@ -339,6 +339,24 @@ function addressAttributes(currentNode){
 	return keys;
 }
 
+function toObserve(full, model, properties,){
+	var place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
+
+	// Get property name
+	if(place[properties] === void 0){
+		place[properties] = [toObserve.template.i];
+
+		if(place === toObserve.template.modelRef)
+			toObserve.template.modelRef_array.push([properties, parsePropertyPath(properties)]);
+		else
+			toObserve.template.modelRefRoot_array.push([properties, parsePropertyPath(properties)]);
+	}
+	else if(place[properties].indexOf(toObserve.template.i) === -1)
+		place[properties].push(toObserve.template.i);
+
+	return full;
+};
+
 self.extractPreprocess = function(targetNode, mask, modelScope){
 	// Remove repeated list from further process
 	// To avoid data parser
@@ -353,13 +371,17 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		return console.error('[Violation] template extraction aborted', targetNode, mask, modelScope);
 
 	var copy = targetNode.outerHTML;
-	var modelRef = null;
-	var modelRef_array = null;
+	var template = {
+		modelRefRoot:{},
+		modelRefRoot_array:[],
+		modelRef:null,
+		modelRef_array:null,
+	};
 
 	// Mask the referenced item
 	if(mask !== null){
-		modelRef = {};
-		modelRef_array = [];
+		template.modelRef = {};
+		template.modelRef_array = [];
 		copy = copy.split('#'+mask).join('_model_');
 	}
 
@@ -369,32 +391,14 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 	var _content_ = copy[2];
 	copy = dataParser(copy[0], null, mask, modelScope, '#noEval', preParsed);
 
-	var modelRefRoot = {};
-	var modelRefRoot_array = [];
 	function findModelProperty(){
 		for (var i = 0; i < preParsed.length; i++) {
 			var current = preParsed[i];
-			var toObserve = function(full, model, properties){
-				var place = model === '_model_' ? modelRef : modelRefRoot;
-
-				// Get property name
-				if(place[properties] === void 0){
-					place[properties] = [i];
-
-					if(place === modelRef)
-						modelRef_array.push([properties, parsePropertyPath(properties)]);
-					else
-						modelRefRoot_array.push([properties, parsePropertyPath(properties)]);
-				}
-				else if(place[properties].indexOf(i) === -1)
-					place[properties].push(i);
-
-				return full;
-			};
 
 			// Text or attribute
 			if(current.type === REF_DIRECT){
-				current.data[0] = current.data[0].replace(sf.regex.itemsObserve, toObserve);
+				toObserve.template.i = i;
+				current.data[0] = current.data[0].replace(sf.regex.itemsObserve, toObserve, template);
 
 				// Convert to function
 				current.get = modelScript(current.data.shift());
@@ -431,6 +435,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 				return _content_[match];
 			});
 
+			toObserve.template.i = i;
 			checkList.split('"').join("'").replace(sf.regex.itemsObserve, toObserve);
 		}
 	}
@@ -447,13 +452,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		current.parentNode.replaceChild(backup[i], current);
 	}
 
-	var specialElement = {
+	template.specialElement = {
 		repeat:[],
 		input:[]
 	};
 
 	// Start addressing
-	var nodes = self.queuePreprocess(copy, true, specialElement).reverse();
+	var nodes = self.queuePreprocess(copy, true, template.specialElement).reverse();
 	var addressed = [];
 
 	for (var i = 0; i < nodes.length; i++) {
@@ -552,32 +557,29 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 		addressed.push(temp);
 	}
 
+	toObserve.template = template;
 	findModelProperty();
+	delete toObserve.template.i;
+	delete toObserve.template;
 
 	// Get the indexes for input bind
-	var specialInput = specialElement.input;
+	var specialInput = template.specialElement.input;
 	for (var i = 0; i < specialInput.length; i++) {
 		specialInput[i] = $.getSelector(specialInput[i], true);
 	}
 
 	// Get the indexes for sf-repeat-this
-	var specialRepeat = specialElement.repeat;
+	var specialRepeat = template.specialElement.repeat;
 	for (var i = 0; i < specialRepeat.length; i++) {
 		specialRepeat[i] = $.getSelector(specialRepeat[i], true);
 	}
 
 	// internal.language.refreshLang(copy);
+	template.html = copy;
+	template.parse = preParsed;
+	template.addresses = addressed;
 
-	return {
-		html:copy,
-		parse:preParsed,
-		addresses:addressed,
-		modelRef:modelRef,
-		modelRefRoot:modelRefRoot,
-		modelRefRoot_array:modelRefRoot_array,
-		modelRef_array:modelRef_array,
-		specialElement:specialElement
-	};
+	return template;
 }
 
 var enclosedHTMLParse = false;
@@ -705,6 +707,7 @@ self.parsePreprocess = function(nodes, model){
 			continue;
 		}
 
+		// Create attribute template only because we're not going to process HTML content
 		if(current.sf$onlyAttribute !== void 0){
 			var preParsedRef = [];
 
@@ -716,25 +719,43 @@ self.parsePreprocess = function(nodes, model){
 					attr.value = dataParser(attr.value, null, false, modelRef, '#noEval', preParsedRef);
 			}
 
+			var template = {
+				parse:preParsedRef,
+				addresses:addressAttributes(current),
+				modelRefRoot:{},
+				modelRefRoot_array:[],
+				modelRef:null,
+				modelRef_array:null
+			};
+
+			toObserve.template = template;
+
 			// Create as function
 			for (var i = 0; i < preParsedRef.length; i++) {
 				var ref = preParsedRef[i];
 
 				if(ref.type === REF_DIRECT){
+					toObserve.template.i = i;
+					ref.data[0] = ref.data[0].replace(sf.regex.itemsObserve, toObserve);
+
 					// Convert to function
 					ref.get = modelScript(ref.data.shift());
 					continue;
 				}
 			}
 
-			var address = addressAttributes(current);
+			delete toObserve.template.i;
+			delete toObserve.template;
+
 			var parsed = templateExec(preParsedRef, modelRef);
 			var currentRef = [];
-			parserForAttribute(current, address, null, modelRef, parsed, currentRef);
+			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef);
 
 			// Save reference to element
 			if(currentRef.length !== 0)
 				current.sf$elementReferences = currentRef;
+
+			self.bindElement(current, modelRef, template);
 
 			delete current.sf$onlyAttribute;
 			continue;

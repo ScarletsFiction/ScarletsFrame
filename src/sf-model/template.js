@@ -71,13 +71,13 @@ var templateExec = function(parse, item, atIndex){
 	return parsed;
 }
 
-function parserForAttribute(current, ref, item, modelRef, parsed, changesReference){
+function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler){
 	for(var a = 0; a < ref.length; a++){
 		var refB = ref[a];
 
 		// Pass to event handler
 		if(refB.event){
-			eventHandler(current, refB, modelRef || item);
+			eventHandler(current, refB, modelRef || item, rootHandler);
 			continue;
 		}
 
@@ -120,7 +120,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 	}
 }
 
-var templateParser = internal.model.templateParser = function(template, item, original, modelRef){
+var templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler){
 	processingElement = template.html;
 
 	var html = original === true ? template.html : template.html.cloneNode(true);
@@ -137,7 +137,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
-			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference);
+			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference, rootHandler);
 			continue;
 		}
 
