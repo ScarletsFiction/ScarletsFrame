@@ -34,6 +34,23 @@ self.add = function(lang, obj){
 
 self.changeDefault = function(defaultLang){
 	self.default = defaultLang;
+
+	function forComponents(){
+		var registered = sf.component.registered;
+		var keys = Object.keys(registered);
+
+		for (var i = 0; i < keys.length; i++) {
+			if(registered[keys[i]][3] !== false)
+				refreshTemplate(registered[keys[i]][3]);
+		}
+	}
+
+	if(self.list[defaultLang] === void 0){
+		forComponents.callbackOnly = true;
+		pendingCallback.push(forComponents);
+	}
+	else forComponents();
+
 	self.init(document.body);
 }
 
@@ -265,39 +282,30 @@ function diveObject(obj, path, setValue){
     return obj;
 }
 
-var pending_refreshLang = void 0;
 internal.language.refreshLang = function(el){
-	if(pending_refreshLang !== void 0)
+	if(el.constructor === Array){
+		var arr = [];
+		for (var i = 0; i < el.length; i++) {
+			if(el[i].hasAttribute === void 0)
+				continue;
+
+			if(el[i].hasAttribute('sf-lang'))
+				arr.push(el[i]);
+		}
+		return refreshLang(arr);
+	}
+
+	if(el.hasAttribute === void 0)
 		return;
 
-	pending_refreshLang = el;
-	requestAnimationFrame(function(){
-		pending_refreshLang = void 0;
+	if(el.hasAttribute('sf-lang'))
+		return refreshLang([el]);
 
-		if(el.constructor === Array){
-			var arr = [];
-			for (var i = 0; i < el.length; i++) {
-				if(el[i].hasAttribute === void 0)
-					continue;
+	el = el.querySelectorAll('[sf-lang]');
+	if(el.length === 0)
+		return;
 
-				if(el[i].hasAttribute('sf-lang'))
-					arr.push(el[i]);
-			}
-			return refreshLang(arr);
-		}
-
-		if(el.hasAttribute === void 0)
-			return;
-
-		if(el.hasAttribute('sf-lang'))
-			return refreshLang([el]);
-
-		el = el.querySelectorAll('[sf-lang]');
-		if(el.length === 0)
-			return;
-
-		refreshLang(Array.from(el));
-	});
+	refreshLang(Array.from(el));
 };
 
 function refreshLang(list, noPending){
@@ -356,40 +364,9 @@ function refreshLang(list, noPending){
 
 		if(elem.placeholder !== void 0)
 			elem.setAttribute('placeholder', value);
-		else{
-			if(value.indexOf('[') !== -1){
-				value = value.replace(/\[(.*?)\]/g, function(full, match){
-					return '*#'+match+'*#';
-				}).split('*#');
+		else
+			assignSquareBracket(elem, value);
 
-				if(value[value.length-1] === '')
-					value.pop();
-
-				// Odd = element for [text]
-				// Even = text only
-
-				var nodes = elem.childNodes;
-				for (var a = 0; a < value.length; a++) {
-					if(a % 2 === 0){ // text
-						if(nodes[a] === void 0) // no nodes
-							elem.appendChild(document.createTextNode(value[a]));
-						else if(nodes[a].nodeType === 3) // text node
-							nodes[a].textContent = value[a];
-						else // element node
-							elem.insertBefore(document.createTextNode(value[a]), nodes[a]);
-
-						continue;
-					}
-
-					if(nodes[a].nodeType === 1) // element node
-						nodes[a].textContent = value[a];
-				}
-
-				if(nodes[a] !== void 0 && nodes[a].nodeType === 3)
-					nodes[a].remove();
-			}
-			else elem.textContent = value;
-		}
 		elem.sf_lang = self.default;
 	}
 
@@ -432,6 +409,41 @@ function refreshLang(list, noPending){
 	}
 }
 
+function assignSquareBracket(elem, value){
+	if(value.indexOf('[') !== -1){
+		value = value.replace(/\[(.*?)\]/g, function(full, match){
+			return '*#'+match+'*#';
+		}).split('*#');
+
+		if(value[value.length-1] === '')
+			value.pop();
+
+		// Odd = element for [text]
+		// Even = text only
+
+		var nodes = elem.childNodes;
+		for (var a = 0; a < value.length; a++) {
+			if(a % 2 === 0){ // text
+				if(nodes[a] === void 0) // no nodes
+					elem.appendChild(document.createTextNode(value[a]));
+				else if(nodes[a].nodeType === 3) // text node
+					nodes[a].textContent = value[a];
+				else // element node
+					elem.insertBefore(document.createTextNode(value[a]), nodes[a]);
+
+				continue;
+			}
+
+			if(nodes[a].nodeType === 1) // element node
+				nodes[a].textContent = value[a];
+		}
+
+		if(nodes[a] !== void 0 && nodes[a].nodeType === 3)
+			nodes[a].remove();
+	}
+	else elem.textContent = value;
+}
+
 function elementReferencesRefresh(elem){
 	var eRef = elem.sf$elementReferences;
 
@@ -468,6 +480,36 @@ function elementReferencesRefresh(elem){
 			return '{{%='+(z++);
 		});
 	}
+}
+
+function refreshTemplate(list){
+	var addresses = list.addresses;
+	var found = false;
+
+	for (var i = 0; i < addresses.length; i++) {
+		if(addresses[i].skipSFLang || addresses[i].value === void 0)
+			continue;
+
+		var elem = $.childIndexes(addresses[i].address, list.html).parentNode;
+		if(elem.hasAttribute('sf-lang') === false)
+			continue;
+
+		found = true;
+		var value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
+
+		var z = 0;
+		value = value.replace(/{(.*?)}/, function(full, match){
+			if(isNaN(match) === false)
+				return '{{%='+match;
+			return '{{%='+(z++);
+		});
+
+		addresses[i].value = value;
+		assignSquareBracket(elem, addresses[i].value);
+	}
+
+	if(found === false)
+		list.skipSFLang = true; // skip because not found
 }
 
 })();

@@ -183,7 +183,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	if(changesReference.length !== 0)
 		html.sf$elementReferences = changesReference;
 
-	internal.language.refreshLang(html);
+	// internal.language.refreshLang(html);
 	// html.sf$modelParsed = parsed;
 
 	// Run the pending element

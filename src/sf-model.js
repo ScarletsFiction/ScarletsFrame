@@ -104,6 +104,8 @@ class SFModel extends HTMLElement {
 		if(this.sf$firstInit === void 0)
 			return;
 
+		internal.language.refreshLang(this);
+
 		var that = this;
 		delete this.sf$firstInit;
 
