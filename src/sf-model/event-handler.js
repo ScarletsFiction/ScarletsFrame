@@ -21,49 +21,64 @@ function eventHandler(that, data, _modelScope, rootHandler){
 
 	// Create custom listener for repeated element
 	else if(rootHandler){
-		var elementIndex = $.getSelector(that, false, rootHandler); // `rootHandler` may not the parent of `that`
+		var elementIndex = $.getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
 
 		if(rootHandler.sf$listListener === void 0)
 			rootHandler.sf$listListener = {};
 
-		if(rootHandler.sf$listListener[name_] === void 0)
-			rootHandler.sf$listListener[name_] = new Set([elementIndex]);
+		var func = new Function(script.split('event').join('arguments[0]')
+			.split('_model_').join('arguments[1]')
+			.split('_modelScope').join('arguments[2]'));
+
+		var listener = rootHandler.sf$listListener[name_];
+		if(listener === void 0){
+			listener = rootHandler.sf$listListener[name_] = [[elementIndex, func]];
+			listener.set = new Set([elementIndex.join('')]);
+		}
 		else{
-			rootHandler.sf$listListener[name_].add(elementIndex);
+			if(listener.set.has(elementIndex.join('')) === false){
+				listener.push([elementIndex, func]);
+				listener.set.add(elementIndex.join(''));
+			}
 			return;
 		}
 
-		var pass = {
-			$:$, // reference copy
-			root:_modelScope,
-			listener:rootHandler.sf$listListener[name_]
-		};
+		// We need to get element with 'sf-bind-list' and check current element before processing
+		script = function(event){
+			var findEventFromList = function(arr){
+				// Partial array compare ([0,1,2] with [0,1,2,3,4] ==> true)
+				for (var i = 0; i < listener.length; i++) {
+					if(arr === void 0){
+						if(listener[i][0].length !== 0)
+							continue;
 
-// We need to get element with 'sf-bind-list' and check current element before processing
-		var custom = `
-var event = arguments[0], _that_ = event.target;
+						return listener[i][1];
+					}
 
-if(_that_.hasAttribute('sf-bind-list') === false){
-	var realThat = this.$.parent(_that_, '[sf-bind-list]');
+					var ref = listener[i][0];
+					for (var z = 0; z < arr.length; z++) {
+						if(arr[z] === ref[z])
+							return listener[i][1];
+						else break;
+					}
+				}
 
-	if(this.listener.has(this.$.getSelector(_that_, false, realThat)) === false) 
-		return;
+				return;
+			}
 
-	var _model_ = realThat.model;
-}
-else{
-	if(this.listener.has('') === false)
-		return;
+			if(event.target.hasAttribute('sf-bind-list') === false){
+				var realThat = $.parent(event.target, '[sf-bind-list]');
+				var call = findEventFromList($.getSelector(event.target, true, realThat));
 
-	var _model_ = _that_.model;
-}`;
+				if(call !== void 0)
+					call(event, realThat.model, _modelScope);
 
-		script = script.split('this').join('_that_')
-			.split('_modelScope').join('this.root');
+				return;
+			}
 
-		var func = new Function(custom+script);
-		script = function(){
-			func.apply(pass, arguments);
+			var call = findEventFromList(void 0);
+			if(call !== void 0)
+				call(event, event.target.model, _modelScope);
 		};
 	}
 
