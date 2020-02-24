@@ -13,7 +13,30 @@ var languages = {
             friend:'Aliz!',
         },
     },
+    id_ID:{
+        second:'Kedua!',
+        my:{
+            test:'Tes saya!'
+        },
+        stuff:{
+            chicken:'Berkokok!',
+            game:'Back to nature!',
+        },
+        another:{
+            day:'Minggu!',
+            friend:'Nyam!',
+        }
+    },
     ja_JP:{
+        translated:'{data}翻訳済み',
+        hello:{
+            other:{
+                side:"[反対側]からこんにちは"
+            }
+        },
+        "i'm":{
+            here:"私はここにいます！"
+        },
         second:'第二!',
         my:{
             test:'私のテスト!'
@@ -56,8 +79,17 @@ module.exports = {
         if(json.my && json.my.test)
         	obj.my = {test:lang.my.test};
 
+        if(json.translated)
+            obj.translated = lang.translated;
+        
         if(json.second)
             obj.second = lang.second;
+
+        if(json.hello)
+            obj.hello = lang.hello;
+
+        if(json["i'm"])
+            obj["i'm"] = lang["i'm"];
 
         if(json.custom)
             obj.custom = lang.custom;

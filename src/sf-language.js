@@ -265,10 +265,15 @@ function diveObject(obj, path, setValue){
     return obj;
 }
 
-var pending_refreshLang = 0;
+var pending_refreshLang = void 0;
 internal.language.refreshLang = function(el){
-	cancelAnimationFrame(pending_refreshLang);
-	pending_refreshLang = requestAnimationFrame(function(){
+	if(pending_refreshLang !== void 0)
+		return;
+
+	pending_refreshLang = el;
+	requestAnimationFrame(function(){
+		pending_refreshLang = void 0;
+
 		if(el.constructor === Array){
 			var arr = [];
 			for (var i = 0; i < el.length; i++) {
@@ -318,7 +323,7 @@ function refreshLang(list, noPending){
 		}
 		else{
 			var modelElement = sf.controller.modelElement(elem);
-			if(modelElement !== null && modelElement.tagName !== 'SF-M'){
+			if(modelElement !== null){
 				if(parentElement.has(modelElement))
 					continue;
 
@@ -353,20 +358,35 @@ function refreshLang(list, noPending){
 			elem.setAttribute('placeholder', value);
 		else{
 			if(value.indexOf('[') !== -1){
-				var deep = [];
 				value = value.replace(/\[(.*?)\]/g, function(full, match){
-					deep.push(match);
-					return '*#';
+					return '*#'+match+'*#';
 				}).split('*#');
 
-				var nodes = elem.childNodes;
-				for (var a = 0; a < nodes.length; a++) {
-					if(nodes[a].nodeType === 3 && value.length !== 0) // text
-						nodes[a].textContent = value.shift();
+				if(value[value.length-1] === '')
+					value.pop();
 
-					else if(nodes[a].nodeType === 1 && deep.length !== 0) // element
-						nodes[a].textContent = deep.shift();
+				// Odd = element for [text]
+				// Even = text only
+
+				var nodes = elem.childNodes;
+				for (var a = 0; a < value.length; a++) {
+					if(a % 2 === 0){ // text
+						if(nodes[a] === void 0) // no nodes
+							elem.appendChild(document.createTextNode(value[a]));
+						else if(nodes[a].nodeType === 3) // text node
+							nodes[a].textContent = value[a];
+						else // element node
+							elem.insertBefore(document.createTextNode(value[a]), nodes[a]);
+
+						continue;
+					}
+
+					if(nodes[a].nodeType === 1) // element node
+						nodes[a].textContent = value[a];
 				}
+
+				if(nodes[a] !== void 0 && nodes[a].nodeType === 3)
+					nodes[a].remove();
 			}
 			else elem.textContent = value;
 		}
@@ -382,6 +402,9 @@ function refreshLang(list, noPending){
 	// Reapply template
 	for (var a = 0; a < parentElement.length; a++) {
 		var model = parentElement[a].model;
+		if(model === void 0)
+			model = sf.controller.modelScope(parentElement[a]);
+
 		if(!model.sf$bindedKey) // Doesn't have template
 			continue;
 
@@ -396,13 +419,13 @@ function refreshLang(list, noPending){
 				}
 
 				var elem = ref[i].element;
-				if(elem.nodeType === 1 && elem.hasAttribute('sf-lang') !== false){
+				if(elem.nodeType === 1){
 					if(appliedElement.has(elem))
 						continue;
 
 					appliedElement.add(elem);
-					if(internal.model.syntheticTemplate(elem, ref[i].template, void 0, model) === false)
-						0; //No update
+					if(internal.model.syntheticTemplate(elem, ref[i].template, keys[z], model) !== false)
+						continue; // updated
 				}
 			}
 		}
@@ -440,6 +463,8 @@ function elementReferencesRefresh(elem){
 
 		var z = 0;
 		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
+			if(isNaN(match) === false)
+				return '{{%='+match;
 			return '{{%='+(z++);
 		});
 	}

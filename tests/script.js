@@ -96,7 +96,7 @@ sf.model.for('virtual-scroll', function(self, root){
 });
 
 var aList = null;
-sf(function(){
+sf(function(){return;
    var list = aList = sf.model('virtual-scroll');
 
    setTimeout(function(){
@@ -257,7 +257,7 @@ sf.model.for('model-binding', function(self, root){
    self.vul = "this musn't being visible"+vul;
    setTimeout(function(){sf.model.init(reinit)}, 1000);
 });
-sf.controller.for('model-binding', function(self, root){
+sf.controller.for('model-binding', function(self, root){return;
    var list = root('virtual-scroll');
    if(list.list1 === undefined)
       console.error("Can't get other model scope variable");
@@ -329,7 +329,7 @@ sf.component.for('comp-test', function(self, root, item){
    }
 });
 
-sf.component.html('comp-test', '<div>1. {{ data }}</div>\
+sf.component.html('comp-test', '<div sf-lang="translated">1. translated {{ data }}</div>\
    <input type="text" sf-bind="data"/>\
    <div class="sf-virtual-list"><span sf-repeat-this="num in tries"><a @click="select(#num)">{{#num}}</a>,</span></div>\
    <div>item: {{ item }}</div>\

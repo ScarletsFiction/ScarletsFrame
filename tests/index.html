@@ -270,9 +270,10 @@
           sf(function(){
             sf.lang.default = 'en_US';
             sf.lang.add('en_US', {
+              translated:"{data} translated",
               hello:{
                 other:{
-                  side:"Hello from the other side"
+                  side:"Hello from the [other] side"
                 }
               },
               "i'm":{
@@ -287,12 +288,21 @@
               }
             });
             sf.lang.add('id_ID', {
+              translated:"terjemahankan {data}",
               custom:{
                 el:{
                   iB1:"Kontent variabel: {inputBinding1}",
                   iB2:"Kontent diatas: {inputBinding1}",
                   iB3:"Itu adalah {input}"
                 }
+              },
+              hello:{
+                other:{
+                  side:"Halo dari sisi [lain]"
+                }
+              },
+              "i'm":{
+                here:"Aku disini!"
               }
             });
             sf.lang.serverURL = '/test/lang';
@@ -316,11 +326,11 @@
           })
         </script>
 
-         <p sf-lang="hello.other.side"></p>
+         <p sf-lang="hello.other.side" onclick="sf.lang.changeDefault('id_ID')">a<b>b</b>c</p>
          <input type="text" sf-lang="i'm.here"/>
 
-         <p sf-lang="my.test"></p>
-         <p sf-lang="second"></p>
+         <p sf-lang="my.test" onclick="sf.lang.changeDefault('ja_JP')"></p>
+         <p sf-lang="second" onclick="sf.lang.changeDefault('en_US')"></p>
       </div>
 
       <script type="text/javascript" src="/tests/script.js"></script>
