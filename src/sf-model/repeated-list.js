@@ -37,7 +37,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 				set:function(val){
 					if(val.length === 0)
 						return RE.splice(0);
-					return RE.replace(val, true);
+					return RE.remake(val, true);
 				}
 			});
 		})();
@@ -135,7 +135,7 @@ class RepeatedElement extends Array{
 				}
 				else if(elem.model.$el === void 0){
 					// This is not a component, lets check if all property are equal
-					if(compareObject(elem.model, that[i])){
+					if(compareObject(elem.model, that[i]) === false){
 						elem = templateParser(template, that[i], false, modelRef, parentNode);
 
 						if(typeof that[i] === "object"){
@@ -311,7 +311,34 @@ class RepeatedElement extends Array{
 		}
 	}
 
-	replace(newList, atMiddle){
+	replace(newList, atIndex){
+		atIndex = atIndex || 0;
+		for(var i = 0; i < newList.length; i++){
+			if(i === this.length)
+				break;
+
+			if(this[i + atIndex] !== newList[i])
+				Object.assign(this[i + atIndex], newList[i]);
+		}
+
+		if(newList.length === this.length)
+			return newList;
+
+		var lastLength = this.length;
+		if(newList.length > this.length){
+			Array.prototype.push.apply(this, newList.slice(this.length));
+			this.$EM.hardRefresh(lastLength);
+			return newList;
+		}
+
+		if(newList.length < this.length){
+			Array.prototype.splice.call(this, newList.length);
+			this.$EM.removeRange(newList.length, lastLength);
+			return newList;
+		}
+	}
+
+	remake(newList, atMiddle){
 		var lastLength = this.length;
 
 		if(this.$virtual)
@@ -501,7 +528,7 @@ class ElementManipulator{
 		if(temp !== void 0){
 			if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
-				if(compareObject(temp.model, item)){
+				if(compareObject(temp.model, item) === false){
 					temp = templateParser(template, item, false, this.modelRef, this.parentNode);
 
 					// Check if this is a component container
@@ -559,9 +586,20 @@ class ElementManipulator{
 
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
-		// Clear siblings after the index
-		for (var i = index; i < exist.length; i++) {
-			exist[i].remove();
+		if(index === 0 && list.$virtual === void 0)
+			this.parentNode.textContent = '';
+		else{
+			// Clear siblings after the index
+			if(list.$virtual === void 0){
+				for (var i = index, n = exist.length; i < n; i++) {
+					exist[index].remove();
+				}
+			}
+			else {
+				for (var i = index; i < exist.length; i++) {
+					exist[i].remove();
+				}
+			}
 		}
 
 		if(list.$virtual)
@@ -591,7 +629,7 @@ class ElementManipulator{
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
-				if(compareObject(temp.model, list[i])){
+				if(compareObject(temp.model, list[i]) === false){
 					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode);
 
 					if(typeof list[i] === "object"){
@@ -744,7 +782,7 @@ class ElementManipulator{
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
-				if(compareObject(temp.model, list[i])){
+				if(compareObject(temp.model, list[i]) === false){
 					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode);
 
 					if(typeof list[i] === "object"){
@@ -771,7 +809,7 @@ class ElementManipulator{
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
 		for (var i = index; i < other; i++) {
-			exist[i].remove();
+			exist[index].remove();
 		}
 	}
 
@@ -856,44 +894,5 @@ class ElementManipulator{
 		this.parentNode.appendChild(temp);
 		if(this.callback.create)
 			this.callback.create(temp);
-	}
-
-	// Deprecated?
-	replace(index){
-		var list = this.list;
-		var elRef = list.getElement(index).sf$elementReferences;
-		var process = template.modelRef[key];
-
-		if(process === void 0){
-			console.error("Can't found binding for '"+key+"'");
-			return;
-		}
-
-		for (var i = 0; i < elRef.length; i++) {
-			if(elRef[i].textContent === void 0 || elRef[i].ref.direct === void 0)
-				continue;
-
-			if(process.indexOf(elRef[i].ref.direct) !== -1){
-				var ref = elRef[i].textContent;
-				var content = $.escapeText(list[index][key]).replace(needle, func);
-
-				// Skip if nothing was changed
-				if(list[index][key] === content) continue;
-				ref.textContent = ''; // Let this empty for later referencing
-				ref.sf$haveChilds = true;
-				content = $.parseElement(content, true);
-
-				// Remove old element if exist
-				while(ref.previousSibling && ref.previousSibling.sf$childRoot === ref){
-					ref.previousSibling.remove();
-				}
-
-				var parentNode_ = ref.parentNode;
-				for (var i = 0; i < content.length; i++) {
-					content[i].sf$childRoot = ref;
-					parentNode_.insertBefore(content[i], ref);
-				}
-			}
-		}
 	}
 }

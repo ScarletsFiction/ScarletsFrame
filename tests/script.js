@@ -96,7 +96,7 @@ sf.model.for('virtual-scroll', function(self, root){
 });
 
 var aList = null;
-sf(function(){return;
+sf(function(){
    var list = aList = sf.model('virtual-scroll');
 
    setTimeout(function(){
@@ -177,18 +177,16 @@ sf(function(){return;
 
       // Save dummy data to element
       list.list1.getElement(7).dummy = true;
-      list.list1.getElement(8).dummy = true;
 
       list.list1[7].id = 'Partial refresh'+vul;
-      // list.list1.refresh(7, 'id');
+      list.list1.getElement(8).dummy = true;
+      list.list1[8] = {id:'Element refresh'+vul};
+      list.list1.hardRefresh(8);
 
       setTimeout(function(){
-         list.list1[8].id = 'Element refresh'+vul;
-         list.list1.hardRefresh(8);
-
-         if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing");
-         if(list.list1.getElement(8).dummy) console.error("Data on element refresh was exist");
-      }, 1000);
+         if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing", list.list1[7]);
+         if(list.list1.getElement(8).dummy) console.error("Data on element refresh was exist", list.list1[8]);
+      }, 500);
 
       console.log("I got the last index", list.list1.getElement(list.list1.length-1));
    }, 2000);
@@ -257,7 +255,7 @@ sf.model.for('model-binding', function(self, root){
    self.vul = "this musn't being visible"+vul;
    setTimeout(function(){sf.model.init(reinit)}, 1000);
 });
-sf.controller.for('model-binding', function(self, root){return;
+sf.controller.for('model-binding', function(self, root){
    var list = root('virtual-scroll');
    if(list.list1 === undefined)
       console.error("Can't get other model scope variable");
