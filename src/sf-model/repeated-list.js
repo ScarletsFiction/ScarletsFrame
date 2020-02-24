@@ -119,7 +119,7 @@ class RepeatedElement extends Array{
 						// elem.setAttribute('sf-bind-list', refName[1]);
 					}
 					else{
-						elem = templateParser(template, that[i], false, modelRef);
+						elem = templateParser(template, that[i], false, modelRef, parentNode);
 
 						// Check if this is a component container
 						if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
@@ -136,7 +136,7 @@ class RepeatedElement extends Array{
 				else if(elem.model.$el === void 0){
 					// This is not a component, lets check if all property are equal
 					if(compareObject(elem.model, that[i])){
-						elem = templateParser(template, that[i], false, modelRef);
+						elem = templateParser(template, that[i], false, modelRef, parentNode);
 
 						if(typeof that[i] === "object"){
 							if(isComponent === false)
@@ -416,8 +416,14 @@ class RepeatedElement extends Array{
 	}
 
 	getElement(index){
-		if(index.constructor === Number)
+		if(index.constructor === Number){
+			if(typeof this[index] !== 'object'){
+				var exist = this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh();
+				return exist[index];
+			}
+
 			return this.$EM.elementRef.get(this[index]);
+		}
 
 		return this.$EM.elementRef.get(index);
 	}
@@ -496,7 +502,7 @@ class ElementManipulator{
 			if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
 				if(compareObject(temp.model, item)){
-					temp = templateParser(template, item, false, this.modelRef);
+					temp = templateParser(template, item, false, this.modelRef, this.parentNode);
 
 					// Check if this is a component container
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
@@ -518,7 +524,7 @@ class ElementManipulator{
 			temp = new template(item);
 			this.list[index] = temp.model;
 		}
-		else temp = templateParser(template, item, false, this.modelRef);
+		else temp = templateParser(template, item, false, this.modelRef, this.parentNode);
 
 		if(typeof item === "object"){
 			if(this.isComponent === false)
@@ -569,7 +575,7 @@ class ElementManipulator{
 					list[i] = temp.model;
 				}
 				else{
-					temp = templateParser(this.template, list[i], false, this.modelRef);
+					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode);
 
 					// Check if this is a component container
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
@@ -586,7 +592,7 @@ class ElementManipulator{
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
 				if(compareObject(temp.model, list[i])){
-					temp = templateParser(this.template, list[i], false, this.modelRef);
+					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode);
 
 					if(typeof list[i] === "object"){
 						if(this.isComponent === false)
@@ -722,7 +728,7 @@ class ElementManipulator{
 					list[i] = temp.model;
 				}
 				else{
-					temp = templateParser(template, list[i], false, this.modelRef);
+					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode);
 
 					// Check if this is a component container
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
@@ -739,7 +745,7 @@ class ElementManipulator{
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
 				if(compareObject(temp.model, list[i])){
-					temp = templateParser(template, list[i], false, this.modelRef);
+					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode);
 
 					if(typeof list[i] === "object"){
 						if(this.isComponent === false)
