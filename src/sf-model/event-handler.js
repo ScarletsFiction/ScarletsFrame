@@ -1,4 +1,4 @@
-function eventHandler(that, data, _modelScope){
+function eventHandler(that, data, _modelScope, rootHandler){
 	var modelKeys = sf.model.modelKeys(_modelScope).join('|');
 
 	var direct = false;
@@ -13,17 +13,65 @@ function eventHandler(that, data, _modelScope){
 		});
 	});
 
+	var name_ = data.name.slice(1);
+
 	// Get function reference
 	if(direct)
 		script = eval(script);
 
+	// Create custom listener for repeated element
+	else if(rootHandler){
+		var elementIndex = $.getSelector(that, false, rootHandler); // `rootHandler` may not the parent of `that`
+
+		if(rootHandler.sf$listListener === void 0)
+			rootHandler.sf$listListener = {};
+
+		if(rootHandler.sf$listListener[name_] === void 0)
+			rootHandler.sf$listListener[name_] = new Set([elementIndex]);
+		else{
+			rootHandler.sf$listListener[name_].add(elementIndex);
+			return;
+		}
+
+		var pass = {
+			$:$, // reference copy
+			root:_modelScope,
+			listener:rootHandler.sf$listListener[name_]
+		};
+
+// We need to get element with 'sf-bind-list' and check current element before processing
+		var custom = `
+var event = arguments[0], _that_ = event.target;
+
+if(_that_.hasAttribute('sf-bind-list') === false){
+	var realThat = this.$.parent(_that_, '[sf-bind-list]');
+
+	if(this.listener.has(this.$.getSelector(_that_, false, realThat)) === false) 
+		return;
+
+	var _model_ = realThat.model;
+}
+else{
+	if(this.listener.has('') === false)
+		return;
+
+	var _model_ = _that_.model;
+}`;
+
+		script = script.split('this').join('_that_')
+			.split('_modelScope').join('this.root');
+
+		var func = new Function(custom+script);
+		script = function(){
+			func.apply(pass, arguments);
+		};
+	}
+
 	// Wrap into a function
-	else
-		script = (new Function('var event = arguments[1];'+script.split('_modelScope.').join('arguments[0].')))
-			.bind(that, _modelScope);
+	else script = (new Function('var event = arguments[1];'+script.split('_modelScope.').join('arguments[0].'))).bind(that, _modelScope);
 
 	var containSingleChar = false;
-	var keys = data.name.slice(1).split('.');
+	var keys = name_.split('.');
 	var eventName = keys.shift();
 
 	if(eventName === 'unfocus')
@@ -63,13 +111,13 @@ function eventHandler(that, data, _modelScope){
 
 		// Prevent context menu on mouse event
 		if(keys.has('right'))
-			that.addEventListener('contextmenu', function(ev){
+			(rootHandler || that).addEventListener('contextmenu', function(ev){
 				ev.preventDefault();
 			}, options);
 	}
 
 	if(specialEvent[eventName]){
-		specialEvent[eventName](that, keys, script, _modelScope);
+		specialEvent[eventName](that, keys, script, _modelScope, rootHandler);
 		return;
 	}
 
@@ -131,13 +179,17 @@ function eventHandler(that, data, _modelScope){
 		}
 	}
 
-	that.addEventListener(eventName, callback, options);
+	(rootHandler || that).addEventListener(eventName, callback, options);
 
 	if(!options.once){
-		that['sf$eventDestroy_'+eventName] = function(){
-			that.removeEventListener(eventName, callback, options);
+		(rootHandler || that)['sf$eventDestroy_'+eventName] = function(){
+			(rootHandler || that).removeEventListener(eventName, callback, options);
 		}
 	}
+
+	// Avoid small memory leak when event still listening
+	if(rootHandler)
+		that = null;
 }
 
 var specialEvent = internal.model.specialEvent = {
