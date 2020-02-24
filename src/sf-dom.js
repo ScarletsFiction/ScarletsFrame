@@ -721,7 +721,13 @@ var $ = sf.dom; // Shortcut
 	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
 		var names = [];
+
 		if(untilElement === void 0) untilElement = documentElement;
+		else if(element === untilElement){
+			if(childIndexes)
+				return [];
+			return '';
+		}
 
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
@@ -731,11 +737,8 @@ var $ = sf.dom; // Shortcut
 				break;
 			}
 			else{
-				if(element === untilElement){
-					if(childIndexes === void 0)
-						names.unshift(element.tagName);
-					else names.unshift(0);
-				}
+				if(element === untilElement)
+					break;
 				else {
 					var e = element;
 					var i = childIndexes ? 0 : 1;

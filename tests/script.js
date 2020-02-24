@@ -293,7 +293,7 @@ sf.model.for('components', function(self){
    self.items = [1];
    self.test = 'this must getting changed'+vul;
    self.handleClick = function(e){
-      console.log(e.target);
+      console.log('element click', e.target);
    }
    self.init = function(){
       console.log("Model init called", self.$el);
@@ -313,7 +313,7 @@ sf.model.for('components', function(self){
 sf.controller.for('comp-test', function(self, root, item){
    console.warn('comp-test', item, self.$el[0]);
    self.init = function(){
-      console.warn("Component init called");
+      console.warn("Component init called", self, self.tries.constructor !== Array && self.tries.getElement(0));
    }
 });
 
@@ -323,9 +323,9 @@ sf.component.for('comp-test', function(self, root, item){
    self.data = 'zxc'+vul;
    self.select = function(zx){
       console.log('selected', zx);
-   }
-   self.init = function(){
-      console.log(self.tries.getElement(0));
+
+      self.tries[self.tries.indexOf(zx)] += zx;
+      self.tries.hardRefresh();
    }
 });
 
