@@ -409,7 +409,7 @@ class RepeatedElement extends Array{
 				this.$EM.removeRange(this.length, lastLength);
 
 			// And start refreshing
-			this.refresh(0, this.length);
+			this.$EM.hardRefresh(0, this.length);
 
 			if(this.$virtual && this.$virtual.refreshVirtualSpacer)
 				this.$virtual.refreshVirtualSpacer(this.$virtual.DOMCursor);
@@ -474,11 +474,41 @@ class RepeatedElement extends Array{
 		return Array.prototype.indexOf.apply(this, arguments);
 	}
 
-	refresh(i, o){
-		this.$EM.update(i, o);
+	refresh(index, length, property){
+		if(index === void 0 || index.constructor === String){
+			index = 0;
+			length = this.length;
+		}
+		else if(length === void 0) length = index + 1;
+		else if(length < 0) length = this.length + length;
+		else length += index;
 
-		if(this.$virtual && this.$virtual.DOMCursor)
-			this.$virtual.reinitCursor();
+		// Trim length
+		var overflow = this.length - length;
+		if(overflow < 0) length = length + overflow;
+
+		var elems = this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh();
+		for (var i = index; i < length; i++) {
+			// Create element if not exist
+			if(elems[i] === void 0){
+				this.$EM.hardRefresh(i);
+
+				if(this.$virtual){
+					// this.$virtual.DOMCursor = i;
+					this.$virtual.reinitCursor();
+					this.$virtual.refresh();
+				}
+
+				return;
+			}
+
+			var oldElem = this.$EM.elementRef.get(this[i]);
+			if(oldElem === void 0 || elems[i].model !== oldElem.model)
+				this.$EM.update(i, 1);
+		}
+
+		if(this.$virtual)
+			this.$virtual.refresh();
 	}
 }
 

@@ -757,7 +757,7 @@ Because chrome has scroll anchoring feature, you may need to use [scrollbar libr
 Elements on the virtual DOM will be combined with visible DOM element and return array of element that have the same index with the actual data.
 ```js
 // This will return the parent of the list element
-var elements = test.list1.$EM.parentNode();
+var elements = test.list1.$virtual.elements();
 
 var $elem = $(elements);
 $elem.find('.something');

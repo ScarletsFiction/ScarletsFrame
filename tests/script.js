@@ -325,7 +325,7 @@ sf.component.for('comp-test', function(self, root, item){
       console.log('selected', zx);
 
       self.tries[self.tries.indexOf(zx)] += zx;
-      self.tries.hardRefresh();
+      self.tries.refresh();
    }
 });
 
