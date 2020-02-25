@@ -108,6 +108,7 @@ class SFModel extends HTMLElement {
 		delete this.sf$firstInit;
 
 		setTimeout(function(){
+			// Run init when all assets have loaded
 			if(sf.loader.DOMWasLoaded){
 				internal.language.refreshLang(that);
 				return sf.model.init(that, that.getAttribute('name'));

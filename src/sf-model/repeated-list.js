@@ -216,8 +216,6 @@ class RepeatedElement extends Array{
 			scroller.classList.add('sf-scroll-element');
 			internal.addScrollerStyle();
 		}, 1000);
-
-		// Todo: Enable auto item binding
 	}
 
 	pop(){

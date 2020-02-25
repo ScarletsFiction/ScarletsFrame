@@ -359,6 +359,11 @@ function refreshLang(list, noPending){
 			continue;
 		}
 
+		var z = 0;
+		value = value.replace(/{(.*?)}/, function(full, match){
+			return '{{'+match+'}}';
+		});
+
 		if(noPending === true)
 			list.splice(i, 1);
 
@@ -505,7 +510,7 @@ function refreshTemplate(list){
 		});
 
 		addresses[i].value = value;
-		assignSquareBracket(elem, addresses[i].value);
+		assignSquareBracket(elem, value);
 	}
 
 	if(found === false)
