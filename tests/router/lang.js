@@ -52,8 +52,8 @@ var languages = {
         custom:{
           el:{
             iB1:"可変コンテンツ：{inputBinding1}",
-            iB2:"上記のコンテンツ：{inputBinding1}",
-            iB3:"それは{input}です"
+            iB2:"上記のコンテンツ：{inputBinding2}",
+            iB3:"それは{inputBinding3}です"
           }
         }
     }
