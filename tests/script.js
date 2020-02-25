@@ -162,7 +162,7 @@ sf(function(){
          sf.model.init(reinit2);
          setTimeout(function(){
             if(list.list1.getElement(0).textContent.indexOf('{{self.vul}}') === -1)
-               return console.error("Vulnerability detected");
+               return console.error("Vulnerability detected", list.list1.getElement(0));
             list.list1.shift();
          }, 200);
       }, 1000);
@@ -178,10 +178,12 @@ sf(function(){
       // Save dummy data to element
       list.list1.getElement(7).dummy = true;
 
-      list.list1[7].id = 'Partial refresh'+vul;
+      list.list1[7].id = 'Partial refresh x1'+vul;
+      list.list1.assign(7, {id:'Partial refresh x2'+vul});
+
       list.list1.getElement(8).dummy = true;
       list.list1[8] = {id:'Element refresh'+vul};
-      list.list1.hardRefresh(8);
+      list.list1.refresh(8, 1);
 
       setTimeout(function(){
          if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing", list.list1[7]);

@@ -3,12 +3,14 @@ sf.loader = new function(){
 	self.loadedContent = 0;
 	self.totalContent = 0;
 	self.DOMWasLoaded = false;
+	self.firstContentfulPaint = false;
 	self.DOMReady = false;
 	self.turnedOff = true;
 
 	var whenDOMReady = [];
 	var whenDOMLoaded = [];
 	var whenProgress = [];
+	var whenFirstPaint = [];
 
 	// Make event listener
 	self.onFinish = function(func){
@@ -25,6 +27,11 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded) return func(self.loadedContent, self.totalContent);
 		if(whenProgress.indexOf(func) !== -1) return;
 		whenProgress.push(func);
+	}
+	sf.dom.paint = self.onFirstContentfulPaint = function(func){
+		if(self.firstContentfulPaint) return func();
+		if(whenFirstPaint.indexOf(func) !== -1) return;
+		whenFirstPaint.push(func);
 	}
 
 	self.f = function(element){
@@ -113,6 +120,27 @@ sf.loader = new function(){
 			document.removeEventListener('readystatechange', domStateEvent, true);
 		}
 	}, true);
+
+	if(window.PerformanceObserver !== void 0){
+		var observer = new PerformanceObserver(function(list){
+		    list = list.getEntries();
+		    for (var i = 0; i < list.length; i++) {
+		        if(list[i].name === 'first-contentful-paint'){
+		            observer.disconnect();
+		            observer = null;
+		            self.firstContentfulPaint = true;
+		            for (var i = 0; i < whenFirstPaint.length; i++) {
+		            	whenFirstPaint[i]();
+		            }
+		            return;
+		        }
+		    }
+		});
+		observer.observe({
+		    entryTypes: ['paint']
+		});
+	}
+	else self.firstContentfulPaint = true;
 
 	var resourceWaitTimer = -1;
 	function waitResources(){

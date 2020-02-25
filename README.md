@@ -28,7 +28,7 @@ A frontend framework that can help you write a simple web structure with complex
  - [License](#license)
 
 ## Example
-- [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output)
+- [Simple Element Binding](https://jsbin.com/liluhul/edit?js,console,output) | [Deep Binding](https://jsbin.com/wesayec/edit?html,js,output)
 - [Simple Component](https://jsbin.com/guwevis/edit?html,js,console,output)
 - [Input Elements](https://jsbin.com/toripov/edit?js,console,output)
 - [State Listener](https://jsbin.com/qohifel/edit?html,js,output)
@@ -641,27 +641,9 @@ Any element with `sf-repeat-this` will be binded with the array condition on the
 
 These addional feature can be used after DOM element was binded.
 ### refresh
-Redraw small changes to an element. The `length` can be passed with negative number to select from the last index. If `index` or `length` was not defined, it will check any changes of the model.
+If you have set new item into the array index (`myArray[0] = {...}`) then you need to refresh the list so it can rebuild the element for the object.
 ```js
 myArray.refresh(index = 0, length = 1);
-```
-```html
-<li sf-repeat-this="x in list">
-  {{ x.cartID }} - {{ x.item + ' (' + list.shopName + ')' }}
-</li>
-```
-
-When you make changes into `x.cartID`, `x.item`, and call the refresh function it the related element will be updated. But if you make changes to different scope like `list.shopName`, you need to provide which `itemProperty` that related with the key. For the example above `list.shopName` was related with `x.item`, so we can call the refresh like below.
-```js
-// myArray.refresh('item');
-// myArray.refresh(index, 'item');
-myArray.refresh(index, length, 'item');
-```
-
-### hardRefresh
-Rebuild element for the model. If `index` or `length` was not defined, it will rebuild all element.
-```js
-myArray.hardRefresh(index = 0, length = 1);
 ```
 
 ### swap
@@ -680,6 +662,13 @@ myArray.move(fromIndex, toIndex[, length]);
 Get the DOM element of the selected index
 ```js
 myArray.getElement(index);
+```
+
+### assign
+Get the DOM element of the selected index
+```js
+myArray.assign(whichIndex, withObject); // Reuse element but reassign the value
+myArray.assign(withArray); // Change all array data, reuse all element, and remove unused element
 ```
 
 Open the model scope for the selected controller for modification.
@@ -767,8 +756,8 @@ Because chrome has scroll anchoring feature, you may need to use [scrollbar libr
 ### Obtain all DOM elements
 Elements on the virtual DOM will be combined with visible DOM element and return array of element that have the same index with the actual data.
 ```js
-// This will return array of elements
-var elements = self.list.$virtual.elements();
+// This will return the parent of the list element
+var elements = test.list1.$EM.parentNode();
 
 var $elem = $(elements);
 $elem.find('.something');

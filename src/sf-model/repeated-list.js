@@ -309,30 +309,37 @@ class RepeatedElement extends Array{
 		}
 	}
 
-	replace(newList, atIndex){
-		atIndex = atIndex || 0;
-		for(var i = 0; i < newList.length; i++){
+	assign(whichIndex, withArray){
+		if(whichIndex.constructor !== Number){
+			withArray = whichIndex;
+			whichIndex = 0;
+		}
+
+		if(withArray.constructor !== Array)
+			withArray = [withArray];
+
+		for(var i = 0; i < withArray.length; i++){
 			if(i === this.length)
 				break;
 
-			if(this[i + atIndex] !== newList[i])
-				Object.assign(this[i + atIndex], newList[i]);
+			if(this[i + whichIndex] !== withArray[i])
+				Object.assign(this[i + whichIndex], withArray[i]);
 		}
 
-		if(newList.length === this.length)
-			return newList;
+		if(withArray.length === this.length || whichIndex !== 0)
+			return withArray;
 
 		var lastLength = this.length;
-		if(newList.length > this.length){
-			Array.prototype.push.apply(this, newList.slice(this.length));
+		if(withArray.length > this.length){
+			Array.prototype.push.apply(this, withArray.slice(this.length));
 			this.$EM.hardRefresh(lastLength);
-			return newList;
+			return withArray;
 		}
 
-		if(newList.length < this.length){
-			Array.prototype.splice.call(this, newList.length);
-			this.$EM.removeRange(newList.length, lastLength);
-			return newList;
+		if(withArray.length < this.length){
+			Array.prototype.splice.call(this, withArray.length);
+			this.$EM.removeRange(withArray.length, lastLength);
+			return withArray;
 		}
 	}
 
@@ -453,46 +460,6 @@ class RepeatedElement extends Array{
 		return this.$EM.elementRef.get(index);
 	}
 
-	refresh(index, length, property){
-		if(index === void 0 || index.constructor === String){
-			property = index;
-			index = 0;
-			length = this.length;
-		}
-		else if(length === void 0) length = index + 1;
-		else if(length.constructor === String){
-			property = length;
-			length = index + 1;
-		}
-		else if(length < 0) length = this.length + length;
-		else length += index;
-
-		// Trim length
-		var overflow = this.length - length;
-		if(overflow < 0) length = length + overflow;
-
-		for (var i = index; i < length; i++) {
-			var elem = this.getElement(i);
-
-			// Create element if not exist
-			if(elem === void 0){
-				this.$EM.hardRefresh(i || 0);
-
-				if(this.$virtual)
-					this.$virtual.DOMCursor = i || 0;
-				break;
-			}
-			else if(syntheticTemplate(elem, this.$EM.template, property, this[i]) === false)
-				continue; // Continue if no update
-
-			if(elem.model !== this[i])
-				elem.model = this[i];
-
-			if(this.$EM.callback.update)
-				this.$EM.callback.update(elem, 'replace');
-		}
-	}
-
 	indexOf(item){
 		if(item.children !== void 0 && item.children.constructor === HTMLCollection){
 			if(item.hasAttribute('sf-bind-list') === false)
@@ -507,7 +474,7 @@ class RepeatedElement extends Array{
 		return Array.prototype.indexOf.apply(this, arguments);
 	}
 
-	hardRefresh(i, o){
+	refresh(i, o){
 		this.$EM.update(i, o);
 
 		if(this.$virtual && this.$virtual.DOMCursor)
