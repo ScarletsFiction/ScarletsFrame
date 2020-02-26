@@ -125,7 +125,7 @@ sf.component = function(scope){
 			if(temp.constructor !== Object){
 				temp = sf.model.extractPreprocess(temp, null, newObj);
 				self.registered[name][3] = temp;
-				temp.tempDOM = tempDOM;
+				tempDOM = temp.tempDOM = true;
 			}
 
 			var copy = Object.assign({}, temp);

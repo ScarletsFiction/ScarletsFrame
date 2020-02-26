@@ -112,7 +112,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				internal.component.skip = true;
 
 				if(ref.html.constructor === String){
-					route.html = sf.dom.parseElement('<template>'+ref.html+'<template>')[0];
+					route.html = sf.dom.parseElement('<template>'+ref.html+'</template>')[0];
 					internal.component.skip = false;
 					return;
 				}
@@ -668,7 +668,7 @@ var self = sf.views = function View(selector, name){
 				return console.error("`window.templates` was not found");
 
 			// Create new element
-			url.html = sf.dom.parseElement('<template>'+window.templates[url.template+'.html']+'<template>')[0];
+			url.html = sf.dom.parseElement('<template>'+window.templates[url.template+'.html']+'</template>')[0];
 		}
 
 		if(url.html){
