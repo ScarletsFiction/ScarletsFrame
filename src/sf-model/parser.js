@@ -642,7 +642,8 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				}
 			}
 
-			self.queuePreprocess(currentNode, extracting, collectOther, temp);
+			if(currentNode.childNodes.length !== 0)
+				self.queuePreprocess(currentNode, extracting, collectOther, temp);
 		}
 
 		else if(currentNode.nodeType === 3){ // Text
@@ -665,22 +666,20 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				continue;
 			}
 
-			if(currentNode.nodeValue.indexOf('{{') !== -1){
+			if(currentNode.textContent.indexOf('{{') !== -1){
 				if(extracting === void 0){
-					if(!temp.has(currentNode.parentNode)){
-						temp.add(currentNode.parentNode);
+					temp.add(currentNode.parentNode);
 
-						if(currentNode.parentNode.sf$onlyAttribute !== void 0)
-							delete currentNode.parentNode.sf$onlyAttribute;
-					}
+					if(currentNode.parentNode.sf$onlyAttribute !== void 0)
+						delete currentNode.parentNode.sf$onlyAttribute;
 					break;
 				}
 
 				if(!temp.has(currentNode)){
 					temp.add(currentNode);
 
-					if(currentNode.sf$onlyAttribute !== void 0)
-						delete currentNode.sf$onlyAttribute;
+					if(currentNode.parentNode.sf$onlyAttribute !== void 0)
+						delete currentNode.parentNode.sf$onlyAttribute;
 				}
 			}
 		}
