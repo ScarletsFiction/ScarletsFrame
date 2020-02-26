@@ -219,8 +219,8 @@ class RepeatedElement extends Array{
 	}
 
 	pop(){
-		this.$EM.remove(this.length);
 		Array.prototype.pop.apply(this, arguments);
+		this.$EM.remove(this.length);
 	}
 
 	push(){
