@@ -478,35 +478,50 @@ function elementReferencesRefresh(elem){
 			continue;
 		}
 
-		var z = 0;
+		var template = eRef[i].ref.from;
 		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
 			if(isNaN(match) === false)
 				return '{{%='+match;
-			return '{{%='+(z++);
+
+			if(template.modelRefRoot[match] !== void 0)
+				return '{{%='+template.modelRefRoot[match][0];
+
+			if(template.modelRef !== null && template.modelRef[match] !== void 0)
+				return '{{%='+template.modelRef[match][0];
+
+			console.error("Language binding can't find existing model binding for", match, "from", Object.keys(template.modelRefRoot));
+			return '';
 		});
 	}
 }
 
-function refreshTemplate(list){
-	var addresses = list.addresses;
+function refreshTemplate(template){
+	var addresses = template.addresses;
 	var found = false;
 
 	for (var i = 0; i < addresses.length; i++) {
 		if(addresses[i].skipSFLang || addresses[i].value === void 0)
 			continue;
 
-		var elem = $.childIndexes(addresses[i].address, list.html).parentNode;
+		var elem = $.childIndexes(addresses[i].address, template.html).parentNode;
 		if(elem.hasAttribute('sf-lang') === false)
 			continue;
 
 		found = true;
 		var value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
 
-		var z = 0;
 		value = value.replace(/{(.*?)}/, function(full, match){
 			if(isNaN(match) === false)
 				return '{{%='+match;
-			return '{{%='+(z++);
+
+			if(template.modelRefRoot[match] !== void 0)
+				return '{{%='+template.modelRefRoot[match][0];
+
+			if(template.modelRef !== null && template.modelRef[match] !== void 0)
+				return '{{%='+template.modelRef[match][0];
+
+			console.error("Language binding can't find existing model binding for", match, "from", Object.keys(template.modelRefRoot));
+			return '';
 		});
 
 		addresses[i].value = value;
@@ -514,7 +529,7 @@ function refreshTemplate(list){
 	}
 
 	if(found === false)
-		list.skipSFLang = true; // skip because not found
+		template.skipSFLang = true; // skip because not found
 }
 
 })();

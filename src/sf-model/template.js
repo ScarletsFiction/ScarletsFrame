@@ -21,14 +21,20 @@ function elseIfHandle(else_, scopes){
 // ==== Template parser ====
 var templateParser_regex = /{{%=([0-9]+)/gm;
 var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
-var templateExec = function(parse, item, atIndex){
-	var parsed = {};
+var templateExec = function(parse, item, atIndex, parsed){
+	parsed = parsed || {};
 	var temp = null;
 
 	// Get or evaluate static or dynamic data
-	for (var i = 0; i < parse.length; i++) {
-		if(atIndex !== void 0 && atIndex.indexOf(i) === -1)
-			continue;
+	for (var i = 0, n = parse.length; i < n; i++) {
+		if(atIndex !== void 0){
+			if(atIndex.constructor === Number){
+				i = atIndex;
+				n = i+1;
+			}
+			else if(atIndex.indexOf(i) === -1)
+				continue;
+		}
 
 		var ref = parse[i];
 		ref.data[0] = item;
@@ -267,7 +273,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 	function checkRelatedChanges(parseIndex){
 		var found = false;
 		for (var i = 0; i < parseIndex.length; i++) {
-			if(changes.indexOf(parseIndex[i]) !== -1){
+			if(parsed[parseIndex] !== void 0){
 				found = true;
 				break;
 			}
@@ -330,16 +336,17 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.textContent !== void 0){ // Text only
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				if(checkRelatedChanges(cRef.ref.parse_index) === true){
-					var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
-						return parsed[match].data;
-					});
+				var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
+					if(parsed[match] === void 0)
+						templateExec(template.parse, item, Number(match), parsed);
 
-					if(cRef.textContent.textContent === temp) continue;
-					cRef.textContent.textContent = temp;
+					return parsed[match].data;
+				});
 
-					haveChanges = true;
-				}
+				if(cRef.textContent.textContent === temp) continue;
+				cRef.textContent.textContent = temp;
+
+				haveChanges = true;
 				continue;
 			}
 
@@ -364,16 +371,17 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.attribute !== void 0){ // Attributes
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				if(checkRelatedChanges(cRef.ref.parse_index) === true){
-					var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
-						return parsed[match].data;
-					});
+				var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
+					if(parsed[match] === void 0)
+						templateExec(template.parse, item, Number(match), parsed);
 
-					if(cRef.attribute.value === temp) continue;
-					cRef.attribute.value = temp;
+					return parsed[match].data;
+				});
 
-					haveChanges = true;
-				}
+				if(cRef.attribute.value === temp) continue;
+				cRef.attribute.value = temp;
+
+				haveChanges = true;
 				continue;
 			}
 
