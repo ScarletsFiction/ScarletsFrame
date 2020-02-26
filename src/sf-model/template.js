@@ -71,7 +71,7 @@ var templateExec = function(parse, item, atIndex){
 	return parsed;
 }
 
-function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler){
+function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template){
 	for(var a = 0; a < ref.length; a++){
 		var refB = ref[a];
 
@@ -89,7 +89,8 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 
 		var temp = {
 			attribute:isValueInput === true ? current : current.attributes[refB.name],
-			ref:refB
+			ref:refB,
+			from:template
 		};
 
 		if(current.hasAttribute('sf-lang'))
@@ -139,7 +140,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
-			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference, rootHandler);
+			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference, rootHandler, template);
 			continue;
 		}
 
@@ -161,6 +162,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			refA.textContent = refA.textContent.replace(templateParser_regex, function(full, match){
 				return parsed[match].data;
 			});
+			continue;
 		}
 
 		// Replace dynamic node
@@ -197,14 +199,15 @@ var templateParser = internal.model.templateParser = function(template, item, or
 		var tDOM = parsed[ref.direct].data;
 
 		// Check if it's an HTMLElement
-		if(tDOM.onclick !== void 0){
+		if(tDOM.nodeType === 1){
 			ref.parentNode.insertBefore(tDOM, ref.dynamicFlag);
 			continue;
 		}
 
+		// Parse if it's not HTMLElement
 		tDOM = $.parseElement(parsed[ref.direct].data, true);
-		for (var a = 0; a < tDOM.length; a++) {
-			ref.parentNode.insertBefore(tDOM[a], ref.dynamicFlag);
+		for (var a = 0, n = tDOM.length; a < n; a++) {
+			ref.parentNode.insertBefore(tDOM[0], ref.dynamicFlag);
 		}
 	}
 

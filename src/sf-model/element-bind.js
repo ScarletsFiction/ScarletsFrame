@@ -127,7 +127,10 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	if(model[propertyName] !== void 0 && Object.getOwnPropertyDescriptor(model, propertyName).set !== void 0)
 		return;
 
-	var objValue = model[propertyName] || ''; // Object value
+	var objValue = model[propertyName]; // Object value
+	if(objValue === void 0 || objValue === null)
+		objValue = '';
+
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,

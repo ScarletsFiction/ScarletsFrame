@@ -100,14 +100,15 @@ function modelScript(script){
 
 	if(which === null)
 		script = 'return '+script;
-	else if(which[0] === '_result_')
-		script = 'var _result_="";'+script+';return _result_';
+	else if(which[0] === '_result_'){
+		script = 'var _result_="";'+script.split('@return').join('_result_+=')+';return _result_';
+	}
+	else script = script.split('@return').join('return');
 
 	script = script
 		.split('_model_').join('arguments[0]').split('arguments[0]:t').join('_model_:t')
 		.split('_modelScope').join('arguments[1]')
-		.split('_content_').join('arguments[2]')
-		.split('@return').join('return');
+		.split('_content_').join('arguments[2]');
 
 	try{
 		return new Function(script);

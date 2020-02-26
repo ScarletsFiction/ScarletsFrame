@@ -285,7 +285,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	return prepared;
 }
 
-function addressAttributes(currentNode){
+function addressAttributes(currentNode, template){
 	var attrs = currentNode.attributes;
 	var keys = [];
 	var indexes = 0;
@@ -327,6 +327,8 @@ function addressAttributes(currentNode){
 				indexes.push(Number(match));
 				return '';
 			});
+
+			key.from = template;
 
 			if(found === '' && indexes.length === 1)
 				key.direct = indexes[0];
@@ -463,11 +465,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 
 	for (var i = 0; i < nodes.length; i++) {
 		var temp = {
-			nodeType:nodes[i].nodeType
+			nodeType:nodes[i].nodeType,
+			from:template
 		};
 
 		if(temp.nodeType === 1){ // Element
-			temp.attributes = addressAttributes(nodes[i]);
+			temp.attributes = addressAttributes(nodes[i], template);
 			temp.address = $.getSelector(nodes[i], true);
 		}
 
@@ -720,13 +723,13 @@ self.parsePreprocess = function(nodes, model){
 
 			var template = {
 				parse:preParsedRef,
-				addresses:addressAttributes(current),
 				modelRefRoot:{},
 				modelRefRoot_array:[],
 				modelRef:null,
 				modelRef_array:null
 			};
 
+			template.addresses = addressAttributes(current, template);
 			toObserve.template = template;
 
 			// Create as function
