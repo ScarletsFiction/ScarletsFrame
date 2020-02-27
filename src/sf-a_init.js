@@ -47,8 +47,8 @@ sf.regex = {
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 
-	itemsObserve:/\b(_model_|_modelScope)\.(.*?)(?=[ <>+=\-/\\:*&(,?;]|$)/g,
-	parsePropertyPath:/(?:\[(.*?)\]|\.(.*?))(?=[\.[]|$)/g,
+	itemsObserve:/\b(_model_|_modelScope)\.([\w\[\].]+)/g,
+	parsePropertyPath:/(?:\[([\w]+)\]|\.([\w]+))/g,
 };
 
 function parsePropertyPath(str){

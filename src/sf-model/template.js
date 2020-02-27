@@ -129,12 +129,27 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 	}
 }
 
-var templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler){
+var templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy){
 	processingElement = template.html;
 
 	var html = original === true ? template.html : template.html.cloneNode(true);
 	var addresses = template.addresses;
 	var parsed = templateExec(template.parse, item);
+
+	if(copy !== void 0){
+		var childs = html.childNodes;
+		for (var i = 0, n = childs.length; i < n; i++) {
+			copy.appendChild(childs[0]);
+		}
+
+		// Assign attributes
+		var attr = html.attributes;
+		for (var i = 0; i < attr.length; i++) {
+			copy.setAttribute(attr[i].name, attr[i].value);
+		}
+
+		html = copy;
+	}
 
 	var changesReference = [];
 	var pendingInsert = [];

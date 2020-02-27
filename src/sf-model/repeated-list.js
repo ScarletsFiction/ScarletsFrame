@@ -90,7 +90,12 @@ class RepeatedElement extends Array{
 
 			// Get reference for debugging
 			processingElement = element;
-			template = self.extractPreprocess(element, refName[0], modelRef);
+
+			var container = void 0;
+			if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
+				container = 'svg';
+
+			template = self.extractPreprocess(element, refName[0], modelRef, container);
 		}
 
 		hiddenProperty(this, '$EM', new ElementManipulator());
@@ -219,8 +224,8 @@ class RepeatedElement extends Array{
 	}
 
 	pop(){
-		Array.prototype.pop.apply(this, arguments);
-		this.$EM.remove(this.length);
+		this.$EM.remove(this.length - 1);
+		return Array.prototype.pop.apply(this, arguments);
 	}
 
 	push(){
@@ -239,6 +244,8 @@ class RepeatedElement extends Array{
 				this.$EM.append(lastLength + i);
 			}
 		}
+
+		return this.slice(lastLength);
 	}
 
 	splice(){
@@ -283,13 +290,15 @@ class RepeatedElement extends Array{
 	}
 
 	shift(){
-		Array.prototype.shift.apply(this, arguments);
+		var ret = Array.prototype.shift.apply(this, arguments);
 
 		this.$EM.remove(0);
 		if(this.$virtual && this.$virtual.DOMCursor > 0){
 			this.$virtual.DOMCursor--;
 			this.$virtual.reinitCursor();
 		}
+
+		return ret;
 	}
 
 	unshift(){
@@ -307,6 +316,8 @@ class RepeatedElement extends Array{
 			this.$virtual.DOMCursor += arguments.length;
 			this.$virtual.reinitCursor();
 		}
+
+		return this.slice(0, arguments.length);
 	}
 
 	assign(whichIndex, withArray){

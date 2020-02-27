@@ -110,7 +110,6 @@ sf.component = function(scope){
 		self.available[name].push(newID);
 
 		var newObj = sf.model.root[newID] = {$el:$()};
-		newObj.$el.push(element);
 
 		self.registered[name][0](newObj, sf.model, $item);
 
@@ -148,17 +147,15 @@ sf.component = function(scope){
 				}
 			}
 
-			var parsed = internal.model.templateParser(copy, newObj);
+			if(tempDOM === true)
+				var parsed = internal.model.templateParser(copy, newObj, void 0, void 0, void 0, element);
+			else{
+				var parsed = internal.model.templateParser(copy, newObj);
+				element.appendChild(parsed);
+			}
+
 			element.sf$elementReferences = parsed.sf$elementReferences;
 			sf.model.bindElement(element, newObj, copy);
-
-			if(tempDOM === true){
-				parsed = parsed.childNodes;
-				for (var i = 0, n = parsed.length; i < n; i++) {
-					element.appendChild(parsed[0]);
-				}
-			}
-			else element.appendChild(parsed);
 		}
 		else{
 			var specialElement = {
@@ -171,6 +168,7 @@ sf.component = function(scope){
 			internal.model.repeatedListBinding(specialElement.repeat, newObj);
 		}
 
+		newObj.$el.push(element);
 		element.model = newObj;
 		componentInit(element, newID, name);
 

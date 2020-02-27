@@ -693,11 +693,11 @@ var $ = sf.dom; // Shortcut
 	var emptyDOM = document.createElement('div');
 	self.parseElement = function(html, returnNode){
 		emptyDOM.innerHTML = '<template>'+html+'</template>';
-		return emptyDOM.children[0].content[returnNode ? 'childNodes' : 'children'];
+		return emptyDOM.firstElementChild.content[returnNode ? 'childNodes' : 'children'];
 	}
 
 	self.escapeText = function(text){
-		var tempDOM = emptyDOM.div;
+		var tempDOM = emptyDOM;
 		tempDOM.textContent = text;
 		return tempDOM.innerHTML;
 	}
@@ -731,7 +731,7 @@ var $ = sf.dom; // Shortcut
 
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
-		while(element.parentNode !== null){
+		while(element.parentElement !== null){
 			if(element.id && !haveSymbol.test(element.id)){
 				names.unshift('#'+element.id);
 				break;
@@ -754,7 +754,7 @@ var $ = sf.dom; // Shortcut
 						names.unshift(":nth-child("+i+")");
 				}
 
-				element = element.parentNode;
+				element = element.parentElement;
 				if(element === null)
 					break;
 			}
@@ -766,16 +766,15 @@ var $ = sf.dom; // Shortcut
 	}
 
 	self.childIndexes = function(array, context){
+		if(array.length === 0)
+			return context;
+
 		var element = context || documentElement;
-		var i = 1;
 
 		if(array[0].constructor === String && element.id !== array[0].substr(1))
 			element = element.querySelector(array[0]);
 
-		else if(array.length === 1)
-			return element;
-
-		for (i = i; i < array.length; i++) {
+		for (var i = 0; i < array.length; i++) {
 			element = element.childNodes.item(array[i]);
 
 			if(element === null)

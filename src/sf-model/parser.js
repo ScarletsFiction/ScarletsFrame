@@ -341,7 +341,7 @@ function addressAttributes(currentNode, template){
 	return keys;
 }
 
-function toObserve(full, model, properties,){
+function toObserve(full, model, properties){
 	var place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
 
 	// Get property name
@@ -359,7 +359,7 @@ function toObserve(full, model, properties,){
 	return full;
 };
 
-self.extractPreprocess = function(targetNode, mask, modelScope){
+self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
@@ -444,7 +444,15 @@ self.extractPreprocess = function(targetNode, mask, modelScope){
 
 	// Rebuild element
 	internal.component.skip = true;
+	if(container !== void 0)
+		copy = '<'+container+'>'+copy+'</'+container+'>';
+
 	copy = $.parseElement(copy)[0];
+	if(container !== void 0){
+		copy = copy.firstElementChild;
+		copy.remove();
+	}
+
 	internal.component.skip = false;
 
 	// Restore element repeated list
