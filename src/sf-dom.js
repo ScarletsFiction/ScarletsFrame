@@ -732,7 +732,7 @@ var $ = sf.dom; // Shortcut
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
 		while(element.parentElement !== null){
-			if(element.id && !haveSymbol.test(element.id)){
+			if(!childIndexes && element.id && !haveSymbol.test(element.id)){
 				names.unshift('#'+element.id);
 				break;
 			}

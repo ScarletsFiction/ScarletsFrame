@@ -497,8 +497,10 @@ function elementReferencesRefresh(elem){
 
 function refreshTemplate(template){
 	var addresses = template.addresses;
-	var found = false;
+	if(addresses === void 0)
+		return;
 
+	var found = false;
 	for (var i = 0; i < addresses.length; i++) {
 		if(addresses[i].skipSFLang || addresses[i].value === void 0)
 			continue;

@@ -122,9 +122,10 @@ sf.component = function(scope){
 
 			// Create template here because we have the sample model
 			if(temp.constructor !== Object){
+				tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 				temp = sf.model.extractPreprocess(temp, null, newObj);
 				self.registered[name][3] = temp;
-				tempDOM = temp.tempDOM = true;
+				temp.tempDOM = tempDOM;
 			}
 
 			var copy = Object.assign({}, temp);

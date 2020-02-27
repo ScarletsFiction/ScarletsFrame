@@ -79,28 +79,42 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];
 		else{
+			var lastProperty = propertyName[propertyName.length-1]
+
+			// We're not binding the native stuff
+			if(lastProperty === 'length'){
+				var deep = deepProperty(model, propertyName.slice(0, -1));
+				if(deep === void 0 || deep.constructor === Array)
+					return;
+			}
+			
+			if(lastProperty === 'constructor') // we're not binding the native stuff
+				return;
+
 			// Register every path as fixed object (where any property replacement will being assigned)
 			for (var i = 0; i < propertyName.length-1; i++) {
 				let value = model[propertyName[i]];
 
 				// Only apply if this is an Object/Array
-				if(value.constructor === Object || value.constructor === Array)
-					Object.defineProperty(model, propertyName[i], {
-						enumerable: true,
-						configurable: true,
-						get:function(){
-							return value;
-						},
-						set:function(val){
-							Object.assign(value, val);
-							return val;
-						}
-					});
+				if(value === void 0 || value === null || value.constructor !== Object && value.constructor !== Array)
+					return;
+
+				Object.defineProperty(model, propertyName[i], {
+					enumerable: true,
+					configurable: true,
+					get:function(){
+						return value;
+					},
+					set:function(val){
+						Object.assign(value, val);
+						return val;
+					}
+				});
 
 				model = value;
 			}
 
-			propertyName = propertyName[propertyName.length-1];
+			propertyName = lastProperty;
 		}
 	}
 

@@ -42,42 +42,53 @@ function eventHandler(that, data, _modelScope, rootHandler){
 			return;
 		}
 
+		var found = null;
+		var findEventFromList = function(arr){
+			// Partial array compare ([0,1,2] with [0,1,2,3,4] ==> true)
+			parent:for (var i = 0; i < listener.length; i++) {
+				if(arr === void 0){
+					if(listener[i][0].length !== 0)
+						continue;
+
+					found = listener[i][0];
+					return listener[i][1];
+				}
+
+				var ref = listener[i][0];
+				for (var z = 0; z < ref.length; z++) {
+					if(ref[z] !== arr[z])
+						continue parent;
+				}
+
+				found = listener[i][0];
+				return listener[i][1];
+			}
+
+			return;
+		}
+
 		// We need to get element with 'sf-bind-list' and check current element before processing
 		script = function(event){
-			var findEventFromList = function(arr){
-				// Partial array compare ([0,1,2] with [0,1,2,3,4] ==> true)
-				for (var i = 0; i < listener.length; i++) {
-					if(arr === void 0){
-						if(listener[i][0].length !== 0)
-							continue;
+			if(event.target.hasAttribute('sf-bind-list') === false){
+				var realThat = $.parent(event.target, '[sf-bind-list]');
+				var call = findEventFromList($.getSelector(event.target, true, realThat));
 
-						return listener[i][1];
-					}
+				if(call !== void 0){
+					// Found, stop event to other parent
+		    		event.stopPropagation();
 
-					var ref = listener[i][0];
-					for (var z = 0; z < arr.length; z++) {
-						if(arr[z] === ref[z])
-							return listener[i][1];
-						else break;
-					}
+					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope);
 				}
 
 				return;
 			}
 
-			if(event.target.hasAttribute('sf-bind-list') === false){
-				var realThat = $.parent(event.target, '[sf-bind-list]');
-				var call = findEventFromList($.getSelector(event.target, true, realThat));
-
-				if(call !== void 0)
-					call(event, realThat.model, _modelScope);
-
-				return;
-			}
+			// Stop callback from other parent
+	    	event.stopPropagation();
 
 			var call = findEventFromList(void 0);
 			if(call !== void 0)
-				call(event, event.target.model, _modelScope);
+				call.call(event.target, event, event.target.model, _modelScope);
 		};
 	}
 

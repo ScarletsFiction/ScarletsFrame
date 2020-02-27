@@ -12,7 +12,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
 
 	if(mask)
-		var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
+		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
 
 	bindingEnabled = true;
 
@@ -28,8 +28,8 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 
 			// Mask item variable
 			if(mask)
-				temp_ = temp_.replace(itemMask, function(matched){
-					return '_model_.'+matched[0].slice(1);
+				temp_ = temp_.replace(itemMask, function(full, left, right){
+					return left+'_model_'+right;
 				});
 
 			// Mask model for variable
@@ -131,7 +131,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
 
 	if(mask)
-		var itemMask = RegExp(sf.regex.strictVar+mask+'\\.\\b', 'g');
+		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
 
 	if(runEval === '#noEval')
 		var preParsedReference = [];
@@ -143,8 +143,8 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 
 			// Mask item variable
 			if(mask)
-				temp_ = temp_.replace(itemMask, function(matched){
-					return '_model_.'+matched[0].slice(1);
+				temp_ = temp_.replace(itemMask, function(full, left, right){
+					return left+'_model_'+right;
 				});
 
 			// Mask model for variable
@@ -285,7 +285,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	return prepared;
 }
 
-function addressAttributes(currentNode, template){
+function addressAttributes(currentNode, template, itemMask){
 	var attrs = currentNode.attributes;
 	var keys = [];
 	var indexes = 0;
@@ -297,6 +297,11 @@ function addressAttributes(currentNode, template){
 				console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
 				continue;
 			}
+
+			if(itemMask)
+				attrs[a].value = attrs[a].value.replace(itemMask, function(full, left, right){
+					return left+'_model_'+right;
+				});
 
 			keys.push({
 				name:attrs[a].name,
@@ -384,9 +389,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	if(mask !== null){
 		template.modelRef = {};
 		template.modelRef_array = [];
-		copy = copy.replace(RegExp(sf.regex.getSingleMask.join(mask), 'gm'), function(full, left, right){
-			return left+'_model_'+right;
-		});
 	}
 
 	// Extract data to be parsed
@@ -473,6 +475,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	var nodes = self.queuePreprocess(copy, true, template.specialElement).reverse();
 	var addressed = [];
 
+	var itemMask = mask ? RegExp(sf.regex.getSingleMask.join(mask), 'gm') : void 0;
 	for (var i = 0; i < nodes.length; i++) {
 		var temp = {
 			nodeType:nodes[i].nodeType,
@@ -480,7 +483,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 		};
 
 		if(temp.nodeType === 1){ // Element
-			temp.attributes = addressAttributes(nodes[i], template);
+			temp.attributes = addressAttributes(nodes[i], template, itemMask);
 			temp.address = $.getSelector(nodes[i], true);
 		}
 
