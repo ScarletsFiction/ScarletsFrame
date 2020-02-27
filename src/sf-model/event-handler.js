@@ -15,20 +15,19 @@ function eventHandler(that, data, _modelScope, rootHandler){
 
 	var name_ = data.name.slice(1);
 
-	// Get function reference
-	if(direct)
-		script = eval(script);
-
 	// Create custom listener for repeated element
-	else if(rootHandler){
+	if(rootHandler){
 		var elementIndex = $.getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
 
 		if(rootHandler.sf$listListener === void 0)
 			rootHandler.sf$listListener = {};
 
-		var func = new Function(script.split('event').join('arguments[0]')
-			.split('_model_').join('arguments[1]')
-			.split('_modelScope').join('arguments[2]'));
+		if(direct)
+			var func = eval(script);
+		else
+			var func = new Function(script.split('event').join('arguments[0]')
+				.split('_model_').join('arguments[1]')
+				.split('_modelScope').join('arguments[2]'));
 
 		var listener = rootHandler.sf$listListener[name_];
 		if(listener === void 0){
@@ -81,6 +80,10 @@ function eventHandler(that, data, _modelScope, rootHandler){
 				call(event, event.target.model, _modelScope);
 		};
 	}
+
+	// Get function reference
+	else if(direct)
+		script = eval(script);
 
 	// Wrap into a function
 	else script = (new Function('var event = arguments[1];'+script.split('_modelScope.').join('arguments[0].'))).bind(that, _modelScope);
