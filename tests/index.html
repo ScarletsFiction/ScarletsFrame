@@ -218,7 +218,7 @@
             {{@if showHTML === true:
                {[<span>This 1st must not be displayed {{ stuff }}</span>]}
             }}
-            <span sf-bind-ignore>Ignored bind: {{ stuff }}</span><br>
+            <span>Some bind: {{ stuff }}</span><br>
             {{@if showHTML === false:
                {[<span>This 2th must be displayed {{ stuff }} {{ stuffes }}</span>]}
             }}<br><br>
@@ -241,7 +241,7 @@
                {[ <b>{{escapeHTML}}</b> ]}
                @return noEscapeHTML;
             }}
-            {{@exec {[ <br><br>expected error{{vuln}} ]} }}
+            {{@exec {[ <br><br>shouldn't being parsed {{vuln}} ]} }}
             </div>
          </div>
       </sf-m>
@@ -283,7 +283,7 @@
                 el:{
                   iB1:"Variable content: {inputBinding1}",
                   iB2:"Above content: {inputBinding2}",
-                  iB3:"It's {inputBinding3}"
+                  iB3:"It's {inputBinding2}"
                 }
               }
             });
@@ -293,7 +293,7 @@
                 el:{
                   iB1:"Kontent variabel: {inputBinding1}",
                   iB2:"Kontent diatas: {inputBinding2}",
-                  iB3:"Itu adalah {inputBinding3}"
+                  iB3:"Itu adalah {inputBinding2}"
                 }
               },
               hello:{

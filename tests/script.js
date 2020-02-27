@@ -155,7 +155,7 @@ sf(function(){
       list.list1.shift();
       list.list1.splice(3, 1); // remove index 3 (item-3)
       list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"}); // add as index 5
-      list.list1.push({id:"I'm inserted on last index"});
+      list.list1.push({id:"I'm inserted on last index (as item-50)"});
 
       list.list1.unshift({id:"{{self.vul}}{{@exec console.error('something not gud')}}"});
       setTimeout(function(){
