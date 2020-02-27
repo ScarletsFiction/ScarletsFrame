@@ -154,11 +154,11 @@
               <li sf-repeat-this="x in list1" data-id="{{x.id}}">
                 <label>{{ x.id }}</label>
 
-                {{@if #x === list1[0]:
+                {{@if x === list1[0]:
                    x.first = true;
                    {[<span> - Am I the ({{ one }}) one?</span>]}
 
-                @elseif x.first && #x !== list1[0]:
+                @elseif x.first && x !== list1[0]:
                    delete x.first;
                    {[<span> - I'm no longer the {{ one }} one..</span>]}
                 }}
@@ -253,7 +253,7 @@
          <comp-test id="henlos">
             <input type="text" sf-bind="data"/>
             custom {{data}} {{item}} here
-            <span sf-repeat-this="num in tries">{{#num}},</span>
+            <span sf-repeat-this="num in tries">{{num}},</span>
             <comp-test id="deepTest">
               Deep repeat yeah
               <comp-test id="deepRepeat" sf-repeat-this="item in items"></comp-test>

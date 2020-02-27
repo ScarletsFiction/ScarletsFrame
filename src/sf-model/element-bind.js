@@ -66,7 +66,15 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 	// Dive to the last object, create if not exist
 	if(propertyName.constructor === Array){
-		originalPropertyName = originalPropertyName.join('.');
+		var remake = originalPropertyName[0];
+		for (var i = 1; i < originalPropertyName.length; i++) {
+			if(originalPropertyName[i].constructor === Number)
+				remake += '['+originalPropertyName[i]+']';
+			else
+				remake += '.'+originalPropertyName[i];
+		}
+
+		originalPropertyName = remake;
 
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];

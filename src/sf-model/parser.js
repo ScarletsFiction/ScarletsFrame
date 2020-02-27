@@ -384,7 +384,9 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	if(mask !== null){
 		template.modelRef = {};
 		template.modelRef_array = [];
-		copy = copy.split('#'+mask).join('_model_');
+		copy = copy.replace(RegExp(sf.regex.getSingleMask.join(mask), 'gm'), function(full, left, right){
+			return left+'_model_'+right;
+		});
 	}
 
 	// Extract data to be parsed

@@ -49,6 +49,7 @@ sf.regex = {
 
 	itemsObserve:/\b(_model_|_modelScope)\.([\w\[\].]+)/g,
 	parsePropertyPath:/(?:\[([\w]+)\]|\.([\w]+))/g,
+	getSingleMask:['([^\\w.]|^)','([^\\w:]|$)'] //gm
 };
 
 function parsePropertyPath(str){
