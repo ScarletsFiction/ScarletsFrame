@@ -245,7 +245,7 @@ class RepeatedElement extends Array{
 			}
 		}
 
-		return this.slice(lastLength);
+		return this.length;
 	}
 
 	splice(){
