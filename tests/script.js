@@ -311,8 +311,8 @@ sf.model.for('components', function(self){
 });
 
 sf.controller.for('comp-test', function(self, root, item){
-   console.warn('comp-test', item, self.$el[0]);
    self.init = function(){
+      console.warn('comp-test', item, self.$el[0]);
       console.warn("Component init called", self, self.tries.constructor !== Array && self.tries.getElement(0));
    }
 });
