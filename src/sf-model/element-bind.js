@@ -80,15 +80,15 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			propertyName = propertyName[0];
 		else{
 			var lastProperty = propertyName[propertyName.length-1]
+			var deep = deepProperty(model, propertyName.slice(0, -1));
+
+			if(deep === void 0)
+				return console.error("Property", originalPropertyName, "was undefined", model);
 
 			// We're not binding the native stuff
-			if(lastProperty === 'length'){
-				var deep = deepProperty(model, propertyName.slice(0, -1));
-				if(deep === void 0 || deep.constructor === Array)
-					return;
-			}
-			
-			if(lastProperty === 'constructor') // we're not binding the native stuff
+			if(lastProperty === 'constructor'
+				|| (deep.constructor === Array && lastProperty === 'length')
+				|| deep.constructor === Function)
 				return;
 
 			// Register every path as fixed object (where any property replacement will being assigned)
