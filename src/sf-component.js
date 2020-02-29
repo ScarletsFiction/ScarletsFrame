@@ -1,4 +1,10 @@
-sf.component = function(scope){
+sf.component = function(scope, func){
+	if(func !== void 0){
+		if(func.constructor === Function)
+			return sf.component.for(scope, func);
+		return sf.component.html(scope, func);
+	}
+
 	var list = sf.component.available[scope];
 	if(list === void 0)
 		return [];
@@ -13,63 +19,80 @@ sf.component = function(scope){
 
 ;(function(){
 	var self = sf.component;
-	var scope = internal.component = {
-		list:{}
-	};
+	internal.component = {};
 
 	var waitingHTML = {};
 
 	self.registered = {};
 	self.available = {};
+	internal.component.tagName = new Set();
 
-	self.for = function(name, func, extend){
-		if(self.registered[name] === void 0)
-			self.registered[name] = [func, sf.controller.pending[name], 0, false, extend];
+	function checkWaiting(name, namespace){
+		var scope = namespace || self;
+
+		var upgrade = waitingHTML[name];
+		for (var i = upgrade.length - 1; i >= 0; i--) {
+			if(upgrade[i].namespace !== namespace)
+				continue;
+
+			var el = upgrade[i].el;
+			if(self.new(name, el, upgrade[i].item, namespace, true) === void 0)
+				return;
+
+			delete el.sf$initTriggered;
+
+			if(el.model.init)
+				el.model.init();
+
+			upgrade.pop();
+		}
+
+		if(upgrade.length === 0)
+			delete waitingHTML[name];
+	}
+
+	self.for = function(name, func, namespace){
+		internal.component.tagName.add(name.toUpperCase());
+		var scope = namespace || self;
+
+		if(scope.registered[name] === void 0)
+			scope.registered[name] = [func, void 0, 0, false]; // index 1 is unused
 
 		internal.component[name.toUpperCase()] = 0;
 
-		self.registered[name][0] = func;
-		delete sf.controller.pending[name];
-
+		scope.registered[name][0] = func;
 		defineComponent(name);
+
+		if(waitingHTML[name] !== void 0)
+			checkWaiting(name, namespace);
 	}
 
-	self.html = function(name, outerHTML){
-		if(self.registered[name] === void 0)
-			self.registered[name] = [false, false, 0, false];
+	self.html = function(name, outerHTML, namespace){
+		var scope = namespace || self;
+
+		if(scope.registered[name] === void 0)
+			scope.registered[name] = [false, false, 0, false];
 
 		var temp = $.parseElement(outerHTML);
 		if(temp.length === 1)
-			self.registered[name][3] = temp[0];
+			scope.registered[name][3] = temp[0];
 		else{
 			var tempDOM = document.createElement('div');
 			tempDOM.tempDOM = true;
 			for (var i = 0; i < temp.length; i++) {
 				tempDOM.appendChild(temp[i]);
 			}
-			self.registered[name][3] = tempDOM;
+			scope.registered[name][3] = tempDOM;
 		}
-
-		if(waitingHTML[name] === void 0)
-			return;
 
 		internal.component[name.toUpperCase()] = 1;
 
-		var upgrade = waitingHTML[name];
-		delete waitingHTML[name];
-
-		for (var i = upgrade.length - 1; i >= 0; i--) {
-			var el = upgrade[i].el;
-			self.new(name, el, upgrade[i].item);
-			delete el.sf$initTriggered;
-
-			if(el.model.init)
-				el.model.init();
-		}
+		if(waitingHTML[name] !== void 0)
+			checkWaiting(name, namespace);
 	}
 
 	var tempDOM = document.createElement('div');
-	self.new = function(name, element, $item){
+	self.new = function(name, element, $item, namespace, _fromCheck){
 		if(internal.component.skip)
 			return;
 
@@ -81,11 +104,19 @@ sf.component = function(scope){
 			return;
 		}
 
-		if(element.childNodes.length === 0 && self.registered[name][3] === false){
+		var scope = namespace || self;
+
+		if(namespace !== void 0)
+			this.sf$space = namespace;
+
+		if(scope.registered[name] === void 0 || element.childNodes.length === 0 && scope.registered[name][3] === false){
+			if(_fromCheck === true)
+				return;
+
 			if(waitingHTML[name] === void 0)
 				waitingHTML[name] = [];
 
-			waitingHTML[name].push({el:element, item:$item});
+			waitingHTML[name].push({el:element, item:$item, namespace:namespace});
 			return;
 		}
 
@@ -102,29 +133,29 @@ sf.component = function(scope){
 			$item[attr[i].nodeName] = attr[i].value;
 		}
 
-		var newID = name+'@'+(self.registered[name][2]++);
+		var newID = name+'@'+(scope.registered[name][2]++);
 
-		if(self.available[name] === void 0)
-			self.available[name] = [];
+		if(scope.available[name] === void 0)
+			scope.available[name] = [];
 
-		self.available[name].push(newID);
+		scope.available[name].push(newID);
 
-		var newObj = sf.model.root[newID] = {$el:$()};
+		var newObj = (namespace || sf.model).root[newID] = {$el:$()};
 
-		self.registered[name][0](newObj, sf.model, $item);
+		scope.registered[name][0](newObj, sf.model, $item);
 
-		if(self.registered[name][1])
-			self.registered[name][1](newObj, sf.model, $item);
+		// if(scope.registered[name][1])
+		// 	scope.registered[name][1](newObj, sf.model, $item);
 
 		if(element.childNodes.length === 0){
-			var temp = self.registered[name][3];
+			var temp = scope.registered[name][3];
 			var tempDOM = temp.tempDOM;
 
 			// Create template here because we have the sample model
 			if(temp.constructor !== Object){
 				tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 				temp = sf.model.extractPreprocess(temp, null, newObj);
-				self.registered[name][3] = temp;
+				scope.registered[name][3] = temp;
 				temp.tempDOM = tempDOM;
 			}
 
@@ -164,7 +195,7 @@ sf.component = function(scope){
 				input:[]
 			};
 
-			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newID);
+			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj);
 		}
@@ -208,9 +239,25 @@ sf.component = function(scope){
 			return console.error("Please use '-' when defining component tags");
 
 		name = capitalizeLetters(name);
+		function componentCreate(raw, $item){
+			var elem = HTMLElement_wrap.call(raw);
+
+			if(internal.space.empty === false){
+				var haveSpace = elem.closest('sf-space');
+				if(haveSpace !== null)
+					internal.space.initComponent(haveSpace, tagName, elem, $item);
+				else
+					self.new(tagName, elem, $item);
+
+				return elem;
+			}
+
+			self.new(tagName, elem, $item);
+			return elem;
+		}
 
 		// Create function at current scope
-		var func = eval("function "+name+"($item){var he = HTMLElement_wrap.call(this);self.new(tagName, he, $item);return he}"+name);
+		var func = eval("function "+name+"($item){return componentCreate(this, $item)}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;
@@ -242,8 +289,12 @@ sf.component = function(scope){
 			if(this.sf$componentIgnore)
 				return;
 
-			var components = sf.component.available[tagName];
-			components.splice(components.indexOf(this.sf$controller), 1);
+			// Skip if it's not initialized
+			if(this.model === void 0)
+				return;
+
+			var components = (this.sf$space || sf.component).available[tagName];
+			components.splice(components.indexOf(this.sf$controlled), 1);
 
 			var that = this;
 			this.sf$destroying = setTimeout(function(){
@@ -256,7 +307,10 @@ sf.component = function(scope){
 				internal.model.removeModelBinding(that.model, true);
 				that.model.$el = null;
 
-				delete sf.model.root[that.sf$controlled];
+				if(that.sf$space)
+					delete that.sf$space.root[that.sf$controlled];
+				else
+					delete sf.model.root[that.sf$controlled];
 			}, 500);
 		};
 

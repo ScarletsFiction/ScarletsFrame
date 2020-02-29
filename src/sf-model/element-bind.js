@@ -224,7 +224,7 @@ self.bindElement = function(element, modelScope, template, localModel){
 
 		if(element.parentNode !== null){
 			var newElem = template.html;
-			if(newElem.tagName.indexOf('-') !== -1 && sf.component.registered[newElem.tagName.toLowerCase()] !== void 0)
+			if(newElem.tagName.indexOf('-') !== -1 && internal.component.tagName.has(newElem.tagName) !== void 0)
 				newElem.sf$componentIgnore = true;
 
 			element.parentNode.replaceChild(newElem, element);

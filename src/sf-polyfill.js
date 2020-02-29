@@ -19,3 +19,20 @@ if(Element.prototype.remove === undefined || CharacterData.prototype.remove === 
 
 if(!Element.prototype.matches)
   Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+
+if(!Element.prototype.closest){
+  Element.prototype.closest = function(selector){
+    var elem = this;
+    do {
+      if(elem === document)
+        return null;
+
+      if(elem.matches(selector) === true)
+        return elem;
+
+      elem = elem.parentNode;
+    } while (elem !== null);
+
+    return null;
+  }
+}

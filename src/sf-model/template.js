@@ -4,18 +4,18 @@ function elseIfHandle(else_, scopes){
 	// Else if
 	for (var i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		if(!elseIf[i][0].apply(self.root, scopes))
+		if(!elseIf[i][0].apply(null, scopes))
 			continue;
 
 		// Get the value
-		return elseIf[i][1].apply(self.root, scopes);
+		return elseIf[i][1].apply(null, scopes);
 	}
 
 	// Else
 	if(else_.elseValue === null)
 		return '';
 
-	return else_.elseValue.apply(self.root, scopes);
+	return else_.elseValue.apply(null, scopes);
 }
 
 // ==== Template parser ====
@@ -41,7 +41,7 @@ var templateExec = function(parse, item, atIndex, parsed){
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
-			temp = ref.get.apply(self.root, ref.data);
+			temp = ref.get.apply(null, ref.data);
 			if(temp === void 0)
 				temp = '';
 			else{
@@ -56,7 +56,7 @@ var templateExec = function(parse, item, atIndex, parsed){
 		}
 
 		if(ref.type === REF_EXEC){
-			parsed[i] = {type:ref.type, data:ref.get.apply(self.root, ref.data)};
+			parsed[i] = {type:ref.type, data:ref.get.apply(null, ref.data)};
 			continue;
 		}
 
@@ -66,12 +66,12 @@ var templateExec = function(parse, item, atIndex, parsed){
 			parsed[i] = {type:ref.type, data:''};
 
 			// If condition was not meet
-			if(!ref.if[0].apply(self.root, scopes)){
+			if(!ref.if[0].apply(null, scopes)){
 				parsed[i].data = elseIfHandle(ref, scopes);
 				continue;
 			}
 
-			parsed[i].data = ref.if[1].apply(self.root, scopes);
+			parsed[i].data = ref.if[1].apply(null, scopes);
 		}
 	}
 	return parsed;

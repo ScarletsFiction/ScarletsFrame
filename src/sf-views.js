@@ -40,7 +40,7 @@ window.addEventListener('popstate', function(ev){
 }, false);
 
 // Listen to every link click
-sf(function(){
+$(function(){
 	$.on(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
@@ -337,7 +337,7 @@ var self = sf.views = function View(selector, name){
 			self.selector();
 
 		if(!firstRouted && name){
-			sf(function(){
+			$(function(){
 				if(firstRouted)
 					return;
 

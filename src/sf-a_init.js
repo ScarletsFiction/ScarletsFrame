@@ -27,14 +27,21 @@ if(typeof document === void 0)
 
 // ===== Module Init =====
 var internal = {};
+var privateRoot = {};
 
-var sf = function(stuff){
-	if(stuff.constructor === Function)
-		return sf.loader.onFinish.apply(null, arguments);
-
+var sf = function(stuff, flag){
 	// If it's Node type
-	if(stuff.tagName !== void 0)
-		return sf.model.root[sf.controller.modelName(stuff)];
+	if(stuff.tagName !== void 0){
+		if(stuff.nodeType !== 1 || stuff.sf$controlled === void 0)
+			stuff = $.parentHasProperty(stuff, 'sf$controlled');
+
+		if(stuff === null)
+			return stuff;
+
+		if(flag)
+			return stuff.sf$controlled;
+		return stuff.model;
+	}
 };
 
 sf.internal = {};

@@ -53,7 +53,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 			return '{{%=' + (exist + lastParsedIndex);
 		}
 
-		temp = '' + localEval.apply(self.root, [runEval + temp, _model_, _modelScope]);
+		temp = '' + localEval.apply(null, [runEval + temp, _model_, _modelScope]);
 
 		return temp.replace(sf.regex.escapeHTML, function(i) {
 	        return '&#'+i.charCodeAt(0)+';';
@@ -246,7 +246,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 			var scopes = [check[0], _model_, _modelScope, _content_];
 
 			// If condition was not meet
-			if(!localEval.apply(self.root, scopes)){
+			if(!localEval.apply(null, scopes)){
 				check.shift();
 				return elseIfHandle(findElse(check), scopes);
 			}
@@ -254,7 +254,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 			check.shift();
 			scopes[0] = check.join(':');
 
-			return localEval.apply(self.root, scopes);
+			return localEval.apply(null, scopes);
 		}
 
 		// Warning! Avoid unencoded user inputted content
@@ -269,7 +269,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 				return '{{%%=' + (preParsedReference.length - 1);
 			}
 
-			temp = localEval.apply(self.root, scopes);
+			temp = localEval.apply(null, scopes);
 			return temp;
 		}
 		return '';
@@ -628,8 +628,8 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			if(enclosedHTMLParse === true)
 				continue;
 
-			// Skip nested sf-model
-			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled)
+			// Skip nested sf-model or sf-space
+			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled || currentNode.tagName === 'SF-SPACE')
 				continue;
 
 			var attrs = currentNode.attributes;
@@ -705,16 +705,11 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 		return Array.from(temp);
 }
 
-self.parsePreprocess = function(nodes, model){
+self.parsePreprocess = function(nodes, modelRef){
 	var binded = [];
 	for (var a = 0; a < nodes.length; a++) {
 		// Get reference for debugging
 		var current = processingElement = nodes[a];
-
-		if(internal.modelPending[model] || self.root[model] === undefined)
-			self(model);
-
-		var modelRef = self.root[model];
 
 		if(current.nodeType === 3 && binded.indexOf(current.parentNode) === -1){
 			self.bindElement(current.parentNode, modelRef);

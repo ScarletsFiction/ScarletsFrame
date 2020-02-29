@@ -330,7 +330,7 @@ function refreshLang(list, noPending){
 			continue;
 		}
 		else{
-			var modelElement = sf.controller.modelElement(elem);
+			var modelElement = sf(elem);
 			if(modelElement !== null){
 				if(parentElement.has(modelElement))
 					continue;
@@ -385,7 +385,7 @@ function refreshLang(list, noPending){
 	for (var a = 0; a < parentElement.length; a++) {
 		var model = parentElement[a].model;
 		if(model === void 0)
-			model = sf.controller.modelScope(parentElement[a]);
+			model = sf(parentElement[a]);
 
 		if(!model.sf$bindedKey) // Doesn't have template
 			continue;

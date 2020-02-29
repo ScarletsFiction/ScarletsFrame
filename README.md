@@ -8,7 +8,8 @@ A frontend framework that can help you write a simple web structure with complex
 
 ## Table of contents
  - [Example](#example)
- - [Migrating from 0.18.5 to 0.21.0](#migration)
+ - [Migrating from 0.18.5 to 0.21.0](#migration1)
+ - [Migrating from 0.25.4 to 0.26.0](#migration2)
  - [Install](#install-from-template)
  - [Hints](#hints)
  - [Asset Loader](#asset-loader)
@@ -20,10 +21,10 @@ A frontend framework that can help you write a simple web structure with complex
  - [Define Model](#initializedefine-model)
    - [Model & Template](#model--template-feature)
    - [Views and Model data binding](#views-and-model-data-binding)
- - [Controller](#controller)
  - [Virtual Scroll](#virtual-scroll)
  - [Components](#components)
  - [Language / Locale](#language--locale)
+ - [Namespace](#namespace)
  - [Contribution](#contribution)
  - [License](#license)
 
@@ -40,9 +41,21 @@ A frontend framework that can help you write a simple web structure with complex
 - [Views and Router](https://1vbdh.csb.app/) | [Source](https://codesandbox.io/s/viewsrouter-example-1vbdh)
 - [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
 
-## Migration
-There are some changes on v0.21.0.
+## Migration2
+There are some changes on v0.26.0.
+```js
+sf.controller // is removed
 
+// -- Run function when loading finished 
+sf(function(){...}); // is removed, use below instead
+sf.dom(function(){...});
+
+sf.dom.parent(...); // is removed, use below instead
+$(...).parent(...);
+```
+
+## Migration1
+There are some changes on v0.21.0.
 ```html
 <!-- The attribute -->
 <div sf-controller="modelName"></div>
@@ -138,7 +151,7 @@ If you want to support IE11 and some old browser, you need to add some polyfill 
 
 This framework still being developed and may have breaking changes before the release, make sure you specify the version instead using `latest`. Please help the development of this framework >.<
 
-If you have separated files for the model and controllers, you can use this library's `gulpfile.js` to combine and compile your js files. To obtain fast compilation in development environment, you can deactivate uglify/minify/babel in `gulpfile.js`.
+If you have separated files for the model and component, you can use this library's `gulpfile.js` to combine and compile your js files. To obtain fast compilation in development environment, you can deactivate uglify/minify/babel in `gulpfile.js`.
 
 ## Install with NPM
 ```sh
@@ -204,10 +217,10 @@ sf.loader.css([
 ]);
 ```
 
-When you load your script, make sure you loaded the controller first then the router or model.
 ```js
 sf.loader.js([
-   'app/controller.js', // Load controller first
+   'app/model.js', // Load model first
+   'app/component.js',
    'app/router.js',
 ], 'body');
 ```
@@ -418,13 +431,11 @@ Let's start with this simple element
 sf.model.for('something', function(self, other){
   // `text` on the DOM element will be filled with `My Name`
   self.text = 'My Name';
-});
 
-// Controller will be executed after the model was initialized
-sf.controller.for('something', function(self, other){
-  // If you want to get reference from other model scope
-  var greet = other('another-thing').stuff;
-  greet === sf.model('another-thing').stuff;
+  // Run something after this model was loaded on the DOM
+  self.init = function(){
+  	// self.$el('.selector');
+  }
 });
 
 sf.model.for('another-thing', function(self, other){
@@ -435,7 +446,7 @@ sf.model.for('another-thing', function(self, other){
 ### Model & Template feature
 When you're using template on html, function call will be removed for security reason.
 
-Get data from current controller's model scope
+Get data from current model scope
 `{{ model.variable }}`
 
 Conditional template
@@ -453,8 +464,6 @@ As a replacement for `<script>` tag. You can also output html by wrap it inside 
 `{{@exec javascript stuff}}`
 All model variable or function can be referenced to the execution scope.
 For security reason, unrecognized function call will prevent template execution.
-
-This feature is supposed for simple execution, but if you have complex execution it's better to define it as a function on the controller.
 
 Make sure you write in ES5 because browser doesn't use transpiler.
 ```html
@@ -477,12 +486,6 @@ Make sure you write in ES5 because browser doesn't use transpiler.
 ```js
 sf.model.for('something', function(self, other){
   self.number = [1, 2, 3, 4, 5];
-});
-
-sf.controller.for('something', function(self){
-  self.myAlert = function(msg){
-    window.alert(msg)
-  };
 });
 ```
 
@@ -590,52 +593,6 @@ You can also initialize your DOM with `sf.model.init` if you added the DOM dynam
 sf.model.init(targetNode = false)
 ```
 
-## Controller
-Controller is used for controling your model, so this would have a list of your static function.
-
-Get controller name for the selected element node
-```html
-<sf-m name="something">
-  <span id="username"></span>
-</sf-m>
-```
-
-Get current controller name for the selected element node
-```js
-sf.controller.modelName($('#username')[0]) // return == 'something'
-```
-
-Get model scope for the selected element node
-```js
-sf.controller.modelScope($('#username')[0], function(obj){
-    // obj == sf.model.root['something']
-})
-```
-
-### Initialize controller
-Register controller when initialization.<br>
-You should use this for defining static function for your controller only.<br>
-
-This will run on first page load and can't be called twice.
-```js
-sf.controller.for(name, function(self){
-    self.myFunction = function(){
-        return true;
-    }
-});
-```
-
-This is where you put your logic to control after the model was loaded and the controller was initialized. This function can be called more than once before the router invoke the `before` event and after the page was contain the matched `<sf-m name="">`. If the name was not found, then it will not be executed.
-```js
-sf.controller.run(name, function(self){
-    var time = Date.now();
-
-    if(self.myFunction()){
-        alert('Hello world!');
-    }
-});
-```
-
 ## Array data to list of DOM element
 Any element with `sf-repeat-this` will be binded with the array condition on the model. If you `push` or `splice` the array data, then the element will also being modified.
 
@@ -671,7 +628,6 @@ myArray.assign(whichIndex, withObject); // Reuse element but reassign the value
 myArray.assign(withArray); // Change all array data, reuse all element, and remove unused element
 ```
 
-Open the model scope for the selected controller for modification.
 ```js
 sf.model.for('music.feedback', function(self, root){
     self.reviews = [{
@@ -805,7 +761,7 @@ sf.component.for('model-name', function(self, root, $item){
 });
 ```
 
-After it's executed, it will be registered as an model component. And any `controller` will running in different scope on every new component.
+After it's executed, it will be registered as an model component.
 
 If you want to create the component in the DOM, you need to define the HTML content for the component.
 
@@ -926,6 +882,37 @@ var myObject = sf.model('name');
 sf.lang.assign(myObject, {
   modelKey:'my.name'
 }, /* {interpolation data}*/);
+```
+
+## Namespace
+This feature is useful for creating your work as distributable model and component w/o doing any scripting. It allow developers that using ScarletsFrame to plug and play the namespace into their template. It would more easier if you using the framework's compiler.
+
+```js
+// Write on local scope
+;(function(){
+	var myNamespace = sf.space({
+		namespace:'my-namespace',
+		onCreate:function(elem){
+			// Let's insert default template for <sf-space>
+			// elem is HTMLElement
+		}
+	});
+
+	myNamespace.model.for('the-name', func) // Just like sf.model.for()
+	myNamespace.component.for('comp-name', func) // Just like sf.component.for()
+	myNamespace.component.html('comp-name', '<html>') // Just like sf.component.html()
+
+	// Expose something maybe
+	window.destroyMyNamespace = myNamespace.destroy;
+})();
+```
+
+After it was initialized, any component/model inside `<sf-space>` will running with that namespace.
+```html
+<sf-space my-namespace>
+	<sf-m name="the-name"></sf-m>
+	<comp-name></comp-name>
+</sf-space>
 ```
 
 ## Contribution

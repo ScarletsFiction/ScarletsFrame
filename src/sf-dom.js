@@ -13,7 +13,7 @@ sf.dom = function(selector, context){
 		else return new DOMList([]);
 	}
 	else if(selector.constructor === Function)
-		return sf(selector);
+		return sf.loader.onFinish(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
 		return new DOMList(sf.dom.parseElement(selector));
 	else if(context)
@@ -90,13 +90,13 @@ var $ = sf.dom; // Shortcut
 		parent:function(selector){
 			if(this.length === 1){
 				if(selector)
-					return new DOMList(self.parent(this[0], selector));
+					return new DOMList(this[0].closest(selector));
 				return new DOMList(this[0].parentNode);
 			}
 
 			var t = [];
 			for (var i = 0; i < this.length; i++)
-				t.push.apply(t, self.parent(this[i], selector));
+				t.push.apply(t, this[i].closest(selector));
 			return new DOMList(t);
 		},
 		prevAll:function(selector){
@@ -412,22 +412,6 @@ var $ = sf.dom; // Shortcut
 		return null;
 	}
 
-	self.parent = function(element, selector){
-		if(element.closest) return element.closest(selector);
-
-		do {
-			if(element === document)
-				return null;
-
-			if(element.matches(selector) === true)
-				return element;
-
-			element = element.parentNode;
-		} while (element !== null);
-
-		return null;
-	}
-
 	self.prevAll = function(element, selector, isNext){
 		var result = [];
 		var findNodes = !selector || selector.constructor !== String ? true : false;
@@ -494,7 +478,7 @@ var $ = sf.dom; // Shortcut
 
 			var tempCallback = callback;
 			callback = function(ev){
-				var target = self.parent(ev.target, selector);
+				var target = ev.target.closest(selector);
 				if(target !== null)
 					tempCallback.apply(target, [ev]);
 			}

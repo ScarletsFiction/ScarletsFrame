@@ -12,6 +12,7 @@
       </script>
 
       <script src='/dist/scarletsframe.min.js'></script>
+      <script>$ = sf.dom;</script>
 
       <meta charset="utf-8">
       <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -267,7 +268,7 @@
       <!-- Language -->
       <div id="lang-test">
         <script>
-          sf(function(){
+          $(function(){
             sf.lang.default = 'en_US';
             sf.lang.add('en_US', {
               translated:"{data} translated",
@@ -331,6 +332,18 @@
 
          <p sf-lang="my.test" onclick="sf.lang.changeDefault('ja_JP')"></p>
          <p sf-lang="second" onclick="sf.lang.changeDefault('en_US')"></p>
+      </div>
+
+      <sf-space test-space="asd">
+        Inner namespace testing
+        <sf-m name="obj">{{ test }}</sf-m>
+        <my-obj id="2">{{ test }}</my-obj>
+      </sf-space>
+
+      <div>
+        Outer namespace testing
+        <sf-m name="obj">{{ test }}</sf-m>
+        <my-obj id="2">{{ test }}</my-obj>
       </div>
 
       <script type="text/javascript" src="/tests/script.js"></script>

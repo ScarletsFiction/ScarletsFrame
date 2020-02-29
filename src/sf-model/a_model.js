@@ -1,27 +1,28 @@
 ;(function(){
 var self = sf.model;
 
-self.init = function(el, modelName){
+self.init = function(el, modelName, namespace){
 	if(el.sf$controlled !== void 0)
 		return;
 
 	el.sf$controlled = modelName;
+	if(namespace !== void 0){
+		el.sf$namespace = namespace;
+		var model = el.model = namespace.root[modelName] || namespace(modelName);
+	}
+	else var model = el.model = sf.model.root[modelName] || sf.model(modelName);
 
-	var model = el.model = sf.model.root[modelName] || sf.model(modelName);
 	if(model.$el === void 0)
 		model.$el = $();
 
 	model.$el.push(el);
-
-	if(sf.controller.pending[modelName] !== void 0)
-		sf.controller.run(modelName);
 
 	var specialElement = {
 		repeat:[],
 		input:[]
 	};
 
-	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), modelName);
+	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model);
 
 	bindInput(specialElement.input, model);
 	repeatedListBinding(specialElement.repeat, model);

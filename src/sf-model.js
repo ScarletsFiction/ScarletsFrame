@@ -1,36 +1,28 @@
 // Data save and HTML content binding
-sf.model = function(scope){
-	// If it's component tag
-	if(sf.component.registered[scope] !== void 0)
-		return root_(scope);
+sf.model = function(name, func, namespace){
+	if(func !== void 0 && func.constructor === Function)
+		return sf.model.for(name, func);
 
-	if(!sf.model.root[scope]){
-		sf.model.root[scope] = {};
-		internal.controller.pending.push(scope);
-	}
+	// If it's component tag
+	if((namespace || sf.component).registered[name] !== void 0)
+		return root_(name);
+
+	var scope = namespace || sf.model;
+
+	if(!scope.root[name])
+		scope.root[name] = {};
 
 	// This usually being initialized after DOM Loaded
-	var pending = internal.modelPending[scope];
+	var pending = internal.modelPending[name];
 	if(pending){
-		var temp = sf.model.root[scope];
+		var temp = scope.root[name];
 		for (var i = 0; i < pending.length; i++) {
-			pending[i](temp, sf.model);
+			pending[i](temp, scope);
 		}
-		pending = internal.modelPending[scope] = false;
+		pending = internal.modelPending[name] = false;
 	}
 
-	for (var i = internal.controller.pending.length - 1; i >= 0; i--) {
-		var temp = sf.controller.pending[internal.controller.pending[i]];
-		if(temp !== void 0){
-			temp(root_(internal.controller.pending[i]), root_);
-			internal.controller.pending.splice(i, 1);
-		}
-	}
-
-	if(sf.controller.pending[scope])
-		sf.controller.run(scope);
-
-	return sf.model.root[scope];
+	return scope.root[name];
 };
 
 ;(function(){
@@ -57,7 +49,7 @@ sf.model = function(scope){
 		var list = currentElement.getAttribute('sf-bind-list');
 		if(!list) return i;
 
-		var ref = self.root[sf.controller.modelName(currentElement)][list];
+		var ref = sf(currentElement)[list];
 		if(!ref.$virtual) return i;
 
 		return i + ref.$virtual.DOMCursor - 1;
@@ -98,15 +90,24 @@ class SFModel extends HTMLElement {
 		this.sf$firstInit = true;
 	}
 	connectedCallback(){
-		if(this.sf$destroying !== void 0)
+		if(this.sf$destroying !== void 0){
+			delete this.sf$destroying;
 			clearTimeout(this.sf$destroying);
+		}
 
 		if(this.sf$firstInit === void 0)
 			return;
 
-		var that = this;
 		delete this.sf$firstInit;
+		if(internal.space.empty === false){
+			var haveSpace = this.closest('sf-space');
+			if(haveSpace !== null)
+				internal.space.initModel(haveSpace, this);
 
+			return;
+		}
+
+		var that = this;
 		setTimeout(function(){
 			// Run init when all assets have loaded
 			if(sf.loader.DOMWasLoaded){
@@ -135,3 +136,31 @@ class SFModel extends HTMLElement {
 }
 
 customElements.define('sf-m', SFModel);
+
+var root_ = function(scope){
+	if(sf.component.registered[scope]){
+		var available = [];
+		var component = sf.component.available[scope];
+		if(component !== void 0){
+			for (var i = 0; i < component.length; i++) {
+				available.push(sf.model.root[component[i]]);
+			}
+		}
+		return available;
+	}
+
+	if(!sf.model.root[scope]){
+		var scope_ = sf.model.root[scope] = {};
+
+		if(internal.modelPending[scope] !== void 0){
+			var ref = internal.modelPending[scope];
+			for (var a = 0; a < ref.length; a++) {
+				ref[a](scope_, root_);
+			}
+
+			delete internal.modelPending[scope];
+		}
+	}
+
+	return sf.model.root[scope];
+}

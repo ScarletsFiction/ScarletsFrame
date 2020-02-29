@@ -174,14 +174,6 @@ sf.loader = new function(){
 			delete internal.modelPending[keys[i]];
 		}
 
-		for (var i = internal.controller.pending.length - 1; i >= 0; i--) {
-			var scope = sf.controller.pending[internal.controller.pending[i]];
-			if(scope !== void 0){
-				scope(root_(internal.controller.pending[i]), root_);
-				internal.controller.pending.splice(i, 1);
-			}
-		}
-
 		for (var i = 0; i < whenDOMLoaded.length; i++) {
 			try{
 				whenDOMLoaded[i]();

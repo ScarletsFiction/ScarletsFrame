@@ -96,7 +96,8 @@ sf.model.for('virtual-scroll', function(self, root){
 });
 
 var aList = null;
-sf(function(){
+$(function(){
+//1;return;
    var list = aList = sf.model('virtual-scroll');
 
    setTimeout(function(){
@@ -234,13 +235,13 @@ sf.model.for('model-binding', function(self, root){
       sf.lang.changeDefault(news);
    }
 
-
    self.text = 'main model';
    self.inputBinding6a = [
       {text:'Select 1'+vul, value:1+vul},
       {text:'Select 2'+vul, value:2+vul},
       {text:'Select 3'+vul, value:3+vul},
    ];
+
    setTimeout(function(){
       self.inputBinding6a.push({text:'Select 4'+vul, val:4+vul});
    }, 5000);
@@ -256,12 +257,17 @@ sf.model.for('model-binding', function(self, root){
    self.vuln = "{{self.vul}}{{@exec console.error('something not gud')}}"+vul;
    self.vul = "this musn't being visible"+vul;
    setTimeout(function(){sf.model.init(reinit)}, 1000);
-});
-sf.controller.for('model-binding', function(self, root){
-   var list = root('virtual-scroll');
-   if(list.list1 === undefined)
-      console.error("Can't get other model scope variable");
 
+   self.init = function(){
+      var list = root('virtual-scroll');
+      if(list.list1 === undefined)
+         console.error("Can't get other model scope variable");
+   }
+
+   self.addition = function(a, b){
+      return a + b;
+   }
+//1;return;
    setTimeout(function(){
       self.inputBinding3 = true;
       self.inputBinding4 = 'radio1';
@@ -283,10 +289,6 @@ sf.controller.for('model-binding', function(self, root){
       self.bold = true;
       self.pink = false;
    }, 8000);
-
-   self.addition = function(a, b){
-      return a + b;
-   }
 });
 
 sf.model.for('components', function(self){
@@ -310,13 +312,6 @@ sf.model.for('components', function(self){
    }
 });
 
-sf.controller.for('comp-test', function(self, root, item){
-   self.init = function(){
-      console.warn('comp-test', item, self.$el[0]);
-      console.warn("Component init called", self, self.tries.constructor !== Array && self.tries.getElement(0));
-   }
-});
-
 sf.component.for('comp-test', function(self, root, item){
    self.item = item;
    self.tries = [1,2,3+vul];
@@ -327,6 +322,11 @@ sf.component.for('comp-test', function(self, root, item){
       self.tries[self.tries.indexOf(zx)] += zx;
       self.tries.refresh();
    }
+
+   self.init = function(){
+      console.warn('comp-test', item, self.$el[0]);
+      console.warn("Component init called", self, self.tries.constructor !== Array && self.tries.getElement(0));
+   }
 });
 
 sf.component.html('comp-test', '<div sf-lang="translated">1. translated {{ data }}</div>\
@@ -335,7 +335,7 @@ sf.component.html('comp-test', '<div sf-lang="translated">1. translated {{ data 
    <div>item: {{ item }}</div>\
 <br>');
 
-sf(function(){
+$(function(){
    var elem2 = new $CompTest('from javascript');
    components.appendChild(elem2);
 });
@@ -445,3 +445,30 @@ setTimeout(function(){
    console.log("Trying to reinit", a.length, "element (must be 0)");
    sf.model.parsePreprocess(a);
 }, 10000);
+
+// Namespace
+var testSpace = new sf.space({namespace:'test-space'});
+
+testSpace.model('obj', function(self, root){
+   self.test = 123;
+});
+
+testSpace.component('my-obj', function(self, root){
+   self.test = 123;
+   self.init = function(){
+      if(root('obj').test === 123)
+         console.log("Test namespace OK");
+   }
+});
+
+sf.model('obj', function(self, root){
+   self.test = 321;
+});
+
+sf.component('my-obj', function(self, root){
+   self.test = 321;
+   self.init = function(){
+      if(root('obj').test === 321)
+         console.log("Global namespace OK");
+   }
+});
