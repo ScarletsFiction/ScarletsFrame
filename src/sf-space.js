@@ -15,19 +15,19 @@ function getNamespace(name, id){
 	if(scope[id] === void 0){
 		var ref = scope[''];
 		if(ref === void 0){
-			ref = scope[''] = createRoot_({});
+			ref = scope[''] = createRoot_({}, {});
 
 			if(id === '')
 				return ref;
 		}
 
-		scope[id] = createRoot_(ref.registered);
+		scope[id] = createRoot_(ref.modelFunc, ref.registered);
 	}
 
 	return scope[id];
 }
 
-function createRoot_(registered){
+function createRoot_(modelFunc, registered){
 	var root_ = function(scope){
 		if(root_.registered[scope]){
 			var available = [];
@@ -40,8 +40,9 @@ function createRoot_(registered){
 			return available;
 		}
 
-		if(!root_.root[scope]){
-			var scope_ = root_.root[scope] = {};
+		if(root_.root[scope] === void 0){
+			root_.root[scope] = {};
+			root_.modelFunc[scope](root_.root[scope], root_);
 
 			if(internal.modelPending[scope] !== void 0){
 				var ref = internal.modelPending[scope];
@@ -57,6 +58,7 @@ function createRoot_(registered){
 	}
 
 	root_.root = {};
+	root_.modelFunc = modelFunc;
 	root_.registered = registered;
 	root_.available = {};
 
@@ -69,7 +71,14 @@ internal.space = {
 		sf.component.new(tagName, elem, $item, root.sf$space);
 	},
 	initModel:function(root, elem){
-		sf.model.init(elem, elem.getAttribute('name'), root.sf$space);
+		var name = elem.getAttribute('name');
+		if(root.sf$space.modelFunc[name] === void 0)
+			return root.sf$space.modelFunc[name] = [[elem, name, root.sf$space]];
+
+		if(root.sf$space.modelFunc[name].constructor === Array)
+			return root.sf$space.modelFunc[name].push([elem, name, root.sf$space]);
+
+		sf.model.init(elem, name, root.sf$space);
 	},
 };
 
@@ -89,11 +98,19 @@ class Space{
 ;(function(){
 	var self = Space.prototype;
 	self.model = function(name, func){
-		sf.model(name, func, this.scope);
-	}
+		if(func !== void 0){
+			var old = this.scope.modelFunc[name];
+			this.scope.modelFunc[name] = func;
 
-	self.model.for = function(name, func){
-		sf.model.for(name, func, this.scope);
+			if(old.constructor === Array)
+				for (var i = 0; i < old.length; i++){
+					sf.model.init.apply(null, old[i]);
+				}
+
+			return;
+		}
+
+		sf.model(name, func, this.scope);
 	}
 
 	self.component = function(name, func){
@@ -106,35 +123,25 @@ class Space{
 		return console.error("No Operation");
 	}
 
-	self.component.for = function(name, func){
-		sf.component.for(name, func, this.scope);
-	}
-
-	self.component.html = function(name, outerHTML){
-		sf.component.html(name, func, this.scope);
-	}
-
 	self.destroy = function(){
-		var namespace = this.namespace+'-';
-
-		var keys = Object.keys(self.models);
+		var keys = Object.keys(this.root);
 		for (var i = 0; i < keys.length; i++) {
 			if(keys[i].indexOf(namespace) === 0){
-				self.models[keys[i]].$el.remove();
-				delete self.models[keys[i]];
+				this.root[keys[i]].$el.remove();
+				delete this.root[keys[i]];
 			}
 		}
 
-		var keys = Object.keys(self.components.registered);
+		var keys = Object.keys(this.components.registered);
 		for (var i = 0; i < keys.length; i++) {
 			if(keys[i].indexOf(namespace) === 0)
-				delete self.components.registered[keys[i]];
+				delete this.components.registered[keys[i]];
 		}
 
-		var keys = Object.keys(self.components.available);
+		var keys = Object.keys(this.components.available);
 		for (var i = 0; i < keys.length; i++) {
 			if(keys[i].indexOf(namespace) === 0)
-				delete self.components.available[keys[i]];
+				delete this.components.available[keys[i]];
 		}
 
 		var keys = Object.keys(internal.component);
