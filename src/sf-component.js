@@ -244,12 +244,10 @@ sf.component = function(scope, func){
 
 			if(internal.space.empty === false){
 				var haveSpace = elem.closest('sf-space');
-				if(haveSpace !== null)
+				if(haveSpace !== null){
 					internal.space.initComponent(haveSpace, tagName, elem, $item);
-				else
-					self.new(tagName, elem, $item);
-
-				return elem;
+					return elem;
+				}
 			}
 
 			self.new(tagName, elem, $item);

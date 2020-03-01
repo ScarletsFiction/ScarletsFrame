@@ -629,7 +629,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				continue;
 
 			// Skip nested sf-model or sf-space
-			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled || currentNode.tagName === 'SF-SPACE')
+			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled !== void 0)
 				continue;
 
 			var attrs = currentNode.attributes;
@@ -646,8 +646,8 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			if(attrs['sf-into'] !== void 0 || attrs['sf-bind'] !== void 0)
 				collectOther.input.push(currentNode);
 
-			// Skip nested component
-			if(internal.component[currentNode.tagName] !== void 0)
+			// Skip any custom element
+			if(currentNode.tagName.indexOf('-') !== -1)
 				continue;
 
 			for (var a = 0; a < attrs.length; a++) {

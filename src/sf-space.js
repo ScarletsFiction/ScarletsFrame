@@ -43,15 +43,6 @@ function createRoot_(modelFunc, registered){
 		if(root_.root[scope] === void 0){
 			root_.root[scope] = {};
 			root_.modelFunc[scope](root_.root[scope], root_);
-
-			if(internal.modelPending[scope] !== void 0){
-				var ref = internal.modelPending[scope];
-				for (var a = 0; a < ref.length; a++) {
-					ref[a](scope_, root_);
-				}
-
-				delete internal.modelPending[scope];
-			}
 		}
 
 		return root_.root[scope];
@@ -72,6 +63,8 @@ internal.space = {
 	},
 	initModel:function(root, elem){
 		var name = elem.getAttribute('name');
+
+		// Pending if model handler was not loaded
 		if(root.sf$space.modelFunc[name] === void 0)
 			return root.sf$space.modelFunc[name] = [[elem, name, root.sf$space]];
 

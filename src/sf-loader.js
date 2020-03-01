@@ -116,7 +116,10 @@ sf.loader = new function(){
 				}
 			}
 
-			resourceWaitTimer = setInterval(waitResources, 100);
+			if(self.turnedOff === false)
+				resourceWaitTimer = setInterval(waitResources, 100);
+			else waitResources();
+
 			document.removeEventListener('readystatechange', domStateEvent, true);
 		}
 	}, true);
@@ -157,22 +160,6 @@ sf.loader = new function(){
 
 		self.DOMWasLoaded = true;
 		self.turnedOff = true;
-
-		// Initialize all pending model
-		var keys = Object.keys(internal.modelPending);
-		for (var i = 0; i < keys.length; i++) {
-			var ref = internal.modelPending[keys[i]];
-
-			if(sf.model.root[keys[i]] === undefined)
-				var scope = sf.model.root[keys[i]] = {};
-			else var scope = sf.model.root[keys[i]];
-
-			for (var a = 0; a < ref.length; a++) {
-				ref[a](scope, root_);
-			}
-
-			delete internal.modelPending[keys[i]];
-		}
 
 		for (var i = 0; i < whenDOMLoaded.length; i++) {
 			try{

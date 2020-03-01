@@ -11,16 +11,6 @@ sf.model = function(name, func, namespace){
 	if(scope.root[name] === void 0)
 		scope.root[name] = {};
 
-	// This usually being initialized after DOM Loaded
-	var pending = internal.modelPending[name];
-	if(pending){
-		var temp = scope.root[name];
-		for (var i = 0; i < pending.length; i++) {
-			pending[i](temp, scope);
-		}
-		pending = internal.modelPending[name] = false;
-	}
-
 	return scope.root[name];
 };
 
@@ -57,19 +47,16 @@ sf.model = function(name, func, namespace){
 	// Declare model for the name with a function
 	self.for = function(name, func, namespace){
 		var scope = namespace || self;
-
-		if(!sf.loader.DOMWasLoaded){
-			if(internal.modelPending[name] === undefined)
-				internal.modelPending[name] = [];
-
-			if(internal.modelPending[name] === false)
-				return func(scope(name), scope);
-
-			// Initialize when DOMLoaded
-			return internal.modelPending[name].push(func);
-		}
-
 		func(scope(name), scope);
+
+		if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
+			var temp = internal.modelPending[name];
+			for (var i = 0; i < temp.length; i++) {
+				sf.model.init(temp[i], temp[i].getAttribute('name'));
+			}
+
+			delete internal.modelPending[name];
+		}
 	}
 
 	// Get property of the model
@@ -102,25 +89,34 @@ class SFModel extends HTMLElement {
 		delete this.sf$firstInit;
 		if(internal.space.empty === false){
 			var haveSpace = this.closest('sf-space');
-			if(haveSpace !== null)
+			if(haveSpace !== null){
 				internal.space.initModel(haveSpace, this);
-
-			return;
+				return;
+			}
 		}
 
-		var that = this;
-		setTimeout(function(){
+		var name = this.getAttribute('name');
+
+		// Instant run when model scope was found or have loaded
+		if(sf.model.root[name] !== void 0 && internal.modelPending[name] === void 0){
 			// Run init when all assets have loaded
 			if(sf.loader.DOMWasLoaded){
-				internal.language.refreshLang(that);
-				return sf.model.init(that, that.getAttribute('name'));
+				internal.language.refreshLang(this);
+				return sf.model.init(this, name);
 			}
 
 			sf.loader.onFinish(function(){
-				internal.language.refreshLang(that);
-				sf.model.init(that, that.getAttribute('name'));
+				internal.language.refreshLang(this);
+				sf.model.init(this, name);
 			});
-		});
+			return;
+		}
+
+		// Pending model initialization
+		if(internal.modelPending[name] === void 0)
+			internal.modelPending[name] = [];
+
+		internal.modelPending[name].push(this);
 	}
 	disconnectedCallback(){
 		var that = this;
@@ -150,18 +146,21 @@ var root_ = function(scope){
 		return available;
 	}
 
-	if(sf.model.root[scope] === void 0){
+	if(sf.model.root[scope] === void 0)
 		var scope_ = sf.model.root[scope] = {};
-
-		if(internal.modelPending[scope] !== void 0){
-			var ref = internal.modelPending[scope];
-			for (var a = 0; a < ref.length; a++) {
-				ref[a](scope_, root_);
-			}
-
-			delete internal.modelPending[scope];
-		}
-	}
 
 	return sf.model.root[scope];
 }
+
+// Let's check all pending model
+$(function(){
+	var keys = Object.keys(internal.modelPending);
+	for (var i = 0; i < keys.length; i++) {
+		var ref = internal.modelPending[keys[i]];
+		for (var z = 0; z < ref.length; z++) {
+			sf.model.init(ref[z], ref[z].getAttribute('name'));
+		}
+
+		delete internal.modelPending[keys[i]];
+	}
+});
