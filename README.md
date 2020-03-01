@@ -898,9 +898,9 @@ This feature is useful for creating your work as distributable model and compone
 		}
 	});
 
-	myNamespace.model.for('the-name', func) // Just like sf.model.for()
-	myNamespace.component.for('comp-name', func) // Just like sf.component.for()
-	myNamespace.component.html('comp-name', '<html>') // Just like sf.component.html()
+	myNamespace.model('the-name', func) // Just like sf.model.for()
+	myNamespace.component('comp-name', func) // Just like sf.component.for()
+	myNamespace.component('comp-name', '<html>') // Just like sf.component.html()
 
 	// Expose something maybe
 	window.destroyMyNamespace = myNamespace.destroy;
