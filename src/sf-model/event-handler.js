@@ -70,7 +70,7 @@ function eventHandler(that, data, _modelScope, rootHandler){
 		// We need to get element with 'sf-bind-list' and check current element before processing
 		script = function(event){
 			if(event.target.hasAttribute('sf-bind-list') === false){
-				var realThat = $.parent(event.target, '[sf-bind-list]');
+				var realThat = event.target.closest('[sf-bind-list]');
 				var call = findEventFromList($.getSelector(event.target, true, realThat));
 
 				if(call !== void 0){
@@ -210,7 +210,7 @@ function eventHandler(that, data, _modelScope, rootHandler){
 
 	(rootHandler || that).addEventListener(eventName, callback, options);
 
-	if(!options.once){
+	if(options.once === void 0){
 		(rootHandler || that)['sf$eventDestroy_'+eventName] = function(){
 			(rootHandler || that).removeEventListener(eventName, callback, options);
 		}

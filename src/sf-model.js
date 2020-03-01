@@ -5,11 +5,10 @@ sf.model = function(name, func, namespace){
 
 	// If it's component tag
 	if((namespace || sf.component).registered[name] !== void 0)
-		return root_(name);
+		return (namespace || root_)(name);
 
 	var scope = namespace || sf.model;
-
-	if(!scope.root[name])
+	if(scope.root[name] === void 0)
 		scope.root[name] = {};
 
 	// This usually being initialized after DOM Loaded
@@ -33,7 +32,7 @@ sf.model = function(name, func, namespace){
 	// Find an index for the element on the list
 	self.index = function(element){
 		if(element.hasAttribute('sf-bind-list') === false)
-			element = sf.dom.parent(element, '[sf-bind-list]');
+			element = element.closest('[sf-bind-list]');
 
 		var i = -1;
 		var tagName = element.tagName;
@@ -50,25 +49,27 @@ sf.model = function(name, func, namespace){
 		if(!list) return i;
 
 		var ref = sf(currentElement)[list];
-		if(!ref.$virtual) return i;
+		if(ref.$virtual === void 0) return i;
 
 		return i + ref.$virtual.DOMCursor - 1;
 	}
 
 	// Declare model for the name with a function
-	self.for = function(name, func){
+	self.for = function(name, func, namespace){
+		var scope = namespace || self;
+
 		if(!sf.loader.DOMWasLoaded){
 			if(internal.modelPending[name] === undefined)
 				internal.modelPending[name] = [];
 
 			if(internal.modelPending[name] === false)
-				return func(self(name), self);
+				return func(scope(name), scope);
 
 			// Initialize when DOMLoaded
 			return internal.modelPending[name].push(func);
 		}
 
-		func(self(name), self);
+		func(scope(name), scope);
 	}
 
 	// Get property of the model
@@ -149,7 +150,7 @@ var root_ = function(scope){
 		return available;
 	}
 
-	if(!sf.model.root[scope]){
+	if(sf.model.root[scope] === void 0){
 		var scope_ = sf.model.root[scope] = {};
 
 		if(internal.modelPending[scope] !== void 0){

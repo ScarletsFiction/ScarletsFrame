@@ -336,14 +336,14 @@
 
       <sf-space test-space="asd">
         Inner namespace testing
-        <sf-m name="obj">{{ test }}</sf-m>
-        <my-obj id="2">{{ test }}</my-obj>
+        <sf-m name="obj">{{ test }} - <span sf-repeat-this="num in list">{{num}}.</span></sf-m>
+        <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
       </sf-space>
 
       <div>
         Outer namespace testing
-        <sf-m name="obj">{{ test }}</sf-m>
-        <my-obj id="2">{{ test }}</my-obj>
+        <sf-m name="obj">{{ test }} - <span sf-repeat-this="num in list">{{num}}.</span></sf-m>
+        <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
       </div>
 
       <script type="text/javascript" src="/tests/script.js"></script>

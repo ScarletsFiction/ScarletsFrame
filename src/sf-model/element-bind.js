@@ -12,13 +12,13 @@ internal.model.removeModelBinding = function(ref, noBackup){
 			if(bindedKey[key][i].constructor === Function)
 				continue;
 
-			if(!bindedKey[key][i].element.isConnected)
+			if(bindedKey[key][i].element.isConnected === false)
 				bindedKey[key].splice(i, 1);
 		}
 
 		if(bindedKey[key].input !== void 0)
 			for (var i = bindedKey[key].input.length-1; i >= 0; i--) {
-				if(!bindedKey[key].input[i].isConnected)
+				if(bindedKey[key].input[i].isConnected === false)
 					bindedKey[key].input.splice(i, 1);
 			}
 

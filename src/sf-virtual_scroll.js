@@ -702,7 +702,7 @@ internal.virtual_scroll = new function(){
 					temp = _onElementResize[i];
 
 					// Check if it's removed from DOM
-					if(!temp.element.isConnected){
+					if(temp.element.isConnected === false){
 						_onElementResize.splice(i, 1);
 						continue;
 					}
@@ -744,7 +744,7 @@ internal.virtual_scroll = new function(){
 
 	var styleInitialized = false;
 	internal.addScrollerStyle = function(){
-		if(!styleInitialized){
+		if(styleInitialized === false){
 			var style = document.getElementById('sf-styles');
 
 			if(!style){

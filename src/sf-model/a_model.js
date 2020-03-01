@@ -22,7 +22,9 @@ self.init = function(el, modelName, namespace){
 		input:[]
 	};
 
-	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model);
+var zz = sf.model.queuePreprocess(el, void 0, specialElement);
+console.log(zz);
+	sf.model.parsePreprocess(zz, model);
 
 	bindInput(specialElement.input, model);
 	repeatedListBinding(specialElement.repeat, model);

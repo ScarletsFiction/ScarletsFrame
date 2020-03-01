@@ -17,10 +17,10 @@ if(Element.prototype.remove === undefined || CharacterData.prototype.remove === 
   })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
 }
 
-if(!Element.prototype.matches)
+if(Element.prototype.matches === void 0)
   Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
 
-if(!Element.prototype.closest){
+if(Element.prototype.closest === void 0){
   Element.prototype.closest = function(selector){
     var elem = this;
     do {

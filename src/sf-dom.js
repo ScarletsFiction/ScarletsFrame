@@ -621,7 +621,7 @@ var $ = sf.dom; // Shortcut
 			}
 
 			self.once(element, animationStart, function(){
-				if(!element.isConnected)
+				if(element.isConnected === false)
 					return;
 
 				if(duration.whenBegin)
@@ -643,7 +643,7 @@ var $ = sf.dom; // Shortcut
 		style.webkitAnimation = style.animation = arrange;
 
 		setTimeout(function(){
-			if(!element.isConnected){
+			if(element.isConnected === void 0){
 				if(callback !== void 0) callback.call(element);
 				return;
 			}

@@ -264,7 +264,7 @@ sf.component = function(scope, func){
 
 		func.prototype.connectedCallback = function(){
 			// Maybe it's not the time
-			if(!this.model)
+			if(this.model === void 0)
 				return;
 
 			if(this.sf$destroying !== void 0){
@@ -298,7 +298,7 @@ sf.component = function(scope, func){
 
 			var that = this;
 			this.sf$destroying = setTimeout(function(){
-				if(!that.model)
+				if(that.model === void 0)
 					return console.log(that);
 
 				if(that.model.destroy)

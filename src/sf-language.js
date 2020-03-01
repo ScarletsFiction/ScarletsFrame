@@ -124,7 +124,7 @@ function getSingle(path, obj, callback){
 		if(obj)
 			value = interpolate(value, obj);
 
-		if(!callback)
+		if(callback === void 0)
 			return value;
 		return callback(value);
 	}
@@ -161,7 +161,7 @@ function getMany(paths, obj, callback){
 		if(obj)
 			value = interpolate(value, obj);
 
-		if(!callback)
+		if(callback === void 0)
 			return value;
 		return callback(value);
 	}
@@ -387,7 +387,7 @@ function refreshLang(list, noPending){
 		if(model === void 0)
 			model = sf(parentElement[a]);
 
-		if(!model.sf$bindedKey) // Doesn't have template
+		if(model.sf$bindedKey === void 0) // Doesn't have template
 			continue;
 
 		var keys = Object.keys(model.sf$bindedKey);
@@ -456,7 +456,7 @@ function elementReferencesRefresh(elem){
 		if(eRef[i].textContent !== void 0){
 			var parent = eRef[i].textContent.parentElement;
 
-			if(!parent.hasAttribute('sf-lang'))
+			if(parent.hasAttribute('sf-lang') === false)
 				continue;
 
 			var key = parent.getAttribute('sf-lang');

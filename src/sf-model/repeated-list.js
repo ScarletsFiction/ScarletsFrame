@@ -474,7 +474,7 @@ class RepeatedElement extends Array{
 	indexOf(item){
 		if(item.children !== void 0 && item.children.constructor === HTMLCollection){
 			if(item.hasAttribute('sf-bind-list') === false)
-				item = sf.dom.parent(item, '[sf-bind-list]');
+				item = item.closest('[sf-bind-list]');
 
 			if(item === null)
 				return -1;

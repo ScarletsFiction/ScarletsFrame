@@ -48,7 +48,7 @@ $(function(){
 		var attr = elem.getAttribute('href');
 
 		if(attr === null){
-			elem = $.parent(elem, 'a[href]');
+			elem = elem.closest('a[href]');
 			attr = elem.getAttribute('href');
 		}
 
@@ -486,7 +486,7 @@ var self = sf.views = function View(selector, name){
 			sf.url.push();
 
 		// Check if view was exist
-		if(!rootDOM.isConnected){
+		if(rootDOM.isConnected === false){
 			if(rootDOM.nodeType !== void 0)
 				rootDOM = {};
 
@@ -631,7 +631,7 @@ var self = sf.views = function View(selector, name){
 					DOMReference = found[selectorName];
 				}
 
-				if(!DOMReference || !DOMReference.isConnected){
+				if(!DOMReference || DOMReference.isConnected === false){
 					if(url.parent === void 0){
 						dom.remove();
 						return routeError_({status:0});
