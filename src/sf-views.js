@@ -112,7 +112,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				internal.component.skip = true;
 
 				if(ref.html.constructor === String){
-					route.html = sf.dom.parseElement('<template>'+ref.html+'</template>')[0];
+					route.html = sf.dom.parseElement('<template>'+ref.html+'</template>', true)[0];
 					internal.component.skip = false;
 					return;
 				}
@@ -668,7 +668,7 @@ var self = sf.views = function View(selector, name){
 				return console.error("`window.templates` was not found");
 
 			// Create new element
-			url.html = sf.dom.parseElement('<template>'+window.templates[url.template+'.html']+'</template>')[0];
+			url.html = sf.dom.parseElement('<template>'+window.templates[url.template+'.html']+'</template>', true)[0];
 		}
 
 		if(url.html){
@@ -705,7 +705,7 @@ var self = sf.views = function View(selector, name){
 				var dom = document.createElement('sf-page-view');
 				dom.classList.add('page-prepare');
 
-				var elements = sf.dom.parseElement(html_content, true);
+				var elements = sf.dom.parseElement(html_content);
 				for(var p=0, n=elements.length; p < n; p++){
 					dom.insertBefore(elements[0], null);
 				}
@@ -716,7 +716,7 @@ var self = sf.views = function View(selector, name){
 					var temp = document.createElement('sf-page-view');
 					temp.classList.add('page-prepare');
 
-					var elements = sf.dom.parseElement(html_content, true);
+					var elements = sf.dom.parseElement(html_content);
 					for(var p=0, n=elements.length; p < n; p++){
 						temp.insertBefore(elements[0], null);
 					}

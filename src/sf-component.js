@@ -73,7 +73,7 @@ sf.component = function(scope, func){
 		if(scope.registered[name] === void 0)
 			scope.registered[name] = [false, false, 0, false];
 
-		var temp = $.parseElement(outerHTML);
+		var temp = $.parseElement(outerHTML, true);
 		if(temp.length === 1)
 			scope.registered[name][3] = temp[0];
 		else{

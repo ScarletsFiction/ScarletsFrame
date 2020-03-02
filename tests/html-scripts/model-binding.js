@@ -52,7 +52,7 @@ sf.model.for('model-binding', function(self, root){
 		console.warn("inputBinding6 was updated from:", old, 'to', news);
 	};
 	self.inputBinding7 = ''+vul;
-	self.showHTML = false;
+	self.showHTML = true;
 	self.prefix = 'i -> '+vul;
 	self.stuff = '(text from the model)'+vul;
 	self.stuffes = ' and stuff'+vul;
@@ -61,6 +61,10 @@ sf.model.for('model-binding', function(self, root){
 	setTimeout(function(){sf.model.init(reinit)}, 1000);
 
 	self.init = function(){
+		setTimeout(function(){
+			self.showHTML = false;
+		}, 2000);
+
 		var list = root('virtual-scroll');
 		if(list.list1 === undefined)
 			console.error("Can't get other model scope variable");

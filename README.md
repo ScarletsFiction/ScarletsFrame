@@ -503,6 +503,21 @@ And the HTML output content will be escaped like below
 </sf-m>
 ```
 
+Any `{[ inner {{ property }} ]}` will not bind into the model, as an alternative you must define a variable outer of the `{[ template ]}`.
+
+```html
+<sf-m name="something">
+  <span>
+    {{@exec
+      var bindMe = prefix;
+      for(var i = 0; i < 5; i++){
+        {[ <label>i -> {{ bindMe }}</label> ]}
+      }
+    }}
+  </span>
+</sf-m>
+```
+
 ## Views and Model data binding
 Every element that built from a template will have one-way data binding. Even it's defined in attributes or innerHTML. To deactivate the feature you need to specify `sf-bind-ignore` on the parent attributes.
 ```html

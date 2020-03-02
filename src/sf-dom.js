@@ -15,7 +15,7 @@ sf.dom = function(selector, context){
 	else if(selector.constructor === Function)
 		return sf.loader.onFinish(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
-		return new DOMList(sf.dom.parseElement(selector));
+		return new DOMList(sf.dom.parseElement(selector, true));
 	else if(context)
 		return new DOMList(context.querySelectorAll(selector));
 	else if(selector.constructor === String)
@@ -675,9 +675,9 @@ var $ = sf.dom; // Shortcut
 	}
 
 	var emptyDOM = document.createElement('div');
-	self.parseElement = function(html, returnNode){
+	self.parseElement = function(html, elementOnly){
 		emptyDOM.innerHTML = '<template>'+html+'</template>';
-		return emptyDOM.firstElementChild.content[returnNode ? 'childNodes' : 'children'];
+		return emptyDOM.firstElementChild.content[elementOnly ? 'children' : 'childNodes'];
 	}
 
 	self.escapeText = function(text){

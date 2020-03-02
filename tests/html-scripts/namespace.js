@@ -1,6 +1,6 @@
 var testSpace = new sf.space({namespace:'test-space'});
 
-testSpace.model('obj', function(self, root){console.log(self);
+testSpace.model('obj', function(self, root){
 	self.test = 123;
 	self.list = [1,2,3];
 	self.init = function(){
@@ -18,7 +18,7 @@ testSpace.component('my-obj', function(self, root){
 	}
 });
 
-sf.model('obj', function(self, root){console.log(self);
+sf.model('obj', function(self, root){
 	self.test = 321;
 	self.list = [3,2,1];
 	self.init = function(){

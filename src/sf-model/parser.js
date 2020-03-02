@@ -451,7 +451,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	if(container !== void 0)
 		copy = '<'+container+'>'+copy+'</'+container+'>';
 
-	copy = $.parseElement(copy)[0];
+	copy = $.parseElement(copy, true)[0];
 	if(container !== void 0){
 		copy = copy.firstElementChild;
 		copy.remove();
@@ -468,7 +468,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 
 	template.specialElement = {
 		repeat:[],
-		input:[]
+		input:[],
 	};
 
 	// Start addressing
@@ -618,6 +618,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 		}
 	}
 
+	// Scan from last into first element
 	for (var i = childNodes.length - 1; i >= 0; i--) {
 		var currentNode = childNodes[i];
 
@@ -625,6 +626,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			continue;
 
 		if(currentNode.nodeType === 1){ // Tag
+			// Skip {[ ..enclosed template.. ]}
 			if(enclosedHTMLParse === true)
 				continue;
 
@@ -682,12 +684,18 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				continue;
 			}
 
+			// Continue here when enclosed template {[...]} was skipped
+
 			if(currentNode.textContent.indexOf('{{') !== -1){
 				if(extracting === void 0){
-					temp.add(currentNode.parentNode);
+					// If it's not single/regular template
+					if(currentNode.textContent.indexOf('{{@') !== -1 || enclosing !== -1){
+						temp.add(currentNode.parentNode); // get the element (from current text node)
 
-					if(currentNode.parentNode.sf$onlyAttribute !== void 0)
-						delete currentNode.parentNode.sf$onlyAttribute;
+						if(currentNode.parentNode.sf$onlyAttribute !== void 0)
+							delete currentNode.parentNode.sf$onlyAttribute;
+					}
+					else temp.add(currentNode);
 					break;
 				}
 
@@ -720,14 +728,20 @@ self.parsePreprocess = function(nodes, modelRef){
 		// Create attribute template only because we're not going to process HTML content
 		if(current.sf$onlyAttribute !== void 0){
 			var preParsedRef = [];
+			var found = false;
 
 			var attrs = current.attributes;
 			for (var i = 0; i < attrs.length; i++) {
 				var attr = attrs[i];
 
-				if(attr.value.indexOf('{{') !== -1)
+				if(attr.value.indexOf('{{') !== -1){
 					attr.value = dataParser(attr.value, null, false, modelRef, '#noEval', preParsedRef);
+					found = true;
+				}
 			}
+
+			if(found === false)
+				continue;
 
 			var template = {
 				parse:preParsedRef,

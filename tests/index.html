@@ -217,7 +217,7 @@
          <b>Conditional HTML</b><br>
          <div>
             {{@if showHTML === true:
-               {[<span>This 1st must not be displayed {{ stuff }}</span>]}
+               {[<span>This 1st must not be displayed {{ stuff }}</span><br>]}
             }}
             <span>Some bind: {{ stuff }}</span><br>
             {{@if showHTML === false:
@@ -229,8 +229,10 @@
          <div>
             <div>
             {{@exec
+            	var bindThis = prefix;
+
                for(var i = 1; i <= 5; i++){
-                  {[<span>{{ prefix }}{{ i }}</span><br>]}
+                  {[<span>{{ bindThis }}{{ i }}</span><br>]}
                }
 
                var calculate = (5+4);
