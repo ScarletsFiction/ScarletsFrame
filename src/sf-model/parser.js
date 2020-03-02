@@ -728,20 +728,14 @@ self.parsePreprocess = function(nodes, modelRef){
 		// Create attribute template only because we're not going to process HTML content
 		if(current.sf$onlyAttribute !== void 0){
 			var preParsedRef = [];
-			var found = false;
 
 			var attrs = current.attributes;
 			for (var i = 0; i < attrs.length; i++) {
 				var attr = attrs[i];
 
-				if(attr.value.indexOf('{{') !== -1){
+				if(attr.value.indexOf('{{') !== -1)
 					attr.value = dataParser(attr.value, null, false, modelRef, '#noEval', preParsedRef);
-					found = true;
-				}
 			}
-
-			if(found === false)
-				continue;
 
 			var template = {
 				parse:preParsedRef,

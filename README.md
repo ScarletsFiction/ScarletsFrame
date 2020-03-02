@@ -443,6 +443,8 @@ sf.model.for('another-thing', function(self, other){
 });
 ```
 
+Binded text node shouldn't be replaced with another one because it will remove the binding feature.
+
 ### Model & Template feature
 When you're using template on html, function call will be removed for security reason.
 
