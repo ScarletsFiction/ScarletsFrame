@@ -214,7 +214,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 self.bindElement = function(element, modelScope, template, localModel){
 	if(template === void 0){
 		if(element.model !== void 0){
-			console.warn('Unexpected rebinding', element);
+			console.warn('Unexpected rebinding', element, 'Try wrap the level one template with an <element/>');
 			return;
 		}
 

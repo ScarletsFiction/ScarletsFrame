@@ -26,7 +26,7 @@
     "gulp-sourcemaps": "^2.6.5",
     "gulp-uglify-es": "^1.0.4",
     "node-notifier": "^5.4.1",
-    "serberries": "^1.4.6"
+    "serberries": "^1.4.7"
   },
   "scripts": {
     "prepublishOnly": "gulp compile"

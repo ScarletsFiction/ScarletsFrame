@@ -416,7 +416,7 @@ function refreshLang(list, noPending){
 
 function assignSquareBracket(elem, value){
 	if(value.indexOf('[') !== -1){
-		value = value.replace(/\[(.*?)\]/g, function(full, match){
+		value = value.replace(/(?=[^\\]|^)\[(.*?)\]/g, function(full, match){
 			return '*#'+match+'*#';
 		}).split('*#');
 

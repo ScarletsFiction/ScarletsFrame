@@ -269,66 +269,6 @@
 
       <!-- Language -->
       <div id="lang-test">
-        <script>
-          $(function(){
-            sf.lang.default = 'en_US';
-            sf.lang.add('en_US', {
-              translated:"{data} translated",
-              hello:{
-                other:{
-                  side:"Hello from the [other] side"
-                }
-              },
-              "i'm":{
-                here:"I'm on here!"
-              },
-              custom:{
-                el:{
-                  iB1:"Variable content: {inputBinding1}",
-                  iB2:"Above content: {inputBinding2}",
-                  iB3:"It's {inputBinding2}"
-                }
-              }
-            });
-            sf.lang.add('id_ID', {
-              translated:"terjemahankan {data}",
-              custom:{
-                el:{
-                  iB1:"Kontent variabel: {inputBinding1}",
-                  iB2:"Kontent diatas: {inputBinding2}",
-                  iB3:"Itu adalah {inputBinding2}"
-                }
-              },
-              hello:{
-                other:{
-                  side:"Halo dari sisi [lain]"
-                }
-              },
-              "i'm":{
-                here:"Aku disini!"
-              }
-            });
-            sf.lang.serverURL = '/test/lang';
-            sf.lang(document.querySelector('#lang-test'));
-
-            var obj = {};
-            sf.lang.assign(obj, {
-              chicken:'stuff.chicken',
-              game:'stuff.game'
-            }, function(){
-              console.warn('lang stuff', obj);
-            });
-
-            sf.lang.get(['stuff.game', 'another.day'], function(values){
-              console.warn('lang multiple', values);
-            });
-
-            sf.lang.get('another.friend', function(values){
-              console.warn('lang single', values);
-            });
-          })
-        </script>
-
          <p sf-lang="hello.other.side" onclick="sf.lang.changeDefault('id_ID')">a<b>b</b>c</p>
          <input type="text" sf-lang="i'm.here"/>
 
@@ -355,5 +295,64 @@
       <script type="text/javascript" src="/tests/html-scripts/virtual-list.js"></script>
       <script type="text/javascript" src="/tests/html-scripts/namespace.js"></script>
       <script type="text/javascript" src="/tests/html-scripts/loader.js"></script>
+      <script>
+        $(function(){
+          sf.lang.default = 'en_US';
+          sf.lang.add('en_US', {
+            translated:"{data} translated"+vul,
+            hello:{
+              other:{
+                side:"Hello from the [other] side"+vul
+              }
+            },
+            "i'm":{
+              here:"I'm on here!"
+            },
+            custom:{
+              el:{
+                iB1:"Variable content: {inputBinding1}",
+                iB2:"Above content: {inputBinding2}",
+                iB3:"It's {inputBinding2}"
+              }
+            }
+          });
+          sf.lang.add('id_ID', {
+            translated:"terjemahankan {data}"+vul,
+            custom:{
+              el:{
+                iB1:"Kontent variabel: {inputBinding1}"+vul,
+                iB2:"Kontent diatas: {inputBinding2}",
+                iB3:"Itu adalah {inputBinding2}"+vul
+              }
+            },
+            hello:{
+              other:{
+                side:"Halo dari sisi [lain]"+vul
+              }
+            },
+            "i'm":{
+              here:"Aku disini!"
+            }
+          });
+          sf.lang.serverURL = '/test/lang';
+          sf.lang(document.querySelector('#lang-test'));
+
+          var obj = {};
+          sf.lang.assign(obj, {
+            chicken:'stuff.chicken',
+            game:'stuff.game'
+          }, function(){
+            console.warn('lang stuff', obj);
+          });
+
+          sf.lang.get(['stuff.game', 'another.day'], function(values){
+            console.warn('lang multiple', values);
+          });
+
+          sf.lang.get('another.friend', function(values){
+            console.warn('lang single', values);
+          });
+        })
+      </script>
    </body>
 </html>
