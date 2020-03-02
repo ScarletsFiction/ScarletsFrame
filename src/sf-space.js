@@ -76,9 +76,6 @@ internal.space = {
 };
 
 class Space{
-	namespace = '';
-	scope = null;
-
 	constructor(options){
 		if(options.namespace === void 0)
 			throw new Error('`namespace` parameter need to be specified');

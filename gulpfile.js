@@ -22,6 +22,7 @@ gulp.task('js', function(){
       'src/sf-a_init.js',
       'src/sf-dom.js',
       'src/sf-loader.js',
+      'src/sf-space.js',
       'src/sf-component.js',
       'src/sf-model.js',
       'src/sf-model/*.js',
