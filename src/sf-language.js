@@ -330,7 +330,7 @@ function refreshLang(list, noPending){
 			continue;
 		}
 		else{
-			var modelElement = sf(elem);
+			var modelElement = sf(elem, true);
 			if(modelElement !== null){
 				if(parentElement.has(modelElement))
 					continue;
@@ -446,7 +446,12 @@ function assignSquareBracket(elem, value){
 		if(nodes[a] !== void 0 && nodes[a].nodeType === 3)
 			nodes[a].remove();
 	}
-	else elem.textContent = value;
+	else{
+		if(elem.nodeType !== 3 && elem.firstChild !== null)
+			elem.firstChild.textContent = value;
+		else 
+			elem.textContent = value;
+	}
 }
 
 function elementReferencesRefresh(elem){

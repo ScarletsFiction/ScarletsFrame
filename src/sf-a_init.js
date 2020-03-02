@@ -29,7 +29,7 @@ if(typeof document === void 0)
 var internal = {};
 var privateRoot = {};
 
-var sf = function(stuff, flag){
+var sf = function(stuff, returnNode){
 	// If it's Node type
 	if(stuff.tagName !== void 0){
 		if(stuff.nodeType !== 1 || stuff.sf$controlled === void 0)
@@ -38,8 +38,8 @@ var sf = function(stuff, flag){
 		if(stuff === null)
 			return stuff;
 
-		if(flag)
-			return stuff.sf$controlled;
+		if(returnNode)
+			return stuff;
 		return stuff.model;
 	}
 };
