@@ -9,7 +9,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 		throw "The model was not found";
 
 	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
+	var scopeMask = RegExp('(?:^|[^.\\]])('+modelKeys+')', 'g');
 
 	if(mask)
 		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
@@ -128,7 +128,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 		throw "The model was not found";
 
 	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g');
+	var scopeMask = RegExp('(?:^|[^.\\]])('+modelKeys+')', 'g');
 
 	if(mask)
 		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
@@ -375,7 +375,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	}
 
 	if(targetNode.model !== void 0)
-		return console.error('[Violation] template extraction aborted', targetNode, mask, modelScope);
+		return console.error('[Violation] element already has a model, template extraction aborted', targetNode, targetNode.model, mask, modelScope);
 
 	var copy = targetNode.outerHTML;
 	var template = {
@@ -634,6 +634,10 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled !== void 0)
 				continue;
 
+			// Skip element that already translated
+			if(currentNode.sf_lang !== void 0)
+				continue;
+
 			var attrs = currentNode.attributes;
 
 			// Skip element and it's childs that already bound to prevent vulnerability
@@ -689,13 +693,12 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			if(currentNode.textContent.indexOf('{{') !== -1){
 				if(extracting === void 0){
 					// If it's not single/regular template
-					if(currentNode.textContent.indexOf('{{@') !== -1 || enclosing !== -1){
+					if(currentNode.textContent.indexOf('{{@') !== -1 || enclosing !== -1)
 						temp.add(currentNode.parentNode); // get the element (from current text node)
-
-						if(currentNode.parentNode.sf$onlyAttribute !== void 0)
-							delete currentNode.parentNode.sf$onlyAttribute;
-					}
 					else temp.add(currentNode);
+
+					if(currentNode.parentNode.sf$onlyAttribute !== void 0)
+						delete currentNode.parentNode.sf$onlyAttribute;
 					break;
 				}
 

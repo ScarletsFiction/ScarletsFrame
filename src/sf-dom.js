@@ -677,7 +677,7 @@ var $ = sf.dom; // Shortcut
 	var emptyDOM = document.createElement('div');
 	self.parseElement = function(html, elementOnly){
 		emptyDOM.innerHTML = '<template>'+html+'</template>';
-		return emptyDOM.firstElementChild.content[elementOnly ? 'children' : 'childNodes'];
+		return emptyDOM.firstElementChild.content[elementOnly ? 'children' : 'childNodes'] || [];
 	}
 
 	self.escapeText = function(text){

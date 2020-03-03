@@ -439,6 +439,11 @@ function assignSquareBracket(elem, value){
 				continue;
 			}
 
+			if(nodes[a] === void 0){
+				console.error("[Language] square bracket found, but element was not found for:", value[a]);
+				continue;
+			}
+
 			if(nodes[a].nodeType === 1) // element node
 				nodes[a].textContent = value[a];
 		}

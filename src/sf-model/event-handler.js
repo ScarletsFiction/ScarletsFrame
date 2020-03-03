@@ -8,7 +8,7 @@ function eventHandler(that, data, _modelScope, rootHandler){
 			direct = true;
 
 		// Replace variable to refer to current scope
-		return script_.replace(RegExp(sf.regex.strictVar+'('+modelKeys+')\\b', 'g'), function(full, matched){
+		return script_.replace(RegExp('(?:^|[^.\\]])('+modelKeys+')', 'g'), function(full, matched){
 			return '_modelScope.'+matched;
 		});
 	});
@@ -209,6 +209,9 @@ function eventHandler(that, data, _modelScope, rootHandler){
 	}
 
 	(rootHandler || that).addEventListener(eventName, callback, options);
+
+	// ToDo: Check if there are unused event attachment on detached element
+	// console.error(231, rootHandler, that, eventName, callback, options);
 
 	if(options.once === void 0){
 		(rootHandler || that)['sf$eventDestroy_'+eventName] = function(){

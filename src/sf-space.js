@@ -92,7 +92,7 @@ class Space{
 			var old = this.scope.modelFunc[name];
 			this.scope.modelFunc[name] = func;
 
-			if(old.constructor === Array)
+			if(old !== void 0 && old.constructor === Array)
 				for (var i = 0; i < old.length; i++){
 					sf.model.init.apply(null, old[i]);
 				}
