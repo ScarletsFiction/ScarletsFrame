@@ -124,10 +124,18 @@ $ npm i -g scarletsframe-cli
 $ scarletsframe init default
 
 # Compile the default template
-$ npm compile
+$ npm run compile
 
-# Starting the server
+# Or use gulp if already installed globally
+$ gulp compile
+```
+
+## Starting the server
+```sh
 $ npm start
+
+# Or use gulp
+$ gulp
 ```
 
 ## Install with CDN link
