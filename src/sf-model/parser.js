@@ -9,7 +9,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 		throw "The model was not found";
 
 	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp('(?:^|[^.\\]])('+modelKeys+')', 'g');
+	var scopeMask = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
 
 	if(mask)
 		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
@@ -33,8 +33,8 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 				});
 
 			// Mask model for variable
-			return temp_.replace(scopeMask, function(full, matched){
-				return '_modelScope.'+matched;
+			return temp_.replace(scopeMask, function(full, before, matched){
+				return before+'_modelScope.'+matched;
 			});
 		}).split('_model_._modelScope.').join('_model_.');
 
@@ -48,9 +48,9 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 			if(exist === -1){
 				preParsed.push(temp);
 				preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
-				return '{{%=' + (preParsed.length + lastParsedIndex - 1);
+				return '{{%=' + (preParsed.length + lastParsedIndex - 1)+'%';
 			}
-			return '{{%=' + (exist + lastParsedIndex);
+			return '{{%=' + (exist + lastParsedIndex)+'%';
 		}
 
 		temp = '' + localEval.apply(null, [runEval + temp, _model_, _modelScope]);
@@ -128,7 +128,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 		throw "The model was not found";
 
 	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp('(?:^|[^.\\]])('+modelKeys+')', 'g');
+	var scopeMask = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
 
 	if(mask)
 		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
@@ -148,8 +148,8 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 				});
 
 			// Mask model for variable
-			return temp_.replace(scopeMask, function(full, matched){
-				return '_modelScope.'+matched;
+			return temp_.replace(scopeMask, function(full, before, matched){
+				return before+'_modelScope.'+matched;
 			});
 		}).split('_model_._modelScope.').join('_model_.');;
 
@@ -290,10 +290,10 @@ function addressAttributes(currentNode, template, itemMask){
 	var keys = [];
 	var indexes = 0;
 	for (var a = attrs.length - 1; a >= 0; a--) {
-		var found = attrs[a].value.split('{{%=');
+		var found = attrs[a].value.indexOf('{{%=') !== -1;
 		if(attrs[a].name[0] === '@'){
 			// No template processing for this
-			if(found.length !== 1){
+			if(found){
 				console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
 				continue;
 			}
@@ -312,7 +312,7 @@ function addressAttributes(currentNode, template, itemMask){
 			currentNode.removeAttribute(attrs[a].name);
 		}
 
-		if(found.length !== 1){
+		if(found){
 			if(attrs[a].name[0] === ':'){
 				var key = {
 					name:attrs[a].name.slice(1),
@@ -328,7 +328,7 @@ function addressAttributes(currentNode, template, itemMask){
 			};
 
 			indexes = [];
-			found = key.value.replace(/{{%=([0-9]+)/g, function(full, match){
+			found = key.value.replace(templateParser_regex, function(full, match){
 				indexes.push(Number(match));
 				return '';
 			});
@@ -549,13 +549,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 					}
 					continue;
 				}
-				else if(nodes[i].textContent.search(/{{%=[0-9]+/) === -1)
+				else if(nodes[i].textContent.search(/{{%=[0-9]+%/) === -1)
 					continue;
 			}
 
 			// Check if it's only model value
 			indexes = [];
-			innerHTML = nodes[i].textContent.replace(/{{%=([0-9]+)/gm, function(full, match){
+			innerHTML = nodes[i].textContent.replace(templateParser_regex, function(full, match){
 				indexes.push(Number(match));
 				return '';
 			});

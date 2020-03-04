@@ -8,8 +8,8 @@ function eventHandler(that, data, _modelScope, rootHandler){
 			direct = true;
 
 		// Replace variable to refer to current scope
-		return script_.replace(RegExp('(?:^|[^.\\]])('+modelKeys+')', 'g'), function(full, matched){
-			return '_modelScope.'+matched;
+		return script_.replace(RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g'), function(full, before, matched){
+			return before+'_modelScope.'+matched;
 		});
 	});
 

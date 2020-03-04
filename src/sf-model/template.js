@@ -19,7 +19,7 @@ function elseIfHandle(else_, scopes){
 }
 
 // ==== Template parser ====
-var templateParser_regex = /{{%=([0-9]+)/gm;
+var templateParser_regex = /{{%=([0-9]+)%/g;
 var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 var templateExec = function(parse, item, atIndex, parsed){
 	parsed = parsed || {};

@@ -48,6 +48,7 @@ sf.internal = {};
 sf.regex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	validFunctionCall:/[_a-zA-Z0-9 \]\$\)]/,
+	scopeVar:'(^|[^.\\]\\w])',
 	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
 
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,

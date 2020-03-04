@@ -491,13 +491,13 @@ function elementReferencesRefresh(elem){
 		var template = eRef[i].ref.from;
 		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
 			if(isNaN(match) === false)
-				return '{{%='+match;
+				return '{{%='+match+'%';
 
 			if(template.modelRefRoot[match] !== void 0)
-				return '{{%='+template.modelRefRoot[match][0];
+				return '{{%='+template.modelRefRoot[match][0]+'%';
 
 			if(template.modelRef !== null && template.modelRef[match] !== void 0)
-				return '{{%='+template.modelRef[match][0];
+				return '{{%='+template.modelRef[match][0]+'%';
 
 			console.error("Language binding can't find existing model binding for", match, "from", Object.keys(template.modelRefRoot));
 			return '';
@@ -524,13 +524,13 @@ function refreshTemplate(template){
 
 		value = value.replace(/{(.*?)}/, function(full, match){
 			if(isNaN(match) === false)
-				return '{{%='+match;
+				return '{{%='+match+'%';
 
 			if(template.modelRefRoot[match] !== void 0)
-				return '{{%='+template.modelRefRoot[match][0];
+				return '{{%='+template.modelRefRoot[match][0]+'%';
 
 			if(template.modelRef !== null && template.modelRef[match] !== void 0)
-				return '{{%='+template.modelRef[match][0];
+				return '{{%='+template.modelRef[match][0]+'%';
 
 			console.error("Language binding can't find existing model binding for", match, "from", Object.keys(template.modelRefRoot));
 			return '';

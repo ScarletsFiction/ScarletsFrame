@@ -5,7 +5,7 @@ sf.model.for('model-binding', function(self, root){
 	setTimeout(function(){
 		var self = root('model-binding');
 		self.inputBinding1 = 'Two way binding'+vul;
-		self.inputBinding2 = 123.321+vul;
+		self.inputBinding2.text = 123.321+vul;
 	}, 4000);
 
 	self.onKeyUp = console.warn;
@@ -13,7 +13,7 @@ sf.model.for('model-binding', function(self, root){
 	self.bold = true;
 	self.pink = false;
 	self.inputBinding1 = ''+vul;
-	self.inputBinding2 = ''+vul;
+	self.inputBinding2 = {text:''+vul};
 	self.inputBinding3 = vul;
 	self.inputBinding4 = ''+vul;
 	self.m2v$inputBinding4 = function(old, news){
@@ -27,7 +27,7 @@ sf.model.for('model-binding', function(self, root){
 		}, 4000);
 	};
 	self.inputBinding5 = [];
-	self.out$inputBinding2 = function(old, news){
+	self.inputBinding2.out$text = function(old, news){
 		console.warn("inputBinding2 was modified from:", news, 'to', Math.round(news));
 		return Math.round(news);
 	};

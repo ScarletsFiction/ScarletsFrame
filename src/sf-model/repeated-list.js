@@ -11,6 +11,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 		var script = element.getAttribute('sf-repeat-this');
 		element.removeAttribute('sf-repeat-this');
+		element.sf$componentIgnore = true;
 
 		var refName = script.split(' in ');
 		if(refName.length !== 2)

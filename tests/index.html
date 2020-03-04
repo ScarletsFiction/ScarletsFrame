@@ -189,9 +189,9 @@
             background-color: {{ pink ? 'pink' : '' }};
          ">Another one</span><br>
 
-         <textarea type="text" sf-into="inputBinding2" placeholder="will round a number if called from script"></textarea><br>
-         <input type="text" value="It's {{inputBinding2}}" sf-lang="custom.el.iB3" disabled><br>
-         <span sf-lang="custom.el.iB2">Above Content: {{ inputBinding2 }}</span><br><br>
+         <textarea type="text" sf-into="inputBinding2.text" placeholder="will round a number if called from script"></textarea><br>
+         <input type="text" value="It's {{inputBinding2.text}}" sf-lang="custom.el.iB3" disabled><br>
+         <span sf-lang="custom.el.iB2">Above Content: {{ inputBinding2.text }}</span><br><br>
          <select sf-bind="inputBinding8">
             <option value="en_US">en_US</option>
             <option value="id_ID">id_ID</option>
@@ -311,8 +311,8 @@
             custom:{
               el:{
                 iB1:"Variable content: {inputBinding1}",
-                iB2:"Above content: {inputBinding2}",
-                iB3:"It's {inputBinding2}"
+                iB2:"Above content: {inputBinding2.text}",
+                iB3:"It's {inputBinding2.text}"
               }
             }
           });
@@ -321,8 +321,8 @@
             custom:{
               el:{
                 iB1:"Kontent variabel: {inputBinding1}"+vul,
-                iB2:"Kontent diatas: {inputBinding2}",
-                iB3:"Itu adalah {inputBinding2}"+vul
+                iB2:"Kontent diatas: {inputBinding2.text}",
+                iB3:"Itu adalah {inputBinding2.text}"+vul
               }
             },
             hello:{
