@@ -1,8 +1,8 @@
 // ToDo: shared or non-private space is possible to have memory leak when component are removed from DOM
 // this because component haven't removed from the list
 
-sf.space = function(options){
-	return new Space(options);
+sf.space = function(namespace, options){
+	return new Space(namespace, options);
 };
 
 // { name:{ '':{}, id:{}, ... } }
@@ -42,7 +42,7 @@ function createRoot_(modelFunc, registered){
 
 		if(root_.root[scope] === void 0){
 			root_.root[scope] = {};
-			root_.modelFunc[scope](root_.root[scope], root_);
+			modelFunc[scope](root_.root[scope], root_);
 		}
 
 		return root_.root[scope];
@@ -59,7 +59,7 @@ function createRoot_(modelFunc, registered){
 internal.space = {
 	empty:true,
 	initComponent:function(root, tagName, elem, $item){
-		sf.component.new(tagName, elem, $item, root.sf$space);
+		sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space);
 	},
 	initModel:function(root, elem){
 		var name = elem.getAttribute('name');
@@ -76,12 +76,38 @@ internal.space = {
 };
 
 class Space{
-	constructor(options){
-		if(options.namespace === void 0)
+	constructor(namespace, options){
+		if(namespace === void 0)
 			throw new Error('`namespace` parameter need to be specified');
 
-		this.namespace = options.namespace;
+		if(namespace !== namespace.toLowerCase())
+			throw new Error('`namespace` must be lowercase');
+
+		this.namespace = namespace;
 		this.scope = getNamespace(this.namespace, '');
+
+		if(options){
+			this.templatePath = options.templatePath;
+		}
+	}
+
+	getScope(index){
+		return getNamespace(this.namespace, index || '');
+	}
+
+	getHTML(index){
+		var that = this;
+		return $(window.templates[this.templatePath]
+			.replace(/<sf-space(.*?)(?:|="(.*?)")>/, function(full, namespace, index_){
+				if(index_ && isNaN(index_) === false)
+					index_ = Number(index_) + 1;
+
+				index = index || index_ || false;
+				if(index)
+					index = '="'+index+'"';
+
+				return '<sf-space '+that.namespace+'>';
+			}))[0];
 	}
 }
 

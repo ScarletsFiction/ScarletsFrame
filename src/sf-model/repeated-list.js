@@ -76,14 +76,11 @@ class RepeatedElement extends Array{
 			}
 		});
 
-		if(internal.component[element.tagName] === 0 && element.childNodes.length !== 0){
-			internal.component[element.tagName] = 1;
-			(namespace || sf.component).registered[element.tagName.toLowerCase()][3] = element;
-		}
+		var compTemplate = (namespace || sf.component).registered[element.tagName.toLowerCase()];
+		if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
+			compTemplate[3] = element;
 
-		var isComponent = internal.component[element.tagName] !== void 0
-			? window['$'+capitalizeLetters(element.tagName.toLowerCase().split('-'))]
-			: false;
+		var isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
 
 		var template;
 		if(!isComponent){
@@ -107,6 +104,7 @@ class RepeatedElement extends Array{
 		this.$EM.refName = refName;
 		this.$EM.elementRef = new WeakMap();
 		this.$EM.isComponent = !!isComponent;
+		this.$EM.namespace = namespace;
 
 		this.$EM.template.mask = refName[0];
 
@@ -120,7 +118,7 @@ class RepeatedElement extends Array{
 
 				if(elem === void 0){
 					if(isComponent){
-						elem = new isComponent(that[i]);
+						elem = new isComponent(that[i], namespace);
 						that[i] = elem.model;
 						// elem.setAttribute('sf-bind-list', refName[1]);
 					}
@@ -555,7 +553,7 @@ class ElementManipulator{
 		}
 
 		if(template.constructor === Function){
-			temp = new template(item);
+			temp = new template(item, this.namespace);
 			this.list[index] = temp.model;
 		}
 		else temp = templateParser(template, item, false, this.modelRef, this.parentNode);
@@ -616,7 +614,7 @@ class ElementManipulator{
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
 				if(this.isComponent){
-					temp = new this.template(list[i]);
+					temp = new this.template(list[i], this.namespace);
 					list[i] = temp.model;
 				}
 				else{
@@ -769,7 +767,7 @@ class ElementManipulator{
 			var temp = this.elementRef.get(list[i]);
 			if(temp === void 0){
 				if(this.isComponent){
-					temp = new template(list[i]);
+					temp = new template(list[i], this.namespace);
 					list[i] = temp.model;
 				}
 				else{

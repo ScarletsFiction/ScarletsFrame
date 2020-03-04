@@ -76,10 +76,14 @@ If you want to support IE11 and some old browser, you need to add some polyfill 
 <script type="text/javascript">
   // Polyfill for Old Browser
   (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
+    if(window.MutationObserver === void 0)
+      window.MutationObserver = window.WebKitMutationObserver;
     if(window.Reflect === void 0)
-        z('https://unpkg.com/core-js-bundle@latest/minified.js');
+      z('https://unpkg.com/core-js-bundle@latest/minified.js');
     if(window.customElements === void 0)
-        z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+      z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+    if(window.PointerEvent === void 0)
+      z('https://code.jquery.com/pep/0.4.3/pep.js');
   })();
 </script>
 ```
@@ -342,6 +346,9 @@ Multiple view path also supported by adding more hashtag and the view name, or a
 
 ```js
 myView.goto('/user/home', {/* 'GET' Data Field */}, method = 'GET');
+
+// Route to custom element
+myView.goto('/user/home', <html-element>);
 ```
 
 ### Views event
@@ -910,17 +917,27 @@ This feature is useful for creating your work as distributable model and compone
 ```js
 // Write on local scope
 ;(function(){
-	var myNamespace = sf.space({
-		namespace:'my-namespace',
+	var myNamespace = sf.space('my-namespace', {
 		onCreate:function(elem){
 			// Let's insert default template for <sf-space>
 			// elem is HTMLElement
-		}
+		},
+
+    // You can also use template path from `window.templates`
+    templatePath:'/index.html'
 	});
 
 	myNamespace.model('the-name', func) // Just like sf.model.for()
 	myNamespace.component('comp-name', func) // Just like sf.component.for()
 	myNamespace.component('comp-name', '<html>') // Just like sf.component.html()
+
+  // Different index will create/reuse a scope by it's index
+  var scope = myNamespace.getScope(/* index | empty string */);
+  var html = myNamespace.getHTML(/* index | empty string */);
+
+  // Obtain model or component list from the scope
+  var model = scope('myModel');
+  var componentsList = scope('my-component');
 
 	// Expose something maybe
 	window.destroyMyNamespace = myNamespace.destroy;

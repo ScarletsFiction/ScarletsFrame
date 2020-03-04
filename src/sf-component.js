@@ -25,7 +25,7 @@ sf.component = function(scope, func){
 
 	self.registered = {};
 	self.available = {};
-	internal.component.tagName = new Set();
+	// internal.component.tagName = new Set();
 
 	function checkWaiting(name, namespace){
 		var scope = namespace || self;
@@ -40,10 +40,6 @@ sf.component = function(scope, func){
 				return;
 
 			delete el.sf$initTriggered;
-
-			if(el.model.init)
-				el.model.init();
-
 			upgrade.pop();
 		}
 
@@ -52,16 +48,18 @@ sf.component = function(scope, func){
 	}
 
 	self.for = function(name, func, namespace){
-		internal.component.tagName.add(name.toUpperCase());
+		// internal.component.tagName.add(name.toUpperCase());
 		var scope = namespace || self;
 
 		if(scope.registered[name] === void 0)
-			scope.registered[name] = [func, void 0, 0, false]; // index 1 is unused
-
-		internal.component[name.toUpperCase()] = 0;
+			scope.registered[name] = [func, void 0, 0, false]; // index 1 is $ComponentConstructor
 
 		scope.registered[name][0] = func;
-		defineComponent(name);
+		var construct = defineComponent(name);
+
+		scope.registered[name][1] = construct;
+		if(namespace === void 0)
+			window['$'+construct.name] = construct;
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
@@ -84,8 +82,6 @@ sf.component = function(scope, func){
 			}
 			scope.registered[name][3] = tempDOM;
 		}
-
-		internal.component[name.toUpperCase()] = 1;
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
@@ -142,7 +138,7 @@ sf.component = function(scope, func){
 
 		var newObj = (namespace || sf.model).root[newID] = {$el:$()};
 
-		scope.registered[name][0](newObj, sf.model, $item);
+		scope.registered[name][0](newObj, (namespace || sf.model), $item);
 
 		// if(scope.registered[name][1])
 		// 	scope.registered[name][1](newObj, sf.model, $item);
@@ -226,8 +222,9 @@ sf.component = function(scope, func){
 
 	// name = 'tag-name'
 	function defineComponent(name){
-		if(customElements.get(name))
-			return;
+		var have = customElements.get(name);
+		if(have)
+			return have;
 
 		if(name.toLowerCase() !== name)
 			return console.error("Please use lower case when defining component name");
@@ -239,11 +236,11 @@ sf.component = function(scope, func){
 			return console.error("Please use '-' when defining component tags");
 
 		name = capitalizeLetters(name);
-		function componentCreate(raw, $item){
+		function componentCreate(raw, $item, namespace){
 			var elem = HTMLElement_wrap.call(raw);
 
 			if(internal.space.empty === false){
-				var haveSpace = elem.closest('sf-space');
+				var haveSpace = namespace || elem.closest('sf-space');
 				if(haveSpace !== null){
 					internal.space.initComponent(haveSpace, tagName, elem, $item);
 					return elem;
@@ -255,7 +252,7 @@ sf.component = function(scope, func){
 		}
 
 		// Create function at current scope
-		var func = eval("function "+name+"($item){return componentCreate(this, $item)}"+name);
+		var func = eval("function "+name+"($item, namespace){return componentCreate(this, $item, namespace)}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;
@@ -316,6 +313,6 @@ sf.component = function(scope, func){
 		  customElements.define(tagName, func);
 		}catch(err){console.error(err)}
 
-		window['$'+name] = func;
+		return func;
 	}
 })();

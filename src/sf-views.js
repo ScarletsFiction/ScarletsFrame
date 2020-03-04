@@ -466,6 +466,16 @@ var self = sf.views = function View(selector, name){
 			method = void 0;
 		}
 
+		var dynamicHTML = false;
+		if(data instanceof HTMLElement){
+			dynamicHTML = data;
+			data = void 0;
+		}
+		if(method instanceof HTMLElement){
+			dynamicHTML = method;
+			method = void 0;
+		}
+
 		pendingAutoRoute = false;
 
 		// Get template URL
@@ -498,7 +508,7 @@ var self = sf.views = function View(selector, name){
 		if(RouterLoading) RouterLoading.abort();
 
 		// Return if the cache was exist
-		if(tryCache(path)) return true;
+		if(dynamicHTML === false && tryCache(path)) return true;
 
 		for (var i = 0; i < onEvent['routeStart'].length; i++) {
 			if(onEvent['routeStart'][i](self.currentPath, path)) return;
@@ -655,6 +665,11 @@ var self = sf.views = function View(selector, name){
 
 			insertLoadedElement(DOMReference, dom, false, pendingShowed);
 			if(callback) callback(dom);
+		}
+
+		if(dynamicHTML !== false){
+			afterDOMLoaded(dynamicHTML);
+			return true;
 		}
 
 		//(url.url || path)

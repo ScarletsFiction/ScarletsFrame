@@ -4,10 +4,14 @@
       <script type="text/javascript">
         // Polyfill for Old Browser
         (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
+          if(window.MutationObserver === void 0)
+            MutationObserver = window.WebKitMutationObserver;
           if(window.Reflect === void 0)
-              z('https://unpkg.com/core-js-bundle@latest/minified.js');
+            z('https://unpkg.com/core-js-bundle@latest/minified.js');
           if(window.customElements === void 0)
-              z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+            z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+          if(window.PointerEvent === void 0)
+            z('https://code.jquery.com/pep/0.4.3/pep.js');
         })();
       </script>
 
@@ -279,7 +283,7 @@
       <sf-space test-space="asd">
         Inner namespace testing
         <sf-m name="obj" id="obj1">{{ test }} - <span sf-repeat-this="num in list">{{num}}.</span></sf-m>
-        <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
+        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
       </sf-space>
 
       <div>
@@ -335,7 +339,7 @@
             }
           });
           sf.lang.serverURL = '/test/lang';
-          sf.lang(document.querySelector('#lang-test'));
+          sf.lang.changeDefault('id_ID');
 
           var obj = {};
           sf.lang.assign(obj, {

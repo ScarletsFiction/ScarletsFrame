@@ -45,6 +45,21 @@ self.changeDefault = function(defaultLang){
 		}
 	}
 
+	function forSpaceComponents(){
+		var list = sf.space.list;
+		var list_ = Object.keys(list);
+
+		for (var i = 0; i < list_.length; i++) {
+			var registered = list[list_[i]][""].registered;
+			var keys = Object.keys(registered);
+
+			for (var a = 0; a < keys.length; a++) {
+				if(registered[keys[a]][3] !== false)
+					refreshTemplate(registered[keys[a]][3]);
+			}
+		}
+	}
+
 	if(self.list[defaultLang] === void 0){
 		forComponents.callbackOnly = true;
 		pendingCallback.push(forComponents);
