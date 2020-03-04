@@ -8,10 +8,10 @@ A frontend framework that can help you write a simple web structure with complex
 
 ## Table of contents
  - [Example](#example)
- - [Migrating from 0.18.5 to 0.21.0](#migration1)
- - [Migrating from 0.25.4 to 0.26.0](#migration2)
  - [Install](#install-from-template)
  - [Hints](#hints)
+ - [Migrating from 0.25.4 to 0.26.0](#migration)
+ - [Cheat Sheet](#cheat-sheet)
  - [Asset Loader](#asset-loader)
  - [Router / Views](#router--views)
    - [Specify routes](#specify-routes)
@@ -40,79 +40,6 @@ A frontend framework that can help you write a simple web structure with complex
 - [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 - [Views and Router](https://1vbdh.csb.app/) | [Source](https://codesandbox.io/s/viewsrouter-example-1vbdh)
 - [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
-
-## Migration2
-There are some changes on v0.26.0.
-```js
-sf.controller // is removed
-
-// -- Run function when loading finished 
-sf(function(){...}); // is removed, use below instead
-sf.dom(function(){...});
-
-sf.dom.parent(...); // is removed, use below instead
-$(...).parent(...);
-```
-
-## Migration1
-There are some changes on v0.21.0.
-```html
-<!-- The attribute -->
-<div sf-controller="modelName"></div>
-
-<!-- Now replaced with this -->
-<sf-m name="modelName"></sf-m>
-```
-
-------
-
-```html
-<!-- One way binding -->
-<input sf-bind=""></input>
-
-<!-- Now replaced with this -->
-<input sf-into="intoModel"></input>
-<input value="{{ fromModel }}"></input>
-```
-
-------
-
-```html
-<!-- Two way binding -->
-<input sf-bound=""></input>
-
-<!-- Now replaced with this -->
-<input sf-bind=""></input>
-```
-
-------
-
-```html
-<!-- Event Listener for current scope -->
-<a sf-click="func"></a>
-
-<!-- Now replaced with below -->
-<a @click="func"></a>
-<a @mouseup.left="func"></a>
-
-<!-- With control button -->
-<a @mouseup.ctrl.left="func"></a>
-
-<!-- Keyboard key must be started with UpperCase-->
-<input type="text" @keyup.ctrl.Enter="func"/>
-<input type="text" @keyup.ArrowUp.once="func"/> 
-
-once, prevent, stop, passive, capture are available
-
-<!-- Letters are case sensitive -->
-<input type="text" @keyup.Z="func"/> UpperCase `Z`
-<input type="text" @keyup.z="func"/> LowerCase `z`
-```
-
-Almost all event are supported like keyup, mousedown, touchup, scroll, etc.
-Addional event: `taphold, gesture, dragmove, filedrop`
-
-If you was found some bugs or something, feel free to contact @StefansArya from github or elsewhere.
 
 ## Install from template
 For starting the development environment, let's use the [default template](https://github.com/StefansArya/scarletsframe-default).
@@ -214,6 +141,74 @@ The `duration` is in seconds (numeric) and also can be the `callback` if you pas
 | visible | Does the element should be visible before animation start? |
 | iteration | [Number of times for the animation cycles](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-iteration-count) |
 | direction | [Set the animation to play backward or forward](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-direction) |
+
+## Migration
+There are some changes on v0.26.0 from v0.25.4
+```js
+sf.controller // is removed
+
+// -- Run function when loading finished 
+sf(function(){...}); // is removed, use below instead
+sf.dom(function(){...});
+
+sf.dom.parent(...); // is removed, use below instead
+$(...).parent(...);
+```
+
+## Cheat Sheet
+```html
+<sf-m name="modelName">
+ <!-- Write template here -->
+ <div>{{ hello }}</div>
+</sf-m>
+
+<script>
+  sf.model('modelName', function(self){
+    // Write model property here
+    self.hello = "world";
+  });
+</script>
+```
+
+------
+
+```html
+<!-- One way binding -->
+<input sf-into="intoModel"></input>
+<input value="{{ fromModel }}"></input>
+
+<!-- Two way binding -->
+<input sf-bind=""></input>
+```
+
+------
+
+```html
+<!-- Event Listener for current scope -->
+<a sf-click="func"></a>
+
+<!-- Now replaced with below -->
+<a @click="func"></a>
+<a @mouseup.left="func"></a>
+
+<!-- With control button -->
+<a @mouseup.ctrl.left="func"></a>
+
+<!-- Keyboard key must be started with UpperCase-->
+<input type="text" @keyup.ctrl.Enter="func"/>
+<input type="text" @keyup.ArrowUp.once="func"/> 
+
+once, prevent, stop, passive, capture are available
+
+<!-- Letters are case sensitive -->
+<input type="text" @keyup.Z="func"/> UpperCase `Z`
+<input type="text" @keyup.z="func"/> LowerCase `z`
+```
+
+Almost all event are supported like keyup, mousedown, touchup, scroll, etc.
+Addional event: `taphold, gesture, dragmove, filedrop`
+
+If you was found some bugs or something, feel free to contact @StefansArya from github or elsewhere.
 
 ## Asset Loader
 This feature is useful if you want to display progress bar and loading percentage before your page was fully loaded.
