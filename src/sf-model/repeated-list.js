@@ -2,7 +2,7 @@
 // this may happen when list are removed (splice, pop, shift, hardRefresh)
 // and using property from root model (not the list property)
 
-var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef){
+var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
 
@@ -28,7 +28,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		// 	modelRef.sf$bindedKey[refName[1]] = null;
 
 		;(function(){
-			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode);
+			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode, namespace);
 			Object.defineProperty(modelRef, refName[1], {
 				enumerable: true,
 				configurable: true,
@@ -47,7 +47,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 var _double_zero = [0,0]; // For arguments
 class RepeatedElement extends Array{
-	constructor(modelRef, element, refName, parentNode){
+	constructor(modelRef, element, refName, parentNode, namespace){
 		if(modelRef.constructor === Number)
 			return Array(modelRef);
 
@@ -78,7 +78,7 @@ class RepeatedElement extends Array{
 
 		if(internal.component[element.tagName] === 0 && element.childNodes.length !== 0){
 			internal.component[element.tagName] = 1;
-			sf.component.registered[element.tagName.toLowerCase()][3] = element;
+			(namespace || sf.component).registered[element.tagName.toLowerCase()][3] = element;
 		}
 
 		var isComponent = internal.component[element.tagName] !== void 0

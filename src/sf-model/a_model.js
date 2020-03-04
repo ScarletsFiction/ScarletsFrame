@@ -25,7 +25,7 @@ self.init = function(el, modelName, namespace){
 	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model);
 
 	bindInput(specialElement.input, model);
-	repeatedListBinding(specialElement.repeat, model);
+	repeatedListBinding(specialElement.repeat, model, namespace);
 
 	if(model.init !== void 0)
 		model.init(el);

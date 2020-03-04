@@ -105,9 +105,10 @@ class SFModel extends HTMLElement {
 				return sf.model.init(this, name);
 			}
 
+			var that = this;
 			sf.loader.onFinish(function(){
-				internal.language.refreshLang(this);
-				sf.model.init(this, name);
+				internal.language.refreshLang(that);
+				sf.model.init(that, name);
 			});
 			return;
 		}

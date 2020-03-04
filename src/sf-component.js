@@ -107,7 +107,7 @@ sf.component = function(scope, func){
 		var scope = namespace || self;
 
 		if(namespace !== void 0)
-			this.sf$space = namespace;
+			element.sf$space = namespace;
 
 		if(scope.registered[name] === void 0 || element.childNodes.length === 0 && scope.registered[name][3] === false){
 			if(_fromCheck === true)
@@ -197,7 +197,7 @@ sf.component = function(scope, func){
 
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
 			internal.model.bindInput(specialElement.input, newObj);
-			internal.model.repeatedListBinding(specialElement.repeat, newObj);
+			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);
 		}
 
 		newObj.$el.push(element);
