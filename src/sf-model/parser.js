@@ -1,3 +1,5 @@
+// ToDo: extract style attribute and use direct change into the CSS Style instead of modify attribute
+
 // For contributor of this library
 // Please be careful when you're passing the eval argument
 var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedReference){
@@ -632,10 +634,6 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			// Skip nested sf-model or sf-space
 			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled !== void 0)
-				continue;
-
-			// Skip element that already translated
-			if(currentNode.sf_lang !== void 0)
 				continue;
 
 			var attrs = currentNode.attributes;

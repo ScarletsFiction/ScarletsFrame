@@ -122,6 +122,9 @@ class SFModel extends HTMLElement {
 	disconnectedCallback(){
 		var that = this;
 		this.sf$destroying = setTimeout(function(){
+			if(that.model === void 0)
+				return;
+
 			if(that.model.$el){
 				var i = that.model.$el.indexOf(that);
 				if(i !== -1)
