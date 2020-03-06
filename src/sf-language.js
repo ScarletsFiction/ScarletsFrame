@@ -1,3 +1,5 @@
+// ToDo: put bindedkey that hold binding information to the element so sf-lang can use from it
+
 ;(function(){
 
 var self = sf.lang = function(el){
@@ -402,27 +404,48 @@ function refreshLang(list, noPending){
 		if(model === void 0)
 			model = sf(parentElement[a]);
 
-		if(model.sf$bindedKey === void 0) // Doesn't have template
+		// Avoid model that doesn't have binding
+		if(model.sf$bindedKey === void 0)
 			continue;
 
 		var keys = Object.keys(model.sf$bindedKey);
+
+		// Avoid model that doesn't have binding
+		if(keys.length === 0)
+			continue;
+
 		for (var z = 0; z < keys.length; z++) {
-			var ref = model.sf$bindedKey[keys[z]];
+			var ref = model.sf$bindedKey[keys[z]];console.log(321, ref);
 
 			for (var i = 0; i < ref.length; i++) {
-				if(ref[i].constructor === Function){
-					ref[i](model[keys[z]], ref.input);
-					continue;
-				}
-
 				var elem = ref[i].element;
-				if(elem.nodeType === 1){
+				if(elem === void 0)
+					continue; // It's function that handle input element
+
+				if(elem.nodeType === 3)
+					elem = elem.parentElement;
+
+				if(elem.getAttribute('sf-lang') !== null){
 					if(appliedElement.has(elem))
 						continue;
 
 					appliedElement.add(elem);
 					if(internal.model.syntheticTemplate(elem, ref[i].template, keys[z], model) !== false)
 						continue; // updated
+				}
+			}
+
+			if(ref.input !== void 0){
+				for (var i = 0, n = ref.input.length; i < n; i++) {
+					var elem = ref.input[i];
+					if(elem.getAttribute('sf-lang') !== null){
+						if(appliedElement.has(elem))
+							continue;
+
+						appliedElement.add(elem);
+						if(internal.model.syntheticTemplate(elem, ref[i].template, keys[z], model) !== false)
+							continue; // updated
+					}
 				}
 			}
 		}

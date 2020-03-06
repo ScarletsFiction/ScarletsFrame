@@ -71,6 +71,7 @@ You can download minified js from this repository or use this CDN link
 <script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest'></script>
 ```
 
+### Polyfill for IE11
 If you want to support IE11 and some old browser, you need to add some polyfill before the framework.
 ```html
 <script type="text/javascript">
@@ -97,7 +98,7 @@ If you have separated files for the model and component, you can use this librar
 $ npm i scarletsframe
 ```
 
-And include it on your project with webpack or browserify.
+And include it on your project with webpack ([example](https://github.com/krausest/js-framework-benchmark/tree/master/frameworks/keyed/scarletsframe)) or browserify.
 ```js
 const sf = require('scarletsframe');
 
