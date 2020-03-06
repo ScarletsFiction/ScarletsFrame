@@ -476,7 +476,6 @@ Conditional template
 As a replacement for `<script>` tag. You can also output html by wrap it inside '{[ ... ]}'.
 `{{@exec javascript stuff}}`
 All model variable or function can be referenced to the execution scope.
-For security reason, unrecognized function call will prevent template execution.
 
 Make sure you write in ES5 because browser doesn't use transpiler.
 ```html
@@ -530,6 +529,8 @@ Any `{[ inner {{ property }} ]}` will not bind into the model, as an alternative
   </span>
 </sf-m>
 ```
+
+If you want the framework to parse any custom element (element tag with dashes `-`) you need to add `sf-parse` to the element attribute.
 
 ## Views and Model data binding
 Every element that built from a template will have one-way data binding. Even it's defined in attributes or innerHTML. To deactivate the feature you need to specify `sf-bind-ignore` on the parent attributes.

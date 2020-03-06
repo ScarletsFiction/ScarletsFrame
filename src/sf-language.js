@@ -415,7 +415,7 @@ function refreshLang(list, noPending){
 			continue;
 
 		for (var z = 0; z < keys.length; z++) {
-			var ref = model.sf$bindedKey[keys[z]];console.log(321, ref);
+			var ref = model.sf$bindedKey[keys[z]];
 
 			for (var i = 0; i < ref.length; i++) {
 				var elem = ref[i].element;

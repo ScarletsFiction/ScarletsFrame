@@ -651,8 +651,10 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				collectOther.input.push(currentNode);
 
 			// Skip any custom element
-			if(currentNode.tagName.indexOf('-') !== -1)
-				continue;
+			if(currentNode.hasAttribute('sf-parse') === false && currentNode.tagName.indexOf('-') !== -1){
+				if(currentNode.tagName !== 'SF-PAGE-VIEW' || currentNode.parentNode.hasAttribute('sf-parse') === false)
+					continue;
+			}
 
 			for (var a = 0; a < attrs.length; a++) {
 				if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){

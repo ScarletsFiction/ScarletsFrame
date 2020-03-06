@@ -83,7 +83,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			var deep = deepProperty(model, propertyName.slice(0, -1));
 
 			if(deep === void 0)
-				return console.error("Property", originalPropertyName, "was undefined", model);
+				return;
 
 			// We're not binding the native stuff
 			if(lastProperty === 'constructor'
