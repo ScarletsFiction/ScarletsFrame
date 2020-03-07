@@ -61,8 +61,8 @@ function createRoot_(modelFunc, registered){
 
 internal.space = {
 	empty:true,
-	initComponent:function(root, tagName, elem, $item){
-		sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space);
+	initComponent:function(root, tagName, elem, $item, asScope){
+		sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
 	},
 	initModel:function(root, elem){
 		var name = elem.getAttribute('name');

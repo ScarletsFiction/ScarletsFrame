@@ -251,7 +251,7 @@ sf.component = function(scope, func){
 			return console.error("Please use '-' when defining component tags");
 
 		name = capitalizeLetters(name);
-		function componentCreate(raw, $item, namespace){
+		function componentCreate(raw, $item, namespace, asScope){
 			var elem = HTMLElement_wrap.call(raw);
 
 			if(internal.space.empty === false){
@@ -260,17 +260,17 @@ sf.component = function(scope, func){
 					if(haveSpace.constructor === Space)
 						haveSpace = haveSpace.scope;
 
-					internal.space.initComponent(haveSpace, tagName, elem, $item);
+					internal.space.initComponent(haveSpace, tagName, elem, $item, asScope);
 					return elem;
 				}
 			}
 
-			self.new(tagName, elem, $item);
+			self.new(tagName, elem, $item, void 0, asScope);
 			return elem;
 		}
 
 		// Create function at current scope
-		var func = eval("function "+name+"($item, namespace){return componentCreate(this, $item, namespace)}"+name);
+		var func = eval("function "+name+"($item, namespace, asScope){return componentCreate(this, $item, namespace, asScope)}"+name);
 		func.prototype = Object.create(HTMLElement.prototype);
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;
