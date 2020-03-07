@@ -58,15 +58,29 @@ sf.component = function(scope, func){
 		var construct = defineComponent(name);
 
 		scope.registered[name][1] = construct;
-		if(namespace === void 0)
-			window['$'+construct.name] = construct;
+		window['$'+construct.name] = construct;
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
 	}
 
-	self.html = function(name, outerHTML, namespace){
+	self.html = function(name, outerHTML, namespace, retry){
 		var scope = namespace || self;
+
+		if(outerHTML.constructor === Array){
+			var template = window.templates[outerHTML[0]];
+
+			if(template === void 0){
+				if(retry === true)
+					return console.error(outerHTML[0], "template was not found");
+
+				return $(function(){
+					self.html(name, outerHTML, namespace, true);
+				});
+			}
+
+			outerHTML = template;
+		}
 
 		if(scope.registered[name] === void 0)
 			scope.registered[name] = [false, false, 0, false];
@@ -136,9 +150,10 @@ sf.component = function(scope, func){
 
 		scope.available[name].push(newID);
 
-		var newObj = (namespace || sf.model).root[newID] = {$el:$()};
+		(namespace || sf.model).root[newID] = $item;
+		$item.$el = $();
 
-		scope.registered[name][0](newObj, (namespace || sf.model), $item);
+		scope.registered[name][0]($item, (namespace || sf.model));
 
 		// if(scope.registered[name][1])
 		// 	scope.registered[name][1](newObj, sf.model, $item);
@@ -150,7 +165,7 @@ sf.component = function(scope, func){
 			// Create template here because we have the sample model
 			if(temp.constructor !== Object){
 				tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
-				temp = sf.model.extractPreprocess(temp, null, newObj);
+				temp = sf.model.extractPreprocess(temp, null, $item);
 				scope.registered[name][3] = temp;
 				temp.tempDOM = tempDOM;
 			}
@@ -167,23 +182,23 @@ sf.component = function(scope, func){
 
 					if(_content_ === null && ref.length === 3){
 						_content_ = Object.assign({}, ref[2]);
-						_content_._modelScope = newObj;
+						_content_._modelScope = $item;
 					}
 
-					ref[1] = newObj;
+					ref[1] = $item;
 					ref[2] = _content_;
 				}
 			}
 
 			if(tempDOM === true)
-				var parsed = internal.model.templateParser(copy, newObj, void 0, void 0, void 0, element);
+				var parsed = internal.model.templateParser(copy, $item, void 0, void 0, void 0, element);
 			else{
-				var parsed = internal.model.templateParser(copy, newObj);
+				var parsed = internal.model.templateParser(copy, $item);
 				element.appendChild(parsed);
 			}
 
 			element.sf$elementReferences = parsed.sf$elementReferences;
-			sf.model.bindElement(element, newObj, copy);
+			sf.model.bindElement(element, $item, copy);
 		}
 		else{
 			var specialElement = {
@@ -191,13 +206,13 @@ sf.component = function(scope, func){
 				input:[]
 			};
 
-			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
-			internal.model.bindInput(specialElement.input, newObj);
-			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);
+			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), $item);
+			internal.model.bindInput(specialElement.input, $item);
+			internal.model.repeatedListBinding(specialElement.repeat, $item, namespace);
 		}
 
-		newObj.$el.push(element);
-		element.model = newObj;
+		$item.$el.push(element);
+		element.model = $item;
 		componentInit(element, newID, name);
 
 		element.sf$initTriggered = true;
@@ -242,6 +257,9 @@ sf.component = function(scope, func){
 			if(internal.space.empty === false){
 				var haveSpace = namespace || elem.closest('sf-space');
 				if(haveSpace !== null){
+					if(haveSpace.constructor === Space)
+						haveSpace = haveSpace.scope;
+
 					internal.space.initComponent(haveSpace, tagName, elem, $item);
 					return elem;
 				}

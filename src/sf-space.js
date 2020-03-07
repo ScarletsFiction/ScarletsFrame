@@ -42,7 +42,10 @@ function createRoot_(modelFunc, registered){
 
 		if(root_.root[scope] === void 0){
 			root_.root[scope] = {};
-			modelFunc[scope](root_.root[scope], root_);
+
+			if(modelFunc[scope].constructor !== Function)
+				console.warn(scope, "haven't been registered. Please check your compiler settings or the compiled file");
+			else modelFunc[scope](root_.root[scope], root_);
 		}
 
 		return root_.root[scope];
