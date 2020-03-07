@@ -154,10 +154,10 @@ sf.controller // is removed
 
 // -- Run function when loading finished 
 sf(function(){...}); // is removed, use below instead
-sf.dom(function(){...});
+$(function(){...});
 
 sf.dom.parent(...); // is removed, use below instead
-$(...).parent(...);
+$('.selector').parent(...);
 ```
 
 ## Cheat Sheet
