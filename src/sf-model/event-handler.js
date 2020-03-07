@@ -298,64 +298,46 @@ var specialEvent = internal.model.specialEvent = {
 		});
 	},
 	dragmove:function(that, keys, script, _modelScope){
-		var length = 0;
-		var actionBackup = '';
-		var startEv = null;
-
+		that.style.touchAction = 'none';
 		function callbackMove(ev){
 			ev.stopPropagation();
 			ev.preventDefault();
-
 			script.call(that, ev);
 		}
 
+		function prevent(ev){ev.preventDefault()}
+
 		var callbackStart = function(ev){
 			ev.preventDefault();
-
-			if(++length !== 1){
-				document.removeEventListener('pointermove', callbackMove);
-				document.removeEventListener('pointerup', callbackEnd, {once:true});
-				document.removeEventListener('pointercancel', callbackEnd, {once:true});
-				return;
-			}
+			ev.stopPropagation();
 
 			script.call(that, ev);
-			startEv = ev;
-
-			actionBackup = that.style.touchAction;
-			that.style.touchAction = 'none';
 
 			document.addEventListener('pointermove', callbackMove);
+			document.addEventListener('touchmove', prevent, {passive: false});
 			document.addEventListener('pointerup', callbackEnd, {once:true});
 			document.addEventListener('pointercancel', callbackEnd, {once:true});
 		}
 
 		var callbackEnd = function(ev){
 			ev.preventDefault();
-
-			if(--length === 1){
-				document.addEventListener('pointermove', callbackMove);
-				document.addEventListener('pointerup', callbackEnd, {once:true});
-				document.addEventListener('pointercancel', callbackEnd, {once:true});
-				return;
-			}
+			ev.stopPropagation();
 
 			script.call(that, ev);
-			startEv = null;
-
-			that.style.touchAction = actionBackup;
 
 			document.removeEventListener('pointermove', callbackMove);
+			document.removeEventListener('touchmove', prevent, {passive: false});
+			document.removeEventListener('pointercancel', callbackEnd, {once:true});
 			that.addEventListener('pointerdown', callbackStart, {once:true});
 		}
 
-		that.addEventListener('pointerdown', callbackStart, {once:true});
+		that.addEventListener('pointerdown', callbackStart);
 
 		that['sf$eventDestroy_dragmove'] = function(){
 			that.removeEventListener('pointerdown', callbackStart, {once:true});
-			that.removeEventListener('pointermove', callbackMove);
-			that.removeEventListener('pointercancel', callbackEnd, {once:true});
-			that.removeEventListener('pointerup', callbackEnd, {once:true});
+			document.removeEventListener('pointermove', callbackMove);
+			document.removeEventListener('pointercancel', callbackEnd, {once:true});
+			document.removeEventListener('pointerup', callbackEnd, {once:true});
 		}
 	},
 	filedrop:function(that, keys, script, _modelScope){
