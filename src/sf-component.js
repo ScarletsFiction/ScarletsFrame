@@ -1,20 +1,31 @@
-sf.component = function(scope, options, func){
+sf.component = function(name, options, func, namespace){
 	if(options !== void 0){
-		if(options !== void 0 && options.constructor !== Object)
+		if(options.constructor === Function)
 			func = options;
+		else {
+			if(options.template !== void 0)
+				options.htmlText = window.templates[options.template];
 
-		if(func.constructor === Function)
-			return sf.component.for(scope, options, func);
-		return sf.component.html(scope, options);
+			if(options.htmlText !== void 0){
+				sf.component.html(name, options.htmlText, namespace);
+
+				if(func !== void 0 && func.constructor === Function)
+					return sf.component.for(name, options, func, namespace);
+			}
+		}
+
+		if(func !== void 0 && func.constructor === Function)
+			return sf.component.for(name, options, func, namespace);
+		return sf.component.html(name, options, namespace);
 	}
 
-	var list = sf.component.available[scope];
+	var list = (namespace || sf.component).available[name];
 	if(list === void 0)
 		return [];
 
 	var ret = [];
 	for (var i = 0; i < list.length; i++) {
-		ret.push(sf.model.root[list[i]]);
+		ret.push((namespace || sf.model).root[list[i]]);
 	}
 
 	return ret;

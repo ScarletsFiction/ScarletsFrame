@@ -139,16 +139,7 @@ class Space{
 	}
 
 	self.component = function(name, options, func){
-		if(options !== void 0){
-			if(options.constructor === Function)
-				func = options;
-
-			if(func.constructor === Function)
-				return sf.component.for(name, options, func, this.scope);
-			return sf.component.html(name, options, this.scope);
-		}
-
-		return console.error("No Operation");
+		return sf.component(name, options, func, this.scope);
 	}
 
 	self.destroy = function(){
