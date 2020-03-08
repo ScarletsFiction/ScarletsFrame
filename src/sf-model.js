@@ -1,15 +1,19 @@
 // Data save and HTML content binding
-sf.model = function(name, func, namespace){
-	if(func !== void 0 && func.constructor === Function)
-		return sf.model.for(name, func);
+sf.model = function(name, options, func, namespace){
+	if(options !== void 0)
+		return sf.model.for(name, options, func);
 
 	// If it's component tag
 	if((namespace || sf.component).registered[name] !== void 0)
 		return (namespace || root_)(name);
 
 	var scope = namespace || sf.model;
-	if(scope.root[name] === void 0)
-		scope.root[name] = {};
+	if(scope.root[name] === void 0){
+		if(internal.modelInherit[name] !== void 0)
+			scope.root[name] = new internal.modelInherit[name]();
+		else
+			scope.root[name] = {};
+	}
 
 	return scope.root[name];
 };
@@ -18,6 +22,7 @@ sf.model = function(name, func, namespace){
 	var self = sf.model;
 	self.root = {};
 	internal.modelPending = {};
+	internal.modelInherit = {};
 
 	// Find an index for the element on the list
 	self.index = function(element){
@@ -45,7 +50,13 @@ sf.model = function(name, func, namespace){
 	}
 
 	// Declare model for the name with a function
-	self.for = function(name, func, namespace){
+	self.for = function(name, options, func, namespace){
+		if(options.constructor === Function)
+			func = options;
+		else{
+			internal.modelInherit[name] = options.extend;
+		}
+
 		var scope = namespace || self;
 		func(scope(name), scope);
 
@@ -66,6 +77,18 @@ sf.model = function(name, func, namespace){
 			if(keys[i].indexOf('$') !== -1)
 				keys.splice(i, 1);
 		}
+
+		// it maybe custom class
+		if(modelRef.constructor !== Object && modelRef.constructor !== Array){
+			var keys2 = Object.getOwnPropertyNames(modelRef.constructor.prototype);
+			for (var i = keys2.length - 1; i >= 0; i--) {
+				if(keys2[i] === 'constructor')
+					keys2.splice(i, 1);
+			}
+
+			keys = keys.concat(keys2);
+		}
+
 		return keys;
 	}
 })();

@@ -21,7 +21,17 @@ if(0){
 
 $(function(){console.log("Loading finished")});
 
-sf.model.for('image', function(self, root){
+class ImgModel{
+	static construct(){
+		console.warn('ImgModel construct was called', this);
+	}
+
+	taphold(el, ev){
+		console.log('taphold called', el, ev);
+	}
+}
+
+sf.model.for('image', {extend: ImgModel}, function(self, root){
 	self.trans = "translate(0)";
 
 	var x=0, y=0;
@@ -38,10 +48,6 @@ sf.model.for('image', function(self, root){
 
 		// console.log('gesture called');
 		self.trans = 'scale('+scale+') rotate('+angle+'deg)';
-	}
-
-	self.taphold = function(el, ev){
-		console.log('taphold called', el, ev);
 	}
 });
 

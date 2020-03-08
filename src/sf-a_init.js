@@ -167,3 +167,22 @@ function capitalizeLetters(name){
 	}
 	return name.join('');
 }
+
+function proxyClass(scope, parent){
+  var proto = parent.prototype;
+  var list = Object.getOwnPropertyNames(proto);
+  
+  var child = {};
+  for(var i=0; i<list.length; i++){
+    var key = list[i];
+
+    // Proxy only when child method has similar name with the parent
+    if(scope[key] !== proto[key]){
+      child[key] = scope[key];
+      scope[key] = function(){
+        scope.super = proto[key];
+        return child[key].apply(scope, arguments);
+      }
+    }
+  }
+}

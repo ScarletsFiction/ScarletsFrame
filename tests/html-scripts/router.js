@@ -46,19 +46,21 @@ views.addRoute([
 	}
 ]);
 
-sf.model.for('test-page1', function(self){
+class TestPage{}
+
+sf.model.for('test-page1', {extend:TestPage}, function(self){
 	self.text = "Hello from page 1";
 });
 
-sf.model.for('test-page1-nest1', function(self){
+sf.model.for('test-page1-nest1', {extend:TestPage}, function(self){
 	self.text = "Hello from nest 1";
 });
 
-sf.model.for('test-page1-nest2', function(self){
+sf.model.for('test-page1-nest2', {extend:TestPage}, function(self){
 	self.text = "Hello from nest 2";
 });
 
-sf.model.for('test-page2', function(self){
+sf.model.for('test-page2', {extend:TestPage}, function(self){
 	self.text = "Hello from page 2";
 });
 

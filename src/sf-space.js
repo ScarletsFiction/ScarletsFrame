@@ -116,8 +116,14 @@ class Space{
 
 ;(function(){
 	var self = Space.prototype;
-	self.model = function(name, func){
-		if(func !== void 0){
+	self.model = function(name, options, func){
+		if(options !== void 0){
+			if(options.constructor === Function)
+				func = options;
+			else{
+				internal.modelInherit[name] = options.extend;
+			}
+
 			var old = this.scope.modelFunc[name];
 			this.scope.modelFunc[name] = func;
 
@@ -129,14 +135,17 @@ class Space{
 			return;
 		}
 
-		sf.model(name, func, this.scope);
+		sf.model(name, options, func, this.scope);
 	}
 
-	self.component = function(name, func){
-		if(func !== void 0){
+	self.component = function(name, options, func){
+		if(options !== void 0){
+			if(options.constructor === Function)
+				func = options;
+
 			if(func.constructor === Function)
-				return sf.component.for(name, func, this.scope);
-			return sf.component.html(name, func, this.scope);
+				return sf.component.for(name, options, func, this.scope);
+			return sf.component.html(name, options, this.scope);
 		}
 
 		return console.error("No Operation");

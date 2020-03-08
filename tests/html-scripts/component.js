@@ -1,4 +1,8 @@
-sf.component.for('comp-test', function(self, root, item){
+class InheritComponent{
+	ahoy(){}
+}
+
+sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, item){
 	self.item = item;
 	self.tries = [1,2,3+vul];
 	self.data = 'zxc'+vul;
@@ -10,7 +14,7 @@ sf.component.for('comp-test', function(self, root, item){
 	}
 
 	self.init = function(){
-		console.warn('comp-test', item, self.$el[0]);
+		console.warn('comp-test', item, self.$el[0], self);
 		console.warn("Component init called", self, self.tries.constructor !== Array && self.tries.getElement(0));
 	}
 });

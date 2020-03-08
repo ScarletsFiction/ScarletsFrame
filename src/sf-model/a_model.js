@@ -27,6 +27,11 @@ self.init = function(el, modelName, namespace){
 	bindInput(specialElement.input, model);
 	repeatedListBinding(specialElement.repeat, model, namespace);
 
+	if(model.constructor !== Object){
+		model.constructor.construct && model.constructor.construct.call(model);
+		proxyClass(model, model.constructor);
+	}
+
 	if(model.init !== void 0)
 		model.init(el);
 }

@@ -1,8 +1,11 @@
-sf.component = function(scope, func){
-	if(func !== void 0){
+sf.component = function(scope, options, func){
+	if(options !== void 0){
+		if(options !== void 0 && options.constructor !== Object)
+			func = options;
+
 		if(func.constructor === Function)
-			return sf.component.for(scope, func);
-		return sf.component.html(scope, func);
+			return sf.component.for(scope, options, func);
+		return sf.component.html(scope, options);
 	}
 
 	var list = sf.component.available[scope];
@@ -20,6 +23,7 @@ sf.component = function(scope, func){
 ;(function(){
 	var self = sf.component;
 	internal.component = {};
+	internal.componentInherit = {};
 
 	var waitingHTML = {};
 
@@ -47,10 +51,17 @@ sf.component = function(scope, func){
 			delete waitingHTML[name];
 	}
 
-	self.for = function(name, func, namespace){
+	self.for = function(name, options, func, namespace){
+		if(options.constructor === Function)
+			func = options;
+		else{
+			internal.componentInherit[name] = options.extend;
+		}
+
 		// internal.component.tagName.add(name.toUpperCase());
 		var scope = namespace || self;
 
+		// 0=Function for scope, 1=DOM Contructor, 2=incremental ID, 3=Template
 		if(scope.registered[name] === void 0)
 			scope.registered[name] = [func, void 0, 0, false]; // index 1 is $ComponentConstructor
 
@@ -82,6 +93,7 @@ sf.component = function(scope, func){
 			outerHTML = template;
 		}
 
+		// 0=Function for scope, 1=DOM Contructor, 2=incremental ID, 3=Template
 		if(scope.registered[name] === void 0)
 			scope.registered[name] = [false, false, 0, false];
 
@@ -132,6 +144,7 @@ sf.component = function(scope, func){
 
 		var avoid = /(^|:)(sf-|class|style)/;
 		var attr = element.attributes;
+		var inherit = internal.componentInherit[name];
 
 		if(attr.length !== 0 && $item === void 0)
 			$item = {};
@@ -150,9 +163,15 @@ sf.component = function(scope, func){
 
 		scope.available[name].push(newID);
 
-		var newObj = (namespace || sf.model).root[newID] = (asScope ? $item : {});
+		var newObj = (namespace || sf.model).root[newID] = (asScope ? $item : (
+			inherit !== void 0 ? new inherit() : {}
+		));
 		newObj.$el = $();
 
+		if(inherit !== void 0 && asScope)
+			Object.setPrototypeOf(newObj, inherit.prototype);
+
+		// Call function that handle scope
 		scope.registered[name][0](newObj, (namespace || sf.model), $item);
 
 		// if(scope.registered[name][1])
@@ -289,8 +308,14 @@ sf.component = function(scope, func){
 			if(this.sf$initTriggered){
 				delete this.sf$initTriggered;
 
-				if(this.model.init)
+				if(this.model.init){
+					if(this.model.constructor !== Object){
+						this.model.constructor.construct && this.model.constructor.construct.call(this.model);
+						proxyClass(this.model, this.model.constructor);
+					}
+
 					this.model.init();
+				}
 				return;
 			}
 
