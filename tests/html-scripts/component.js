@@ -14,8 +14,9 @@ sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, i
 	}
 
 	self.init = function(){
-		console.warn('comp-test', item, self.$el[0], self);
-		console.warn("Component init called", self, self.tries.constructor !== Array && self.tries.getElement(0));
+		console.warn('comp-test', item, self.$el[0], self, self.tries.constructor !== Array && self.tries.getElement(0));
+
+		document.firstElementChild.scrollTop = document.firstElementChild.scrollHeight;
 	}
 });
 

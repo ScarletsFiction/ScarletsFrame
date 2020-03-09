@@ -335,8 +335,6 @@ function addressAttributes(currentNode, template, itemMask){
 				return '';
 			});
 
-			key.from = template;
-
 			if(found === '' && indexes.length === 1)
 				key.direct = indexes[0];
 			else
@@ -480,8 +478,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	var itemMask = mask ? RegExp(sf.regex.getSingleMask.join(mask), 'gm') : void 0;
 	for (var i = 0; i < nodes.length; i++) {
 		var temp = {
-			nodeType:nodes[i].nodeType,
-			from:template
+			nodeType:nodes[i].nodeType
 		};
 
 		if(temp.nodeType === 1){ // Element
@@ -773,8 +770,10 @@ self.parsePreprocess = function(nodes, modelRef){
 			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef);
 
 			// Save reference to element
-			if(currentRef.length !== 0)
+			if(currentRef.length !== 0){
+				currentRef.template = template;
 				current.sf$elementReferences = currentRef;
+			}
 
 			self.bindElement(current, modelRef, template);
 

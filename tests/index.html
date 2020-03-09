@@ -114,7 +114,7 @@
           :style="transform:{{trans}}"
           .@dragmove="dragmove"
           @gesture="gesture(321, event)"
-          @taphold="taphold(this, 321)"
+          @taphold="taphold(this, event)"
         >
       </sf-m>
 
@@ -338,6 +338,8 @@
               here:"Aku disini!"
             }
           });
+
+          // Spy.observe($('#lkj')[0]);
           sf.lang.serverURL = '/test/lang';
           sf.lang.changeDefault('id_ID');
 

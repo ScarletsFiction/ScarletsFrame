@@ -197,6 +197,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 						continue;
 					}
 
+					// ToDo: can we move ref[i].template to ref.template as it's same reference
 					if(syntheticTemplate(ref[i].element, ref[i].template, originalPropertyName, originalModel) === false)
 						0; //No update
 				}

@@ -56,3 +56,23 @@ setTimeout(function(){
 	console.log("Trying to reinit", a.length, "element (must be 0)");
 	sf.model.parsePreprocess(a);
 }, 10000);
+
+var Spy = /** @class */ (function () {
+    function Spy() {
+    }
+    Spy.observe = function (targetNode) {
+        Spy.observer.observe(targetNode, Spy.config);
+    };
+    Spy.disconnect = function () {
+        Spy.observer.disconnect();
+    };
+    Spy["break"] = function () {
+    	// See the call stack
+        debugger;
+    };
+    Spy.config = { characterData: true, attributes: true, childList: true, subtree: true };
+    Spy.observer = new MutationObserver(Spy["break"]);
+    return Spy;
+}());
+
+// Spy.observe($('')[0]);

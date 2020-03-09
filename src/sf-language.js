@@ -416,7 +416,7 @@ function refreshLang(list, noPending){
 				continue;
 
 			appliedElement.add(elem);
-			if(internal.model.syntheticTemplate(elem, ref[i].ref.from, void 0, model) !== false)
+			if(internal.model.syntheticTemplate(elem, ref.template, void 0, model) !== false)
 				continue; // updated
 
 			elem.sf_lang = void 0;
@@ -498,7 +498,7 @@ function elementReferencesRefresh(elem){
 			continue;
 		}
 
-		var template = eRef[i].ref.from;
+		var template = eRef.template;
 		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
 			if(isNaN(match) === false)
 				return '{{%='+match+'%';

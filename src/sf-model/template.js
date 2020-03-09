@@ -95,8 +95,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 
 		var temp = {
 			attribute:isValueInput === true ? current : current.attributes[refB.name],
-			ref:refB,
-			from:template
+			ref:refB
 		};
 
 		if(current.hasAttribute('sf-lang'))
@@ -208,8 +207,10 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	html.model = item;
 
 	// Save reference to element
-	if(changesReference.length !== 0)
+	if(changesReference.length !== 0){
+		changesReference.template = template;
 		html.sf$elementReferences = changesReference;
+	}
 
 	// internal.language.refreshLang(html);
 	// html.sf$modelParsed = parsed;
