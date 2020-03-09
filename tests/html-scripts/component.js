@@ -20,7 +20,7 @@ sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, i
 });
 
 sf.component.html('comp-test', '<div sf-lang="translated">1. translated {{ data }}</div>\
-	<input type="text" sf-bind="data"/>\
+	<input type="text" sf-bind="data">\
 	<div class="sf-virtual-list"><span sf-repeat-this="num in tries"><a @click="select(num)">{{num}}</a>,</span></div>\
 	<div>item: {{ item }}</div>\
 <br>');

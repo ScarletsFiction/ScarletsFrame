@@ -2,21 +2,12 @@ sf.component = function(name, options, func, namespace){
 	if(options !== void 0){
 		if(options.constructor === Function)
 			func = options;
-		else {
-			if(options.template !== void 0)
-				options.htmlText = window.templates[options.template];
 
-			if(options.htmlText !== void 0){
-				sf.component.html(name, options.htmlText, namespace);
-
-				if(func !== void 0 && func.constructor === Function)
-					return sf.component.for(name, options, func, namespace);
-			}
-		}
+		if(func !== options)
+			sf.component.html(name, options, namespace);
 
 		if(func !== void 0 && func.constructor === Function)
 			return sf.component.for(name, options, func, namespace);
-		return sf.component.html(name, options, namespace);
 	}
 
 	var list = (namespace || sf.component).available[name];
@@ -89,12 +80,18 @@ sf.component = function(name, options, func, namespace){
 	self.html = function(name, outerHTML, namespace, retry){
 		var scope = namespace || self;
 
-		if(outerHTML.constructor === Array){
-			var template = window.templates[outerHTML[0]];
+		if(outerHTML.constructor === Object){
+			var template;
+
+			if(outerHTML.template)
+				template = window.templates && window.templates[outerHTML.template];
+			else if(outerHTML.html)
+				template = outerHTML.html;
+			else return;
 
 			if(template === void 0){
 				if(retry === true)
-					return console.error(outerHTML[0], "template was not found");
+					return console.error(outerHTML, "template was not found");
 
 				return $(function(){
 					self.html(name, outerHTML, namespace, true);
@@ -108,14 +105,18 @@ sf.component = function(name, options, func, namespace){
 		if(scope.registered[name] === void 0)
 			scope.registered[name] = [false, false, 0, false];
 
-		var temp = $.parseElement(outerHTML, true);
+		var temp;
+		if(outerHTML.constructor === String)
+			temp = $.parseElement(outerHTML, true);
+		else temp = outerHTML;
+
 		if(temp.length === 1)
 			scope.registered[name][3] = temp[0];
 		else{
 			var tempDOM = document.createElement('div');
 			tempDOM.tempDOM = true;
-			for (var i = 0; i < temp.length; i++) {
-				tempDOM.appendChild(temp[i]);
+			for (var i = temp.length - 1; i >= 0; i--) {
+				tempDOM.insertBefore(temp[i], tempDOM.firstChild);
 			}
 			scope.registered[name][3] = tempDOM;
 		}
