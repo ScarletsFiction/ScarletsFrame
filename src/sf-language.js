@@ -327,7 +327,7 @@ internal.language.refreshLang = function(el){
 
 function refreshLang(list, noPending){
 	var defaultLang = self.list[self.default];
-	var parentElement = new Set();
+	var parentElement = new Set(); // This technique cause slow down because memory allocation
 
 	if(defaultLang === void 0)
 		defaultLang = self.list[self.default] = {};
@@ -341,6 +341,7 @@ function refreshLang(list, noPending){
 		var elem = list[i];
 
 		// Preserve model/component binding
+		// We will reapply the template later
 		if(elem.sf$elementReferences !== void 0){
 			elementReferencesRefresh(elem);
 			parentElement.add(elem);
@@ -388,8 +389,6 @@ function refreshLang(list, noPending){
 			elem.setAttribute('placeholder', value);
 		else
 			assignSquareBracket(elem, value);
-
-		elem.sf_lang = self.default;
 	}
 
 	if(parentElement.size === 0)
@@ -400,54 +399,27 @@ function refreshLang(list, noPending){
 
 	// Reapply template
 	for (var a = 0; a < parentElement.length; a++) {
-		var model = parentElement[a].model;
+		var elem = parentElement[a];
+		elem.sf_lang = self.default;
+
+		var model = elem.model;
 		if(model === void 0)
-			model = sf(parentElement[a]);
+			model = sf(elem);
 
 		// Avoid model that doesn't have binding
 		if(model.sf$bindedKey === void 0)
 			continue;
 
-		var keys = Object.keys(model.sf$bindedKey);
+		var ref = elem.sf$elementReferences;
+		for (var i = 0; i < ref.length; i++) {
+			if(appliedElement.has(elem))
+				continue;
 
-		// Avoid model that doesn't have binding
-		if(keys.length === 0)
-			continue;
+			appliedElement.add(elem);
+			if(internal.model.syntheticTemplate(elem, ref[i].ref.from, void 0, model) !== false)
+				continue; // updated
 
-		for (var z = 0; z < keys.length; z++) {
-			var ref = model.sf$bindedKey[keys[z]];
-
-			for (var i = 0; i < ref.length; i++) {
-				var elem = ref[i].element;
-				if(elem === void 0)
-					continue; // It's function that handle input element
-
-				if(elem.nodeType === 3)
-					elem = elem.parentElement;
-
-				if(elem.getAttribute('sf-lang') !== null){
-					if(appliedElement.has(elem))
-						continue;
-
-					appliedElement.add(elem);
-					if(internal.model.syntheticTemplate(elem, ref[i].template, keys[z], model) !== false)
-						continue; // updated
-				}
-			}
-
-			if(ref.input !== void 0){
-				for (var i = 0, n = ref.input.length; i < n; i++) {
-					var elem = ref.input[i];
-					if(elem.getAttribute('sf-lang') !== null){
-						if(appliedElement.has(elem))
-							continue;
-
-						appliedElement.add(elem);
-						if(internal.model.syntheticTemplate(elem, ref[i].template, keys[z], model) !== false)
-							continue; // updated
-					}
-				}
-			}
+			elem.sf_lang = void 0;
 		}
 	}
 }
