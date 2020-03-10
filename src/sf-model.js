@@ -80,13 +80,10 @@ sf.model = function(name, options, func, namespace){
 
 		// it maybe custom class
 		if(modelRef.constructor !== Object && modelRef.constructor !== Array){
-			var keys2 = Object.getOwnPropertyNames(modelRef.constructor.prototype);
-			for (var i = keys2.length - 1; i >= 0; i--) {
-				if(keys2[i] === 'constructor')
-					keys2.splice(i, 1);
-			}
-
-			keys = keys.concat(keys2);
+			keys = new Set(keys);
+			getStaticMethods(keys, modelRef.constructor);
+			getPrototypeMethods(keys, modelRef.constructor);
+			keys = Array.from(keys);
 		}
 
 		return keys;

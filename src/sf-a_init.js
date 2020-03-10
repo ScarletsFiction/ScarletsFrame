@@ -1,15 +1,15 @@
 (function(global, factory){
   // Check browser feature
   if(HTMLElement.prototype.remove === void 0 || window.customElements === void 0 || window.Reflect === void 0){
-  	console.error("This browser was not supported");
+	console.error("This browser was not supported");
 
-  	if(window.customElements === void 0)
-    	console.warn("This can be fixed by adding 'https://unpkg.com/@webcomponents/webcomponentsjs@2.3.0/webcomponents-loader.js' before loading 'scarletsframe.js'");
+	if(window.customElements === void 0)
+		console.warn("This can be fixed by adding 'https://unpkg.com/@webcomponents/webcomponentsjs@2.3.0/webcomponents-loader.js' before loading 'scarletsframe.js'");
 
-    if(window.Reflect === void 0)
-    	console.warn("This can be fixed by adding 'https://unpkg.com/core-js-bundle@3.4.0/minified.js' before loading 'scarletsframe.js'");
+	if(window.Reflect === void 0)
+		console.warn("This can be fixed by adding 'https://unpkg.com/core-js-bundle@3.4.0/minified.js' before loading 'scarletsframe.js'");
 
-    alert("This browser was not supported");
+	alert("This browser was not supported");
   }
 
   // Dynamic script when using router to load template
@@ -67,8 +67,8 @@ function parsePropertyPath(str){
 				g1 = Number(g1);
 			else if(g1[0] === '"' || g1[0] === "'")
 				g1 = g1.slice(1, -1);
-          
-        	temp.push(g1);
+		  
+			temp.push(g1);
 			return '';
 		}
 
@@ -155,8 +155,8 @@ function hiddenProperty(obj, property, value){
 
 function deepProperty(obj, path){
   for(var i = 0; i < path.length; i++){
-    obj = obj[path[i]];
-    if(obj === void 0) return obj;
+	obj = obj[path[i]];
+	if(obj === void 0) return obj;
   }
   return obj;
 }
@@ -168,21 +168,48 @@ function capitalizeLetters(name){
 	return name.join('');
 }
 
-function proxyClass(scope, parent){
-  var proto = parent.prototype;
-  var list = Object.getOwnPropertyNames(proto);
-  
-  var child = {};
-  for(var i=0; i<list.length; i++){
-    var key = list[i];
+function getStaticMethods(keys, clas){
+	var keys2 = Object.getOwnPropertyNames(clas);
 
-    // Proxy only when child method has similar name with the parent
-    if(scope[key] !== proto[key]){
-      child[key] = scope[key];
-      scope[key] = function(){
-        scope.super = proto[key];
-        return child[key].apply(scope, arguments);
-      }
-    }
-  }
+	for(var i = 0; i < keys2.length; i++){
+		if(clas[keys2[i]].constructor === Function)
+			keys.add(keys2[i]);
+	}
+}
+
+function getPrototypeMethods(keys, clas){
+	if(clas.prototype === void 0)
+		return;
+
+	var keys2 = Object.getOwnPropertyNames(clas.prototype);
+	for (var i = keys2.length - 1; i >= 0; i--) {
+		if(keys2[i] !== 'constructor')
+			keys.add(keys2[i]);
+	}
+
+	var deep = Object.getPrototypeOf(clas);
+	if(deep.prototype !== void 0)
+		getPrototypeMethods(keys, deep);
+}
+
+function proxyClass(scope, parent){
+	var proto = parent.prototype;
+
+	var list = new Set();
+	getPrototypeMethods(list, parent);
+	list = Array.from(list);
+
+	var child = {};
+	for(var i=0; i<list.length; i++){
+		var key = list[i];
+
+		// Proxy only when child method has similar name with the parent
+		if(scope[key] !== proto[key]){
+			child[key] = scope[key];
+			scope[key] = function(){
+				scope.super = proto[key];
+				return child[key].apply(scope, arguments);
+			}
+		}
+	}
 }
