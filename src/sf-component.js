@@ -185,6 +185,10 @@ sf.component = function(name, options, func, namespace){
 
 		// Call function that handle scope
 		scope.registered[name][0](newObj, (namespace || sf.model), $item);
+		if(newObj.constructor !== Object){
+			proxyClass(newObj, newObj.constructor);
+			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
+		}
 
 		// if(scope.registered[name][1])
 		// 	scope.registered[name][1](newObj, sf.model, $item);
@@ -321,10 +325,8 @@ sf.component = function(name, options, func, namespace){
 				delete this.sf$initTriggered;
 
 				if(this.model.init){
-					if(this.model.constructor !== Object){
-						this.model.constructor.construct && this.model.constructor.construct.call(this.model);
-						proxyClass(this.model, this.model.constructor);
-					}
+					if(this.model.constructor !== Object)
+						this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || sf.model));
 
 					this.model.init();
 				}

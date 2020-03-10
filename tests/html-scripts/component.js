@@ -1,5 +1,13 @@
 class InheritComponent{
-	ahoy(){}
+	static construct(root, item){
+		this.nyam = true;
+	}
+	static init(root, item){
+		this.nyam2 = true;
+	}
+	select(item){
+		return item;
+	}
 }
 
 sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, item){
@@ -7,7 +15,7 @@ sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, i
 	self.tries = [1,2,3+vul];
 	self.data = 'zxc'+vul;
 	self.select = function(zx){
-		console.log('selected', zx);
+		console.log('self.super returning', self.super(zx));
 
 		self.tries[self.tries.indexOf(zx)] += zx;
 		self.tries.refresh();
@@ -15,6 +23,9 @@ sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, i
 
 	self.init = function(){
 		console.warn('comp-test', item, self.$el[0], self, self.tries.constructor !== Array && self.tries.getElement(0));
+
+		if(!this.nyam || !this.nyam2)
+			console.error("inherited construct or init was not working");
 
 		document.firstElementChild.scrollTop = document.firstElementChild.scrollHeight;
 	}

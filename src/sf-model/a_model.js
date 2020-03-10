@@ -17,6 +17,18 @@ self.init = function(el, modelName, namespace){
 
 	model.$el.push(el);
 
+	if(model.constructor !== Object){
+		if(model.sf$internal === void 0)
+			Object.defineProperty(model, 'sf$internal', {enumerabe:false, value:{}});
+	
+		if(model.sf$internal.methodProxied !== true){
+			proxyClass(model, model.constructor);
+			model.sf$internal.proxied = true;
+		}
+
+		model.constructor.construct && model.constructor.construct.call(model, (namespace || sf.model), el);
+	}
+
 	var specialElement = {
 		repeat:[],
 		input:[]
@@ -27,13 +39,11 @@ self.init = function(el, modelName, namespace){
 	bindInput(specialElement.input, model);
 	repeatedListBinding(specialElement.repeat, model, namespace);
 
-	if(model.constructor !== Object){
-		model.constructor.construct && model.constructor.construct.call(model);
-		proxyClass(model, model.constructor);
-	}
-
 	if(model.init !== void 0)
 		model.init(el);
+
+	if(model.constructor !== Object)
+		model.constructor.init && model.constructor.init.call(model, (namespace || sf.model), el);
 }
 
 // Escape the escaped quote

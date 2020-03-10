@@ -201,7 +201,7 @@ function proxyClass(scope, parent){
 
 	var child = {};
 	for(var i=0; i<list.length; i++){
-		var key = list[i];
+		let key = list[i];
 
 		// Proxy only when child method has similar name with the parent
 		if(scope[key] !== proto[key]){
