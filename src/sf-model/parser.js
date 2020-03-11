@@ -8,8 +8,8 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
 	if(modelKeys.length === 0){
-		console.error("Template model was not found", _modelScope, html);
-		return;
+		console.error(_modelScope, $.parseElement(html));
+		throw new Error("Template model was not found");
 	}
 
 	// Don't match text inside quote, or object keys
@@ -129,8 +129,8 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
 	if(modelKeys.length === 0){
-		console.error("Template model was not found", _modelScope, html);
-		return;
+		console.error(_modelScope, $.parseElement(html));
+		throw new Error("Template model was not found");
 	}
 
 	// Don't match text inside quote, or object keys
@@ -368,9 +368,10 @@ function toObserve(full, model, properties){
 	return full;
 };
 
-self.extractPreprocess = function(targetNode, mask, modelScope, container){
+self.templateInjector = function(targetNode, modelScope){
+	var injectTemplate = targetNode.getElementsByTagName('sf-template');
 	var reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
-	var dynamicTemplate = targetNode.getElementsByTagName('sf-template');
+	var isDynamic = reservedTemplate.length !== 0;
 
 	if(reservedTemplate.length !== 0){
 		if(modelScope.sf$reserved === void 0){
@@ -394,26 +395,33 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 		}
 	}
 
-	if(dynamicTemplate.length !== 0){
+	if(injectTemplate.length !== 0){
 		var temp = window.templates;
-		for (var i = dynamicTemplate.length - 1; i >= 0; i--) {
-			var path = dynamicTemplate[i].getAttribute('path');
+		if(temp === void 0)
+			throw new Error("<sf-template> need `window.templates` to be loaded first");
+
+		for (var i = injectTemplate.length - 1; i >= 0; i--) {
+			var path = injectTemplate[i].getAttribute('path');
 
 			if(path[0] === '.')
 				path = path.replace('./', targetNode.templatePath);
 
 			var serve = temp[path];
 			if(serve === void 0){
-				console.log(dynamicTemplate[i], 'Template path was not found', path);
-				dynamicTemplate[i].remove();
+				console.log(injectTemplate[i], 'Template path was not found', path);
+				injectTemplate[i].remove();
 				continue;
 			}
 
 			serve = $.parseElement(serve);
-			$(serve).insertBefore(dynamicTemplate[i].nextSibling || dynamicTemplate[i]);
-			dynamicTemplate[i].remove();
+			$(serve).insertBefore(injectTemplate[i].nextSibling || injectTemplate[i]);
+			injectTemplate[i].remove();
 		}
 	}
+}
+
+self.extractPreprocess = function(targetNode, mask, modelScope, container){
+	self.templateInjector(targetNode, modelScope);
 
 	// Remove repeated list from further process
 	// To avoid data parser
@@ -497,6 +505,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	}
 
 	// Rebuild element
+	var tempSkip = internal.component.skip;
 	internal.component.skip = true;
 	if(container !== void 0)
 		copy = '<'+container+'>'+copy+'</'+container+'>';
@@ -507,7 +516,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 		copy.remove();
 	}
 
-	internal.component.skip = false;
+	internal.component.skip = tempSkip;
 
 	// Restore element repeated list
 	var restore = copy.querySelectorAll('sfrepeat-this');

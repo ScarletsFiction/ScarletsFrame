@@ -254,7 +254,13 @@ sf.component = function(name, options, func, namespace){
 				input:[]
 			};
 
+			sf.model.templateInjector(element, newObj);
+
+			var tempSkip = internal.component.skip;
+			internal.component.skip = true;
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
+			internal.component.skip = tempSkip;
+
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);
 		}
