@@ -7,8 +7,10 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
-	if(modelKeys.length === 0)
-		throw "The model was not found";
+	if(modelKeys.length === 0){
+		console.error("Template model was not found", _modelScope, html);
+		return;
+	}
 
 	// Don't match text inside quote, or object keys
 	var scopeMask = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
@@ -126,8 +128,10 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 
 	var modelKeys = self.modelKeys(_modelScope).join('|');
 
-	if(modelKeys.length === 0)
-		throw "The model was not found";
+	if(modelKeys.length === 0){
+		console.error("Template model was not found", _modelScope, html);
+		return;
+	}
 
 	// Don't match text inside quote, or object keys
 	var scopeMask = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
@@ -365,6 +369,52 @@ function toObserve(full, model, properties){
 };
 
 self.extractPreprocess = function(targetNode, mask, modelScope, container){
+	var reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
+	var dynamicTemplate = targetNode.getElementsByTagName('sf-template');
+
+	if(reservedTemplate.length !== 0){
+		if(modelScope.sf$reserved === void 0){
+			for (var i = reservedTemplate.length - 1; i >= 0; i--) {
+				reservedTemplate[i].remove();
+			}
+		}
+		else{
+			var temp = modelScope.sf$reserved;
+			for (var i = reservedTemplate.length - 1; i >= 0; i--) {
+				var serve = temp[reservedTemplate[i].getAttribute('name')];
+				if(serve === void 0){
+					reservedTemplate[i].remove();
+					continue;
+				}
+
+				serve = $.parseElement(serve);
+				$(serve).insertBefore(reservedTemplate[i].nextSibling || reservedTemplate[i]);
+				reservedTemplate[i].remove();
+			}
+		}
+	}
+
+	if(dynamicTemplate.length !== 0){
+		var temp = window.templates;
+		for (var i = dynamicTemplate.length - 1; i >= 0; i--) {
+			var path = dynamicTemplate[i].getAttribute('path');
+
+			if(path[0] === '.')
+				path = path.replace('./', targetNode.templatePath);
+
+			var serve = temp[path];
+			if(serve === void 0){
+				console.log(dynamicTemplate[i], 'Template path was not found', path);
+				dynamicTemplate[i].remove();
+				continue;
+			}
+
+			serve = $.parseElement(serve);
+			$(serve).insertBefore(dynamicTemplate[i].nextSibling || dynamicTemplate[i]);
+			dynamicTemplate[i].remove();
+		}
+	}
+
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');

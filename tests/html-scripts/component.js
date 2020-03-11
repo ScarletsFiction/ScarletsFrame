@@ -41,3 +41,25 @@ $(function(){
 	var elem2 = new $CompTest('from javascript');
 	components.appendChild(elem2);
 });
+
+sf.component('dynamic-reserved', function(self, root){
+	self.sf$reserved = {test:'<div> {{ binds }} </div>'};
+	self.binds = 'OK working';
+});
+
+sf.component('dynamic-template', {template:'test/index.html'}, function(self, root){
+	self.binds = 'OK working';
+	self.init = function(argument) {
+		console.log('asdjhaksjd');
+	}
+});
+
+window.templates = {
+	'test/index.html':`is something
+<sf-template path="test/absolute.html"></sf-template>
+and
+<sf-template path="./relative.html"></sf-template>
+in the middle?`,
+	'test/absolute.html':'<div> 1. {{ binds }} </div>',
+	'test/relative.html':'<div> 2. {{ binds }} </div>',
+};

@@ -79,12 +79,15 @@ sf.component = function(name, options, func, namespace){
 
 	self.html = function(name, outerHTML, namespace, retry){
 		var scope = namespace || self;
+		var templatePath = false;
 
 		if(outerHTML.constructor === Object){
 			var template;
 
-			if(outerHTML.template)
+			if(outerHTML.template){
+				templatePath = outerHTML.template;
 				template = window.templates && window.templates[outerHTML.template];
+			}
 			else if(outerHTML.html)
 				template = outerHTML.html;
 			else return;
@@ -107,7 +110,7 @@ sf.component = function(name, options, func, namespace){
 
 		var temp;
 		if(outerHTML.constructor === String)
-			temp = $.parseElement(outerHTML, true);
+			temp = $.parseElement(outerHTML);
 		else temp = outerHTML;
 
 		if(temp.length === 1)
@@ -119,6 +122,16 @@ sf.component = function(name, options, func, namespace){
 				tempDOM.insertBefore(temp[i], tempDOM.firstChild);
 			}
 			scope.registered[name][3] = tempDOM;
+		}
+
+		if(templatePath !== false){
+			templatePath = templatePath.split('/');
+			templatePath.pop();
+			templatePath = templatePath.join('/');
+			if(templatePath !== '')
+				templatePath += '/';
+
+			scope.registered[name][3].templatePath = templatePath;
 		}
 
 		if(waitingHTML[name] !== void 0)
