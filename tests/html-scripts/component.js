@@ -42,24 +42,24 @@ $(function(){
 	components.appendChild(elem2);
 });
 
-sf.component('dynamic-reserved', function(self, root){
-	self.sf$reserved = {test:'<div> {{ binds }} </div>'};
+sf.component('dynamic-reserved', {template:'test/reserved.html'}, function(self, root, $item){
+	self.sf$reserved = {test:$item.index === '1' ? '(1. {{ binds }})' : '(2. {{ binds }})'};
 	self.binds = 'OK working';
 });
 
-sf.component('dynamic-template', {template:'test/index.html'}, function(self, root){
+sf.component('dynamic-template', {template:'test/template.html'}, function(self, root){
 	self.binds = 'OK working';
-	self.init = function(argument) {
-		console.log('asdjhaksjd');
-	}
 });
 
 window.templates = {
-	'test/index.html':`is something
-<sf-template path="test/absolute.html"></sf-template>
-and
-<sf-template path="./relative.html"></sf-template>
-in the middle?`,
-	'test/absolute.html':'<div> 1. {{ binds }} </div>',
-	'test/relative.html':'<div> 2. {{ binds }} </div>',
+	'test/reserved.html':`
+ reserve one
+ <sf-reserved name="test"></sf-reserved>
+ ?`,
+	'test/template.html':`is something
+<sf-template path="test/absolute.html"></sf-template> as one<br>
+and <sf-template path="./relative.html"></sf-template> as two<br>
+from window.templates?`,
+	'test/absolute.html':'(1. {{ binds }})',
+	'test/relative.html':'(2. {{ binds }})',
 };
