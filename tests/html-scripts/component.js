@@ -25,7 +25,7 @@ sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, i
 		console.warn('comp-test', item, self.$el[0], self, self.tries.constructor !== Array && self.tries.getElement(0));
 
 		if(!this.nyam || !this.nyam2)
-			console.error("inherited construct or init was not working");
+			console.error("❌ inherited construct or init was not working");
 
 		document.firstElementChild.scrollTop = document.firstElementChild.scrollHeight;
 	}
@@ -45,6 +45,11 @@ $(function(){
 sf.component('dynamic-reserved', {template:'test/reserved.html'}, function(self, root, $item){
 	self.sf$reserved = {test:$item.index === '1' ? '(1. {{ binds }})' : '(2. {{ binds }})'};
 	self.binds = 'OK working';
+
+	self.init = function(argument) {
+		if(self.$el[0].innerHTML.indexOf('{{') !== -1)
+			console.error('❌ Component init called on unparsed element template');
+	}
 });
 
 sf.component('dynamic-template', {template:'test/template.html'}, function(self, root){
@@ -53,7 +58,7 @@ sf.component('dynamic-template', {template:'test/template.html'}, function(self,
 
 window.templates = {
 	'test/reserved.html':`
- reserve one
+ reserve index
  <sf-reserved name="test"></sf-reserved>
  ?`,
 	'test/template.html':`is something

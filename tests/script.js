@@ -1,6 +1,6 @@
 var $ = sf.dom;
 var vul = '';
-var minimalTest = 0;
+var minimalTest = 1;
 
 // This framework is vulnerable if any alert displayed
 // or console.error is being outputted
@@ -10,7 +10,7 @@ if(0){
 	var ckz = 0;
 	var checkz = setInterval(function(){
 		if($('#vull').length)
-			alert("Vulnerability found!");
+			alert("❌ Vulnerability found!");
 
 		if(ckz++ > 100){
 			console.log("Vulnerability check finished");
@@ -19,15 +19,15 @@ if(0){
 	}, 200);
 }
 
-$(function(){console.log("Loading finished")});
+$(function(){console.log("✔ Loading finished")});
 
 class ImgModel{
 	static construct(){
-		console.warn('ImgModel construct was called', this);
+		console.warn('✔ ImgModel construct was called', this);
 	}
 
 	taphold(el, ev){
-		console.log('taphold called', el, ev);
+		console.log('✔ taphold called', el, ev);
 	}
 }
 
@@ -56,23 +56,3 @@ setTimeout(function(){
 	console.log("Trying to reinit", a.length, "element (must be 0)");
 	sf.model.parsePreprocess(a);
 }, 10000);
-
-var Spy = /** @class */ (function () {
-    function Spy() {
-    }
-    Spy.observe = function (targetNode) {
-        Spy.observer.observe(targetNode, Spy.config);
-    };
-    Spy.disconnect = function () {
-        Spy.observer.disconnect();
-    };
-    Spy["break"] = function () {
-    	// See the call stack
-        debugger;
-    };
-    Spy.config = { characterData: true, attributes: true, childList: true, subtree: true };
-    Spy.observer = new MutationObserver(Spy["break"]);
-    return Spy;
-}());
-
-// Spy.observe($('')[0]);

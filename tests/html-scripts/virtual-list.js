@@ -105,7 +105,7 @@ $(function(){
 
 		var posY = list.list1.$virtual.offsetTo(20);
 		if(!posY)
-			console.error("Can't get element offset for static height virtual scroll");
+			console.error("❌ Can't get element offset for static height virtual scroll");
 
 		list.list1.pop(); // remove item-50
 		list.list1.unshift({id:"I'm should be deleted"}, {id:"I'm inserted on first index"});
@@ -119,7 +119,7 @@ $(function(){
 			sf.model.init(reinit2);
 			setTimeout(function(){
 				if(list.list1.getElement(0).textContent.indexOf('{{self.vul}}') === -1)
-					return console.error("Vulnerability detected", list.list1.getElement(0));
+					return console.error("❌ Vulnerability detected", list.list1.getElement(0));
 				list.list1.shift();
 			}, 200);
 		}, 1000);
@@ -143,8 +143,8 @@ $(function(){
 		list.list1.refresh(8, 1);
 
 		setTimeout(function(){
-			if(!list.list1.getElement(7).dummy) console.error("Data on partial refresh was missing", list.list1[7]);
-			if(list.list1.getElement(8).dummy) console.error("Data on element refresh was exist", list.list1[8]);
+			if(!list.list1.getElement(7).dummy) console.error("❌ Data on partial refresh was missing", list.list1[7]);
+			if(list.list1.getElement(8).dummy) console.error("❌ Data on element refresh was exist", list.list1[8]);
 		}, 500);
 
 		console.log("I got the last index", list.list1.getElement(list.list1.length-1));

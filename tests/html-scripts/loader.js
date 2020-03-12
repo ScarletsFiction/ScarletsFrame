@@ -12,12 +12,12 @@ else {
 	sf.loader.onFinish(function(){
 		loaderWorking = true;
 		if(typeof assetloader === 'undefined')
-			console.error("External script loaded by sf.loader is not executed");
+			console.error("❌ External script loaded by sf.loader is not executed");
 	});
 
 	setTimeout(function(){
 		if(loaderWorking === false)
-			console.error("'sf.loader.onFinish' was not being called");
+			console.error("❌ 'sf.loader.onFinish' was not being called");
 	}, 5000);
 
 	sf.loader.css(['/tests/test_loader.css']);

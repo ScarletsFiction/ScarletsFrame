@@ -58,8 +58,9 @@
         _bst(function(){
           if(tempbst !== _bst_+_bsi_){
             console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
-            return console.log("Looks like internal framework timer was not effective");
+            return console.log("⚔ Looks like internal framework timer was not effective");
           }
+          else console.log("✔ Internal timer looks OK");
         }, 30000);
       </script>
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
