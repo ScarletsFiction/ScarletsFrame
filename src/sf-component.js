@@ -212,11 +212,15 @@ sf.component = function(name, options, func, namespace){
 			if(temp.constructor !== Object){
 				tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 
-				var isDynamic = internal.model.templateInjector(temp, newObj)
+				var isDynamic = internal.model.templateInjector(temp, newObj, true);
 				temp = sf.model.extractPreprocess(temp, null, newObj);
 
-				if(isDynamic !== true)
+				if(isDynamic === false)
 					scope.registered[name][3] = temp;
+				else{
+					isDynamic.tempDOM = tempDOM;
+					scope.registered[name][3] = isDynamic;
+				}
 
 				temp.tempDOM = tempDOM;
 			}
@@ -259,7 +263,7 @@ sf.component = function(name, options, func, namespace){
 				input:[]
 			};
 
-			internal.model.templateInjector(element, newObj);
+			internal.model.templateInjector(element, newObj, false);
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);

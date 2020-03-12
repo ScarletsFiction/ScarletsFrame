@@ -366,12 +366,23 @@ function toObserve(full, model, properties){
 		place[properties].push(toObserve.template.i);
 
 	return full;
-};
+}
 
-internal.model.templateInjector = function(targetNode, modelScope){
-	var injectTemplate = targetNode.getElementsByTagName('sf-template');
+// Return element or 
+internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic){
 	var reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
 	var isDynamic = reservedTemplate.length !== 0;
+	if(cloneDynamic === true && isDynamic === true){
+		targetNode.sf$hasReserved = true;
+		targetNode.sf$componentIgnore = true;
+
+		var temp = internal.component.skip;
+		internal.component.skip = true;
+		isDynamic = targetNode.cloneNode(true);
+		internal.component.skip = temp;
+	}
+
+	var injectTemplate = targetNode.getElementsByTagName('sf-template');
 
 	if(reservedTemplate.length !== 0){
 		if(modelScope.sf$reserved === void 0){
