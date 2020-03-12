@@ -225,8 +225,8 @@ self.bindElement = function(element, modelScope, template, localModel){
 
 		if(element.parentNode !== null){
 			var newElem = template.html;
-			// if(newElem.tagName.indexOf('-') !== -1)
-			// 	newElem.sf$componentIgnore = true;
+			if(element.tagName.indexOf('-') !== -1)
+				element.sf$componentIgnore = true;
 
 			element.parentNode.replaceChild(newElem, element);
 		}

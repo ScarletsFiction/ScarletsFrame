@@ -213,8 +213,13 @@ sf.component = function(name, options, func, namespace){
 			// Create template here because we have the sample model
 			if(temp.constructor !== Object){
 				tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
+
+				var isDynamic = internal.model.templateInjector(temp, newObj)
 				temp = sf.model.extractPreprocess(temp, null, newObj);
-				scope.registered[name][3] = temp;
+
+				if(isDynamic !== true)
+					scope.registered[name][3] = temp;
+
 				temp.tempDOM = tempDOM;
 			}
 
@@ -248,19 +253,16 @@ sf.component = function(name, options, func, namespace){
 			element.sf$elementReferences = parsed.sf$elementReferences;
 			sf.model.bindElement(element, newObj, copy);
 		}
+
+		// Custom component o the DOM
 		else{
 			var specialElement = {
 				repeat:[],
 				input:[]
 			};
 
-			sf.model.templateInjector(element, newObj);
-
-			var tempSkip = internal.component.skip;
-			internal.component.skip = true;
+			internal.model.templateInjector(element, newObj);
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
-			internal.component.skip = tempSkip;
-
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);
 		}
@@ -270,6 +272,9 @@ sf.component = function(name, options, func, namespace){
 		componentInit(element, newID, name);
 
 		element.sf$initTriggered = true;
+
+		if(element.tagName === 'DYNAMIC-RESERVED')
+			console.error(81, element);
 		return element;
 	}
 
@@ -331,7 +336,7 @@ sf.component = function(name, options, func, namespace){
 
 		func.prototype.connectedCallback = function(){
 			// Maybe it's not the time
-			if(this.model === void 0)
+			if(this.model === void 0 || this.sf$componentIgnore === true)
 				return;
 
 			if(this.sf$destroying !== void 0){

@@ -368,7 +368,7 @@ function toObserve(full, model, properties){
 	return full;
 };
 
-self.templateInjector = function(targetNode, modelScope){
+internal.model.templateInjector = function(targetNode, modelScope){
 	var injectTemplate = targetNode.getElementsByTagName('sf-template');
 	var reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
 	var isDynamic = reservedTemplate.length !== 0;
@@ -418,11 +418,11 @@ self.templateInjector = function(targetNode, modelScope){
 			injectTemplate[i].remove();
 		}
 	}
+
+	return isDynamic;
 }
 
 self.extractPreprocess = function(targetNode, mask, modelScope, container){
-	self.templateInjector(targetNode, modelScope);
-
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
