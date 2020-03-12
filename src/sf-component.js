@@ -42,10 +42,11 @@ sf.component = function(name, options, func, namespace){
 				continue;
 
 			var el = upgrade[i].el;
-			if(self.new(name, el, upgrade[i].item, namespace, false, true) === void 0)
+			el = self.new(name, el, upgrade[i].item, namespace, false, true);
+			if(el === void 0)
 				return;
 
-			delete el.sf$initTriggered;
+			el.connectedCallback('init');
 			upgrade.pop();
 		}
 
@@ -203,9 +204,6 @@ sf.component = function(name, options, func, namespace){
 			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
 		}
 
-		// if(scope.registered[name][1])
-		// 	scope.registered[name][1](newObj, sf.model, $item);
-
 		if(element.childNodes.length === 0){
 			var temp = scope.registered[name][3];
 			var tempDOM = temp.tempDOM;
@@ -254,7 +252,7 @@ sf.component = function(name, options, func, namespace){
 			sf.model.bindElement(element, newObj, copy);
 		}
 
-		// Custom component o the DOM
+		// Custom component that written on the DOM
 		else{
 			var specialElement = {
 				repeat:[],
@@ -265,6 +263,9 @@ sf.component = function(name, options, func, namespace){
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);
+
+			if(element.sf$componentIgnore === true)
+				return;
 		}
 
 		newObj.$el.push(element);
@@ -272,9 +273,6 @@ sf.component = function(name, options, func, namespace){
 		componentInit(element, newID, name);
 
 		element.sf$initTriggered = true;
-
-		if(element.tagName === 'DYNAMIC-RESERVED')
-			console.error(81, element);
 		return element;
 	}
 
@@ -334,7 +332,7 @@ sf.component = function(name, options, func, namespace){
 		func.prototype.constructor = func;
 		func.__proto__ = HTMLElement;
 
-		func.prototype.connectedCallback = function(){
+		func.prototype.connectedCallback = function(which){
 			// Maybe it's not the time
 			if(this.model === void 0 || this.sf$componentIgnore === true)
 				return;
@@ -357,7 +355,7 @@ sf.component = function(name, options, func, namespace){
 				return;
 			}
 
-			if(this.model.reinit)
+			if(which !== 'init' && this.model.reinit)
 				this.model.reinit();
 		};
 
