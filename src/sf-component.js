@@ -377,7 +377,7 @@ sf.component = function(name, options, func, namespace){
 			var that = this;
 			this.sf$destroying = setTimeout(function(){
 				if(that.model === void 0)
-					return console.log(that);
+					return;
 
 				if(that.model.destroy)
 					that.model.destroy();

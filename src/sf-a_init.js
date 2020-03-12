@@ -156,7 +156,7 @@ function hiddenProperty(obj, property, value){
 function deepProperty(obj, path){
   for(var i = 0; i < path.length; i++){
 	obj = obj[path[i]];
-	if(obj === void 0) return obj;
+	if(obj === void 0) return;
   }
   return obj;
 }

@@ -43,6 +43,7 @@ $(function(){
 });
 
 sf.component('dynamic-reserved', {template:'test/reserved.html'}, function(self, root, $item){
+	// Add note to developer that they must not load template from untrusted 3rd party
 	self.sf$reserved = {test:$item.index === '1' ? '(1. {{ binds }})' : '(2. {{ binds }})'};
 	self.binds = 'OK working';
 

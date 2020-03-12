@@ -371,18 +371,47 @@ function toObserve(full, model, properties){
 // Return element or 
 internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic){
 	var reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
-	var isDynamic = reservedTemplate.length !== 0;
-	if(cloneDynamic === true && isDynamic === true){
-		targetNode.sf$hasReserved = true;
-		targetNode.sf$componentIgnore = true;
-
-		var temp = internal.component.skip;
-		internal.component.skip = true;
-		isDynamic = targetNode.cloneNode(true);
-		internal.component.skip = temp;
-	}
-
 	var injectTemplate = targetNode.getElementsByTagName('sf-template');
+
+	if(injectTemplate.length !== 0){
+		var temp = window.templates;
+		if(temp === void 0)
+			throw new Error("<sf-template> need `window.templates` to be loaded first");
+
+		for (var i = injectTemplate.length - 1; i >= 0; i--) {
+			var path = injectTemplate[i].getAttribute('path')
+			if(path === null){
+				path = injectTemplate[i].getAttribute('get-path');
+
+				if(path !== null) // below got undefined if not found
+					path = deepProperty(window, parsePropertyPath(path));
+			}
+
+			var serve;
+			if(path !== null){
+				if(path !== void 0) {
+					if(path[0] === '.' && targetNode.templatePath !== void 0)
+						path = path.replace('./', targetNode.templatePath);
+
+					serve = temp[path];
+				}
+			}
+			else {
+				path = injectTemplate[i].getAttribute('get-html');
+				serve = deepProperty(window, parsePropertyPath(path));
+			}
+
+			if(serve === void 0){
+				console.log(injectTemplate[i], 'Template path was not found', path);
+				injectTemplate[i].remove();
+				continue;
+			}
+
+			serve = $.parseElement(serve);
+			$(serve).insertBefore(injectTemplate[i].nextSibling || injectTemplate[i]);
+			injectTemplate[i].remove();
+		}
+	}
 
 	if(reservedTemplate.length !== 0){
 		if(modelScope.sf$reserved === void 0){
@@ -406,28 +435,15 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 		}
 	}
 
-	if(injectTemplate.length !== 0){
-		var temp = window.templates;
-		if(temp === void 0)
-			throw new Error("<sf-template> need `window.templates` to be loaded first");
+	var isDynamic = reservedTemplate.length !== 0;
+	if(cloneDynamic === true && isDynamic === true){
+		targetNode.sf$hasReserved = true;
+		targetNode.sf$componentIgnore = true;
 
-		for (var i = injectTemplate.length - 1; i >= 0; i--) {
-			var path = injectTemplate[i].getAttribute('path');
-
-			if(path[0] === '.')
-				path = path.replace('./', targetNode.templatePath);
-
-			var serve = temp[path];
-			if(serve === void 0){
-				console.log(injectTemplate[i], 'Template path was not found', path);
-				injectTemplate[i].remove();
-				continue;
-			}
-
-			serve = $.parseElement(serve);
-			$(serve).insertBefore(injectTemplate[i].nextSibling || injectTemplate[i]);
-			injectTemplate[i].remove();
-		}
+		var temp = internal.component.skip;
+		internal.component.skip = true;
+		isDynamic = targetNode.cloneNode(true);
+		internal.component.skip = temp;
 	}
 
 	return isDynamic;
