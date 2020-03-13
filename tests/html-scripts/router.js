@@ -68,10 +68,10 @@ views.on('routeStart', function(current, target) {
 	 console.log("Loading path to " + target);
 });
 views.on('routeFinish', function(current, target) {
-	 console.log("Navigated from " + current + " to " + target);
+	 console.log("Navigated from " + current + " to " + (target || '❌'));
 });
 views.on('routeError', function(e) {
-	 console.error("Navigation failed", e);
+	 console.error("❌ Navigation failed", e);
 });
 // views.on('routeData', function(obj){
 //	 if(obj.title) sf.dom.findOne('head > title').innerHTML = obj.title;

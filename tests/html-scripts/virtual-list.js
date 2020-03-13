@@ -35,16 +35,16 @@ sf.model.for('virtual-scroll', function(self, root){
 	var added = false;
 	self.on$list2 = self.on$list1 = {
 		hitFloor:function(){
-			console.log("Scroll hit floor");
+			console.log("✔️ Scroll hit floor");
 
 			// Test infinity load for static scroll
 			if(added === false){
 				added = true;
-				self.list1.push({id:"Added on scroll end - 1"+vul}, {id:"Added on scroll end - 2"}, {id:"Added on scroll end - 3"});
+				self.list1.push({id:"Added on scroll end - 1"+vul}, {id:"Added on scroll end - 2"}, {id:"✔️ Added on scroll end - 3"});
 			}
 		},
 		hitCeiling:function(){
-			console.log("Scroll hit ceiling");
+			console.log("✔️ Scroll hit ceiling");
 		}
 	}
 });
@@ -147,6 +147,6 @@ $(function(){
 			if(list.list1.getElement(8).dummy) console.error("❌ Data on element refresh was exist", list.list1[8]);
 		}, 500);
 
-		console.log("I got the last index", list.list1.getElement(list.list1.length-1));
+		console.log("I got the last index", list.list1.getElement(list.list1.length-1) || '❌');
 	}, 2000);
 });

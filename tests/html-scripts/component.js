@@ -39,7 +39,7 @@ sf.component.html('comp-test', '<div sf-lang="translated">1. translated {{ data 
 
 $(function(){
 	var elem2 = new $CompTest('from javascript');
-	components.appendChild(elem2);
+	nyam.appendChild(elem2);
 });
 
 sf.component('dynamic-reserved', {template:'test/reserved.html'}, function(self, root, $item){
@@ -47,9 +47,13 @@ sf.component('dynamic-reserved', {template:'test/reserved.html'}, function(self,
 	self.sf$reserved = {test:$item.index === '1' ? '(1. {{ binds }})' : '(2. {{ binds }})'};
 	self.binds = 'OK working';
 
-	self.init = function(argument) {
+	self.init = function(arg) {
 		if(self.$el[0].innerHTML.indexOf('{{') !== -1)
 			console.error('❌ Component init called on unparsed element template');
+
+		var find = '('+$item.index+'. '+self.binds+')';
+		if(self.$el[0].innerHTML.indexOf(find) === -1)
+			console.error("❌ Reserved element was replaced with incorrect data, expected to found", find, self.$el[0]);
 	}
 });
 
@@ -63,7 +67,7 @@ window.templates = {
  <sf-reserved name="test"></sf-reserved>
  ?`,
 	'test/template.html':`is something
-<sf-template path="test/absolute.html"></sf-template> as one<br>
+<sf-template path="test/absolute.html"></sf-template> as one 
 and <sf-template path="./relative.html"></sf-template> as two<br>
 from window.templates?`,
 	'test/absolute.html':'(1. {{ binds }})',

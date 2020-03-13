@@ -17,10 +17,10 @@ sf.model.for('model-binding', function(self, root){
 	self.inputBinding3 = vul;
 	self.inputBinding4 = ''+vul;
 	self.m2v$inputBinding4 = function(old, news){
-		console.warn("inputBinding4 (Model -> View)", old, news);
+		console.warn("inputBinding4 (Model -> View)", old, news || '❌');
 	};
 	self.v2m$inputBinding4 = function(old, news){
-		console.log("inputBinding4 (View -> Model) will be revert from:", news, 'to', old);
+		console.log("inputBinding4 (View -> Model) will be revert from:", news, 'to', old || '❌');
 		setTimeout(function(){
 			self.inputBinding4 = old+vul;
 			console.log("Reverted");
@@ -28,7 +28,7 @@ sf.model.for('model-binding', function(self, root){
 	};
 	self.inputBinding5 = [];
 	self.inputBinding2.out$text = function(old, news){
-		console.warn("inputBinding2 was modified from:", news, 'to', Math.round(news));
+		console.warn("inputBinding2 was modified from:", news || '❌', 'to', Math.round(news));
 		return Math.round(news);
 	};
 
@@ -49,7 +49,7 @@ sf.model.for('model-binding', function(self, root){
 	}, 5000);
 	self.inputBinding6 = '';
 	self.on$inputBinding6 = function(old, news){
-		console.warn("inputBinding6 was updated from:", old, 'to', news);
+		console.warn("inputBinding6 was updated from:", old, 'to', news || '❌');
 	};
 	self.inputBinding7 = ''+vul;
 	self.showHTML = true;
@@ -58,7 +58,15 @@ sf.model.for('model-binding', function(self, root){
 	self.stuffes = ' and stuff'+vul;
 	self.vuln = "{{self.vul}}{{@exec console.error('something not gud')}}"+vul;
 	self.vul = "this musn't being visible"+vul;
-	setTimeout(function(){sf.model.init(reinit)}, 1000);
+
+	setTimeout(function(){
+		try{
+			sf.model.init(reinit);
+		}
+		catch(e){
+			console.error("✔️ Expected error", e);
+		}
+	}, 1000);
 
 	self.init = function(){
 		setTimeout(function(){
@@ -104,19 +112,19 @@ sf.model.for('components', function(self){
 	self.items = [1];
 	self.test = 'this must getting changed'+vul;
 	self.handleClick = function(e){
-		console.log('element click', e.target);
+		console.log('element click', e.target || '❌');
 	}
 	self.init = function(){
-		console.log("Model init called", self.$el);
+		console.log("Model init called", self.$el || '❌');
 
 		setTimeout(function(){
 			self.test = 'OK'+vul;
 			if(self.$el('#nyam').attr('test') !== 'OK'+vul)
-				console.error("Attribute is not changed", self.$el('#nyam')[0]);
+				console.error("✔️ Attribute is not changed", self.$el('#nyam')[0]);
 		}, 1000);
 	}
 	self.clickOK = function(){
-		console.warn("Click OK!");
+		console.warn("✔️ Click OK!");
 		self.items.push(self.items.length+1);
 	}
 });

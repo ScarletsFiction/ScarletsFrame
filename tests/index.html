@@ -60,7 +60,7 @@
             console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
             return console.log("⚔ Looks like internal framework timer was not effective");
           }
-          else console.log("✔ Internal timer looks OK");
+          else console.log("✔️ Internal timer looks OK");
         }, 30000);
       </script>
       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
@@ -271,14 +271,16 @@
          <comp-test id="repeat" sf-repeat-this="item in items"></comp-test>
        </div>
        <div>
+        <b>Below must be 2,2,1</b><br>
          <dynamic-reserved index="2"></dynamic-reserved>
          <dynamic-reserved index="2">
             reserve two
             <sf-reserved name="test"></sf-reserved>
             ?
-         </dynamic-reserved>
+         </dynamic-reserved><br>
          <dynamic-reserved index="1"></dynamic-reserved>
          <br>
+         <b>Below must be 1,2</b><br>
          <dynamic-template></dynamic-template>
        </div>
       </sf-m>

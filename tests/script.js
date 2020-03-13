@@ -19,15 +19,15 @@ if(0){
 	}, 200);
 }
 
-$(function(){console.log("✔ Loading finished")});
+$(function(){console.log("✔️ Loading finished")});
 
 class ImgModel{
 	static construct(){
-		console.warn('✔ ImgModel construct was called', this);
+		console.warn('✔️ ImgModel construct was called', this);
 	}
 
 	taphold(el, ev){
-		console.log('✔ taphold called', el, ev);
+		console.log('✔️ taphold called', el, ev);
 	}
 }
 
@@ -53,6 +53,6 @@ sf.model.for('image', {extend: ImgModel}, function(self, root){
 
 setTimeout(function(){
 	var a = sf.model.queuePreprocess(document.body);
-	console.log("Trying to reinit", a.length, "element (must be 0)");
+	console.log(a.length ? '❌' : '✔️', "Trying to reinit", a.length, "element (must be 0)");
 	sf.model.parsePreprocess(a);
 }, 10000);
