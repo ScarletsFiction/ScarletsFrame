@@ -413,6 +413,17 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 		}
 	}
 
+	var isDynamic = reservedTemplate.length !== 0;
+	if(cloneDynamic === true && isDynamic === true){
+		targetNode.sf$hasReserved = true;
+		targetNode.sf$componentIgnore = true;
+
+		var temp = internal.component.skip;
+		internal.component.skip = true;
+		isDynamic = targetNode.cloneNode(true);
+		internal.component.skip = temp;
+	}
+
 	if(reservedTemplate.length !== 0){
 		if(modelScope.sf$reserved === void 0){
 			for (var i = reservedTemplate.length - 1; i >= 0; i--) {
@@ -433,17 +444,6 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 				reservedTemplate[i].remove();
 			}
 		}
-	}
-
-	var isDynamic = reservedTemplate.length !== 0;
-	if(cloneDynamic === true && isDynamic === true){
-		targetNode.sf$hasReserved = true;
-		targetNode.sf$componentIgnore = true;
-
-		var temp = internal.component.skip;
-		internal.component.skip = true;
-		isDynamic = targetNode.cloneNode(true);
-		internal.component.skip = temp;
 	}
 
 	return isDynamic;
