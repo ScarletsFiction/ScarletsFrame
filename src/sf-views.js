@@ -514,7 +514,7 @@ var self = sf.views = function View(selector, name){
 			if(onEvent['routeStart'][i](self.currentPath, path)) return;
 		}
 
-		self.data = url.data;
+		var currentData = self.data = url.data;
 
 		function insertLoadedElement(DOMReference, dom, parentNode, pendingShowed){
 			if(parentNode)
@@ -524,9 +524,9 @@ var self = sf.views = function View(selector, name){
 			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
 				dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
 				dom.firstChild.remove();
-			}
 
-			Object.assign(self.data, dom.routerData)
+				Object.assign(self.data, dom.routerData);
+			}
 
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
@@ -651,6 +651,10 @@ var self = sf.views = function View(selector, name){
 						var newPath = path.match(url.parent.forChild)[0];
 						return self.goto(newPath, false, method, function(parentNode){
 							DOMReference = parentNode.sf$viewSelector[selectorName];
+
+							if(currentData !== self.data)
+								self.data = Object.assign(currentData, self.data);
+
 							insertLoadedElement(DOMReference, dom, parentNode);
 
 							if(callback) return callback(dom);
@@ -712,7 +716,7 @@ var self = sf.views = function View(selector, name){
 		    }),
 			success:function(html_content){
 				if(rejectResponse.test(html_content)){
-					console.error("Views request was received <html> while it was disalowed. Please check http response from Network Tab.");
+					console.error("Views request was received <html> while it was disallowed. Please check http response from Network Tab.");
 					return routeError_(1);
 				}
 
@@ -788,7 +792,7 @@ var self = sf.views = function View(selector, name){
 		self.data = cachedDOM.routerData;
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.coming)
-			self.currentDOM.routeCached.on.coming();
+			self.currentDOM.routeCached.on.coming(self.data);
 
 		toBeShowed(cachedDOM);
 
@@ -801,7 +805,7 @@ var self = sf.views = function View(selector, name){
 		self.currentPath = self.currentDOM.routePath;
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.showed)
-			self.currentDOM.routeCached.on.showed();
+			self.currentDOM.routeCached.on.showed(self.data);
 
 		if(lastDOM.routeCached.on !== void 0 && lastDOM.routeCached.on.hidden)
 			lastDOM.routeCached.on.hidden();
