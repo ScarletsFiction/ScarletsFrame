@@ -492,7 +492,7 @@ var self = sf.views = function View(selector, name){
 			sf.url.hashes[name] = path;
 
 		// This won't trigger popstate event
-		if(!disableHistoryPush && _disableHistory === void 0)
+		if(!disableHistoryPush && _disableHistory === void 0 && name !== false)
 			sf.url.push();
 
 		// Check if view was exist
