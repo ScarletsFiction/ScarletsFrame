@@ -256,9 +256,12 @@ internal.virtual_scroll = new function(){
 		refreshScrollBounding(0, bounding, list, parentNode);
 
 		var updating = false;
-		function checkCursorPosition(){
+		function checkCursorPosition(ev){
 			if(updating || scrollingByScript) return;
 			updating = true;
+
+			ev.preventDefault();
+			ev.stopPropagation();
 
 			if(scroller.scrollTop < bounding.ceiling){
 				// console.log('back', bounding, scroller.scrollTop, virtual.DOMCursor);
@@ -348,7 +351,7 @@ internal.virtual_scroll = new function(){
 		var updating = false;
 		var fromCeiling = true;
 		var scrollFocused = false;
-		function checkCursorPosition(){
+		function checkCursorPosition(ev){
 			if(updating || scrollingByScript || scroller.scrollTop >= bounding.ceiling && scroller.scrollTop <= bounding.floor){
 				// Fix chrome scroll anchoring bugs when scrolling at corner
 				if(scrollFocused){
@@ -393,6 +396,8 @@ internal.virtual_scroll = new function(){
 				return;
 			}
 
+			ev.preventDefault();
+			ev.stopPropagation();
 			virtual.DOMCursor = cursor;
 
 			// console.log(cursor, changes, bounding.ceiling, bounding.floor, scroller.scrollTop);
