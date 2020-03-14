@@ -39,21 +39,14 @@ window.addEventListener('popstate', function(ev){
 	disableHistoryPush = false;
 }, false);
 
-// Listen to every link click
+// Listen to every link click, capture mode
 $(function(){
 	$.on(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
-		var elem = ev.target;
-		var attr = elem.getAttribute('href');
-
-		if(attr === null){
-			elem = elem.closest('a[href]');
-			attr = elem.getAttribute('href');
-		}
-
+		var attr = this.getAttribute('href');
 		if(attr[0] === '@'){ // ignore
-			var target = elem.getAttribute('target');
+			var target = this.getAttribute('target');
 			if(target)
 				window.open(attr.slice(1), target);
 			else window.location = attr.slice(1);
@@ -61,12 +54,19 @@ $(function(){
 		}
 
 		// Make sure it's from current origin
-		var path = elem.href.replace(window.location.origin, '');
-		if(path.indexOf('//') !== -1)
-			return;
+		var path = this.href.replace(window.location.origin, '');
 
+		// If it's different domain
+		if(path.indexOf('//') !== -1){
+			if(sf.views.onCrossing)
+				sf.views.onCrossing(this.href);
+
+			return;
+		}
+
+		// Let ScarletsFrame handle this link
 		self.goto(attr);
-	});
+	}, true);
 });
 
 var cachedURL = {};
@@ -708,8 +708,12 @@ var self = sf.views = function View(selector, name){
 			return true;
 		}
 
+		var thePath = (url.templateURL || url.url || path);
+		if(thePath[0] !== '/')
+			thePath = '/'+thePath;
+
 		RouterLoading = sf.ajax({
-			url:window.location.origin + (url.templateURL || url.url || path),
+			url:window.location.origin + thePath,
 			method:method || 'GET',
 		    data:Object.assign(data || url.defaultData, {
 		        _sf_view:url.selector === void 0 ? selector : selectorList[url.selector].split(' ').pop()
