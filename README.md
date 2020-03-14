@@ -17,7 +17,6 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 - [Todo Application](https://playcode.io/134963?tabs=console&model.js&output)
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 - [Gesture Event](https://jsbin.com/jilivas/edit?html,js,output)
-- [Complex DOM](https://jsbin.com/zunebuj/edit?html,js,output)
 - [Views and Router](https://1vbdh.csb.app/) | [Source](https://codesandbox.io/s/viewsrouter-example-1vbdh)
 - [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
 

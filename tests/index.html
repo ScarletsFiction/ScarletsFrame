@@ -141,8 +141,17 @@
             <a href="/test/page2/nest2/nest2">2-2-2</a> | 
          </custom-view>
          <br><br>
-         <a href="@/">Refresh whole page</a>
+         <a href="@/">Refresh whole page</a><br>
+
+         <!-- This should be passed as unhandled -->
+         <a href="//www.google.com">Test1</a>
+         <a href="//www.google.com/hey">Test2</a>
       </div><br><br>
+      <script type="text/javascript">
+        sf.views.onCrossing = function(url){
+          console.log("Cross domain catched:", url);
+        }
+      </script>
 
       <!-- Virtual Scroll And Array Binding -->
       <sf-m name="virtual-scroll" id="reinit2">
@@ -156,8 +165,8 @@
 
          <b>Virtual Scroll - Static Height & Scroll on parent</b>
          <div data-simplebar style="height: 200px;">
-            <ul class="sf-virtual-list" scroll-parent-index="2" @click="handleClick(event, 1)">
-              <li sf-repeat-this="x in list1" data-id="{{x.id}}">
+            <ul class="sf-virtual-list" scroll-parent-index="2">
+              <li sf-repeat-this="x in list1" data-id="{{x.id}}" @click="handleClick(event, 1)">
                 <label>{{ x.id }}</label>
 
                 {{@if x === list1[0]:
@@ -174,9 +183,9 @@
 
          <b>Virtual Scroll - Dynamic Height</b>
          <i>Automatically scroll to item-11</i>
-         <ul class="scroller sf-virtual-list sf-list-dynamic" @click="handleClick(event, 2)">
+         <ul class="scroller sf-virtual-list sf-list-dynamic">
             <li sf-repeat-this="x in list2" data-id="{{x.id}}">
-               <label>{{x.id}}</label>
+               <label @click="handleClick(event, 2)">{{x.id}}</label>
             </li>
          </ul>
       </sf-m><br><br>
