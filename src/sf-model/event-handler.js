@@ -142,6 +142,8 @@ function eventHandler(that, data, _modelScope, rootHandler){
 		if(keys.has('right'))
 			(rootHandler || that).addEventListener('contextmenu', function(ev){
 				ev.preventDefault();
+				ev.stopPropagation();
+				ev.stopImmediatePropagation();
 			}, options);
 	}
 
@@ -159,6 +161,10 @@ function eventHandler(that, data, _modelScope, rootHandler){
 
 			if(keys.has('stop'))
 				ev.stopPropagation();
+			else if(keys.has('stopAll')){
+				ev.stopImmediatePropagation();
+				ev.stopPropagation();
+			}
 
 			if(ev.ctrlKey !== void 0){
 				if(ev.ctrlKey !== keys.has('ctrl')
@@ -240,9 +246,6 @@ var specialEvent = internal.model.specialEvent = {
 		}
 
 		function callbackMove(ev){
-			ev.preventDefault();
-			ev.stopPropagation();
-
 			if(Math.abs(evStart.clientX - ev.clientX) > 1 || Math.abs(evStart.clientY - ev.clientY) > 1){
 				clearTimeout(timer);
 				set.delete(ev.pointerId);
@@ -302,6 +305,7 @@ var specialEvent = internal.model.specialEvent = {
 		function callbackMove(ev){
 			ev.stopPropagation();
 			ev.preventDefault();
+			ev.stopImmediatePropagation();
 			script.call(that, ev);
 		}
 
@@ -434,6 +438,7 @@ function touchGesture(that, callback){
 	var callbackMove = function(ev){
 		ev.preventDefault();
 		ev.stopPropagation();
+		ev.stopImmediatePropagation();
 		findAnd(1, ev);
 
 		var dx = pointers[1].clientX - pointers[0].clientX;
