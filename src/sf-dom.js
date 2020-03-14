@@ -208,19 +208,19 @@ var $ = sf.dom; // Shortcut
 
 			return this;
 		},
-		on:function(event, selector, callback){
+		on:function(event, selector, callback, options){
 			for (var i = 0; i < this.length; i++){
 				if(internal.model.specialEvent[event] !== void 0){
 					internal.model.specialEvent[event](this[i], null, callback);
 					continue;
 				}
 
-				self.on(this[i], event, selector, callback);
+				self.on(this[i], event, selector, callback, options);
 			}
 
 			return this;
 		},
-		off:function(event, selector, callback){
+		off:function(event, selector, callback, options){
 			for (var i = 0; i < this.length; i++){
 				if(internal.model.specialEvent[event] !== void 0){
 					if(this[i]['sf$eventDestroy_'+event] !== void 0)
@@ -229,7 +229,7 @@ var $ = sf.dom; // Shortcut
 					continue;
 				}
 
-				self.off(this[i], event, selector, callback);
+				self.off(this[i], event, selector, callback, options);
 			}
 			return this;
 		},
@@ -449,28 +449,32 @@ var $ = sf.dom; // Shortcut
 	 * @param  string 			event   	event name
 	 * @param  function|string  selector    callback function or selector
 	 * @param  function			callback    callback function
-	 * @param  boolean			once    	call once
+	 * @param  object			options     event options
 	 * @return null
 	 */
-	self.on = function(element, event, selector, callback, once){
-		if(typeof element === 'string'){
-			element = document;
-			callback = selector;
-			selector = event;
-			event = element;
-		}
-
+	self.on = function(element, event, selector, callback, options){
 		if(event.indexOf(' ') !== -1){
 			event = event.split(' ');
 			for (var i = 0; i < event.length; i++) {
-				self.on(element, event[i], selector, callback, once);
+				self.on(element, event[i], selector, callback, options);
 			}
 			return;
 		}
 
-		if(typeof selector === 'function'){
+		if(selector.constructor === Function){
 			callback = selector;
 			selector = null;
+		}
+
+		else if(selector.constructor === Object){
+			options = selector;
+			selector = null;
+		}
+
+		if(callback.constructor === Object){
+			var temp = options;
+			callback = options;
+			options = temp;
 		}
 
 		if(selector){
@@ -486,10 +490,11 @@ var $ = sf.dom; // Shortcut
 		}
 
 		callback.selector = selector;
-		callback.once = once;
-		element.addEventListener(event, callback, {capture:true, once:once === true});
+		callback.options = options;
 
-		if(once) return;
+		element.addEventListener(event, callback, callback.options);
+		if(typeof options === 'object' && options.once)
+			return;
 
 		// Save event listener
 		if(element.sf$eventListener === void 0)
@@ -503,7 +508,7 @@ var $ = sf.dom; // Shortcut
 
 	// Shorcut
 	self.once = function(element, event, selector, callback){
-		self.on(element, event, selector, callback, true);
+		self.on(element, event, selector, callback, {once:true});
 	}
 
 	/**
@@ -514,7 +519,7 @@ var $ = sf.dom; // Shortcut
 	 * @param  function  	callback    callback
 	 * @return null
 	 */
-	self.off = function(element, event, selector, callback){
+	self.off = function(element, event, selector, callback, options){
 		// Remove all event
 		if(event === void 0){
 			if(element.sf$eventListener === void 0)
@@ -543,13 +548,13 @@ var $ = sf.dom; // Shortcut
 		// Remove listener
 		if(element.sf$eventListener === void 0){
 			if(callback !== void 0)
-				element.removeEventListener(event, callback, {capture:true});
+				element.removeEventListener(event, callback, options);
 
 			return;
 		}
 
 		if(callback){
-			element.removeEventListener(event, callback, {capture:true});
+			element.removeEventListener(event, callback, options);
 			var ref = element.sf$eventListener[event];
 			if(ref === void 0)
 				return;
@@ -558,6 +563,9 @@ var $ = sf.dom; // Shortcut
 
 			if(i !== -1)
 				ref.splice(i, 1);
+
+			if(ref.length === 0)
+				delete element.sf$eventListener[event];
 		}
 		else{
 			var ref = element.sf$eventListener;
@@ -566,8 +574,11 @@ var $ = sf.dom; // Shortcut
 					if(selector && ref[event][i].selector !== selector)
 						continue;
 
-					element.removeEventListener(event, ref[event].splice(i, 1), {capture:true});
+					var options = ref[event][i].options;
+					element.removeEventListener(event, ref[event].splice(i, 1), options);
 				}
+
+				delete element.sf$eventListener[event];
 			}
 		}
 	}
