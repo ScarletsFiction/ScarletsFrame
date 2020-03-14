@@ -55,7 +55,8 @@ var languages = {
             iB2:"上記のコンテンツ：{inputBinding2.text}",
             iB3:"それは{inputBinding2.text}です"
           }
-        }
+        },
+        test:{complex:'[{item}] {data} japan test'}
     }
 };
 
@@ -81,7 +82,10 @@ module.exports = {
 
         if(json.translated)
             obj.translated = lang.translated;
-        
+
+        if(json.test)
+            obj.test = lang.test;
+
         if(json.second)
             obj.second = lang.second;
 

@@ -437,8 +437,9 @@ function assignSquareBracket(elem, value){
 		// Even = text only
 
 		var nodes = elem.childNodes;
+		var whenEven = true;
 		for (var a = 0; a < value.length; a++) {
-			if(a % 2 === 0){ // text
+			if((a % 2 === 0) === whenEven){ // text node
 				if(nodes[a] === void 0) // no nodes
 					elem.appendChild(document.createTextNode(value[a]));
 				else if(nodes[a].nodeType === 3) // text node
@@ -454,8 +455,16 @@ function assignSquareBracket(elem, value){
 				continue;
 			}
 
-			if(nodes[a].nodeType === 1) // element node
+			if(nodes[a].nodeType === 1){ // element node
+				if(value[a][0] === '{') // Check if this was template
+					continue;
+
 				nodes[a].textContent = value[a];
+				continue;
+			}
+
+			// This may rare case, but does found other node type?
+			whenEven = !whenEven; 
 		}
 
 		if(nodes[a] !== void 0 && nodes[a].nodeType === 3)
@@ -498,6 +507,36 @@ function elementReferencesRefresh(elem){
 			continue;
 		}
 
+		if(eRef[i].textContent !== void 0){
+			var hasBracket = value.split(/(?=[^\\]|^)\[(.*?)\]/g);
+			if(hasBracket.length !== 1){
+				// ToDo: add more support for complex model and language
+				// It would need to add more `eRef[i].textContent` on the template
+				if(hasBracket.length === 3){ // text, [element], text
+					var found = false;
+					if(hasBracket[0].indexOf('{') !== -1)
+						found = 0;
+
+					if(hasBracket[2].indexOf('{') !== -1){
+						if(found !== false){
+							console.error('Currently only one square language template that can be combined with model template');
+							continue;
+						}
+
+						found = 2;
+					}
+
+					assignSquareBracket(elem, value);
+					value = hasBracket[found];
+					eRef[i].textContent = elem.childNodes[found];
+				}
+				else{
+					console.error('Currently only one square language template that can be combined with model template');
+					continue;
+				}
+			}
+		}
+
 		var template = eRef.template;
 		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
 			if(isNaN(match) === false)
@@ -509,7 +548,7 @@ function elementReferencesRefresh(elem){
 			if(template.modelRef !== null && template.modelRef[match] !== void 0)
 				return '{{%='+template.modelRef[match][0]+'%';
 
-			console.error("Language binding can't find existing model binding for", match, "from", Object.keys(template.modelRefRoot));
+			console.error("Language can't find existing model template for '"+match+"' from", Object.keys(template.modelRefRoot));
 			return '';
 		});
 	}

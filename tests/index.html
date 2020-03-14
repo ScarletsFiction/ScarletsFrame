@@ -269,7 +269,7 @@
          <a @click="clickOK">test click</a><br>
          <comp-test id="henlos">
             <input type="text" sf-bind="data"/>
-            custom {{data}} {{item}} here
+            <span sf-lang="test.complex">custom {{data}} <b>{{item}}</b> here</span>
             <span sf-repeat-this="num in tries">{{num}},</span>
             <comp-test id="deepTest">
               Deep repeat yeah
@@ -341,7 +341,8 @@
                 iB2:"Above content: {inputBinding2.text}",
                 iB3:"It's {inputBinding2.text}"
               }
-            }
+            },
+            test:{complex:'custom {data} [{item}] here'}
           });
           sf.lang.add('id_ID', {
             translated:"terjemahankan {data}"+vul,
@@ -359,7 +360,8 @@
             },
             "i'm":{
               here:"Aku disini!"
-            }
+            },
+            test:{complex:'contoh {data} disini [{item}]'}
           });
 
           // Spy.observe($('#lkj')[0]);
