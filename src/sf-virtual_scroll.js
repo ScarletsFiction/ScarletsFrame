@@ -260,9 +260,6 @@ internal.virtual_scroll = new function(){
 			if(updating || scrollingByScript) return;
 			updating = true;
 
-			ev.preventDefault();
-			ev.stopPropagation();
-
 			if(scroller.scrollTop < bounding.ceiling){
 				// console.log('back', bounding, scroller.scrollTop, virtual.DOMCursor);
 				previousCeiling();
@@ -396,8 +393,6 @@ internal.virtual_scroll = new function(){
 				return;
 			}
 
-			ev.preventDefault();
-			ev.stopPropagation();
 			virtual.DOMCursor = cursor;
 
 			// console.log(cursor, changes, bounding.ceiling, bounding.floor, scroller.scrollTop);
