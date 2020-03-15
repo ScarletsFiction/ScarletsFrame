@@ -114,7 +114,6 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				if(ref.html.constructor === String){
 					route.html = sf.dom.parseElement('<template>'+ref.html+'</template>', true)[0];
 					internal.component.skip = false;
-					return;
 				}
 				else dom.appendChild(ref.html);
 
