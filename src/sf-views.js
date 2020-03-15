@@ -380,14 +380,25 @@ var self = sf.views = function View(selector, name){
 		return false;
 	}
 
+	function routeErrorPassEvent(statusCode, data){
+		var ref = onEvent['routeError'];
+
+		if(ref.length === 0){
+			console.error('Unhandled router error:', statusCode, data);
+			return;
+		}
+
+		for (var i = 0; i < ref.length; i++) {
+			ref[i](statusCode, data);
+		}
+	}
+
 	function routeError_(xhr, data){
 		if(xhr.aborted) return;
 		routingError = true;
 
 		RouterLoading = false;
-		for (var i = 0; i < onEvent['routeError'].length; i++) {
-			onEvent['routeError'][i](xhr.status, data);
-		}
+		routeErrorPassEvent(xhr.status, data);
 
 		window.history.go(routeDirection * -1);
 	}
@@ -479,7 +490,12 @@ var self = sf.views = function View(selector, name){
 
 		// Get template URL
 		var url = routes.findRoute(path);
-		if(!url) return;
+		if(!url){
+			return routeErrorPassEvent(404, {
+				path:path,
+				message:"Path was not found"
+			});
+		}
 
 		// Return when beforeRoute returned truthy value
 		if(url.beforeRoute !== void 0 && url.beforeRoute(url.data))
@@ -643,7 +659,11 @@ var self = sf.views = function View(selector, name){
 				if(!DOMReference || DOMReference.isConnected === false){
 					if(url.parent === void 0){
 						dom.remove();
-						return routeError_({status:0});
+						return routeError_({status:0}, {
+							path:path,
+							target:dom,
+							message:"Parent element was not found while adding this element. Maybe it was disconnected from the DOM."
+						});
 					}
 					else{
 						// Try to load parent router first
@@ -719,8 +739,11 @@ var self = sf.views = function View(selector, name){
 		    }),
 			success:function(html_content){
 				if(rejectResponse.test(html_content)){
-					console.error("Views request was received <html> while it was disallowed. Please check http response from Network Tab.");
-					return routeError_(1);
+					return routeError_({status:403}, {
+						path:path,
+						requestURL:window.location.origin + thePath,
+						message:"Views request was received <html> while it was disallowed. Please check http response from Network Tab."
+					});
 				}
 
 				// Create new element

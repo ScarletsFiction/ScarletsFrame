@@ -18,7 +18,7 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 - [Gesture Event](https://jsbin.com/jilivas/edit?html,js,output)
 - [Views and Router](https://1vbdh.csb.app/) | [Source](https://codesandbox.io/s/viewsrouter-example-1vbdh)
-- [Language](https://jsbin.com/delayeb/edit?html,js,console,output)
+- [Language](https://jsbin.com/delayeb/edit?html,js,output)
 
 ## Install from template
 For starting the development environment, let's use the [default template](https://github.com/StefansArya/scarletsframe-default).
@@ -85,9 +85,7 @@ sf.model.for('things', (self, root) => {
 ## Contribution
 If you want to help in ScarletsFrame please fork this project and edit on your repository, then make a pull request to here. Otherwise, you can help with donation via [patreon](https://www.patreon.com/stefansarya).
 
-Keep the code simple and clear.
-
 ## License
 ScarletsFrame is under the MIT license.
 
-But don't forget to put the a link to this repository.
+But don't forget to put a link to this repository, or share it maybe.
