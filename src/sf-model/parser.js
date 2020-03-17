@@ -648,7 +648,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 			if(innerHTML === '' && indexes.length === 1)
 				temp.direct = indexes[0];
 			else{
-				temp.value = nodes[i].textContent;
+				temp.value = nodes[i].textContent.replace(/[ \t]{2,}/g, ' ');
 				temp.parse_index = indexes;
 			}
 
