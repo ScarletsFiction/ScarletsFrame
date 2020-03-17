@@ -47,7 +47,7 @@ $ gulp
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link
 ```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js'></script>
 ```
 
 ### Polyfill for IE11
