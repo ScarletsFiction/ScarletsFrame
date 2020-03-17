@@ -128,3 +128,43 @@ sf.model.for('components', function(self){
 		self.items.push(self.items.length+1);
 	}
 });
+
+sf.model('deep-property', function(self){
+  test = self;
+
+  self.one = 'One';
+  self.today = {two:'Two'};
+  self.list = [];
+
+  // Run when this model was initialized
+  self.init = function(){
+    self.list.push({
+      text:{
+        three:"Three"
+      },
+      four:'Four'
+    });
+
+    setTimeout(function(){
+      self.one += '12';
+      if(self.$el('.today').text().trim() !== 'One12 Two')
+        console.error('❌', self.$el('.today').text().trim(), ', should be ->', 'One12 Two');
+      if(self.$el('label').text().indexOf('One12') === -1)
+        console.error('❌ Four Three - Two One, should be changed to -> Four Three - Two One12');
+
+      self.today.two += '12';
+      if(self.$el('.today').text().trim() !== 'One12 Two12')
+        console.error('❌', self.$el('.today').text().trim(), ', should be ->', 'One12 Two12');
+      if(self.$el('label').text().indexOf('Two12') === -1)
+        console.error('❌ Four Three - Two One12, should be changed to -> Four Three - Two12 One12');
+
+      self.list[0].text.three += '12';
+      if(self.$el('label').text().indexOf('Three12') === -1)
+        console.error('❌ Four Three - Two12 One12, should be changed to -> Four Three12 - Two12 One12');
+
+      self.list[0].four += '12';
+      if(self.$el('label').text().indexOf('Four12') === -1)
+        console.error('❌ Four Three12 - Two12 One12, should be changed to -> Four12 Three12 - Two12 One12');
+    });
+  }
+});

@@ -315,6 +315,34 @@
         <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
       </div>
 
+      <sf-m name="deep-property" class="container">
+        <!-- Bind the html content -->
+        <div class="today">
+          {{ one + ' ' + today.two }}
+          <input sf-bind="today.two"/>
+          <input sf-bind="one"/>
+        </div>
+
+        <div class="row">
+          <ul class="todo-list">
+            <!-- Bind array from the model -->
+            <li sf-repeat-this="item in list">
+              <div class="checkbox">
+                <input sf-bind="item.four"/>
+                <input sf-bind="item.text.three"/>
+                <input sf-bind="today.two"/>
+                <input sf-bind="one"/>
+                <label>
+                  {{ item.four + ' ' + item.text.three }}
+                  <span> - </span>
+                  {{ today.two + ' ' + one }}
+                </label>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </sf-m>
+
       <script type="text/javascript" src="/tests/script.js"></script>
       <script type="text/javascript" src="/tests/html-scripts/model-binding.js"></script>
       <script type="text/javascript" src="/tests/html-scripts/component.js"></script>
