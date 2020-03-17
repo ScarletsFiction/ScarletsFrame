@@ -212,7 +212,6 @@ var templateParser = internal.model.templateParser = function(template, item, or
 		html.sf$elementReferences = changesReference;
 	}
 
-	// internal.language.refreshLang(html);
 	// html.sf$modelParsed = parsed;
 
 	// Run the pending element
@@ -286,31 +285,10 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 	}
 
 	var parsed = templateExec(template.parse, item, changes);
-	function checkRelatedChanges(parseIndex){
-		var found = false;
-		for (var i = 0; i < parseIndex.length; i++) {
-			if(parsed[parseIndex] !== void 0){
-				found = true;
-				break;
-			}
-		}
-		if(found === false)
-			return false;
-
-		// Prepare all required data
-		var changes_ = [];
-		for (var i = 0; i < parseIndex.length; i++) {
-			if(parsed[parseIndex[i]] === void 0)
-				changes_.push(parseIndex[i]);
-		}
-
-		Object.assign(parsed, templateExec(template.parse, item, changes_));
-		return true;
-	}
 
 	var changesReference = element.sf$elementReferences;
 	var haveChanges = false;
-	for (var i = 0; i < changesReference.length; i++) {
+	changes:for (var i = 0; i < changesReference.length; i++) {
 		var cRef = changesReference[i];
 
 		if(cRef.dynamicFlag !== void 0){ // Dynamic data
@@ -318,8 +296,6 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 				var tDOM = Array.from($.parseElement(parsed[cRef.direct].data)).reverse();
 				var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 				var notExist = false;
-
-				// internal.language.refreshLang(tDOM);
 
 				// Replace if exist, skip if similar
 				for (var a = 0; a < tDOM.length; a++) {
@@ -352,10 +328,13 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.textContent !== void 0){ // Text only
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
-					if(parsed[match] === void 0)
-						templateExec(template.parse, item, Number(match), parsed);
+				var index = cRef.ref.parse_index;
+				for (var j = 0, n = index.length; j < n; j++) {
+					if(parsed[index[j]] === void 0)
+						continue changes;
+				}
 
+				var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
 					return parsed[match].data;
 				});
 

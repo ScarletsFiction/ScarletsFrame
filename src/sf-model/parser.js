@@ -462,7 +462,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	if(targetNode.model !== void 0)
 		return console.error('[Violation] element already has a model, template extraction aborted', targetNode, targetNode.model, mask, modelScope);
 
-	var copy = targetNode.outerHTML;
+	var copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 	var template = {
 		modelRefRoot:{},
 		modelRefRoot_array:[],
