@@ -239,7 +239,7 @@ var self = sf.views = function View(selector, name){
 
 		if(DOM.sf$viewInitialized) return false;
 
-		if(collection.length === 0)
+		if(collection === null)
 			collection = DOM.getElementsByTagName('sf-page-view');
 
 		// if(selector_)
@@ -364,7 +364,7 @@ var self = sf.views = function View(selector, name){
 
 	var RouterLoading = false; // xhr reference if the router still loading
 
-	var collection = [];
+	var collection = null;
 	function findRelatedElement(currentURL){
 		var found = [];
 		for (var i = 0; i < collection.length; i++) {
