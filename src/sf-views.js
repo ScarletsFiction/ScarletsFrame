@@ -41,6 +41,12 @@ window.addEventListener('popstate', function(ev){
 
 // Listen to every link click, capture mode
 $(function(){
+	if(sf.views.onCrossing === void 0)
+		sf.views.onCrossing = function(url, target){
+			console.error("Unhandled crossing URL origin", url, target);
+			console.warn("Handle it by make your custom function like `sf.views.onCrossing = func(){}`");
+		};
+
 	$.on(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
@@ -58,9 +64,7 @@ $(function(){
 
 		// If it's different domain
 		if(path.indexOf('//') !== -1){
-			if(sf.views.onCrossing)
-				sf.views.onCrossing(this.href);
-
+			sf.views.onCrossing(this.href, this.getAttribute('target'));
 			return;
 		}
 
@@ -222,7 +226,7 @@ var self = sf.views = function View(selector, name){
 	self.relatedDOM = [];
 	self.data = {};
 
-	self.maxCache = 3;
+	self.maxCache = 4;
 
 	var rootDOM = {};
 	self.selector = function(selector_, isChild, currentPath){
@@ -235,7 +239,7 @@ var self = sf.views = function View(selector, name){
 
 		if(DOM.sf$viewInitialized) return false;
 
-		if(collection === null)
+		if(collection.length === 0)
 			collection = DOM.getElementsByTagName('sf-page-view');
 
 		// if(selector_)
@@ -360,7 +364,7 @@ var self = sf.views = function View(selector, name){
 
 	var RouterLoading = false; // xhr reference if the router still loading
 
-	var collection = null;
+	var collection = [];
 	function findRelatedElement(currentURL){
 		var found = [];
 		for (var i = 0; i < collection.length; i++) {
