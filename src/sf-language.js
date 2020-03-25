@@ -383,7 +383,7 @@ function refreshLang(list, noPending){
 		if(noPending === true)
 			list.splice(i, 1);
 
-		if(elem.placeholder !== void 0)
+		if(elem.hasAttribute('placeholder'))
 			elem.setAttribute('placeholder', value);
 		else
 			assignSquareBracket(elem, value);
