@@ -342,8 +342,7 @@ function refreshLang(list, noPending){
 
 		// Preserve model/component binding
 		// We will reapply the template later
-		if(elem.sf$elementReferences !== void 0){
-			elementReferencesRefresh(elem);
+		if(elem.sf$elementReferences !== void 0 && elementReferencesRefresh(elem)){
 			parentElement.add(elem);
 			continue;
 		}
@@ -354,8 +353,7 @@ function refreshLang(list, noPending){
 					continue;
 
 				// Run below once
-				if(modelElement.sf$elementReferences !== void 0){
-					elementReferencesRefresh(modelElement);
+				if(modelElement.sf$elementReferences !== void 0 && elementReferencesRefresh(modelElement)){
 					parentElement.add(modelElement);
 					continue;
 				}
@@ -480,6 +478,7 @@ function assignSquareBracket(elem, value){
 
 function elementReferencesRefresh(elem){
 	var eRef = elem.sf$elementReferences;
+	var processed = false;
 
 	for (var i = 0; i < eRef.length; i++) {
 		if(eRef[i].textContent !== void 0){
@@ -504,7 +503,7 @@ function elementReferencesRefresh(elem){
 
 			diveObject(pending, key, 1);
 			pendingElement.push(elem);
-			continue;
+			return; // Let's process it later for current element
 		}
 
 		if(eRef[i].textContent !== void 0){
@@ -538,20 +537,42 @@ function elementReferencesRefresh(elem){
 		}
 
 		var template = eRef.template;
-		eRef[i].ref.value = value.replace(/{(.*?)}/, function(full, match){
-			if(isNaN(match) === false)
-				return '{{%='+match+'%';
+		var parse_index = eRef[i].ref.parse_index;
+		var validMatch = 0;
+		value = value.replace(/{(.*?)}/, function(full, match){
+			if(validMatch === false)
+				return full;
 
-			if(template.modelRefRoot[match] !== void 0)
-				return '{{%='+template.modelRefRoot[match][0]+'%';
+			if(isNaN(match) !== false){
+				if(template.modelRefRoot[match] !== void 0)
+					match = template.modelRefRoot[match][0];
 
-			if(template.modelRef !== null && template.modelRef[match] !== void 0)
-				return '{{%='+template.modelRef[match][0]+'%';
+				else if(template.modelRef !== null && template.modelRef[match] !== void 0)
+					match = template.modelRef[match][0];
+				else{
+					console.error("Language can't find existing model template for '"+match+"' from", Object.keys(template.modelRefRoot));
+					return '';
+				}
+			}
 
-			console.error("Language can't find existing model template for '"+match+"' from", Object.keys(template.modelRefRoot));
-			return '';
+			// Avoid translating on different value that not supposed to be translated
+			if(parse_index.indexOf(match) === -1){
+				validMatch = false;
+				return full;
+			}
+
+			validMatch++;
+			return '{{%='+match+'%';
 		});
+
+		if(validMatch === false || validMatch !== parse_index.length)
+			continue;
+
+		eRef[i].ref.value = value;
+		processed = true;
 	}
+
+	return processed;
 }
 
 function refreshTemplate(template){
