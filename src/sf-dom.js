@@ -235,7 +235,7 @@ var $ = sf.dom; // Shortcut
 		},
 		once:function(event, selector, callback){
 			for (var i = 0; i < this.length; i++)
-				self.on(this[i], event, selector, callback, true);
+				self.once(this[i], event, selector, callback);
 			return this;
 		},
 		trigger:function(events, data, direct) {
@@ -473,8 +473,8 @@ var $ = sf.dom; // Shortcut
 
 		if(callback.constructor === Object){
 			var temp = options;
-			callback = options;
-			options = temp;
+			options = callback;
+			callback = temp;
 		}
 
 		if(selector){
