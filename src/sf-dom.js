@@ -293,7 +293,7 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		append:function(element){
-			if(element.constructor === Array || element.constructor === Object){
+			if(element.constructor === Array || element.classList === void 0){
 				for (var i = 0; i < element.length; i++)
 					this[0].append(element[i]);
 			}
@@ -305,7 +305,7 @@ var $ = sf.dom; // Shortcut
 			return this;
 		},
 		prepend:function(element){
-			if(element.constructor === Array || element.constructor === Object){
+			if(element.constructor === Array || element.classList === void 0){
 				for (var i = 0; i < element.length; i++)
 					this[0].prepend(element[i]);
 			}
