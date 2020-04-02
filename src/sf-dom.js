@@ -16,8 +16,11 @@ sf.dom = function(selector, context){
 		return sf.loader.onFinish(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
 		return new DOMList(sf.dom.parseElement(selector, true));
-	else if(context)
+	else if(context){
+		if(context.classList === void 0)
+			return context.find(selector);
 		return new DOMList(context.querySelectorAll(selector));
+	}
 	else if(selector.constructor === String)
 		return new DOMList(document.querySelectorAll(selector));
 	return new DOMList(selector);
