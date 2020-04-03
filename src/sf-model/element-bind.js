@@ -146,7 +146,8 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	}
 
 	// Proxy property
-	if(model[propertyName] !== void 0 && Object.getOwnPropertyDescriptor(model, propertyName).set !== void 0)
+	var desc = Object.getOwnPropertyDescriptor(model, propertyName);
+	if(desc === void 0 || desc.set !== void 0)
 		return;
 
 	var objValue = model[propertyName]; // Object value
