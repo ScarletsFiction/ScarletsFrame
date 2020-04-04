@@ -13,7 +13,8 @@
   },
   "browserslist": [
     "> 1%",
-    "IE >= 11"
+    "Chrome >= 26",
+    "Firefox >= 26",
   ],
   "devDependencies": {
     "@babel/core": "^7.7.2",

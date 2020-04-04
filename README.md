@@ -50,8 +50,10 @@ You can download minified js from this repository or use this CDN link
 <script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js'></script>
 ```
 
-### Polyfill for IE11
-If you want to support IE11 and some old browser, you need to add some polyfill before the framework.
+### Polyfill for older browser
+If you want to support some old browser, you need to add some polyfill before the framework.<br>
+It's working on Chrome version 26 and should working on Android KitKat stock browser.<br>
+Not supported on IE11 because the error line has integer overflow and can't be debugged.
 ```html
 <script type="text/javascript">
   // Polyfill for Old Browser
