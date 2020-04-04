@@ -1,14 +1,26 @@
-class InheritComponent{
-	static construct(root, item){
-		this.nyam = true;
-	}
-	static init(root, item){
-		this.nyam2 = true;
-	}
-	select(item){
-		return item;
-	}
+// class InheritComponent{
+// 	static construct(root, item){
+// 		this.nyam = true;
+// 	}
+// 	static init(root, item){
+// 		this.nyam2 = true;
+// 	}
+// 	select(item){
+// 		return item;
+// 	}
+// }
+
+function InheritComponent(){}
+InheritComponent.construct = function(root, item){
+	this.nyam = true;
 }
+InheritComponent.init = function(root, item){
+	this.nyam2 = true;
+}
+InheritComponent.prototype.select = function(item){
+	return item;
+}
+
 
 sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, item){
 	self.item = item;

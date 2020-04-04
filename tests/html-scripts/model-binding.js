@@ -130,8 +130,6 @@ sf.model.for('components', function(self){
 });
 
 sf.model('deep-property', function(self){
-  test = self;
-
   self.one = 'One';
   self.today = {two:'Two'};
   self.list = [];

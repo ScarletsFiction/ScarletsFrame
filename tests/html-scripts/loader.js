@@ -1,7 +1,7 @@
 if(minimalTest){
 	sf.loader.loadedContent = 1;
 	sf.loader.totalContent = 1;
-	self.turnedOff = true;
+	sf.loader.turnedOff = true;
 }
 else {
 	var loaderWorking = false;

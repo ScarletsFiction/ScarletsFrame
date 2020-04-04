@@ -56,3 +56,22 @@ setTimeout(function(){
 	console.log(a.length ? '❌' : '✔️', "Trying to reinit", a.length, "element (must be 0)");
 	sf.model.parsePreprocess(a);
 }, 10000);
+
+var c = new WeakMap();
+function destroyer(){
+	var a = Object.keys(sf.model.root);
+	for (var i = 0; i < a.length; i++) {
+		c.set(sf.model.root[a[i]], a[i]);
+	}
+
+	$('*').off();
+	$ = null;
+	sf.model.root = null;
+	// sf = null;
+	binding = null;
+	test = null;
+	views = null;
+	aList = null;
+	document.body.textContent = '';
+	return a.length;
+}

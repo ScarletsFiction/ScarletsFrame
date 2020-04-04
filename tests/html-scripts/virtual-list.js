@@ -1,7 +1,4 @@
-var test = null;
 sf.model.for('virtual-scroll', function(self, root){
-	test = self;
-
 	self.handleClick = function(e, which){
 		// e.target.model ==> the item{}
 		// but let's try get from the index first
