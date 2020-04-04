@@ -172,7 +172,7 @@ function getStaticMethods(keys, clas){
 	var keys2 = Object.getOwnPropertyNames(clas);
 
 	for(var i = 0; i < keys2.length; i++){
-		if(clas[keys2[i]].constructor === Function)
+		if(typeof clas[keys2[i]] === 'function')
 			keys.add(keys2[i]);
 	}
 }

@@ -147,8 +147,12 @@ class SFModel extends HTMLElement {
 
 			if(that.model.$el){
 				var i = that.model.$el.indexOf(that);
-				if(i !== -1)
-					that.model.$el.splice(i)
+				if(i !== -1){
+					var temp = that.model.$el.splice(i);
+
+					if(that.model.destroy)
+						that.model.destroy(temp, that.model.$el.length === 0);
+				}
 			}
 
 			internal.model.removeModelBinding(that.model);
@@ -159,16 +163,8 @@ class SFModel extends HTMLElement {
 customElements.define('sf-m', SFModel);
 
 var root_ = function(scope){
-	if(sf.component.registered[scope]){
-		var available = [];
-		var component = sf.component.available[scope];
-		if(component !== void 0){
-			for (var i = 0; i < component.length; i++) {
-				available.push(sf.model.root[component[i]]);
-			}
-		}
-		return available;
-	}
+	if(sf.component.registered[scope])
+		return sf.component(scope);
 
 	if(sf.model.root[scope] === void 0)
 		var scope_ = sf.model.root[scope] = {};

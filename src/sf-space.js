@@ -1,6 +1,3 @@
-// ToDo: shared or non-private space is possible to have memory leak when component are removed from DOM
-// this because component haven't removed from the list
-
 sf.space = function(namespace, options){
 	return new Space(namespace, options);
 };
@@ -31,12 +28,16 @@ function createRoot_(modelFunc, registered){
 	var root_ = function(scope){
 		if(root_.registered[scope]){
 			var available = [];
-			var component = root_.available[scope];
-			if(component !== void 0){
-				for (var i = 0; i < component.length; i++) {
-					available.push(root_.root[component[i]]);
-				}
+
+			for (var i = 0; i < domList.length; i++) {
+				var component = domList[i].getElementsByTagName(scope);
+				if(component.length === 0)
+					continue;
+
+				for (var a = 0, n = component.length; a < n; a++)
+					available.push(component[a].model);
 			}
+
 			return available;
 		}
 
@@ -54,7 +55,7 @@ function createRoot_(modelFunc, registered){
 	root_.root = {};
 	root_.modelFunc = modelFunc;
 	root_.registered = registered;
-	root_.available = {};
+	var domList = root_.domList = [];
 
 	return root_;
 }
@@ -98,7 +99,7 @@ class Space{
 		return getNamespace(this.namespace, index || '');
 	}
 
-	getHTML(index){
+	createHTML(index){
 		var that = this;
 		return $(window.templates[this.templatePath]
 			.replace(/<sf-space(.*?)(?:|="(.*?)")>/, function(full, namespace, index_){
@@ -111,6 +112,10 @@ class Space{
 
 				return '<sf-space '+that.namespace+'>';
 			}))[0];
+	}
+
+	destroy(){
+		
 	}
 }
 
@@ -157,12 +162,6 @@ class Space{
 				delete this.components.registered[keys[i]];
 		}
 
-		var keys = Object.keys(this.components.available);
-		for (var i = 0; i < keys.length; i++) {
-			if(keys[i].indexOf(namespace) === 0)
-				delete this.components.available[keys[i]];
-		}
-
 		var keys = Object.keys(internal.component);
 		for (var i = 0; i < keys.length; i++) {
 			if(keys[i].indexOf(namespace) === 0)
@@ -204,20 +203,14 @@ class SFSpace extends HTMLElement {
 			throw new Error("<sf-space>: space name was undefined");
 
 		this.sf$space = getNamespace(name, this.sf$spaceID);
+		this.sf$space.domList.push(this);
 	}
 	disconnectedCallback(){
 		var that = this;
 		this.sf$destroying = setTimeout(function(){
-			if(that.model === void 0)
-				return;
-
-			if(that.model.$el){
-				var i = that.model.$el.indexOf(that);
-				if(i !== -1)
-					that.model.$el.splice(i)
-			}
-
-			internal.model.removeModelBinding(that.model);
+			var i = this.sf$space.domList.indexOf(that);
+			if(i !== -1)
+				this.sf$space.domList.splice(i, 1);
 		}, 1000);
 	}
 }

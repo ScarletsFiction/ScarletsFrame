@@ -1,3 +1,5 @@
+// ToDo: Global component getter shouldn't also get component from sf-space
+
 sf.component = function(name, options, func, namespace){
 	if(options !== void 0){
 		if(options.constructor === Function)
@@ -10,16 +12,19 @@ sf.component = function(name, options, func, namespace){
 			return sf.component.for(name, options, func, namespace);
 	}
 
-	var list = (namespace || sf.component).available[name];
-	if(list === void 0)
-		return [];
+	if(sf.component.registered[name]){
+		var ret = [];
+		var component = document.body.getElementsByTagName(name);
+		if(component.length === 0)
+			return ret;
 
-	var ret = [];
-	for (var i = 0; i < list.length; i++) {
-		ret.push((namespace || sf.model).root[list[i]]);
+		for (var i = 0, n = component.length; i < n; i++)
+			ret.push(component[i].model);
+
+		return ret;
 	}
 
-	return ret;
+	return [];
 }
 
 ;(function(){
@@ -30,7 +35,6 @@ sf.component = function(name, options, func, namespace){
 	var waitingHTML = {};
 
 	self.registered = {};
-	self.available = {};
 	// internal.component.tagName = new Set();
 
 	function checkWaiting(name, namespace){
@@ -58,7 +62,8 @@ sf.component = function(name, options, func, namespace){
 		if(options.constructor === Function)
 			func = options;
 		else{
-			internal.componentInherit[name] = options.extend;
+			if(options.extend !== void 0)
+				internal.componentInherit[name] = options.extend;
 		}
 
 		// internal.component.tagName.add(name.toUpperCase());
@@ -157,7 +162,8 @@ sf.component = function(name, options, func, namespace){
 		if(namespace !== void 0)
 			element.sf$space = namespace;
 
-		if(scope.registered[name] === void 0 || element.childNodes.length === 0 && scope.registered[name][3] === false){
+		var registrar = scope.registered[name];
+		if(registrar === void 0 || element.childNodes.length === 0 && registrar[3] === false){
 			if(_fromCheck === true)
 				return;
 
@@ -182,30 +188,24 @@ sf.component = function(name, options, func, namespace){
 			$item[attr[i].nodeName] = attr[i].value;
 		}
 
-		var newID = name+'@'+(scope.registered[name][2]++);
-
-		if(scope.available[name] === void 0)
-			scope.available[name] = [];
-
-		scope.available[name].push(newID);
-
-		var newObj = (namespace || sf.model).root[newID] = (asScope ? $item : (
+		var newID = name+'@'+(registrar[2]++);
+		var newObj = (asScope ? $item : (
 			inherit !== void 0 ? new inherit() : {}
 		));
-		newObj.$el = $();
 
+		newObj.$el = $();
 		if(inherit !== void 0 && asScope)
 			Object.setPrototypeOf(newObj, inherit.prototype);
 
 		// Call function that handle scope
-		scope.registered[name][0](newObj, (namespace || sf.model), $item);
+		registrar[0](newObj, (namespace || sf.model), $item);
 		if(newObj.constructor !== Object){
 			proxyClass(newObj, newObj.constructor);
 			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
 		}
 
 		if(element.childNodes.length === 0){
-			var temp = scope.registered[name][3];
+			var temp = registrar[3];
 			var tempDOM = temp.tempDOM;
 
 			// Create template here because we have the sample model
@@ -216,10 +216,10 @@ sf.component = function(name, options, func, namespace){
 				temp = sf.model.extractPreprocess(temp, null, newObj);
 
 				if(isDynamic === false)
-					scope.registered[name][3] = temp;
+					registrar[3] = temp;
 				else{
 					isDynamic.tempDOM = tempDOM;
-					scope.registered[name][3] = isDynamic;
+					registrar[3] = isDynamic;
 				}
 
 				temp.tempDOM = tempDOM;
@@ -274,15 +274,11 @@ sf.component = function(name, options, func, namespace){
 
 		newObj.$el.push(element);
 		element.model = newObj;
-		componentInit(element, newID, name);
+		element.sf$controlled = newID;
+		element.sf$componentFrom = name;
 
 		element.sf$initTriggered = true;
 		return element;
-	}
-
-	function componentInit(element, newID, from){
-		element.sf$controlled = newID;
-		element.sf$componentFrom = from;
 	}
 
 	var HTMLElement = window.HTMLElement;
@@ -341,9 +337,9 @@ sf.component = function(name, options, func, namespace){
 			if(this.model === void 0 || this.sf$componentIgnore === true)
 				return;
 
-			if(this.sf$destroying !== void 0){
-				clearTimeout(this.sf$destroying);
-				this.sf$destroying = void 0;
+			if(this.sf$detaching !== void 0){
+				clearTimeout(this.sf$detaching);
+				this.sf$detaching = void 0;
 				return;
 			}
 
@@ -371,24 +367,13 @@ sf.component = function(name, options, func, namespace){
 			if(this.model === void 0)
 				return;
 
-			var components = (this.sf$space || sf.component).available[tagName];
-			components.splice(components.indexOf(this.sf$controlled), 1);
-
 			var that = this;
-			this.sf$destroying = setTimeout(function(){
+			this.sf$detaching = setTimeout(function(){
 				if(that.model === void 0)
 					return;
 
 				if(that.model.destroy)
 					that.model.destroy();
-
-				internal.model.removeModelBinding(that.model, true);
-				that.model.$el = null;
-
-				if(that.sf$space)
-					delete that.sf$space.root[that.sf$controlled];
-				else
-					delete sf.model.root[that.sf$controlled];
 			}, 500);
 		};
 
