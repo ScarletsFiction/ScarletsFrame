@@ -224,6 +224,11 @@ var $ = sf.dom; // Shortcut
 		},
 		off:function(event, selector, callback, options){
 			for (var i = 0; i < this.length; i++){
+				if(event === void 0){
+					self.off(this[i]);
+					continue;
+				}
+
 				if(internal.model.specialEvent[event] !== void 0){
 					if(this[i]['sf$eventDestroy_'+event] !== void 0)
 						this[i]['sf$eventDestroy_'+event]();
@@ -527,10 +532,7 @@ var $ = sf.dom; // Shortcut
 			if(element.sf$eventListener === void 0)
 				return;
 
-			var events = element.sf$eventListener[event];
-			if(events === void 0)
-				return;
-
+			var events = Object.keys(element.sf$eventListener);
 			for (var i = 0; i < events.length; i++) {
 				self.off(element, events[i]);
 			}
@@ -580,7 +582,7 @@ var $ = sf.dom; // Shortcut
 						continue;
 
 					var options = ref[event][i].options;
-					element.removeEventListener(event, ref[event].splice(i, 1), options);
+					element.removeEventListener(event, ref[event].splice(i, 1)[0], options);
 				}
 
 				delete element.sf$eventListener[event];
