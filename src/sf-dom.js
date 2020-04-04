@@ -8,7 +8,7 @@ sf.dom = function(selector, context){
 			if(IE11 === false)
 				Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
 
-			return Object.assign(temp, DOMList.prototype);
+			return Object.setPrototypeOf(temp, DOMList.prototype);
 		}
 		else return new DOMList([]);
 	}
@@ -63,9 +63,8 @@ var $ = sf.dom; // Shortcut
 				this[this.length++] = el;
 		},
 		indexOf:function(el){
-			var keys = Object.keys(this);
-			for (var i = 0; i < keys.length; i++) {
-				if(this[keys[i]] === el)
+			for (var i = 0; i < this.length; i++) {
+				if(this[i] === el)
 					return i;
 			}
 			return -1;
@@ -529,6 +528,9 @@ var $ = sf.dom; // Shortcut
 				return;
 
 			var events = element.sf$eventListener[event];
+			if(events === void 0)
+				return;
+
 			for (var i = 0; i < events.length; i++) {
 				self.off(element, events[i]);
 			}

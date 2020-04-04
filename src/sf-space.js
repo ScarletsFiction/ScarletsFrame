@@ -208,9 +208,9 @@ class SFSpace extends HTMLElement {
 	disconnectedCallback(){
 		var that = this;
 		this.sf$destroying = setTimeout(function(){
-			var i = this.sf$space.domList.indexOf(that);
+			var i = that.sf$space.domList.indexOf(that);
 			if(i !== -1)
-				this.sf$space.domList.splice(i, 1);
+				that.sf$space.domList.splice(i, 1);
 		}, 1000);
 	}
 }
