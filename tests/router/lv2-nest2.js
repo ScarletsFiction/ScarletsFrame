@@ -5,7 +5,7 @@ module.exports = {
     // Response handler
     response:function(req, res, closeConnection){
         res.writeHead(200);
-        var data = {title:"Now you're at nest 2"};
+        var data = {title:"You're at nest 2-2"};
         closeConnection('<!-- SF-View-Data:'+JSON.stringify(data)+'--><div>Deep nest 2</div>');
     },
  

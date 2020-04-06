@@ -1,5 +1,5 @@
 var views = new sf.views('custom-view');
-views.maxCache = 100;
+views.maxCache = 2;
 views.addRoute([
 	{
 		path:'/test/page1',
@@ -64,15 +64,25 @@ sf.model.for('test-page2', {extend:TestPage}, function(self){
 	self.text = "Hello from page 2";
 });
 
-views.on('routeStart', function(current, target) {
-	 console.log("Loading path to " + target);
+views.on('start', function(from, to){
+	console.log("Navigating from", from, "to", to);
 });
-views.on('routeFinish', function(current, target) {
-	 console.log("Navigated from " + current + " to " + (target || '❌'));
+views.on('loading', function(current, totalDepth){
+	console.log("Loading", current, "from", totalDepth);
 });
-views.on('routeError', function(e) {
-	 console.error("❌ Navigation failed", e);
+views.on('loaded', function(current, totalDepth) {
+	console.log("Loaded", current, "from", totalDepth);
 });
-// views.on('routeData', function(obj){
-//	 if(obj.title) sf.dom.findOne('head > title').innerHTML = obj.title;
-// });
+views.on('finish', function(current, target) {
+	console.log("Navigated from " + current + " to " + (target || '❌'));
+
+	var obj = views.data;
+	if(obj.title)
+		$('head > title').text(obj.title);
+
+	if(current === target)
+		console.error("❌ Current address parameter was similar with last address");
+});
+views.on('error', function(e) {
+	console.error("❌ Navigation failed", e);
+});
