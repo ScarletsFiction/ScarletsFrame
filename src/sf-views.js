@@ -580,8 +580,9 @@ var self = sf.views = function View(selector, name){
 			}
 
 			// Trigger loaded event
+			var rC = routeTotal + 1 - (_routeCount || 1);
 			for (var i = 0; i < onEvent.loaded.length; i++) {
-				if(onEvent.loaded[i](_routeCount || 1, routeTotal, dom)) return;
+				if(onEvent.loaded[i](rC, routeTotal, dom)) return;
 			}
 
 			// Let page script running first

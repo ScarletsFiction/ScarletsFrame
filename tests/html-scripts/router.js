@@ -66,14 +66,14 @@ sf.model.for('test-page2', {extend:TestPage}, function(self){
 
 views.on('start', function(from, to){
 	console.log("Navigating from", from, "to", to);
-});
-views.on('loading', function(current, totalDepth){
+})
+.on('loading', function(current, totalDepth){
 	console.log("Loading", current, "from", totalDepth);
-});
-views.on('loaded', function(current, totalDepth) {
+})
+.on('loaded', function(current, totalDepth) {
 	console.log("Loaded", current, "from", totalDepth);
-});
-views.on('finish', function(current, target) {
+})
+.on('finish', function(current, target) {
 	console.log("Navigated from " + current + " to " + (target || '❌'));
 
 	var obj = views.data;
@@ -82,7 +82,7 @@ views.on('finish', function(current, target) {
 
 	if(current === target)
 		console.error("❌ Current address parameter was similar with last address");
-});
-views.on('error', function(e) {
+})
+.on('error', function(e) {
 	console.error("❌ Navigation failed", e);
 });
