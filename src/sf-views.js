@@ -579,6 +579,11 @@ var self = sf.views = function View(selector, name){
 				Object.assign(self.data, dom.routerData);
 			}
 
+			// Trigger loaded event
+			for (var i = 0; i < onEvent.loaded.length; i++) {
+				if(onEvent.loaded[i](_routeCount || 1, routeTotal, dom)) return;
+			}
+
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
 
@@ -810,11 +815,6 @@ var self = sf.views = function View(selector, name){
 
 					cachedURL[url.templateURL] = temp;
 					internal.component.skip = false;
-				}
-
-				// Trigger loaded event
-				for (var i = 0; i < onEvent.loaded.length; i++) {
-					if(onEvent.loaded[i](_routeCount || 1, routeTotal)) return;
 				}
 
 				afterDOMLoaded(dom);
