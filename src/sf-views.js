@@ -227,6 +227,20 @@ var self = sf.views = function View(selector, name){
 	self.data = {};
 
 	self.maxCache = 4;
+	function removeOldCache(current){
+		var parent = current.parentNode;
+		if(parent.sf$cachedDOM === void 0)
+			parent.sf$cachedDOM = [];
+
+		var i = parent.sf$cachedDOM.indexOf(current);
+		if(i === -1)
+			parent.sf$cachedDOM.push(current);
+		else
+			parent.sf$cachedDOM.push(parent.sf$cachedDOM.splice(i, 1)[0]);
+
+		if(self.maxCache < parent.sf$cachedDOM.length)
+			parent.sf$cachedDOM.shift().remove();
+	}
 
 	var rootDOM = {};
 	self.selector = function(selector_, isChild, currentPath){
@@ -554,10 +568,7 @@ var self = sf.views = function View(selector, name){
 
 		var currentData = self.data = url.data;
 
-		function insertLoadedElement(DOMReference, dom, parentNode, pendingShowed){
-			if(parentNode)
-				dom.parentPageElement = parentNode;
-
+		function insertLoadedElement(DOMReference, dom, pendingShowed){
 			dom.routerData = {};
 			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
 				dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
@@ -608,17 +619,7 @@ var self = sf.views = function View(selector, name){
 				routingError = false;
 
 				// Clear old cache
-				var parent = self.currentDOM.parentNode;
-				for (var n = parent.childElementCount, i = n - self.maxCache - 1; i >= 0; i--) {
-					if(parent.defaultViewContent !== parent.firstElementChild
-					&& parent.firstElementChild.routeNoRemove
-					&& parent.firstElementChild !== dom)
-						parent.firstElementChild.remove();
-					else if(n > 1 && parent.children[1] !== dom)
-						parent.children[1].remove();
-					else if(n > 2)
-						parent.children[2].remove();
-				}
+				removeOldCache(dom);
 
 				if(url.on !== void 0 && url.on.showed)
 					url.on.showed(self.data);
@@ -689,7 +690,7 @@ var self = sf.views = function View(selector, name){
 							if(currentData !== self.data)
 								self.data = Object.assign(currentData, self.data);
 
-							insertLoadedElement(DOMReference, dom, parentNode);
+							insertLoadedElement(DOMReference, dom);
 							if(callback) return callback(dom);
 
 							if(dom.routerData)
@@ -711,7 +712,7 @@ var self = sf.views = function View(selector, name){
 				}
 			}
 
-			insertLoadedElement(DOMReference, dom, false, pendingShowed);
+			insertLoadedElement(DOMReference, dom, pendingShowed);
 			if(callback) return callback(dom);
 
 			if(dom.routerData)
