@@ -285,10 +285,11 @@ var self = sf.views = function View(selector, name){
 	internal.router.enabled = true;
 
 	var onEvent = {
-		'routeStart':[],
-		'routeFinish':[],
-		'routeCached':[],
-		'routeError':[]
+		'start':[],
+		'finish':[],
+		'loading':[],
+		'loaded':[],
+		'error':[]
 	};
 
 	self.on = function(event, func){
@@ -298,7 +299,7 @@ var self = sf.views = function View(selector, name){
 				self.on(event[i], func);
 			}
 
-			return;
+			return self;
 		}
 
 		if(onEvent[event] === void 0)
@@ -306,6 +307,8 @@ var self = sf.views = function View(selector, name){
 
 		if(onEvent[event].indexOf(func) === -1)
 			onEvent[event].push(func);
+
+		return self;
 	}
 
 	self.off = function(event, func){
@@ -315,7 +318,7 @@ var self = sf.views = function View(selector, name){
 				self.off(event[i], func);
 			}
 
-			return;
+			return self;
 		}
 
 		if(onEvent[event] === void 0)
@@ -323,14 +326,16 @@ var self = sf.views = function View(selector, name){
 
 		if(func === void 0){
 			onEvent[event].length = 0;
-			return;
+			return self;
 		}
 
 		var i = onEvent[event].indexOf(func);
 		if(i === -1)
-			return;
+			return self;
 
 		onEvent[event].splice(i, 1);
+
+		return self;
 	}
 
 	self.addRoute = function(obj){
@@ -385,7 +390,7 @@ var self = sf.views = function View(selector, name){
 	}
 
 	function routeErrorPassEvent(statusCode, data){
-		var ref = onEvent['routeError'];
+		var ref = onEvent.error;
 
 		if(ref.length === 0){
 			console.error('Unhandled router error:', statusCode, data);
@@ -466,9 +471,17 @@ var self = sf.views = function View(selector, name){
 		routes.splice(i, 1);
 	}
 
-	self.goto = function(path, data, method, callback, _disableHistory){
+	var routeTotal = 0;
+	self.goto = function(path, data, method, callback, _routeCount){
 		if(self.currentPath === path)
 			return;
+
+		if(_routeCount === void 0){
+			for (var i = 0; i < onEvent.start.length; i++)
+				if(onEvent.start[i](self.currentPath, path)) return;
+
+			self.lastPath = self.currentPath;
+		}
 
 		if(data !== void 0 && data.constructor === Function){
 			callback = data;
@@ -511,7 +524,7 @@ var self = sf.views = function View(selector, name){
 			sf.url.hashes[name] = path;
 
 		// This won't trigger popstate event
-		if(!disableHistoryPush && _disableHistory === void 0 && name !== false)
+		if(!disableHistoryPush && _routeCount === void 0 && name !== false)
 			sf.url.push();
 
 		// Check if view was exist
@@ -529,8 +542,14 @@ var self = sf.views = function View(selector, name){
 		// Return if the cache was exist
 		if(dynamicHTML === false && tryCache(path)) return true;
 
-		for (var i = 0; i < onEvent['routeStart'].length; i++) {
-			if(onEvent['routeStart'][i](self.currentPath, path)) return;
+		// Count all parent route
+		if(_routeCount === void 0){
+			routeTotal = 1;
+			var routeParent = url.parent;
+			while(routeParent !== void 0){
+				routeTotal++;
+				routeParent = routeParent.parent;
+			}
 		}
 
 		var currentData = self.data = url.data;
@@ -561,7 +580,6 @@ var self = sf.views = function View(selector, name){
 			// setTimeout(function(){
 				var tempDOM = self.currentDOM;
 				self.lastDOM = tempDOM;
-				self.lastPath = self.currentPath;
 				self.currentDOM = dom;
 				self.currentPath = path;
 
@@ -572,12 +590,6 @@ var self = sf.views = function View(selector, name){
 					dom.routeNoRemove = true;
 
 				toBeShowed(dom);
-
-				// Trigger loaded event
-				var event = onEvent['routeFinish'];
-				for (var i = 0; i < event.length; i++) {
-					if(event[i](self.currentPath, path)) return;
-				}
 
 				if(pendingShowed !== void 0)
 					self.relatedDOM.push.apply(self.relatedDOM, pendingShowed);
@@ -599,8 +611,8 @@ var self = sf.views = function View(selector, name){
 				var parent = self.currentDOM.parentNode;
 				for (var n = parent.childElementCount, i = n - self.maxCache - 1; i >= 0; i--) {
 					if(parent.defaultViewContent !== parent.firstElementChild
-						&& parent.firstElementChild.routeNoRemove
-						&& parent.firstElementChild !== dom)
+					&& parent.firstElementChild.routeNoRemove
+					&& parent.firstElementChild !== dom)
 						parent.firstElementChild.remove();
 					else if(n > 1 && parent.children[1] !== dom)
 						parent.children[1].remove();
@@ -678,19 +690,40 @@ var self = sf.views = function View(selector, name){
 								self.data = Object.assign(currentData, self.data);
 
 							insertLoadedElement(DOMReference, dom, parentNode);
-
 							if(callback) return callback(dom);
+
+							if(dom.routerData)
+								self.data = dom.routerData;
+							else if(dom.parentElement !== null){
+								var parent = dom.parentElement.closest('sf-page-view');
+								if(parent !== null)
+									self.data = parent.routerData;
+							}
+
+							for (var i = 0; i < onEvent.finish.length; i++)
+								onEvent.finish[i](self.lastPath, path);
 
 							var defaultViewContent = dom.parentNode.defaultViewContent;
 							if(defaultViewContent !== void 0 && defaultViewContent.routePath !== path)
 								defaultViewContent.classList.remove('page-current');
-						}, true);
+						}, _routeCount + 1 || 2);
 					}
 				}
 			}
 
 			insertLoadedElement(DOMReference, dom, false, pendingShowed);
-			if(callback) callback(dom);
+			if(callback) return callback(dom);
+
+			if(dom.routerData)
+				self.data = dom.routerData;
+			else if(dom.parentElement !== null){
+				var parent = dom.parentElement.closest('sf-page-view');
+				if(parent !== null)
+					self.data = parent.routerData;
+			}
+
+			for (var i = 0; i < onEvent.finish.length; i++)
+				onEvent.finish[i](self.lastPath, path);
 		}
 
 		if(dynamicHTML !== false){
@@ -734,6 +767,9 @@ var self = sf.views = function View(selector, name){
 		if(thePath[0] !== '/')
 			thePath = '/'+thePath;
 
+		for (var i = 0; i < onEvent.loading.length; i++)
+			if(onEvent.loading[i](_routeCount || 1, routeTotal)) return;
+
 		RouterLoading = sf.ajax({
 			url:window.location.origin + thePath,
 			method:method || 'GET',
@@ -771,6 +807,11 @@ var self = sf.views = function View(selector, name){
 
 					cachedURL[url.templateURL] = temp;
 					internal.component.skip = false;
+				}
+
+				// Trigger loaded event
+				for (var i = 0; i < onEvent.loaded.length; i++) {
+					if(onEvent.loaded[i](_routeCount || 1, routeTotal)) return;
 				}
 
 				afterDOMLoaded(dom);
@@ -818,20 +859,24 @@ var self = sf.views = function View(selector, name){
 			self.currentDOM.routeCached.on.leaving();
 
 		self.currentDOM = cachedDOM;
-		self.data = cachedDOM.routerData;
+
+		if(cachedDOM.routerData)
+			self.data = cachedDOM.routerData;
+		else if(cachedDOM.parentElement !== null){
+			var parent = cachedDOM.parentElement.closest('sf-page-view');
+			if(parent !== null)
+				self.data = parent.routerData;
+		}
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.coming)
 			self.currentDOM.routeCached.on.coming(self.data);
 
+		self.currentPath = self.currentDOM.routePath;
+
 		toBeShowed(cachedDOM);
 
-		var event = onEvent['routeCached'];
-		for (var i = 0; i < event.length; i++) {
-			event[i](self.currentPath, self.lastPath);
-		}
-
-		self.lastPath = self.currentPath;
-		self.currentPath = self.currentDOM.routePath;
+		for(var i = 0; i < onEvent.finish.length; i++)
+			onEvent.finish[i](self.lastPath, self.currentPath);
 
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.showed)
 			self.currentDOM.routeCached.on.showed(self.data);
