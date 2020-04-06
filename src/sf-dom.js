@@ -101,16 +101,28 @@ var $ = sf.dom; // Shortcut
 				t.push.apply(t, this[i].closest(selector));
 			return new DOMList(t);
 		},
+		prev:function(selector){
+			var t;
+			if(this.length !== 0)
+				t = self.prevAll(this[0], selector, false, true);
+			return new DOMList(t || []);
+		},
 		prevAll:function(selector){
 			var t = [];
 			for (var i = 0; i < this.length; i++)
 				t.push.apply(t, self.prevAll(this[i], selector));
 			return new DOMList(t);
 		},
+		next:function(selector){
+			var t;
+			if(this.length !== 0)
+				t = self.prevAll(this[0], selector, true, true);
+			return new DOMList(t || []);
+		},
 		nextAll:function(selector){
 			var t = [];
 			for (var i = 0; i < this.length; i++)
-				t.push.apply(t, self.nextAll(this[i], selector, true));
+				t.push.apply(t, self.prevAll(this[i], selector, true));
 			return new DOMList(t);
 		},
 		children:function(selector){
@@ -419,20 +431,26 @@ var $ = sf.dom; // Shortcut
 		return null;
 	}
 
-	self.prevAll = function(element, selector, isNext){
+	self.prevAll = function(element, selector, isNext, one){
 		var result = [];
-		var findNodes = !selector || selector.constructor !== String ? true : false;
+		var findNodes = (!selector || selector.constructor !== String) ? true : false;
 
 		// Skip current element
 		element = isNext ? element.nextSibling : element.previousSibling;
 		while (element !== null) {
 			if(findNodes === false){
-				if(element.matches(selector) === true)
+				if(element.matches(selector) === true){
+					if(one)
+						return element;
 					result.push(element);
+				}
 			}
 			else{
-				if(element === selector)
+				if(element === selector){
+					if(one)
+						return true;
 					break;
+				}
 				result.push(element);
 			}
 
@@ -442,12 +460,14 @@ var $ = sf.dom; // Shortcut
 				element = element.previousSibling;
 		}
 
+		if(one)
+			return;
 		return result;
 	}
 
 	// Shorcut
-	self.nextAll = function(element, selector){
-		return self.prevAll(element, selector, true);
+	self.nextAll = function(element, selector, one){
+		return self.prevAll(element, selector, true, one);
 	}
 
 	/**
@@ -643,7 +663,7 @@ var $ = sf.dom; // Shortcut
 					return;
 
 				if(duration.whenBegin)
-					duration.whenBegin();
+					duration.whenBegin.call(element);
 
 				element.classList.remove('anim-pending');
 				style.visibility = 'visible';

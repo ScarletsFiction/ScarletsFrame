@@ -221,8 +221,8 @@ var self = sf.views = function View(selector, name){
 	var firstRouted = false;
 
 	self.lastPath = '/';
-	self.currentDOM = null;
 	self.lastDOM = null;
+	self.currentDOM = null;
 	self.relatedDOM = [];
 	self.data = {};
 
@@ -419,12 +419,12 @@ var self = sf.views = function View(selector, name){
 			parent = parent.parentNode;
 		}
 
-		var lastSibling = void 0;
-		var parentSimilarity = void 0;
+		var lastSibling = null;
+		var parentSimilarity = null;
 
 		for (var i = 0; i < self.relatedDOM.length; i++) {
 			if(relatedPage.indexOf(self.relatedDOM[i]) === -1){
-				if(lastSibling === void 0){
+				if(lastSibling === null){
 					lastSibling = self.relatedDOM[i];
 					parentSimilarity = lastSibling.parentNode;
 				}
@@ -433,9 +433,9 @@ var self = sf.views = function View(selector, name){
 			}
 		}
 
-		var showedSibling = void 0;
+		var showedSibling = null;
 		for (var i = 0; i < relatedPage.length; i++) {
-			if(showedSibling === void 0 && relatedPage[i].parentNode === parentSimilarity)
+			if(showedSibling === null && relatedPage[i].parentNode === parentSimilarity)
 				showedSibling = relatedPage[i];
 
 			relatedPage[i].classList.add('page-current');
@@ -558,18 +558,18 @@ var self = sf.views = function View(selector, name){
 			}
 
 			// Wait if there are some component that being initialized
-			setTimeout(function(){
-				// Parse the DOM data binding
-				// sf.model.init(dom);
+			// setTimeout(function(){
+				var tempDOM = self.currentDOM;
+				self.lastDOM = tempDOM;
+				self.lastPath = self.currentPath;
+				self.currentDOM = dom;
+				self.currentPath = path;
 
 				if(url.on !== void 0 && url.on.coming)
 					url.on.coming(self.data);
 
 				if(url.cache)
 					dom.routeNoRemove = true;
-
-				var tempDOM = self.currentDOM;
-				self.currentDOM = dom;
 
 				toBeShowed(dom);
 
@@ -583,17 +583,12 @@ var self = sf.views = function View(selector, name){
 					self.relatedDOM.push.apply(self.relatedDOM, pendingShowed);
 
 				if(tempDOM !== null){
-					self.lastPath = self.currentPath;
-
 					// Old route
 					if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
 						tempDOM.routeCached.on.leaving(path, url);
-
-					self.lastDOM = tempDOM;
 				}
 
 				// Save current URL
-				self.currentPath = path;
 				dom.routeCached = url;
 				dom.routePath = path;
 
@@ -602,11 +597,15 @@ var self = sf.views = function View(selector, name){
 
 				// Clear old cache
 				var parent = self.currentDOM.parentNode;
-				for (var i = parent.childElementCount - self.maxCache - 1; i >= 0; i--) {
-					if(parent.defaultViewContent !== parent.firstElementChild && parent.firstElementChild.routeNoRemove)
+				for (var n = parent.childElementCount, i = n - self.maxCache - 1; i >= 0; i--) {
+					if(parent.defaultViewContent !== parent.firstElementChild
+						&& parent.firstElementChild.routeNoRemove
+						&& parent.firstElementChild !== dom)
 						parent.firstElementChild.remove();
-					else if(parent.childElementCount > 1)
-						parent.firstElementChild.nextElementSibling.remove();
+					else if(n > 1 && parent.children[1] !== dom)
+						parent.children[1].remove();
+					else if(n > 2)
+						parent.children[2].remove();
 				}
 
 				if(url.on !== void 0 && url.on.showed)
@@ -617,7 +616,7 @@ var self = sf.views = function View(selector, name){
 					if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.hidden)
 						tempDOM.routeCached.on.hidden(path, url);
 				}
-			});
+			// });
 		}
 
 		var afterDOMLoaded = function(dom){
@@ -814,7 +813,7 @@ var self = sf.views = function View(selector, name){
 		if(cachedDOM === false)
 			return false;
 
-		var lastDOM = self.currentDOM;
+		self.lastDOM = self.currentDOM;
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.leaving)
 			self.currentDOM.routeCached.on.leaving();
 
@@ -837,8 +836,8 @@ var self = sf.views = function View(selector, name){
 		if(self.currentDOM.routeCached.on !== void 0 && self.currentDOM.routeCached.on.showed)
 			self.currentDOM.routeCached.on.showed(self.data);
 
-		if(lastDOM.routeCached.on !== void 0 && lastDOM.routeCached.on.hidden)
-			lastDOM.routeCached.on.hidden();
+		if(self.lastDOM.routeCached.on !== void 0 && self.lastDOM.routeCached.on.hidden)
+			self.lastDOM.routeCached.on.hidden();
 
 		return true;
 	}
