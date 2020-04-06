@@ -379,6 +379,8 @@ var self = sf.views = function View(selector, name){
 				}
 			});
 		}
+
+		return self;
 	}
 
 	var RouterLoading = false; // xhr reference if the router still loading
