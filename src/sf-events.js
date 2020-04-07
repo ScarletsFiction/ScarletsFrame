@@ -1,112 +1,107 @@
 sf.events = (function(){
-	var callbacks = {};
-	var callbacksWhen = {};
-	self.warningWhen = 10;
+	self._listener = {};
+	self._statusTrigger = {};
 
-	function Events(name, run){
+	function Events(name, defaultVal){
 		if(name.constructor === Array){
 			for (var i = 0; i < name.length; i++)
-				Events(name[i], run);
+				Events(name[i], defaultVal);
 
 			return;
 		}
 
-		if(Events[name] === void 0){
-			var active = void 0;
+		// Events.when (Status Trigger)
+		// Status trigger only triggered when true otherwise it will pending the callback
+		// After triggered, all events will be cleared
+		if(defaultVal !== void 0 && defaultVal.constructor === Boolean){
+			if(Events[name] !== void 0 && Events[name] !== defaultVal)
+				console.warn("Events", name, "already has value:", Events[name]);
 
-			if(run !== void 0 && run.constructor === Boolean)
-				active = run;
-
-			if(active !== void 0){
-				Object.defineProperty(Events, name, {
-					enumerable:false,
-					configurable:true,
-					get:function(){return active},
-					set:function(val){
-						if(active === val)
-							return;
-
-						var ref = callbacksWhen[name];
-						if(ref !== void 0){
-							for (var i = 0; i < ref.length; i++) {
-								try{
-									ref[i].apply(null, arguments);
-								} catch(e) {
-									console.error(e);
-								}
-							}
-
-							delete callbacksWhen[name];
-						}
-
-						// Reset to default
-						Object.defineProperty(Events, name, {
-							enumerable:false,
-							configurable:true,
-							writable:true,
-							value:val
-						});
-					}
-				});
-			}
-			else{
-				Events[name] = function(){
-					for (var i = 0; i < callback.length; i++) {
+			var trigger = function(){
+				var ref = self._statusTrigger[name];
+				if(ref !== void 0){
+					for (var i = 0; i < ref.length; i++) {
 						try{
-							callback[i].apply(null, arguments);
-							if(callback[i].once === true)
-								callback.splice(i--, 1);
+							ref[i]();
 						} catch(e) {
 							console.error(e);
 						}
 					}
+
+					// Remove all pending callback
+					delete self._statusTrigger[name];
 				}
-
-				if(callbacks[name] === void 0)
-					callbacks[name] = [];
-
-				var callback = callbacks[name];
 			}
+
+			var active = Events[name] || defaultVal;
+			Object.defineProperty(Events, name, {
+				enumerable:true,
+				configurable:true,
+				get:function(){return active},
+				set:function(val){
+					if(active === val)
+						return;
+
+					active = val;
+					if(active) trigger();
+				}
+			});
+
+			if(active) trigger();
 		}
 
-		if(run && run.constructor === Function){
-			run(Events[name]);
-			run = null;
+		// Events.on (Listener)
+		else if(Events[name] === void 0){
+			Events[name] = function(){
+				for (var i = 0; i < callback.length; i++) {
+					try{
+						callback[i].apply(null, arguments);
+						if(callback[i].once === true)
+							callback.splice(i--, 1);
+					} catch(e) {
+						console.error(e);
+					}
+				}
+			}
+
+			if(self._listener[name] === void 0)
+				self._listener[name] = [];
+
+			var callback = self._listener[name];
 		}
+
+		defaultVal = null;
 	}
 
 	Events.when = function(name, callback){
 		if(Events[name] === true)
 			return callback();
 
-		if(callbacksWhen[name] === void 0)
-			callbacksWhen[name] = [];
+		if(self._statusTrigger[name] === void 0)
+			self._statusTrigger[name] = [];
 
-		callbacksWhen[name].push(callback);
+		self._statusTrigger[name].push(callback);
 	}
 
 	Events.once = function(name, callback){
 		callback.once = true;
-		callbacks[name].push(callback);
+		self._listener[name].push(callback);
 	}
 
 	Events.on = function(name, callback){
-		if(callbacks[name] === void 0)
-			callbacks[name] = [];
+		if(self._listener[name] === void 0)
+			self._listener[name] = [];
 
-		if(callbacks[name].length >= self.warningWhen)
-			console.warn("Events", name, "have more than", self.warningWhen, "callback, there may possible memory leak.");
-
-		callbacks[name].push(callback);
+		self._listener[name].push(callback);
 	}
 
 	Events.off = function(name, callback){
-		if(callbacks[name] === void 0)
-			return callbacks[name].length = 0;
+		if(self._listener[name] === void 0)
+			return self._listener[name].length = 0;
 
-		var i = callbacks[name].indexOf(callback);
+		var i = self._listener[name].indexOf(callback);
 		if(i === -1) return;
-		callbacks[name].splice(i, 1);
+		self._listener[name].splice(i, 1);
 	}
 
 	return Events;
