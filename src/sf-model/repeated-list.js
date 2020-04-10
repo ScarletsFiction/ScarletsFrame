@@ -448,7 +448,7 @@ class RepeatedElement extends Array{
 
 		this.$EM.move(from, to, count);
 
-		var temp = Array.prototype.splice.apply(this, [from, count]);
+		var temp = Array.prototype.splice.call(this, from, count);
 		temp.unshift(to, 0);
 		Array.prototype.splice.apply(this, temp);
 

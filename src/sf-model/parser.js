@@ -2,6 +2,8 @@
 
 // For contributor of this library
 // Please be careful when you're passing the eval argument
+// .apply() or spread ...array is slower than direct function call
+// object[0] is slower than array[0]
 var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedReference){
 	if(!runEval) runEval = '';
 
@@ -57,7 +59,7 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 			return '{{%=' + (exist + lastParsedIndex)+'%';
 		}
 
-		temp = '' + localEval.apply(null, [runEval + temp, _model_, _modelScope]);
+		temp = '' + localEval(runEval + temp, _model_, _modelScope);
 
 		return temp.replace(sf.regex.escapeHTML, function(i) {
 	        return '&#'+i.charCodeAt(0)+';';
@@ -249,18 +251,18 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 				return '{{%%=' + (preParsedReference.length - 1);
 			}
 
-			var scopes = [check[0], _model_, _modelScope, _content_];
+			var arg = [check[0], _model_, _modelScope, _content_];
 
 			// If condition was not meet
-			if(!localEval.apply(null, scopes)){
+			if(!localEval(arg[0], arg[1], arg[2], arg[3])){
 				check.shift();
-				return elseIfHandle(findElse(check), scopes);
+				return elseIfHandle(findElse(check), arg);
 			}
 
 			check.shift();
-			scopes[0] = check.join(':');
+			arg[0] = check.join(':');
 
-			return localEval.apply(null, scopes);
+			return localEval(arg[0], arg[1], arg[2], arg[3]);
 		}
 
 		// Warning! Avoid unencoded user inputted content
@@ -268,15 +270,14 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 		// Any function call will be removed for addional security
 		check = temp.split('@exec');
 		if(check.length !== 1){
-			var scopes = [check[1], _model_, _modelScope, _content_];
+			var arg = [check[1], _model_, _modelScope, _content_];
 
 			if(runEval === '#noEval'){
-				preParsedReference.push({type:REF_EXEC, data:scopes});
+				preParsedReference.push({type:REF_EXEC, data:arg});
 				return '{{%%=' + (preParsedReference.length - 1);
 			}
 
-			temp = localEval.apply(null, scopes);
-			return temp;
+			return localEval(arg[0], arg[1], arg[2], arg[3])
 		}
 		return '';
 	});
@@ -358,9 +359,9 @@ function toObserve(full, model, properties){
 		place[properties] = [toObserve.template.i];
 
 		if(place === toObserve.template.modelRef)
-			toObserve.template.modelRef_array.push([properties, parsePropertyPath(properties)]);
+			toObserve.template.modelRef_path.push(parsePropertyPath(properties));
 		else
-			toObserve.template.modelRefRoot_array.push([properties, parsePropertyPath(properties)]);
+			toObserve.template.modelRefRoot_path.push(parsePropertyPath(properties));
 	}
 	else if(place[properties].indexOf(toObserve.template.i) === -1)
 		place[properties].push(toObserve.template.i);
@@ -465,15 +466,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	var copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 	var template = {
 		modelRefRoot:{},
-		modelRefRoot_array:[],
-		modelRef:null,
-		modelRef_array:null,
+		modelRefRoot_path:[],
 	};
 
 	// Mask the referenced item
 	if(mask !== null){
 		template.modelRef = {};
-		template.modelRef_array = [];
+		template.modelRef_path = [];
 	}
 
 	// Extract data to be parsed
@@ -826,9 +825,7 @@ self.parsePreprocess = function(nodes, modelRef){
 			var template = {
 				parse:preParsedRef,
 				modelRefRoot:{},
-				modelRefRoot_array:[],
-				modelRef:null,
-				modelRef_array:null
+				modelRefRoot_path:[]
 			};
 
 			template.addresses = addressAttributes(current, template);

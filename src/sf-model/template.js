@@ -1,21 +1,21 @@
-function elseIfHandle(else_, scopes){
+function elseIfHandle(else_, arg){
 	var elseIf = else_.elseIf;
 
 	// Else if
 	for (var i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		if(!elseIf[i][0].apply(null, scopes))
+		if(!elseIf[i][0](arg[0], arg[1], arg[2], arg[3]))
 			continue;
 
 		// Get the value
-		return elseIf[i][1].apply(null, scopes);
+		return elseIf[i][1](arg[0], arg[1], arg[2], arg[3]);
 	}
 
 	// Else
 	if(else_.elseValue === null)
 		return '';
 
-	return else_.elseValue.apply(null, scopes);
+	return else_.elseValue(arg[0], arg[1], arg[2], arg[3]);
 }
 
 // ==== Template parser ====
@@ -37,11 +37,12 @@ var templateExec = function(parse, item, atIndex, parsed){
 		}
 
 		var ref = parse[i];
-		ref.data[0] = item;
+		var arg = ref.data;
+		arg[0] = item;
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
-			temp = ref.get.apply(null, ref.data);
+			temp = ref.get(arg[0], arg[1], arg[2], arg[3]);
 			if(temp === void 0)
 				temp = '';
 			else{
@@ -56,22 +57,21 @@ var templateExec = function(parse, item, atIndex, parsed){
 		}
 
 		if(ref.type === REF_EXEC){
-			parsed[i] = {type:ref.type, data:ref.get.apply(null, ref.data)};
+			parsed[i] = {type:ref.type, data:ref.get(arg[0], arg[1], arg[2], arg[3])};
 			continue;
 		}
 
 		// Conditional type
 		if(ref.type === REF_IF){
-			var scopes = ref.data;
 			parsed[i] = {type:ref.type, data:''};
 
 			// If condition was not meet
-			if(!ref.if[0].apply(null, scopes)){
-				parsed[i].data = elseIfHandle(ref, scopes);
+			if(!ref.if[0](arg[0], arg[1], arg[2], arg[3])){
+				parsed[i].data = elseIfHandle(ref, arg);
 				continue;
 			}
 
-			parsed[i].data = ref.if[1].apply(null, scopes);
+			parsed[i].data = ref.if[1](arg[0], arg[1], arg[2], arg[3]);
 		}
 	}
 	return parsed;
@@ -267,21 +267,12 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 		}
 	}
 	else{ // This will trying to update all binding
-		var changes = [];
+		if(template.parse.length === 0)
+			return false;
 
-		var ref = template.modelRefRoot_array;
-		for (var i = 0; i < ref.length; i++) {
-			Array.prototype.push.apply(changes, template.modelRefRoot[ref[i][0]]);
-		}
-
-		if(template.modelRef_array !== null){
-			ref = template.modelRef_array;
-			for (var i = 0; i < ref.length; i++) {
-				Array.prototype.push.apply(changes, template.modelRef[ref[i][0]]);
-			}
-		}
-
-		if(changes.length === 0) return false;
+		var changes = new Array(template.parse.length);
+		for (var i = 0; i < changes.length; i++)
+			changes[i] = i;
 	}
 
 	var parsed = templateExec(template.parse, item, changes);

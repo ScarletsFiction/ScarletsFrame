@@ -547,7 +547,7 @@ function elementReferencesRefresh(elem){
 				if(template.modelRefRoot[match] !== void 0)
 					match = template.modelRefRoot[match][0];
 
-				else if(template.modelRef !== null && template.modelRef[match] !== void 0)
+				else if(template.modelRef !== void 0 && template.modelRef[match] !== void 0)
 					match = template.modelRef[match][0];
 				else{
 					console.error("Language can't find existing model template for '"+match+"' from", Object.keys(template.modelRefRoot));
@@ -599,7 +599,7 @@ function refreshTemplate(template){
 			if(template.modelRefRoot[match] !== void 0)
 				return '{{%='+template.modelRefRoot[match][0]+'%';
 
-			if(template.modelRef !== null && template.modelRef[match] !== void 0)
+			if(template.modelRef !== void 0 && template.modelRef[match] !== void 0)
 				return '{{%='+template.modelRef[match][0]+'%';
 
 			console.error("Language binding can't find existing model binding for", match, "from", Object.keys(template.modelRefRoot));

@@ -55,6 +55,7 @@ sf.events = (function(){
 			Events[name] = function(){
 				for (var i = 0; i < callback.length; i++) {
 					try{
+						// .apply() is performant here
 						callback[i].apply(null, arguments);
 						if(callback[i].once === true)
 							callback.splice(i--, 1);

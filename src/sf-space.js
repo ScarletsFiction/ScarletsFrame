@@ -134,7 +134,8 @@ class Space{
 
 			if(old !== void 0 && old.constructor === Array)
 				for (var i = 0; i < old.length; i++){
-					sf.model.init.apply(null, old[i]);
+					var arg = old[i];
+					sf.model.init(arg[0], arg[1], arg[2]);
 				}
 
 			return;
