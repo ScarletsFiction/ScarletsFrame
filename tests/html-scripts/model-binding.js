@@ -26,9 +26,17 @@ sf.model.for('model-binding', function(self, root){
 			console.log("Reverted");
 		}, 4000);
 	};
+
 	self.inputBinding5 = [];
-	self.inputBinding2.out$text = function(old, news){
-		console.warn("inputBinding2 was modified from:", news || '❌', 'to', Math.round(news));
+	self.inputBinding2.v2m$text = function(old, news, isM2V){
+		console.warn('V2M', "inputBinding2 was modified from:", news || '❌', 'to', news);
+		return Math.round(news);
+	};
+	self.inputBinding2.on$text = function(old, news, isM2V){
+		if(!isM2V)
+			return;
+
+		console.warn('M2V', "inputBinding2 was modified from:", news || '❌', 'to', news);
 		return Math.round(news);
 	};
 
