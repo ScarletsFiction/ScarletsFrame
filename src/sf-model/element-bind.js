@@ -122,8 +122,10 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);
 
-	if(model.sf$bindedKey[propertyName] !== void 0){
-		var ref = model.sf$bindedKey[propertyName];
+	var bindedKey = model.sf$bindedKey;
+
+	if(bindedKey[propertyName] !== void 0){
+		var ref = bindedKey[propertyName];
 		if(ref.indexOf(callback) === -1)
 			ref.push(callback);
 
@@ -137,10 +139,10 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		return;
 	}
 
-	model.sf$bindedKey[propertyName] = [callback];
+	bindedKey[propertyName] = [callback];
 
 	if(elementBind !== void 0){
-		var ref = model.sf$bindedKey[propertyName];
+		var ref = bindedKey[propertyName];
 		ref.input = [elementBind];
 		ref.input.type = type;
 	}
@@ -154,6 +156,12 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	if(objValue === void 0 || objValue === null)
 		objValue = '';
 
+	var _on = 'on$'+propertyName; // Everytime value's going changed, callback value will assigned as new value
+	var _m2v = 'm2v$'+propertyName; // Everytime value changed from script (not from View), callback value will only affect View
+	
+	if(model['out$'+propertyName])
+		console.warn(`'out$${propertyName}' is removed, please use 'on$${propertyName} = (old, now, isOut)=>{...};'`);
+
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,
@@ -162,49 +170,30 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		},
 		set:function(val){
 			if(objValue !== val){
-				var newValue = void 0;
-				if(inputBoundRunning === false){
-					var on = model['on$'+propertyName];
-					var out = model['out$'+propertyName];
+				var newValue, noFeedback;
+				if(inputBoundRunning === false && model[_m2v] !== void 0){
+					newValue = model[_m2v](objValue, val);
 
-					try{
-						if(on !== void 0)
-							newValue = on(objValue, val);
-						if(out !== void 0)
-							newValue = out(objValue, val);
-					}catch(e){console.error(e)}
+					if(newValue !== void 0)
+						noFeedback = true;
 				}
 
-				var m2v = model['m2v$'+propertyName];
-				if(m2v !== void 0){
-					newValue = m2v(objValue, val);
+				if(model[_on] !== void 0)
+					newValue = model[_on](objValue, val, true);
 
-					if(newValue !== void 0){
-						objValue = newValue;
-						m2v = val;
-					}
-					else{
-						m2v = void 0;
-						objValue = val;
-					}
-				}
-				else
-					objValue = newValue !== void 0 ? newValue : val;
+				objValue = newValue !== void 0 ? newValue : val;
 
-				var ref = model.sf$bindedKey[propertyName];
+				var ref = bindedKey[propertyName];
 				for (var i = 0; i < ref.length; i++) {
 					if(inputBoundRun === ref[i]){
 						ref[i](objValue, ref.input);
 						continue;
 					}
 
-					// ToDo: can we move ref[i].template to ref.template as it's same reference
-					if(syntheticTemplate(ref[i].element, ref[i].template, originalPropertyName, originalModel) === false)
-						0; //No update
+					syntheticTemplate(ref[i].element, ref[i].template, originalPropertyName, originalModel); // no update === false
 				}
 
-				if(m2v !== void 0)
-					objValue = m2v;
+				if(noFeedback) objValue = val;
 			}
 
 			inputBoundRunning = false;
@@ -235,18 +224,18 @@ self.bindElement = function(element, modelScope, template, localModel){
 		element = template.html;
 	}
 
-	var properties = template.modelRefRoot_array;
+	var properties = template.modelRefRoot_path;
 	for (var i = 0; i < properties.length; i++) {
-		modelToViewBinding(modelScope, properties[i][1], {
+		modelToViewBinding(modelScope, properties[i], {
 			element:element,
 			template:template
 		});
 	}
 
-	if(template.modelRef_array !== null){
-		properties = template.modelRef_array;
+	if(template.modelRef_path !== void 0){
+		properties = template.modelRef_path;
 		for (var i = 0; i < properties.length; i++) {
-			modelToViewBinding(localModel, properties[i][1], {
+			modelToViewBinding(localModel, properties[i], {
 				element:element,
 				template:template
 			});

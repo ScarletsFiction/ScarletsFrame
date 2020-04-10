@@ -1,21 +1,27 @@
-var callInputListener = function(model, property, value){
-	var on = model['on$'+property];
-	var v2m = model['v2m$'+property];
-	var newValue1 = void 0; var newValue2 = void 0;
-	if(on !== void 0 || v2m !== void 0){
-		var old = model[property];
+var callInputListener = function(ref, value){
+	var v2m = ref.sfModel['v2m$'+ref.sfBounded];
+	var on = ref.sfModel['on$'+ref.sfBounded];
+
+	if(v2m !== void 0 || on !== void 0){
+		var newValue;
+		var old = ref.sfModel[ref.sfBounded];
+
 		if(old !== null && old !== void 0 && old.constructor === Array)
 			old = old.slice(0);
 
 		try{
 			if(v2m !== void 0)
-				newValue1 = v2m(old, value);
+				newValue = v2m(old, value);
 
-			if(on !== void 0)
-				newValue2 = on(old, value);
+			if(on !== void 0){
+				newValue = on(old, value, false);
+				if(newValue !== void 0)
+					ref.sfFeedback = true;
+			}
 		}catch(e){console.error(e)}
+
+		return newValue;
 	}
-	return newValue2 !== void 0 ? newValue2 : newValue1;
 }
 
 var inputBoundRunning = false;
@@ -25,31 +31,65 @@ var inputTextBound = function(e){
 	var ref = inputBoundRunning = e.target;
 	ref.viewInputted = true;
 	var value = ref.typeData === Number ? Number(ref.value) : ref.value;
-	var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-	if(newValue !== void 0)
-		ref.sfModel[ref.sfBounded] = newValue;
-	else ref.sfModel[ref.sfBounded] = value;
+	var newValue = callInputListener(ref, value);
+
+	if(ref.sfFeedback){
+		ref.sfFeedback = false;
+		ref.value = newValue;
+	}
+
+	ref.sfModel[ref.sfBounded] = newValue !== void 0 ? newValue : value;
 }
+
 var inputFilesBound = function(e){
 	if(e.fromSFFramework === true) return;
-	
+
 	var ref = e.target;
-	callInputListener(ref.sfModel, ref.sfBounded, ref.files);
-	ref.sfModel[ref.sfBounded] = ref.files;
+	var newValue = callInputListener(ref, ref.files);
+	if(newValue !== void 0){
+		if(!newValue || newValue.length === 0)
+			ref.value = '';
+		else{
+			var temp = new DataTransfer();
+			for (var i = 0; i < newValue.length; i++)
+				temp.items.add(newValue[i]);
+
+			ref.sfModel[ref.sfBounded] = temp.files;
+			if(ref.sfFeedback){
+				ref.sfFeedback = false;
+				ref.files = temp.files;
+			}
+		}
+	}
+	else ref.sfModel[ref.sfBounded] = ref.files;
 }
 
 var inputCheckBoxBound = function(e){
 	if(e.fromSFFramework === true) return;
-	
+
 	var ref = inputBoundRunning = e.target;
 	ref.viewInputted = true;
-	var value = ref.typeData === Number ? Number(ref.value) : ref.value;
-	var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-	if(newValue !== void 0)
-		value = newValue;
 
 	var model = ref.sfModel;
 	var constructor = model[ref.sfBounded].constructor;
+
+	var value;
+	if(constructor === Boolean || ref.typeData === Boolean)
+		value = ref.checked;
+	else if(ref.typeData === Number)
+		value = Number(ref.value);
+	else
+		value = ref.value;
+
+	var newValue = callInputListener(ref, value);
+	if(newValue !== void 0){
+		value = newValue;
+
+		if(ref.sfFeedback){
+			ref.sfFeedback = false;
+			assignElementData.checkbox(value, ref);
+		}
+	}
 
 	if(constructor === Array){
 		var i = model[ref.sfBounded].indexOf(value);
@@ -59,29 +99,33 @@ var inputCheckBoxBound = function(e){
 		else if(i !== -1 && ref.checked === false)
 			model[ref.sfBounded].splice(i, 1);
 	}
-	else if(constructor === Boolean || ref.typeData === Boolean)
-		model[ref.sfBounded] = ref.checked;
 	else model[ref.sfBounded] = value;
 }
 
 var inputSelectBound = function(e){
 	if(e.fromSFFramework === true) return;
-	
+
 	var ref = inputBoundRunning = e.target;
 	ref.viewInputted = true;
 	var typeData = ref.typeData;
+
+	var value = [];
 	if(ref.multiple === true){
 		var temp = ref.selectedOptions;
-		var value = [];
-		for (var i = 0; i < temp.length; i++) {
+		for (var i = 0; i < temp.length; i++)
 			value.push(typeData === Number ? Number(temp[i].value) : temp[i].value);
-		}
 	}
 	else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
-	var newValue = callInputListener(ref.sfModel, ref.sfBounded, value);
-	if(newValue !== void 0)
+	var newValue = callInputListener(ref, value);
+	if(newValue !== void 0){
+		if(ref.sfFeedback){
+			ref.sfFeedback = false;
+			assignElementData.select(newValue, ref);
+		}
+
 		ref.sfModel[ref.sfBounded] = newValue;
+	}
 	else ref.sfModel[ref.sfBounded] = value;
 }
 
@@ -89,15 +133,16 @@ var assignElementData = {
 	select:function(val, element){
 		var list = element.options;
 		var typeData = element.typeData;
-		var arrayValue = val.constructor === Array ? val : false;
-		for (var i = 0, n = list.length; i < n; i++) {
-			if(arrayValue === false){
+
+		if(val.constructor !== Array){
+			for (var i = 0, n = list.length; i < n; i++) {
 				if(typeData === String)
 					list[i].selected = list[i].value === val;
 				else list[i].selected = list[i].value == val;
 			}
-			else list[i].selected = arrayValue.indexOf(typeData === Number ? Number(list[i].value) : list[i].value) !== -1;
 		}
+		else for (var i = 0, n = list.length; i < n; i++)
+			list[i].selected = val.indexOf(typeData === Number ? Number(list[i].value) : list[i].value) !== -1;
 	},
 	checkbox:function(val, element){
 		if(val.constructor === Array)
@@ -109,19 +154,27 @@ var assignElementData = {
 				element.checked = element.value === val;
 			else element.checked = element.value == val;
 		}
+	},
+	file:function(val, element){
+		if(!val || val.length === 0)
+			element.value = '';
+		else{
+			var temp = new DataTransfer();
+			for (var i = 0; i < val.length; i++)
+				temp.items.add(val[i]);
+
+			element.files = temp.files;
+		}
 	}
 }
 
 var inputBoundRun = function(val, elements){
-	if(val !== 0 && !val)
+	if(val === null || val === void 0)
 		return;
 
 	for (var i = 0; i < elements.length; i++) {
 		if(inputBoundRunning === elements[i])
 			continue; // Avoid multiple assigment
-
-		var ev = new Event('change');
-		ev.fromSFFramework = true;
 
 		if(elements.type === 1) // text
 			elements[i].value = val;
@@ -131,7 +184,13 @@ var inputBoundRun = function(val, elements){
 			elements[i].checked = val == elements[i].value;
 		else if(elements.type === 4) // checkbox
 			assignElementData.checkbox(val, elements[i]);
+		else if(elements.type === 5){ // file
+			assignElementData.file(val, elements[i]);
+			continue;
+		}
 
+		var ev = new Event('change');
+		ev.fromSFFramework = true;
 		elements[i].dispatchEvent(ev);
 	}
 }
@@ -195,7 +254,7 @@ var elementBoundChanges = function(model, property, element, oneWay, modelLocal,
 
 		else if(type === 'file'){
 			$.on(element, 'input', inputFilesBound);
-			return;
+			type = 5;
 		}
 
 		else{
