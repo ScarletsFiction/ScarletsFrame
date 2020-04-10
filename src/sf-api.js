@@ -67,7 +67,7 @@ var extendsAPI = {
 		if(formData.constructor !== FormData)
 			return console.error("Parameter 2 must be a FormData");
 
-		var getXHR = void 0;
+		var getXHR;
 		if(progress !== void 0){
 			getXHR = function(xhr){
 				xhr.upload.onprogress = function(ev){

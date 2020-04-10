@@ -89,7 +89,7 @@ class RepeatedElement extends Array{
 			// Get reference for debugging
 			processingElement = element;
 
-			var container = void 0;
+			var container;
 			if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
 				container = 'svg';
 

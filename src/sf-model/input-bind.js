@@ -226,17 +226,17 @@ var elementBoundChanges = function(model, property, element, oneWay, modelLocal,
 	// Bound value change
 	if(element.tagName === 'TEXTAREA'){
 		$.on(element, 'input', inputTextBound);
-		element.value = val;
 		type = 1;
-	}
 
+		if(oneWay === false)
+			element.value = val;
+	}
 	else if(element.selectedOptions !== void 0){
 		$.on(element, 'input', inputSelectBound);
 		type = 2;
 
 		assignElementData.select(val, element);
 	}
-
 	else{
 		var type = element.type.toLowerCase();
 		if(type === 'radio'){
@@ -251,16 +251,16 @@ var elementBoundChanges = function(model, property, element, oneWay, modelLocal,
 
 			assignElementData.checkbox(val, element);
 		}
-
 		else if(type === 'file'){
 			$.on(element, 'input', inputFilesBound);
 			type = 5;
 		}
-
 		else{
 			$.on(element, 'input', inputTextBound);
-			element.value = val;
 			type = 1;
+
+			if(oneWay === false)
+				element.value = val;
 		}
 	}
 

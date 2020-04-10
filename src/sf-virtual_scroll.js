@@ -618,7 +618,7 @@ internal.virtual_scroll = new function(){
 
 	function obtainElements(list, parentNode){
 		var exist = [];
-		var temp = void 0;
+		var temp;
 
 		var length = list.$virtual.DOMCursor;
 		for (var i = 0; i < length; i++) {
