@@ -335,8 +335,14 @@ var $ = sf.dom; // Shortcut
 			}
 			return this;
 		},
-		eq:function(i){
-			return new DOMList(this[i]);
+		eq:function(i, count){
+			if(i < 0)
+				i = this.length + i;
+
+			if(count === void 0)
+				return new DOMList(this[i]);
+
+			return new DOMList(this.slice(i, count > 0 ? count : void 0));			
 		},
 		insertAfter:function(el){
 			var parent = el.parentNode;
@@ -511,7 +517,7 @@ var $ = sf.dom; // Shortcut
 			callback = function(ev){
 				var target = ev.target.closest(selector);
 				if(target !== null)
-					tempCallback.apply(target, [ev]);
+					tempCallback.call(target, ev);
 			}
 			callback.callback = tempCallback;
 		}
