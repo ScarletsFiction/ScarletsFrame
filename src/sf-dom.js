@@ -748,8 +748,6 @@ var $ = sf.dom; // Shortcut
 
 	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
-		var names = [];
-
 		if(untilElement === void 0) untilElement = documentElement;
 		else if(element === untilElement){
 			if(childIndexes)
@@ -759,6 +757,7 @@ var $ = sf.dom; // Shortcut
 
 		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
+		var names = [];
 		while(element.parentElement !== null){
 			if(!childIndexes && element.id && !haveSymbol.test(element.id)){
 				names.unshift('#'+element.id);

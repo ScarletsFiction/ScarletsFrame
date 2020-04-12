@@ -231,17 +231,15 @@ class RepeatedElement extends Array{
 		var lastLength = this.length;
 		this.length += arguments.length;
 
-		var n = 0;
-		for (var i = lastLength; i < this.length; i++) {
+		for (var i = lastLength, n = 0; i < this.length; i++)
 			this[i] = arguments[n++];
-		}
 
 		if(arguments.length === 1)
 			this.$EM.append(lastLength);
+
 		else{
-			for (var i = 0; i < arguments.length; i++) {
+			for (var i = 0; i < arguments.length; i++)
 				this.$EM.append(lastLength + i);
-			}
 		}
 
 		return this.length;
@@ -263,9 +261,8 @@ class RepeatedElement extends Array{
 		var limit = arguments[1];
 		if(!limit && limit !== 0) limit = this.length;
 
-		for (var i = limit - 1; i >= 0; i--) {
+		for (var i = limit - 1; i >= 0; i--)
 			this.$EM.remove(real + i);
-		}
 
 		if(this.$virtual && this.$virtual.DOMCursor >= real)
 			this.$virtual.DOMCursor = real - limit;
@@ -277,9 +274,8 @@ class RepeatedElement extends Array{
 			if(real >= this.length)
 				real = this.length - 1;
 
-			for (var i = 0; i < limit; i++) {
+			for (var i = 0; i < limit; i++)
 				this.$EM.insertAfter(real + i);
-			}
 
 			if(this.$virtual && this.$virtual.DOMCursor >= real)
 				this.$virtual.DOMCursor += limit;
@@ -305,10 +301,10 @@ class RepeatedElement extends Array{
 
 		if(arguments.length === 1)
 			this.$EM.prepend(0);
+
 		else{
-			for (var i = arguments.length - 1; i >= 0; i--) {
+			for (var i = arguments.length - 1; i >= 0; i--)
 				this.$EM.prepend(i);
-			}
 		}
 
 		if(this.$virtual && this.$virtual.DOMCursor !== 0){
@@ -813,9 +809,8 @@ class ElementManipulator{
 	removeRange(index, other){
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
-		for (var i = index; i < other; i++) {
+		for (var i = index; i < other; i++)
 			exist[index].remove();
-		}
 	}
 
 	clear(){

@@ -231,6 +231,7 @@ sf.component = function(name, options, func, namespace){
 				var _content_ = null;
 				copy.parse = copy.parse.slice(0);
 
+				// Copy the original properties to new object
 				for (var i = 0; i < copy.parse.length; i++) {
 					copy.parse[i] = Object.assign({}, copy.parse[i]);
 					var ref = copy.parse[i].data = copy.parse[i].data.slice(0);

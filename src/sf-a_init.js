@@ -79,27 +79,27 @@ function parsePropertyPath(str){
 	return temp;
 }
 
+var _es = '<%$@>';
 function avoidQuotes(str, func, noReturn){
-	var temp = [];
-	var es = '<%$@>';
-
 	if(noReturn !== void 0){
-		func(str.replace(sf.regex.getQuotes, '<%$@>'));
+		func(str.replace(sf.regex.getQuotes, _es));
 		return;
 	}
 
+	var temp = [];
+
 	str = str.replace(sf.regex.getQuotes, function(full){
 		temp.push(full);
-		return es+(temp.length-1)+es;
+		return _es+(temp.length-1)+_es;
 	});
 
 	str = func(str);
 
 	// Fix unexpected _modelScope replacement
-	str =  str.split('<%$@>_modelScope.').join('<%$@>');
+	str =  str.split('<%$@>_modelScope.').join(_es);
 
 	for (var i = 0; i < temp.length; i++) {
-		str = str.replace(es+i+es, temp[i]);
+		str = str.replace(_es+i+_es, temp[i]);
 	}
 	return str;
 }

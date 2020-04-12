@@ -598,11 +598,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 					addressStart = $.getSelector(nodes[i].previousSibling, true);
 
 				// Find boundary ends
-				var commentFlag = [];
+				var commentFlag = addressed.length;
 				for(var a = 0; a < indexes.length; a++){
 					var flag = document.createComment('');
 					parent.insertBefore(flag, nextSibling);
-					commentFlag.push({
+
+					// Add comment element as a flag
+					addressed.push({
 						nodeType:-1,
 						parse_index:indexes[a],
 						startFlag:addressStart,
@@ -624,11 +626,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 				}
 
 				// Merge boundary address
-				Array.prototype.push.apply(addressed, commentFlag);
 				if(nodes[i].textContent === ''){
 					nodes[i].remove();
-					for (var a = 0; a < commentFlag.length; a++) {
-						var ref = commentFlag[a].address;
+
+					// Process the comment flag only
+					for (var a = commentFlag; a < addressed.length; a++) {
+						var ref = addressed[a].address;
 						ref[ref.length - 1]--;
 					}
 					continue;

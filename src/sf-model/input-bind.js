@@ -11,10 +11,10 @@ var callInputListener = function(ref, value){
 
 		try{
 			if(v2m !== void 0)
-				newValue = v2m(old, value);
+				newValue = v2m.call(ref.sfModel, old, value);
 
 			if(on !== void 0){
-				newValue = on(old, value, false);
+				newValue = on.call(ref.sfModel, old, value, false);
 				if(newValue !== void 0)
 					ref.sfFeedback = true;
 			}

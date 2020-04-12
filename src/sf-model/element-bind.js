@@ -160,20 +160,6 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	var _on = model['on$'+propertyName]; // Everytime value's going changed, callback value will assigned as new value
 	var _m2v = model['m2v$'+propertyName]; // Everytime value changed from script (not from View), callback value will only affect View
 
-	// Callback cache
-	if(_m2v.length >= 3)
-		bindedKey.m2v = function(newVal){
-			var temp = objValue;
-			objValue = newVal;
-
-			for (var i = 0; i < bindedKey.length; i++) {
-				// false === no update
-				syntheticTemplate(bindedKey[i].element, bindedKey[i].template, originalPropertyName, originalModel);
-			}
-
-			objValue = temp;
-		};
-
 	if(model['out$'+propertyName])
 		console.warn(`'out$${propertyName}' is removed, please use 'on$${propertyName} = (old, now, isOut)=>{...};'`);
 
@@ -187,17 +173,14 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			if(objValue !== val){
 				var newValue, noFeedback;
 				if(inputBoundRunning === false && _m2v !== void 0){
-					if(_m2v.length >= 3)
-						newValue = _m2v(objValue, val, bindedKey.m2v);
-					else
-						newValue = _m2v(objValue, val);
+					newValue = _m2v.call(model, objValue, val);
 
 					if(newValue !== void 0)
 						noFeedback = true;
 				}
 
 				if(_on !== void 0)
-					newValue = _on(objValue, val, true);
+					newValue = _on.call(model, objValue, val, true);
 
 				objValue = newValue !== void 0 ? newValue : val;
 

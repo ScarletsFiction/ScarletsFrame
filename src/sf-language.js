@@ -210,13 +210,13 @@ self.assign = function(model, keyPath, obj, callback){
 	if(self.list[self.default] === void 0)
 		self.list[self.default] = {};
 
-	var keys = Object.keys(keyPath);
-	var vals = Object.values(keyPath);
-
 	if(obj !== void 0 && obj.constructor === Function){
 		callback = obj;
 		obj = void 0;
 	}
+
+	var keys = Object.keys(keyPath);
+	var vals = Object.values(keyPath);
 
 	getMany(vals, obj, function(values){
 		for (var i = 0; i < keys.length; i++) {
