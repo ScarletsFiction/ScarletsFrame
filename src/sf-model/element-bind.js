@@ -33,9 +33,9 @@ internal.model.removeModelBinding = function(ref, noBackup){
 				ref[key].$virtual = void 0;
 			}
 
-			// Reset property without copying the array
+			// Reset property without copying the array to new reference
 			if(noBackup === void 0){
-				temp = ref[key].splice('obtain');
+				temp = ref[key].splice();
 				delete ref[key];
 				ref[key] = temp;
 			}

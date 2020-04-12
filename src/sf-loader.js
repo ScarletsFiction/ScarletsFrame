@@ -141,10 +141,7 @@ sf.loader = new function(){
 			}
 		}
 
-		whenProgress.splice(0);
-		whenDOMReady.splice(0);
-		whenDOMLoaded.splice(0);
-		whenDOMReady = whenDOMLoaded = null;
+		whenProgress = whenDOMReady = whenDOMLoaded = null;
 	}
 }
 sf.prototype.constructor = sf.loader.onFinish;

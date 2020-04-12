@@ -383,9 +383,8 @@ var $ = sf.dom; // Shortcut
 				this[i].text = text;
 			return this;
 		},
-	};
 
-	Object.assign(self.fn, {
+		// Event trigger shortcut
 		click:function(d){return this.trigger('click', d, true)},
 		blur:function(d){return this.trigger('blur', d, true)},
 		focus:function(d){return this.trigger('focus', d, true)},
@@ -408,7 +407,7 @@ var $ = sf.dom; // Shortcut
 		touchmove:function(d){return this.trigger('touchmove', d)},
 		resize:function(d){return this.trigger('resize', d, true)},
 		scroll:function(d){return this.trigger('scroll', d, true)},
-	});
+	};
 
 	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);
