@@ -71,8 +71,10 @@ function eventHandler(that, data, _modelScope, rootHandler){
 		script = function(event){
 			if(event.target.hasAttribute('sf-bind-list') === false){
 				var realThat = event.target.closest('[sf-bind-list]');
-				var call = findEventFromList($.getSelector(event.target, true, realThat));
+				if(realThat === null)
+					return;
 
+				var call = findEventFromList($.getSelector(event.target, true, realThat));
 				if(call !== void 0){
 					// Found, stop event to other parent
 		    		event.stopPropagation();
