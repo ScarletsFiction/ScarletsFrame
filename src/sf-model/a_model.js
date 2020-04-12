@@ -16,11 +16,12 @@ self.init = function(el, modelName, namespace){
 		model.$el = $();
 
 	model.$el.push(el);
+	if(model.sf$internal === void 0){
+		Object.defineProperty(model, 'sf$internal', {enumerabe:false, value:{}});
+		model.sf$internal.modelKeysRegex = createModelKeysRegex(el, model, null);
+	}
 
 	if(model.constructor !== Object){
-		if(model.sf$internal === void 0)
-			Object.defineProperty(model, 'sf$internal', {enumerabe:false, value:{}});
-	
 		if(model.sf$internal.methodProxied !== true){
 			proxyClass(model, model.constructor);
 			model.sf$internal.proxied = true;
@@ -34,7 +35,7 @@ self.init = function(el, modelName, namespace){
 		input:[]
 	};
 
-	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model);
+	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model, model.sf$internal.modelKeysRegex);
 
 	bindInput(specialElement.input, model);
 	repeatedListBinding(specialElement.repeat, model, namespace);

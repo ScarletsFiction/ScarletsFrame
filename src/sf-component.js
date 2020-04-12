@@ -71,7 +71,7 @@ sf.component = function(name, options, func, namespace){
 
 		// 0=Function for scope, 1=DOM Contructor, 2=incremental ID, 3=Template
 		if(scope.registered[name] === void 0)
-			scope.registered[name] = [func, void 0, 0, false]; // index 1 is $ComponentConstructor
+			scope.registered[name] = [func, void 0, 0, void 0, void 0]; // index 1 is $ComponentConstructor
 
 		scope.registered[name][0] = func;
 		var construct = defineComponent(name);
@@ -110,9 +110,9 @@ sf.component = function(name, options, func, namespace){
 			outerHTML = template;
 		}
 
-		// 0=Function for scope, 1=DOM Contructor, 2=incremental ID, 3=Template
+		// 0=Function for scope, 1=DOM Contructor, 2=incremental ID, 3=Template, 4=ModelRegex
 		if(scope.registered[name] === void 0)
-			scope.registered[name] = [false, false, 0, false];
+			scope.registered[name] = [void 0, void 0, 0, void 0, void 0];
 
 		var temp;
 		if(outerHTML.constructor === String)
@@ -163,7 +163,7 @@ sf.component = function(name, options, func, namespace){
 			element.sf$space = namespace;
 
 		var registrar = scope.registered[name];
-		if(registrar === void 0 || element.childNodes.length === 0 && registrar[3] === false){
+		if(registrar === void 0 || element.childNodes.length === 0 && registrar[3] === void 0){
 			if(_fromCheck === true)
 				return;
 
@@ -204,6 +204,9 @@ sf.component = function(name, options, func, namespace){
 			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
 		}
 
+		if(registrar[4] === void 0)
+			registrar[4] = internal.model.createModelKeysRegex(temp, newObj, null);
+
 		if(element.childNodes.length === 0){
 			var temp = registrar[3];
 			var tempDOM = temp.tempDOM;
@@ -213,7 +216,8 @@ sf.component = function(name, options, func, namespace){
 				tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 
 				var isDynamic = internal.model.templateInjector(temp, newObj, true);
-				temp = sf.model.extractPreprocess(temp, null, newObj);
+
+				temp = sf.model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
 
 				if(isDynamic === false)
 					registrar[3] = temp;
@@ -265,7 +269,7 @@ sf.component = function(name, options, func, namespace){
 			};
 
 			internal.model.templateInjector(element, newObj, false);
-			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj);
+			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj, registrar[4]);
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);
 

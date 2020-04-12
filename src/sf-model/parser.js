@@ -400,7 +400,25 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 	return isDynamic;
 }
 
-self.extractPreprocess = function(targetNode, mask, modelScope, container){
+var createModelKeysRegex = internal.model.createModelKeysRegex = function(targetNode, modelScope, mask){
+	var modelKeys = self.modelKeys(modelScope).join('|');
+	if(modelKeys.length === 0){
+		console.error(modelScope, $(targetNode.outerHTML)[0]);
+		throw new Error("Template model was not found");
+	}
+
+	var obj = {};
+
+	// Don't match text inside quote, or object keys
+	obj.modelRefRoot_regex = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
+	if(mask !== null)
+		obj.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
+
+	obj.modelRef_regex_mask = mask;
+	return obj;
+}
+
+self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex){
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
@@ -413,27 +431,39 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	if(targetNode.model !== void 0)
 		return console.error('[Violation] element already has a model, template extraction aborted', targetNode, targetNode.model, mask, modelScope);
 
-	var modelKeys = self.modelKeys(modelScope).join('|');
-	if(modelKeys.length === 0){
-		console.error(modelScope, $(targetNode.outerHTML)[0]);
-		throw new Error("Template model was not found");
+	var template;
+
+	// modelRefRoot_regex should be placed on template prototype
+	if(modelRegex !== void 0){
+		template = Object.create(modelRegex);
+
+		// For preparing the next model too
+		if(modelRegex.modelRef_regex_mask !== mask){
+			modelRegex.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
+			modelRegex.modelRef_regex_mask = mask;
+		}
+	}
+	else{
+		template = createModelKeysRegex(targetNode, modelScope, mask);
+
+		// Delete parser cache because unused anymore
+		setTimeout(function(){
+			delete template.modelRefRoot_regex;
+			delete template.modelRef_regex;
+			delete template.modelRef_regex_mask;
+		}, 1000);
 	}
 
-	var copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
-	var template = {
-		modelRefRoot:{},
-		modelRefRoot_path:[],
-
-		// Don't match text inside quote, or object keys
-		modelRefRoot_regex:RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g')
-	};
+	template.modelRefRoot = {};
+	template.modelRefRoot_path = [];
 
 	// Mask the referenced item
 	if(mask !== null){
 		template.modelRef = {};
 		template.modelRef_path = [];
-		template.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm')
 	}
+
+	var copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 
 	// Extract data to be parsed
 	copy = uniqueDataParser(copy, template, modelScope);
@@ -760,14 +790,14 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 		return Array.from(temp);
 }
 
-self.parsePreprocess = function(nodes, modelRef){
+self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 	var binded = [];
 	for (var a = 0; a < nodes.length; a++) {
 		// Get reference for debugging
 		var current = processingElement = nodes[a];
 
 		if(current.nodeType === 3 && binded.indexOf(current.parentNode) === -1){
-			self.bindElement(current.parentNode, modelRef);
+			self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
 			binded.push(current.parentNode);
 			continue;
 		}
@@ -776,18 +806,10 @@ self.parsePreprocess = function(nodes, modelRef){
 		if(current.sf$onlyAttribute !== void 0){
 			var preParsedRef = [];
 
-			var modelKeys = self.modelKeys(modelRef).join('|');
-			if(modelKeys.length === 0){
-				console.error(modelRef, $(nodes.outerHTML)[0]);
-				throw new Error("Template model was not found");
-			}
-
-			var template = {
-				parse:preParsedRef,
-				modelRefRoot:{},
-				modelRefRoot_path:[],
-				modelRefRoot_regex:RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g')
-			};
+			var template = Object.create(modelKeysRegex);
+			template.parse = preParsedRef;
+			template.modelRefRoot = {};
+			template.modelRefRoot_path = [];
 
 			var attrs = current.attributes;
 			for (var i = 0; i < attrs.length; i++) {
@@ -841,7 +863,7 @@ self.parsePreprocess = function(nodes, modelRef){
 			continue;
 		}
 
-		self.bindElement(current, modelRef);
+		self.bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
 	}
 }
 

@@ -42,7 +42,7 @@ self.changeDefault = function(defaultLang){
 		var keys = Object.keys(registered);
 
 		for (var i = 0; i < keys.length; i++) {
-			if(registered[keys[i]][3] !== false)
+			if(registered[keys[i]][3] !== void 0)
 				refreshTemplate(registered[keys[i]][3]);
 		}
 	}
@@ -56,7 +56,7 @@ self.changeDefault = function(defaultLang){
 			var keys = Object.keys(registered);
 
 			for (var a = 0; a < keys.length; a++) {
-				if(registered[keys[a]][3] !== false)
+				if(registered[keys[a]][3] !== void 0)
 					refreshTemplate(registered[keys[a]][3]);
 			}
 		}
