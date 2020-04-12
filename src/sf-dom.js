@@ -202,16 +202,16 @@ var $ = sf.dom; // Shortcut
 			if(name.constructor === Object){
 				var keys = Object.keys(name);
 				for (var i = 0; i < keys.length; i++) {
-					if(/\-/.test(keys[i]) !== true)
+					if(keys[i].indexOf('-') === -1)
 						continue;
 
 					name[keys[i].replace(css_str, css_strRep)] = name[keys[i]];
 					delete name[keys[i]];
 				}
 
-				for (var i = 0; i < this.length; i++) {
+				for (var i = 0; i < this.length; i++)
 					Object.assign(this[i].style, name);
-				}
+
 				return this;
 			}
 

@@ -56,7 +56,12 @@ sf.regex = {
 
 	itemsObserve:/\b(_model_|_modelScope)\.([\w\[\].]+)/g,
 	parsePropertyPath:/(?:\[([\w]+)\]|\.([\w]+))/g,
-	getSingleMask:['([^\\w.]|^)','([^\\w:]|$)'] //gm
+	getSingleMask:['([^\\w.]|^)','([^\\w:]|$)'], //gm
+
+	inputAttributeType:/checkbox|radio|hidden/,
+	anyCurlyBracket:/{{.*?}}/,
+	allTemplateBracket:/{\[([\s\S]*?)\]}/g,
+	anyOperation:/[ =(+-]/,
 };
 
 function parsePropertyPath(str){

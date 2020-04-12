@@ -4,21 +4,8 @@
 // Please be careful when you're passing the eval argument
 // .apply() or spread ...array is slower than direct function call
 // object[0] is slower than array[0]
-var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedReference){
+var dataParser = function(html, _model_, template, _modelScope, runEval, preParsedReference){
 	if(!runEval) runEval = '';
-
-	var modelKeys = self.modelKeys(_modelScope).join('|');
-
-	if(modelKeys.length === 0){
-		console.error(_modelScope, $.parseElement(html));
-		throw new Error("Template model was not found");
-	}
-
-	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
-
-	if(mask)
-		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
 
 	bindingEnabled = true;
 
@@ -33,13 +20,13 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 			// Mask item variable
-			if(mask)
-				temp_ = temp_.replace(itemMask, function(full, left, right){
+			if(template.modelRef_regex !== void 0)
+				temp_ = temp_.replace(template.modelRef_regex, function(full, left, right){
 					return left+'_model_'+right;
 				});
 
 			// Mask model for variable
-			return temp_.replace(scopeMask, function(full, before, matched){
+			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
 				return before+'_modelScope.'+matched;
 			});
 		}).split('_model_._modelScope.').join('_model_.');
@@ -68,21 +55,34 @@ var dataParser = function(html, _model_, mask, _modelScope, runEval, preParsedRe
 
 	if(runEval === '#noEval'){
 		// Clear memory before return
-		_modelScope = preParsed = _model_ = mask = runEval = scopeMask = itemMask = html = null;
+		_modelScope = preParsed = _model_ = runEval = html = null;
 		setTimeout(function(){prepared = null});
 	}
 	return prepared;
 }
 
 // Dynamic data parser
-var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
+var uniqueDataParser = function(html, template, _modelScope){
 	// Get prepared html content
-	var _content_ = {
-		length:0,
-		_modelScope:_modelScope,
-		take:function(passVar, currentIndex){
+	var _content_ = [];
+
+	// Build script preparation
+	html = html.replace(sf.regex.allTemplateBracket, function(full, matched){
+		if(sf.regex.anyCurlyBracket.test(matched) === false)
+			return "_result_ += '"+matched.split("'").join("\\'")+"'";
+
+		_content_.push(matched);
+		return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
+	});
+
+	if(_content_.length === 0)
+		_content_ = null;
+	else{
+		var _model_ = null;
+		_content_._modelScope = _modelScope;
+		_content_.take = function(passVar, currentIndex){
 			if(passVar === null)
-				return dataParser(this[currentIndex], _model_, mask, this._modelScope);
+				return dataParser(this[currentIndex], _model_, template, this._modelScope);
 
 			// Use strict mode and prepare for new variables
 			var strDeclare = '"use strict";var ';
@@ -114,49 +114,26 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 			strDeclare = strDeclare.split('(').join('&#40;').split(')').join('&#41;');
 
 			// Pass to static data parser for another HTML data
-			return dataParser(this[currentIndex], _model_, mask, this._modelScope, strDeclare + ';');
-		}
-	};
-
-	// Build script preparation
-	html = html.replace(/{\[([\s\S]*?)\]}/g, function(full, matched){
-		if(/{{.*?}}/.test(matched) === false)
-			return "_result_ += '"+matched.split("'").join("\\'")+"'";
-
-		_content_[_content_.length] = matched;
-		_content_.length++;
-		return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
-	});
-
-	var modelKeys = self.modelKeys(_modelScope).join('|');
-
-	if(modelKeys.length === 0){
-		console.error(_modelScope, $.parseElement(html));
-		throw new Error("Template model was not found");
+			return dataParser(this[currentIndex], _model_, template, this._modelScope, strDeclare + ';');
+		};
 	}
 
-	// Don't match text inside quote, or object keys
-	var scopeMask = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
+	// console.log(3213, _content_);
 
-	if(mask)
-		var itemMask = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
-
-	if(runEval === '#noEval')
-		var preParsedReference = [];
-
+	var preParsedReference = [];
 	var prepared = html.replace(sf.regex.uniqueDataParser, function(actual, temp){
 		temp = avoidQuotes(temp, function(temp_){
 			// Unescape HTML
 			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 			// Mask item variable
-			if(mask)
-				temp_ = temp_.replace(itemMask, function(full, left, right){
+			if(template.modelRef_regex !== void 0)
+				temp_ = temp_.replace(template.modelRef_regex, function(full, left, right){
 					return left+'_model_'+right;
 				});
 
 			// Mask model for variable
-			return temp_.replace(scopeMask, function(full, before, matched){
+			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
 				return before+'_modelScope.'+matched;
 			});
 		}).split('_model_._modelScope.').join('_model_.');;
@@ -172,9 +149,7 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 			VarPass.push(s1[2]);
 		}
 
-		if(_model_ === null && runEval === '#noEval')
-			VarPass.push('_model_');
-
+		VarPass.push('_model_');
 		if(VarPass.length !== 0){
 			var obtained = [];
 			for (var i = 0; i < VarPass.length; i++) {
@@ -230,39 +205,24 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 				return obj;
 			}
 
-			if(runEval === '#noEval'){
-				var condition = check.shift();
-				var elseIf = findElse(check);
-				elseIf.type = REF_IF;
-				elseIf.data = [_model_, _modelScope, _content_];
+			var condition = check.shift();
+			var elseIf = findElse(check);
+			elseIf.type = REF_IF;
+			elseIf.data = [null, _modelScope, _content_];
 
-				// Trim Data
-				elseIf.if = [condition.trim(), elseIf.if.trim()];
-				if(elseIf.elseValue !== null)
-					elseIf.elseValue = elseIf.elseValue.trim();
+			// Trim Data
+			elseIf.if = [condition.trim(), elseIf.if.trim()];
+			if(elseIf.elseValue !== null)
+				elseIf.elseValue = elseIf.elseValue.trim();
 
-				for (var i = 0; i < elseIf.elseIf.length; i++) {
-					elseIf.elseIf[i][0] = elseIf.elseIf[i][0].trim();
-					elseIf.elseIf[i][1] = elseIf.elseIf[i][1].trim();
-				}
-
-				// Push data
-				preParsedReference.push(elseIf);
-				return '{{%%=' + (preParsedReference.length - 1);
+			for (var i = 0; i < elseIf.elseIf.length; i++) {
+				elseIf.elseIf[i][0] = elseIf.elseIf[i][0].trim();
+				elseIf.elseIf[i][1] = elseIf.elseIf[i][1].trim();
 			}
 
-			var arg = [check[0], _model_, _modelScope, _content_];
-
-			// If condition was not meet
-			if(!localEval(arg[0], arg[1], arg[2], arg[3])){
-				check.shift();
-				return elseIfHandle(findElse(check), arg);
-			}
-
-			check.shift();
-			arg[0] = check.join(':');
-
-			return localEval(arg[0], arg[1], arg[2], arg[3]);
+			// Push data
+			preParsedReference.push(elseIf);
+			return '{{%%=' + (preParsedReference.length - 1);
 		}
 
 		// Warning! Avoid unencoded user inputted content
@@ -270,29 +230,19 @@ var uniqueDataParser = function(html, _model_, mask, _modelScope, runEval){
 		// Any function call will be removed for addional security
 		check = temp.split('@exec');
 		if(check.length !== 1){
-			var arg = [check[1], _model_, _modelScope, _content_];
-
-			if(runEval === '#noEval'){
-				preParsedReference.push({type:REF_EXEC, data:arg});
-				return '{{%%=' + (preParsedReference.length - 1);
-			}
-
-			return localEval(arg[0], arg[1], arg[2], arg[3])
+			preParsedReference.push({type:REF_EXEC, data:[check[1], null, _modelScope, _content_]});
+			return '{{%%=' + (preParsedReference.length - 1);
 		}
 		return '';
 	});
 
-	if(runEval === '#noEval'){
-		// Clear memory before return
-		_modelScope = runEval = scopeMask = itemMask = html = null;
-		setTimeout(function(){prepared = null});
-		return [prepared, preParsedReference, _content_];
-	}
-
-	return prepared;
+	// Clear memory before return
+	_modelScope = html = null;
+	setTimeout(function(){prepared = null});
+	return [prepared, preParsedReference, _content_];
 }
 
-function addressAttributes(currentNode, template, itemMask){
+function addressAttributes(currentNode, template){
 	var attrs = currentNode.attributes;
 	var keys = [];
 	var indexes = 0;
@@ -305,8 +255,8 @@ function addressAttributes(currentNode, template, itemMask){
 				continue;
 			}
 
-			if(itemMask)
-				attrs[a].value = attrs[a].value.replace(itemMask, function(full, left, right){
+			if(template.modelRef_regex)
+				attrs[a].value = attrs[a].value.replace(template.modelRef_regex, function(full, left, right){
 					return left+'_model_'+right;
 				});
 
@@ -463,23 +413,33 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	if(targetNode.model !== void 0)
 		return console.error('[Violation] element already has a model, template extraction aborted', targetNode, targetNode.model, mask, modelScope);
 
+	var modelKeys = self.modelKeys(modelScope).join('|');
+	if(modelKeys.length === 0){
+		console.error(modelScope, $(targetNode.outerHTML)[0]);
+		throw new Error("Template model was not found");
+	}
+
 	var copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 	var template = {
 		modelRefRoot:{},
 		modelRefRoot_path:[],
+
+		// Don't match text inside quote, or object keys
+		modelRefRoot_regex:RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g')
 	};
 
 	// Mask the referenced item
 	if(mask !== null){
 		template.modelRef = {};
 		template.modelRef_path = [];
+		template.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm')
 	}
 
 	// Extract data to be parsed
-	copy = uniqueDataParser(copy, null, mask, modelScope, '#noEval');
+	copy = uniqueDataParser(copy, template, modelScope);
 	var preParsed = copy[1];
 	var _content_ = copy[2];
-	copy = dataParser(copy[0], null, mask, modelScope, '#noEval', preParsed);
+	copy = dataParser(copy[0], null, template, modelScope, '#noEval', preParsed);
 
 	function findModelProperty(){
 		for (var i = 0; i < preParsed.length; i++) {
@@ -560,14 +520,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container){
 	var nodes = self.queuePreprocess(copy, true, template.specialElement).reverse();
 	var addressed = [];
 
-	var itemMask = mask ? RegExp(sf.regex.getSingleMask.join(mask), 'gm') : void 0;
 	for (var i = 0; i < nodes.length; i++) {
 		var temp = {
 			nodeType:nodes[i].nodeType
 		};
 
 		if(temp.nodeType === 1){ // Element
-			temp.attributes = addressAttributes(nodes[i], template, itemMask);
+			temp.attributes = addressAttributes(nodes[i], template);
 			temp.address = $.getSelector(nodes[i], true);
 		}
 
@@ -817,19 +776,26 @@ self.parsePreprocess = function(nodes, modelRef){
 		if(current.sf$onlyAttribute !== void 0){
 			var preParsedRef = [];
 
-			var attrs = current.attributes;
-			for (var i = 0; i < attrs.length; i++) {
-				var attr = attrs[i];
-
-				if(attr.value.indexOf('{{') !== -1)
-					attr.value = dataParser(attr.value, null, false, modelRef, '#noEval', preParsedRef);
+			var modelKeys = self.modelKeys(modelRef).join('|');
+			if(modelKeys.length === 0){
+				console.error(modelRef, $(nodes.outerHTML)[0]);
+				throw new Error("Template model was not found");
 			}
 
 			var template = {
 				parse:preParsedRef,
 				modelRefRoot:{},
-				modelRefRoot_path:[]
+				modelRefRoot_path:[],
+				modelRefRoot_regex:RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g')
 			};
+
+			var attrs = current.attributes;
+			for (var i = 0; i < attrs.length; i++) {
+				var attr = attrs[i];
+
+				if(attr.value.indexOf('{{') !== -1)
+					attr.value = dataParser(attr.value, null, template, modelRef, '#noEval', preParsedRef);
+			}
 
 			template.addresses = addressAttributes(current, template);
 			toObserve.template = template;
@@ -853,7 +819,7 @@ self.parsePreprocess = function(nodes, modelRef){
 
 			var parsed = templateExec(preParsedRef, modelRef);
 			var currentRef = [];
-			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef);
+			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef, void 0, template);
 
 			// Save reference to element
 			if(currentRef.length !== 0){
@@ -875,21 +841,7 @@ self.parsePreprocess = function(nodes, modelRef){
 			continue;
 		}
 
-		if(current.hasAttribute('sf-bind-ignore') === false)
-			self.bindElement(current, modelRef);
-
-		// Deprecate
-		else{
-			var temp = uniqueDataParser(current.innerHTML, modelRef, false, model);
-			current.innerHTML = dataParser(temp, modelRef, false, model);
-			var attrs = current.attributes;
-			for (var i = 0; i < attrs.length; i++) {
-				if(attrs[i].value.indexOf('{{') !== -1){
-					var attr = attrs[i];
-					attr.value = dataParser(attr.value, modelRef, false, model);
-				}
-			}
-		}
+		self.bindElement(current, modelRef);
 	}
 }
 

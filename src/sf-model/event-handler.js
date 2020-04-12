@@ -1,14 +1,14 @@
-function eventHandler(that, data, _modelScope, rootHandler){
+function eventHandler(that, data, _modelScope, rootHandler, template){
 	var modelKeys = sf.model.modelKeys(_modelScope).join('|');
 
 	var direct = false;
 	var script = data.value;
 	script = avoidQuotes(script, function(script_){
-		if(/[ =(+-]/.test(script_) === false)
+		if(sf.regex.anyOperation.test(script_) === false)
 			direct = true;
 
 		// Replace variable to refer to current scope
-		return script_.replace(RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g'), function(full, before, matched){
+		return script_.replace(template.modelRefRoot_regex, function(full, before, matched){
 			return before+'_modelScope.'+matched;
 		});
 	});

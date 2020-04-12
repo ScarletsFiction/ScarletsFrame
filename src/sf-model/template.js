@@ -84,13 +84,13 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 		// Pass to event handler
 		if(refB.event){
 			if(rootHandler === void 0 || rootHandler.sf$listListenerLock === void 0)
-				eventHandler(current, refB, modelRef || item, rootHandler);
+				eventHandler(current, refB, modelRef || item, rootHandler, template);
 
 			continue;
 		}
 
 		var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
-			(current.tagName === 'INPUT' && /checkbox|radio|hidden/.test(current.type) === false)
+			(current.tagName === 'INPUT' && sf.regex.inputAttributeType.test(current.type) === false)
 		));
 
 		var temp = {

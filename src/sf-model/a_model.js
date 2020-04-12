@@ -72,7 +72,7 @@ function trimIndentation(text){
 	return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
 }
 
-// Secured evaluation
+// Secured evaluation (deprecate above also)
 var bracketMatch = /([\w\n.]*?[\S\s])\(/g;
 var chackValidFunctionCall = sf.regex.validFunctionCall;
 var localEval = function(script, _model_, _modelScope, _content_){
