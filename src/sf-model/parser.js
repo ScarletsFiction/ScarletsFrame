@@ -5,14 +5,8 @@
 // .apply() or spread ...array is slower than direct function call
 // object[0] is slower than array[0]
 var dataParser = function(html, _model_, template, _modelScope, runEval, preParsedReference){
-	if(!runEval) runEval = '';
-
-	bindingEnabled = true;
-
-	if(runEval === '#noEval'){
-		var preParsed = [];
-		var lastParsedIndex = preParsedReference.length;
-	}
+	var preParsed = [];
+	var lastParsedIndex = preParsedReference.length;
 
 	var prepared = html.replace(sf.regex.dataParser, function(actual, temp){
 		temp = avoidQuotes(temp, function(temp_){
@@ -32,7 +26,7 @@ var dataParser = function(html, _model_, template, _modelScope, runEval, prePars
 		}).split('_model_._modelScope.').join('_model_.');
 
 		// Evaluate
-		if(runEval === '#noEval'){
+		if(runEval === '#noEval' || runEval === '#simple'){
 			temp = temp.trim();
 
 			// Simplicity similar
@@ -40,85 +34,36 @@ var dataParser = function(html, _model_, template, _modelScope, runEval, prePars
 
 			if(exist === -1){
 				preParsed.push(temp);
-				preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
+				if(runEval === '#simple')
+					preParsedReference.push(temp);
+				else
+					preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
 				return '{{%=' + (preParsed.length + lastParsedIndex - 1)+'%';
 			}
 			return '{{%=' + (exist + lastParsedIndex)+'%';
 		}
-
-		temp = '' + localEval(runEval + temp, _model_, _modelScope);
-
-		return temp.replace(sf.regex.escapeHTML, function(i) {
-	        return '&#'+i.charCodeAt(0)+';';
-	    });
 	});
 
-	if(runEval === '#noEval'){
-		// Clear memory before return
-		_modelScope = preParsed = _model_ = runEval = html = null;
-		setTimeout(function(){prepared = null});
-	}
 	return prepared;
 }
 
 // Dynamic data parser
 var uniqueDataParser = function(html, template, _modelScope){
-	// Get prepared html content
-	var _content_ = [];
-
 	// Build script preparation
-	html = html.replace(sf.regex.allTemplateBracket, function(full, matched){
-		if(sf.regex.anyCurlyBracket.test(matched) === false)
+	html = html.replace(sf.regex.allTemplateBracket, function(full, matched){ // {[ ... ]}
+		if(sf.regex.anyCurlyBracket.test(matched) === false) // {{ ... }}
 			return "_result_ += '"+matched.split("'").join("\\'")+"'";
 
-		_content_.push(matched);
-		return '_result_ += _content_.take(&VarPass&, '+(_content_.length - 1)+');';
+		var vars = [];
+		matched = dataParser(matched, null, template, _modelScope, '#simple', vars).split('"').join('\\"');
+
+		var replacers = "";
+		for (var i = 0; i < vars.length; i++)
+			replacers += ".split('{{%="+i+"%').join("+vars[i]+")";
+
+		var c = '_result_ += (function(){return "'+matched+'"'+replacers+'}).apply(null, arguments);';
+		return c;
 	});
-
-	if(_content_.length === 0)
-		_content_ = null;
-	else{
-		var _model_ = null;
-		_content_._modelScope = _modelScope;
-		_content_.take = function(passVar, currentIndex){
-			if(passVar === null)
-				return dataParser(this[currentIndex], _model_, template, this._modelScope);
-
-			// Use strict mode and prepare for new variables
-			var strDeclare = '"use strict";var ';
-			var firstTime = true;
-
-			// Declare new variable
-			for(var key in passVar){
-				if(typeof passVar[key] === 'string')
-					passVar[key] = '"'+passVar[key].split('"').join('\\"')+'"';
-				else if(key === '_model_'){
-					_model_ = passVar[key];
-					continue;
-				}
-				else if(typeof passVar[key] === 'object')
-					passVar[key] = JSON.stringify(passVar[key]);
-
-				if(!firstTime)
-					strDeclare += ',';
-
-				strDeclare += key + ' = ' + passVar[key];
-				firstTime = false;
-			}
-
-			// Remove var because no variable are being passed
-			if(firstTime === true)
-				strDeclare = strDeclare.replace('var ', '');
-
-			// Escape function call for addional security eval protection
-			strDeclare = strDeclare.split('(').join('&#40;').split(')').join('&#41;');
-
-			// Pass to static data parser for another HTML data
-			return dataParser(this[currentIndex], _model_, template, this._modelScope, strDeclare + ';');
-		};
-	}
-
-	// console.log(3213, _content_);
 
 	var preParsedReference = [];
 	var prepared = html.replace(sf.regex.uniqueDataParser, function(actual, temp){
@@ -138,37 +83,7 @@ var uniqueDataParser = function(html, template, _modelScope){
 			});
 		}).split('_model_._modelScope.').join('_model_.');;
 
-		var result = '';
 		var check = false;
-
-		// Get defined variables
-		var VarPass_ = /(var|let)([\w,\s]+)(?=\s(?==|in|of))/g;
-		var VarPass = [];
-		var s1 = null;
-		while((s1 = VarPass_.exec(temp)) !== null){
-			VarPass.push(s1[2]);
-		}
-
-		VarPass.push('_model_');
-		if(VarPass.length !== 0){
-			var obtained = [];
-			for (var i = 0; i < VarPass.length; i++) {
-				VarPass[i].replace(/([\n\t\r]|  )+/g, '').split(',').forEach(function(val){
-					obtained.push(val);
-				});
-			};
-			VarPass = obtained;
-			for (var i = 0; i < VarPass.length; i++) {
-				VarPass[i] += ':typeof '+VarPass[i]+'!=="undefined"?'+VarPass[i]+':void 0';
-			}
-
-			if(VarPass.length === 0)
-				VarPass = 'null';
-			else VarPass = '{'+VarPass.join(',')+'}';
-			temp = temp.split('&VarPass&').join(VarPass);
-		}
-		else temp = temp.split('&VarPass&').join('null');
-
 		check = temp.split('@if ');
 		if(check.length !== 1){
 			check = check[1].split(':');
@@ -208,7 +123,7 @@ var uniqueDataParser = function(html, template, _modelScope){
 			var condition = check.shift();
 			var elseIf = findElse(check);
 			elseIf.type = REF_IF;
-			elseIf.data = [null, _modelScope, _content_];
+			elseIf.data = [null, _modelScope];
 
 			// Trim Data
 			elseIf.if = [condition.trim(), elseIf.if.trim()];
@@ -227,10 +142,9 @@ var uniqueDataParser = function(html, template, _modelScope){
 
 		// Warning! Avoid unencoded user inputted content
 		// And always check/remove closing ']}' in user content
-		// Any function call will be removed for addional security
 		check = temp.split('@exec');
 		if(check.length !== 1){
-			preParsedReference.push({type:REF_EXEC, data:[check[1], null, _modelScope, _content_]});
+			preParsedReference.push({type:REF_EXEC, data:[check[1], null, _modelScope]});
 			return '{{%%=' + (preParsedReference.length - 1);
 		}
 		return '';
@@ -238,8 +152,7 @@ var uniqueDataParser = function(html, template, _modelScope){
 
 	// Clear memory before return
 	_modelScope = html = null;
-	setTimeout(function(){prepared = null});
-	return [prepared, preParsedReference, _content_];
+	return [prepared, preParsedReference, null];
 }
 
 function addressAttributes(currentNode, template){
@@ -468,7 +381,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	// Extract data to be parsed
 	copy = uniqueDataParser(copy, template, modelScope);
 	var preParsed = copy[1];
-	var _content_ = copy[2];
 	copy = dataParser(copy[0], null, template, modelScope, '#noEval', preParsed);
 
 	function findModelProperty(){
@@ -510,10 +422,6 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				// Convert to function
 				current.get = modelScript(checkList);
 			}
-
-			checkList = checkList.replace(/_result_ \+= _content_\.take\(.*?, ([0-9]+)\);/g, function(full, match){
-				return _content_[match];
-			});
 
 			toObserve.template.i = i;
 			checkList.split('"').join("'").replace(sf.regex.itemsObserve, toObserve);

@@ -47,17 +47,7 @@ self.init = function(el, modelName, namespace){
 		model.constructor.init && model.constructor.init.call(model, (namespace || sf.model), el);
 }
 
-// Escape the escaped quote
-function escapeEscapedQuote(text){
-	return text.split('\\"').join('\\$%*').split("\\'").join('\\%$*');
-}
-
-function unescapeEscapedQuote(text){
-	return text.split('\\$%*').join('\\"').split('\\%$*').join("\\'");
-}
-
 var processingElement = null;
-var bindingEnabled = false;
 var scope = internal.model = {};
 
 // For debugging, normalize indentation
@@ -73,54 +63,16 @@ function trimIndentation(text){
 	return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
 }
 
-// Secured evaluation (deprecate above also)
-var bracketMatch = /([\w\n.]*?[\S\s])\(/g;
-var chackValidFunctionCall = sf.regex.validFunctionCall;
-var localEval = function(script, _model_, _modelScope, _content_){
-	"use strict";
-
-	var _result_ = '';
-	try{
-		if(/@return /.test(script) === true){
-			var _evaled_ = eval('(function(){'+script.split('@return ').join('return ')+'})()');
-
-			if(_evaled_ === void 0)
-				return _result_ + 'undefined';
-
-			if(_evaled_ === null)
-				return _result_ + 'null';
-
-			// Check if it's an HTMLElement
-			if(_evaled_.onclick !== void 0)
-				return _evaled_;
-
-			return _result_ + _evaled_;
-		}
-		else var _evaled_ = eval(script);
-	} catch(e){
-		console.groupCollapsed("%c<-- Expand the template error", 'color: yellow');
-		console.log(trimIndentation(processingElement.outerHTML).trim());
-		console.log("%c"+trimIndentation(script).trim(), 'color: yellow');
-		console.groupEnd();
-
-		console.error(e);
-		return '#TemplateError';
-	}
-
-	if(_result_ !== '') return _result_;
-	return _evaled_;
-}
-
 var modelScript_ = /_result_|return/;
 function modelScript(script){
 	var which = script.match(modelScript_);
 
 	if(which === null)
 		script = 'return '+script;
-	else if(which[0] === '_result_'){
+	else if(which[0] === '_result_')
 		script = 'var _result_="";'+script.split('@return').join('_result_+=')+';return _result_';
-	}
-	else script = script.split('@return').join('return');
+	else
+		script = script.split('@return').join('return');
 
 	script = script
 		.split('_model_').join('arguments[0]').split('arguments[0]:t').join('_model_:t')
