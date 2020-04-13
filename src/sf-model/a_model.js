@@ -38,7 +38,7 @@ self.init = function(el, modelName, namespace){
 	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model, model.sf$internal.modelKeysRegex);
 
 	bindInput(specialElement.input, model);
-	repeatedListBinding(specialElement.repeat, model, namespace);
+	repeatedListBinding(specialElement.repeat, model, namespace, model.sf$internal.modelKeysRegex);
 
 	if(model.init !== void 0)
 		model.init(el);
@@ -63,6 +63,22 @@ function trimIndentation(text){
 	return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
 }
 
+function _escapeParse(html, vars){
+	return avoidQuotes(html, function(noQuot){
+		// Escape for value in HTML
+		return noQuot.replace(templateParser_regex, function(full, match){
+			return sf.dom.escapeText(vars[match]);
+		});
+	}, function(inQuot){
+		// Escape for value in attributes
+		return inQuot.replace(templateParser_regex, function(full, match){
+			return vars[match] && vars[match].constructor === String
+				? vars[match].split('"').join('&quot;').split("'").join("&quot;")
+				: vars[match];
+		});
+	});
+}
+
 var modelScript_ = /_result_|return/;
 function modelScript(script){
 	var which = script.match(modelScript_);
@@ -77,7 +93,7 @@ function modelScript(script){
 	script = script
 		.split('_model_').join('arguments[0]').split('arguments[0]:t').join('_model_:t')
 		.split('_modelScope').join('arguments[1]')
-		.split('_content_').join('arguments[2]');
+		.split('_escapeParse').join('arguments[2]');
 
 	try{
 		return new Function(script);

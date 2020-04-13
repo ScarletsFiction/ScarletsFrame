@@ -205,7 +205,7 @@ sf.component = function(name, options, func, namespace){
 		}
 
 		if(registrar[4] === void 0)
-			registrar[4] = internal.model.createModelKeysRegex(temp, newObj, null);
+			registrar[4] = internal.model.createModelKeysRegex(element, newObj, null);
 
 		if(element.childNodes.length === 0){
 			var temp = registrar[3];
@@ -229,24 +229,16 @@ sf.component = function(name, options, func, namespace){
 				temp.tempDOM = tempDOM;
 			}
 
-			var copy = Object.assign({}, temp);
+			// Create new object, but using registrar[3] as prototype
+			var copy = Object.create(temp);
 
 			if(copy.parse.length !== 0){
-				var _content_ = null;
 				copy.parse = copy.parse.slice(0);
 
 				// Deep copy the original properties to new object
 				for (var i = 0; i < copy.parse.length; i++) {
-					copy.parse[i] = Object.assign({}, copy.parse[i]);
-					var ref = copy.parse[i].data = copy.parse[i].data.slice(0);
-
-					if(_content_ === null && ref.length === 3){
-						_content_ = Object.assign({}, ref[2]);
-						_content_._modelScope = newObj;
-					}
-
-					ref[1] = newObj;
-					ref[2] = _content_;
+					copy.parse[i] = Object.create(copy.parse[i]);
+					copy.parse[i].data = [null, newObj];
 				}
 			}
 
@@ -271,7 +263,7 @@ sf.component = function(name, options, func, namespace){
 			internal.model.templateInjector(element, newObj, false);
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj, registrar[4]);
 			internal.model.bindInput(specialElement.input, newObj);
-			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace);
+			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
 
 			if(element.sf$componentIgnore === true)
 				return;

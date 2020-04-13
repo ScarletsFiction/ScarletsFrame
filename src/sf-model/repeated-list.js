@@ -2,7 +2,7 @@
 // this may happen when list are removed (splice, pop, shift, hardRefresh)
 // and using property from root model (not the list property)
 
-var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace){
+var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
 
@@ -28,7 +28,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		// 	modelRef.sf$bindedKey[refName[1]] = null;
 
 		;(function(){
-			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode, namespace);
+			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode, namespace, modelKeysRegex);
 			Object.defineProperty(modelRef, refName[1], {
 				enumerable: true,
 				configurable: true,
@@ -47,7 +47,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 var _double_zero = [0,0]; // For arguments
 class RepeatedElement extends Array{
-	constructor(modelRef, element, refName, parentNode, namespace){
+	constructor(modelRef, element, refName, parentNode, namespace, modelKeysRegex){
 		if(modelRef.constructor === Number)
 			return Array(modelRef);
 
@@ -93,7 +93,7 @@ class RepeatedElement extends Array{
 			if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
 				container = 'svg';
 
-			template = self.extractPreprocess(element, refName[0], modelRef, container);
+			template = self.extractPreprocess(element, refName[0], modelRef, container, modelKeysRegex);
 		}
 
 		hiddenProperty(this, '$EM', new ElementManipulator());

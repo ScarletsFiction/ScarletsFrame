@@ -4,7 +4,7 @@
 // Please be careful when you're passing the eval argument
 // .apply() or spread ...array is slower than direct function call
 // object[0] is slower than array[0]
-var dataParser = function(html, _model_, template, _modelScope, runEval, preParsedReference){
+var dataParser = function(html, _model_, template, _modelScope, preParsedReference, justName){
 	var preParsed = [];
 	var lastParsedIndex = preParsedReference.length;
 
@@ -23,25 +23,22 @@ var dataParser = function(html, _model_, template, _modelScope, runEval, prePars
 			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
 				return before+'_modelScope.'+matched;
 			});
-		}).split('_model_._modelScope.').join('_model_.');
+		}).split('_model_._modelScope.').join('_model_.').split('%@~_modelScope.').join('%@~');
 
-		// Evaluate
-		if(runEval === '#noEval' || runEval === '#simple'){
-			temp = temp.trim();
+		temp = temp.trim();
 
-			// Simplicity similar
-			var exist = preParsed.indexOf(temp);
+		// Simplicity similar
+		var exist = preParsed.indexOf(temp);
 
-			if(exist === -1){
-				preParsed.push(temp);
-				if(runEval === '#simple')
-					preParsedReference.push(temp);
-				else
-					preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
-				return '{{%=' + (preParsed.length + lastParsedIndex - 1)+'%';
-			}
-			return '{{%=' + (exist + lastParsedIndex)+'%';
+		if(exist === -1){
+			preParsed.push(temp);
+			if(justName === true)
+				preParsedReference.push(temp);
+			else
+				preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
+			return '{{%=' + (preParsed.length + lastParsedIndex - 1)+'%';
 		}
+		return '{{%=' + (exist + lastParsedIndex)+'%';
 	});
 
 	return prepared;
@@ -55,14 +52,9 @@ var uniqueDataParser = function(html, template, _modelScope){
 			return "_result_ += '"+matched.split("'").join("\\'")+"'";
 
 		var vars = [];
-		matched = dataParser(matched, null, template, _modelScope, '#simple', vars).split('"').join('\\"');
+		matched = dataParser(matched, null, template, _modelScope, vars, true).split('"').join('\\"');
 
-		var replacers = "";
-		for (var i = 0; i < vars.length; i++)
-			replacers += ".split('{{%="+i+"%').join("+vars[i]+")";
-
-		var c = '_result_ += (function(){return "'+matched+'"'+replacers+'}).apply(null, arguments);';
-		return c;
+		return '_result_ += (function(){return _escapeParse("'+matched+'", '+JSON.stringify(vars).split('"').join('')+')}).apply(null, arguments);';
 	});
 
 	var preParsedReference = [];
@@ -81,44 +73,12 @@ var uniqueDataParser = function(html, template, _modelScope){
 			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
 				return before+'_modelScope.'+matched;
 			});
-		}).split('_model_._modelScope.').join('_model_.');;
+		}).split('_model_._modelScope.').join('_model_.').split('%@~_modelScope.').join('%@~');
 
 		var check = false;
 		check = temp.split('@if ');
 		if(check.length !== 1){
 			check = check[1].split(':');
-
-			// {if, elseIf:([if, value], ...), elseValue}
-			var findElse = function(text){
-				text = text.join(':');
-				var else_ = null;
-
-				// Split elseIf
-				text = text.split('@elseif ');
-
-				// Get else value
-				var else_ = text[text.length - 1].split('@else');
-				if(else_.length === 2){
-					text[text.length - 1] = else_[0];
-					else_ = else_.pop();
-					else_ = else_.substr(else_.indexOf(':') + 1);
-				}
-				else else_ = null;
-
-				var obj = {
-					if:text.shift(),
-					elseIf:[],
-					elseValue:else_
-				};
-
-				// Separate condition script and value
-				for (var i = 0; i < text.length; i++) {
-					var val = text[i].split(':');
-					obj.elseIf.push([val.shift(), val.join(':')]);
-				}
-
-				return obj;
-			}
 
 			var condition = check.shift();
 			var elseIf = findElse(check);
@@ -150,9 +110,39 @@ var uniqueDataParser = function(html, template, _modelScope){
 		return '';
 	});
 
-	// Clear memory before return
-	_modelScope = html = null;
-	return [prepared, preParsedReference, null];
+	return [prepared, preParsedReference];
+}
+
+// {if, elseIf:([if, value], ...), elseValue}
+var findElse = function(text){
+	text = text.join(':');
+	var else_ = null;
+
+	// Split elseIf
+	text = text.split('@elseif ');
+
+	// Get else value
+	var else_ = text[text.length - 1].split('@else');
+	if(else_.length === 2){
+		text[text.length - 1] = else_[0];
+		else_ = else_.pop();
+		else_ = else_.substr(else_.indexOf(':') + 1);
+	}
+	else else_ = null;
+
+	var obj = {
+		if:text.shift(),
+		elseIf:[],
+		elseValue:else_
+	};
+
+	// Separate condition script and value
+	for (var i = 0; i < text.length; i++) {
+		var val = text[i].split(':');
+		obj.elseIf.push([val.shift(), val.join(':')]);
+	}
+
+	return obj;
 }
 
 function addressAttributes(currentNode, template){
@@ -347,24 +337,20 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	var template;
 
 	// modelRefRoot_regex should be placed on template prototype
-	if(modelRegex !== void 0){
+	if(modelRegex.parse === void 0)
 		template = Object.create(modelRegex);
-
-		// For preparing the next model too
-		if(modelRegex.modelRef_regex_mask !== mask){
-			modelRegex.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
-			modelRegex.modelRef_regex_mask = mask;
-		}
-	}
 	else{
-		template = createModelKeysRegex(targetNode, modelScope, mask);
+		template = {
+			modelRefRoot_regex:modelRegex.modelRefRoot_regex,
+			modelRef_regex:modelRegex.modelRef_regex,
+			modelRef_regex_mask:modelRegex.modelRef_regex_mask,
+		};
+	}
 
-		// Delete parser cache because unused anymore
-		setTimeout(function(){
-			delete template.modelRefRoot_regex;
-			delete template.modelRef_regex;
-			delete template.modelRef_regex_mask;
-		}, 1000);
+	// For preparing the next model too
+	if(template.modelRef_regex_mask !== mask){
+		template.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
+		template.modelRef_regex_mask = mask;
 	}
 
 	template.modelRefRoot = {};
@@ -381,7 +367,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	// Extract data to be parsed
 	copy = uniqueDataParser(copy, template, modelScope);
 	var preParsed = copy[1];
-	copy = dataParser(copy[0], null, template, modelScope, '#noEval', preParsed);
+	copy = dataParser(copy[0], null, template, modelScope, preParsed);
 
 	function findModelProperty(){
 		for (var i = 0; i < preParsed.length; i++) {
@@ -579,6 +565,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	template.parse = preParsed;
 	template.addresses = addressed;
 
+	if(modelRegex.parse !== void 0){
+		delete template.modelRefRoot_regex;
+		delete template.modelRef_regex;
+		delete template.modelRef_regex_mask;
+	}
+
 	return template;
 }
 
@@ -724,7 +716,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 				var attr = attrs[i];
 
 				if(attr.value.indexOf('{{') !== -1)
-					attr.value = dataParser(attr.value, null, template, modelRef, '#noEval', preParsedRef);
+					attr.value = dataParser(attr.value, null, template, modelRef, preParsedRef);
 			}
 
 			template.addresses = addressAttributes(current, template);

@@ -10,7 +10,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		// Replace variable to refer to current scope
 		return script_.replace(template.modelRefRoot_regex, function(full, before, matched){
 			return before+'_modelScope.'+matched;
-		});
+		}).split('%@~_modelScope.').join('%@~');
 	});
 
 	var name_ = data.name.slice(1);
@@ -98,7 +98,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	else if(direct)
 		script = eval(script);
 
-	// Wrap into a function
+	// Wrap into a function, var event = firefox compatibility
 	else script = (new Function('var event = arguments[1];'+script.split('_modelScope.').join('arguments[0].'))).bind(that, _modelScope);
 
 	var containSingleChar = false;

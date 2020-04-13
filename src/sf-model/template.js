@@ -4,18 +4,18 @@ function elseIfHandle(else_, arg){
 	// Else if
 	for (var i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		if(!elseIf[i][0](arg[0], arg[1], arg[2], arg[3]))
+		if(!elseIf[i][0](arg[0], arg[1], _escapeParse))
 			continue;
 
 		// Get the value
-		return elseIf[i][1](arg[0], arg[1], arg[2], arg[3]);
+		return elseIf[i][1](arg[0], arg[1], _escapeParse);
 	}
 
 	// Else
 	if(else_.elseValue === null)
 		return '';
 
-	return else_.elseValue(arg[0], arg[1], arg[2], arg[3]);
+	return else_.elseValue(arg[0], arg[1], _escapeParse);
 }
 
 // ==== Template parser ====
@@ -42,7 +42,7 @@ var templateExec = function(parse, item, atIndex, parsed){
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
-			temp = ref.get(arg[0], arg[1], arg[2], arg[3]);
+			temp = ref.get(arg[0], arg[1], _escapeParse);
 			if(temp === void 0)
 				temp = '';
 			else{
@@ -57,7 +57,7 @@ var templateExec = function(parse, item, atIndex, parsed){
 		}
 
 		if(ref.type === REF_EXEC){
-			parsed[i] = {type:ref.type, data:ref.get(arg[0], arg[1], arg[2], arg[3])};
+			parsed[i] = {type:ref.type, data:ref.get(arg[0], arg[1], _escapeParse)};
 			continue;
 		}
 
@@ -66,12 +66,12 @@ var templateExec = function(parse, item, atIndex, parsed){
 			parsed[i] = {type:ref.type, data:''};
 
 			// If condition was not meet
-			if(!ref.if[0](arg[0], arg[1], arg[2], arg[3])){
+			if(!ref.if[0](arg[0], arg[1], _escapeParse)){
 				parsed[i].data = elseIfHandle(ref, arg);
 				continue;
 			}
 
-			parsed[i].data = ref.if[1](arg[0], arg[1], arg[2], arg[3]);
+			parsed[i].data = ref.if[1](arg[0], arg[1], _escapeParse);
 		}
 	}
 	return parsed;
@@ -251,7 +251,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			specialRepeat_.push($.childIndexes(specialRepeat[i], html));
 		}
 
-		repeatedListBinding(specialRepeat_, item);
+		repeatedListBinding(specialRepeat_, item, void 0, template);
 	}
 
 	return html;

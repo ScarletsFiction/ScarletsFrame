@@ -5,14 +5,26 @@ var minimalTest = 0;
 // This framework is vulnerable if any alert displayed
 // or console.error is being outputted
 if(0){
-	vul = '\'\"><script id="vull">alert("Heya")</script>{{@exec console.error("Vulnerablility detected!", _modelScope.$el[0]) }}<a z=\'\"';
+	vul = '\'\"><vuln-elem></vuln-elem><script id="vull">console.error("Vulnerability found!")</script>{{vulnerable}}{{@ console.error("Vulnerablility detected!", _modelScope.$el[0]) }}<a z=\'\"';
+
+	sf.component('vuln-elem', function(self){
+		console.error("❌ Vulnerable element found!");
+		self.dummy = 'variable';
+	});
+	sf.component.html('vuln-elem', '<div>❌ This element was vulnerable</div>');
 
 	var ckz = 0;
+	var vullGot = 0;
 	var checkz = setInterval(function(){
-		if($('#vull').length)
-			alert("❌ Vulnerability found!");
+		if(window.vull && vull.length !== vullGot){
+			vullGot = vull.length;
+			console.error("❌ Vulnerability found!");
+		}
 
 		if(ckz++ > 100){
+			if(window.vull && window.vull.length !== 0)
+				console.log("Unexpected element: ", window.vull);
+
 			console.log("Vulnerability check finished");
 			clearInterval(checkz);
 		}

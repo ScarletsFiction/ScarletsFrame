@@ -73,7 +73,7 @@ function parsePropertyPath(str){
 				g1 = Number(g1);
 			else if(g1[0] === '"' || g1[0] === "'")
 				g1 = g1.slice(1, -1);
-		  
+
 			temp.push(g1);
 			return '';
 		}
@@ -85,28 +85,30 @@ function parsePropertyPath(str){
 	return temp;
 }
 
-var _es = '<%$@>';
-function avoidQuotes(str, func, noReturn){
-	if(noReturn !== void 0){
-		func(str.replace(sf.regex.getQuotes, _es));
-		return;
-	}
+var _es = '%@~';
+function avoidQuotes(str, func, onQuotes){
+	str = str.split(_es).join('');
 
 	var temp = [];
-
 	str = str.replace(sf.regex.getQuotes, function(full){
 		temp.push(full);
 		return _es+(temp.length-1)+_es;
 	});
 
+	if(temp.length === 0)
+		return func(str);
+
 	str = func(str);
 
-	// Fix unexpected _modelScope replacement
-	str =  str.split('<%$@>_modelScope.').join(_es);
-
-	for (var i = 0; i < temp.length; i++) {
-		str = str.replace(_es+i+_es, temp[i]);
+	if(onQuotes !== void 0){
+		for (var i = 0; i < temp.length; i++)
+			str = str.replace(_es+i+_es, onQuotes(temp[i]));
 	}
+	else{
+		for (var i = 0; i < temp.length; i++)
+			str = str.replace(_es+i+_es, temp[i]);
+	}
+
 	return str;
 }
 
