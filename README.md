@@ -11,6 +11,7 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 ### Advanced Example
 - [List Swap](https://jsbin.com/wicunop/edit?js,console,output)
 - [Cards](https://jsbin.com/bicijol/edit?js,output)
+- [Control Style](https://jsbin.com/venipic/edit?html,js,output)
 <!-- - [Todo Application](https://playcode.io/134963?tabs=console&model.js&output) -->
 
 ## Simple Example

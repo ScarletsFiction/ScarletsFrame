@@ -158,7 +158,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		var callback = script;
 	else{
 		var callback = function(ev){
-			if(!keys.has('bot') && ev.isTrusted === false)
+			if(ev.isTrusted === false && keys.has('trusted'))
 				return;
 
 			if(keys.has('stop'))
