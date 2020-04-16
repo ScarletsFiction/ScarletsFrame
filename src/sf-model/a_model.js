@@ -98,6 +98,7 @@ function modelScript(script){
 	try{
 		return new Function(script);
 	} catch(e){
-		console.error(e, script);
+		console.log(script);
+		console.error(e);
 	}
 }

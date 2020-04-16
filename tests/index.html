@@ -171,7 +171,7 @@
                 <label>{{ x.id }}</label>
 
                 {{@if x === list1[0]:
-                   x.first = true;
+                   x.first = true;"\' \""
                    {[<span> - Am I the ({{ one }}) one?</span>]}
 
                 @elseif x.first && x !== list1[0]:
@@ -236,8 +236,13 @@
             }}
             <span>Some bind: {{ stuff }}</span><br>
             {{@if showHTML === false:
-               {[<span>This 2th must be displayed {{ stuff }} {{ stuffes }}</span>]}
+               {[<span>'"\'\"This 2th must be displayed {{ stuff+"'\"" }} {{ stuffes }}</span>]}
             }}<br><br>
+            {{@if showHTML === false:
+               {[<span>Template with"'\"\'
+                  <b aw yeah></b>
+                </span><br>]}
+            }}
          </div>
 
          <b>Execution for the current model scope</b><br>

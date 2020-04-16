@@ -47,8 +47,6 @@ var sf = function(stuff, returnNode){
 sf.internal = {};
 sf.regex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
-	// validFunctionCall:/[_a-zA-Z0-9 \]\$\)]/,
-	// bracketMatch:/([\w\n.]*?[\S\s])\(/g,
 	scopeVar:'(^|[^.\\]\\w])',
 	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
 

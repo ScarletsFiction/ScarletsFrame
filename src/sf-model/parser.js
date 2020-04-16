@@ -49,12 +49,13 @@ var uniqueDataParser = function(html, template, _modelScope){
 	// Build script preparation
 	html = html.replace(sf.regex.allTemplateBracket, function(full, matched){ // {[ ... ]}
 		if(sf.regex.anyCurlyBracket.test(matched) === false) // {{ ... }}
-			return "_result_ += '"+matched.split("'").join("\\'")+"'";
+			return "_result_ += '"+matched.split("\\").join("\\\\").split("'").join("\\'").split("\n").join("\\\n")+"'";
 
 		var vars = [];
-		matched = dataParser(matched, null, template, _modelScope, vars, true).split('"').join('\\"');
+		matched = dataParser(matched, null, template, _modelScope, vars, true)
+				.split('\\').join('\\\\').split('"').join('\\"').split("\n").join("\\\n");
 
-		return '_result_ += (function(){return _escapeParse("'+matched+'", '+JSON.stringify(vars).split('"').join('')+')}).apply(null, arguments);';
+		return '_result_ += (function(){return _escapeParse("'+matched+'", ['+vars.join(',')+'])}).apply(null, arguments);';
 	});
 
 	var preParsedReference = [];
