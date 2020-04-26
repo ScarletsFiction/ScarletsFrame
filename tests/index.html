@@ -168,11 +168,11 @@
          <div data-simplebar style="height: 200px;">
             <ul class="sf-virtual-list" scroll-parent-index="2">
               <li sf-repeat-this="x in list1" data-id="{{x.id}}" @click="handleClick(event, 1)">
-                <label>{{ x.id }}</label>
+                <label>{{ x.id+(false?"\' \"":'') }}</label>
 
                 {{@if x === list1[0]:
-                   x.first = true;"\' \""
-                   {[<span> - Am I the ({{ one }}) one?</span>]}
+                   x.first = true;"\' \"";
+                   {[<span> - Am I the ({{ one+(false?"\' \"":'') }}) one?</span>]}
 
                 @elseif x.first && x !== list1[0]:
                    delete x.first;
@@ -189,6 +189,11 @@
                <label @click="handleClick(event, 2)">{{x.id}}</label>
             </li>
          </ul>
+         <div sf-repeat-this="nyan in list3">{{@exec
+           for (var i = 0; i < nyan.length; i++) {
+             {[ test[{{i}}] = {{ nyan[i] }}<br> ]}
+           }
+         }}</div>
       </sf-m><br><br>
 
       <!-- Model and Controller -->
@@ -256,9 +261,9 @@
                }
 
                var calculate = (5+4);
-               {[<span>5 + 4 = {{ calculate }}</span><br>]}
+               {[<span>5 + 4 = {{ calculate+(false?"\' \"":'') }}</span><br>]}
 
-               var escapeHTML = "<span>This must be HTML escaped (except the bold)</span>";
+               var escapeHTML = "<span>This must be HTML escaped (except the bold)</span>"+vul;
                var noEscapeHTML = "<br><span>This shouldn't be HTML escaped (no &lt;span&gt;)</span>";
 
                {[ <b>{{escapeHTML}}</b> ]}
@@ -398,7 +403,6 @@
             test:{complex:'contoh {data} disini [{item}]'}
           });
 
-          // Spy.observe($('#lkj')[0]);
           sf.lang.serverURL = '/test/lang';
           sf.lang.changeDefault('id_ID');
 

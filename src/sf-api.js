@@ -18,8 +18,8 @@ sf.API = function(method, url, data, success, complete, accessToken, getXHR){
 				data = JSON.parse(data.response);
 			}catch(e){}
 
-			sf.API.onError(status, data)
-			if(complete) complete(status, data);
+			sf.API.onError(data, status)
+			if(complete) complete(data, status);
 		},
 	};
 

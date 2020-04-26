@@ -118,6 +118,10 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		}
 	}
 
+	// We can't redefine length on array
+	if(model.constructor === Array && propertyName === 'length')
+		return;
+
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);

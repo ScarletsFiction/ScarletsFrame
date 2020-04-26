@@ -25,9 +25,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		if(direct)
 			var func = eval(script);
 		else
-			var func = new Function(script.split('event').join('arguments[0]')
-				.split('_model_').join('arguments[1]')
-				.split('_modelScope').join('arguments[2]'));
+			var func = new Function('event', '_model_', '_modelScope', script);
 
 		var listener = rootHandler.sf$listListener[name_];
 		if(listener === void 0){
@@ -99,7 +97,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		script = eval(script);
 
 	// Wrap into a function, var event = firefox compatibility
-	else script = (new Function('var event = arguments[1];'+script.split('_modelScope.').join('arguments[0].'))).bind(that, _modelScope);
+	else script = (new Function('_modelScope', 'event', script)).bind(that, _modelScope);
 
 	var containSingleChar = false;
 	var keys = name_.split('.');

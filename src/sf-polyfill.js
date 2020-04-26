@@ -32,3 +32,6 @@ if(Element.prototype.closest === void 0){
 		return null;
 	}
 }
+
+if(!window.TouchEvent)
+	window.TouchEvent = void 0;

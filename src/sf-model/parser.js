@@ -322,7 +322,7 @@ var createModelKeysRegex = internal.model.createModelKeysRegex = function(target
 	return obj;
 }
 
-self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex){
+self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex, preserveRegex){
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
@@ -380,34 +380,34 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				current.data[0] = current.data[0].replace(sf.regex.itemsObserve, toObserve, template);
 
 				// Convert to function
-				current.get = modelScript(current.data.shift());
+				current.get = modelScript(mask, current.data.shift());
 				continue;
 			}
 
 			// Dynamic data
 			if(current.type === REF_IF){
 				var checkList = current.if.join(';');
-				current.if[0] = modelScript(current.if[0]);
-				current.if[1] = modelScript(current.if[1]);
+				current.if[0] = modelScript(mask, current.if[0]);
+				current.if[1] = modelScript(mask, current.if[1]);
 
 				if(current.elseValue !== null){
 					checkList += ';' + current.elseValue;
-					current.elseValue = modelScript(current.elseValue);
+					current.elseValue = modelScript(mask, current.elseValue);
 				}
 
 				for (var a = 0; a < current.elseIf.length; a++) {
 					var refElif = current.elseIf[a];
 
 					checkList += refElif.join(';');
-					refElif[0] = modelScript(refElif[0]);
-					refElif[1] = modelScript(refElif[1]);
+					refElif[0] = modelScript(mask, refElif[0]);
+					refElif[1] = modelScript(mask, refElif[1]);
 				}
 			}
 			else if(current.type === REF_EXEC){
 				var checkList = current.data.shift();
 
 				// Convert to function
-				current.get = modelScript(checkList);
+				current.get = modelScript(mask, checkList);
 			}
 
 			toObserve.template.i = i;
@@ -566,7 +566,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	template.parse = preParsed;
 	template.addresses = addressed;
 
-	if(modelRegex.parse !== void 0){
+	if(preserveRegex === void 0 && modelRegex.parse !== void 0){
 		delete template.modelRefRoot_regex;
 		delete template.modelRef_regex;
 		delete template.modelRef_regex_mask;
@@ -732,7 +732,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 					ref.data[0] = ref.data[0].replace(sf.regex.itemsObserve, toObserve);
 
 					// Convert to function
-					ref.get = modelScript(ref.data.shift());
+					ref.get = modelScript(void 0, ref.data.shift());
 					continue;
 				}
 			}

@@ -2,6 +2,7 @@
 // this may happen when list are removed (splice, pop, shift, hardRefresh)
 // and using property from root model (not the list property)
 
+// var warnUnsupport = true;
 var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
 	for (var i = 0; i < elements.length; i++) {
 		var element = elements[i];
@@ -15,33 +16,31 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 		var refName = script.split(' in ');
 		if(refName.length !== 2)
-			return console.error("'", script, "' must match the pattern like `item in items`");
+			return console.error("'", script, "' should match the pattern like `item in items`");
 
-		if(modelRef[refName[1]] === void 0)
-			modelRef[refName[1]] = [];
+		if(modelRef[refName[1]] === void 0){
+			//var temp = refName[1].split('.');
+			//if(temp.length === 1)
+				modelRef[refName[1]] = [];
+			/*else{
+				refName[1] = temp.pop();
+				temp.shift();
+
+				if(temp.length !== 0)
+					modelRef = deepProperty(modelRef, temp);
+
+				if(warnUnsupport){
+					warnUnsupport = false;
+					console.warn("Currently nested RepeatedElement can't use parent's scope on it's scope");
+				}
+			}*/
+		}
 
 		// Enable element binding
 		if(modelRef.sf$bindedKey === void 0)
 			initBindingInformation(modelRef);
 
-		// if(modelRef.sf$bindedKey[refName[1]] === void 0)
-		// 	modelRef.sf$bindedKey[refName[1]] = null;
-
-		;(function(){
-			var RE = new RepeatedElement(modelRef, element, refName, element.parentNode, namespace, modelKeysRegex);
-			Object.defineProperty(modelRef, refName[1], {
-				enumerable: true,
-				configurable: true,
-				get:function(){
-					return RE;
-				},
-				set:function(val){
-					if(val.length === 0)
-						return RE.splice(0);
-					return RE.remake(val, true);
-				}
-			});
-		})();
+		new RepeatedElement(modelRef, element, refName, element.parentNode, namespace, modelKeysRegex);
 	}
 }
 
@@ -93,7 +92,7 @@ class RepeatedElement extends Array{
 			if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
 				container = 'svg';
 
-			template = self.extractPreprocess(element, refName[0], modelRef, container, modelKeysRegex);
+			template = self.extractPreprocess(element, refName[0], modelRef, container, modelKeysRegex, true);
 		}
 
 		hiddenProperty(this, '$EM', new ElementManipulator());
@@ -207,6 +206,19 @@ class RepeatedElement extends Array{
 		}
 
 		element.remove();
+
+		Object.defineProperty(modelRef, refName[1], {
+			enumerable: true,
+			configurable: true,
+			get:function(){
+				return that;
+			},
+			set:function(val){
+				if(val.length === 0)
+					return that.splice(0);
+				return that.remake(val, true);
+			}
+		});
 
 		// Wait for scroll plugin initialization
 		setTimeout(function(){

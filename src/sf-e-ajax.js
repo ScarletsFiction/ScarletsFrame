@@ -192,7 +192,7 @@ function Request(requestOptions) {
         });
     }
     // Check for crossDomain
-    if (typeof options.crossDomain === 'void 0') {
+    if (options.crossDomain === void 0) {
         // eslint-disable-next-line
         options.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(options.url) && RegExp.$2 !== window.location.host;
     }
