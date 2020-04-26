@@ -58,19 +58,20 @@ You can download minified js from this repository or use this CDN link
 ### Polyfill for older browser
 If you want to support some old browser, you need to add some polyfill before the framework.<br>
 It's working on Chrome version 26 and should working on Android KitKat stock browser.<br>
-Not supported on IE11 because the error line has integer overflow and can't be debugged.
+For Safari or iOS browser you may need to polyfill PointerEvent too<br>
+Not supported on IE11 because the error line can't be debugged.
 ```html
 <script type="text/javascript">
   // Polyfill for Old Browser
   (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
+    if(window.PointerEvent === void 0)
+      z('https://code.jquery.com/pep/0.4.3/pep.js');
     if(window.MutationObserver === void 0)
       window.MutationObserver = window.WebKitMutationObserver;
     if(window.Reflect === void 0)
       z('https://unpkg.com/core-js-bundle@latest/minified.js');
     if(window.customElements === void 0)
       z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
-    if(window.PointerEvent === void 0)
-      z('https://code.jquery.com/pep/0.4.3/pep.js');
   })();
 </script>
 ```
