@@ -723,10 +723,16 @@ class ElementManipulator{
 					exist[i].remove();
 				}
 			}
+
+			if(this.elements !== void 0)
+				exist.length = index;
 		}
 
 		if(list.$virtual)
 			var vCursor = list.$virtual.vCursor;
+
+		if(this.elements !== void 0)
+			exist.length = list.length;
 
 		for (var i = index; i < list.length; i++) {
 			var temp = this.elementRef.get(list[i]);
@@ -748,6 +754,9 @@ class ElementManipulator{
 						self.bindElement(temp, this.modelRef, this.template, list[i]);
 
 					this.elementRef.set(list[i], temp);
+
+					if(this.elements !== void 0)
+						exist[i] = temp;
 				}
 			}
 			else if(temp.model.$el === void 0){
@@ -760,6 +769,9 @@ class ElementManipulator{
 							self.bindElement(temp, this.modelRef, this.template, list[i]);
 
 						this.elementRef.set(list[i], temp);
+
+						if(this.elements !== void 0)
+							exist[i] = temp;
 					}
 				}
 			}
@@ -774,90 +786,6 @@ class ElementManipulator{
 
 		if(list.$virtual && list.$virtual.refreshVirtualSpacer)
 			list.$virtual.refreshVirtualSpacer(list.$virtual.DOMCursor);
-	}
-
-	move(from, to, count){
-		if(this.list.$virtual){
-			var vStartRange = this.list.$virtual.DOMCursor;
-			var vEndRange = vStartRange + this.list.$virtual.preparedLength;
-		}
-
-		var exist = this.parentChilds || this.elements || this.virtualRefresh();
-
-		var overflow = this.list.length - from - count;
-		if(overflow < 0)
-			count += overflow;
-
-		// Move to virtual DOM
-		var vDOM = document.createElement('div');
-		for (var i = 0; i < count; i++) {
-			vDOM.appendChild(exist[from + i]);
-		}
-
-		var nextSibling = exist[to] || null;
-		var theParent = nextSibling && nextSibling.parentNode;
-
-		if(theParent === false){
-			if(this.list.$virtual && this.list.length >= vEndRange)
-				theParent = this.list.$virtual.dom;
-			else theParent = parentNode;
-		}
-
-		// Move to defined index
-		for (var i = 0; i < count; i++) {
-			theParent.insertBefore(vDOM.firstElementChild, nextSibling);
-
-			if(this.callback.update)
-				this.callback.update(exist[from + i], 'move');
-		}
-	}
-
-	swap(index, other){
-		var exist = this.parentChilds || this.elements || this.virtualRefresh();
-
-		if(index > other){
-			var index_a = exist[other];
-			other = exist[index];
-			index = index_a;
-		} else {
-			index = exist[index];
-			other = exist[other];
-		}
-
-		var other_sibling = other.nextSibling;
-		var other_parent = other.parentNode;
-		index.parentNode.insertBefore(other, index.nextSibling);
-		other_parent.insertBefore(index, other_sibling);
-
-		if(this.callback.update){
-			this.callback.update(exist[other], 'swap');
-			this.callback.update(exist[index], 'swap');
-		}
-	}
-
-	remove(index){
-		var exist = this.parentChilds || this.elements || this.virtualRefresh();
-
-		if(exist[index]){
-			var currentEl = exist[index];
-
-			if(this.callback.remove){
-				var currentRemoved = false;
-				var startRemove = function(){
-					if(currentRemoved) return;
-					currentRemoved = true;
-
-					currentEl.remove();
-				};
-
-				// Auto remove if return false
-				if(!this.callback.remove(currentEl, startRemove))
-					startRemove();
-			}
-
-			// Auto remove if no callback
-			else currentEl.remove();
-		}
 	}
 
 	update(index, other){
@@ -901,6 +829,9 @@ class ElementManipulator{
 						self.bindElement(temp, this.modelRef, template, list[i]);
 
 					this.elementRef.set(list[i], temp);
+
+					if(this.elements != void 0)
+						exist[i] = temp;
 				}
 			}
 			else if(temp.model.$el === void 0){
@@ -913,6 +844,9 @@ class ElementManipulator{
 							self.bindElement(temp, this.modelRef, template, list[i]);
 
 						this.elementRef.set(list[i], temp);
+
+						if(this.elements != void 0)
+							exist[i] = temp;
 					}
 				}
 			}
@@ -923,9 +857,113 @@ class ElementManipulator{
 			}
 
 			this.parentNode.replaceChild(temp, oldChild);
+
+			if(this.elements != void 0)
+				exist[i] = temp;
+
 			if(this.callback.update)
 				this.callback.update(temp, 'replace');
 		}
+	}
+
+	move(from, to, count){
+		if(this.list.$virtual){
+			var vStartRange = this.list.$virtual.DOMCursor;
+			var vEndRange = vStartRange + this.list.$virtual.preparedLength;
+		}
+
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+
+		var overflow = this.list.length - from - count;
+		if(overflow < 0)
+			count += overflow;
+
+		var vDOM = Array(count);
+		for (var i = 0; i < count; i++) {
+			vDOM[i] = exist[from + i];
+			vDOM[i].remove();
+		}
+
+		var nextSibling = exist[to] || null;
+		var theParent = nextSibling && nextSibling.parentNode;
+
+		if(theParent === false){
+			if(this.list.$virtual && this.list.length >= vEndRange)
+				theParent = this.list.$virtual.dom;
+			else theParent = parentNode;
+		}
+
+		// Move to defined index
+		for (var i = 0; i < count; i++) {
+			theParent.insertBefore(vDOM[i], nextSibling);
+
+			if(this.callback.update)
+				this.callback.update(vDOM[i], 'move');
+		}
+
+		if(this.elements !== void 0){
+			exist.splice(from, count);
+			vDOM.unshift(from, 0);
+			exist.splice.apply(exist, vDOM);
+		}
+	}
+
+	swap(index, other){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+
+		var ii=index, oo=other;
+		if(index > other){
+			var index_a = exist[other];
+			other = exist[index];
+			index = index_a;
+		} else {
+			index = exist[index];
+			other = exist[other];
+		}
+
+		if(this.elements !== void 0){
+			var temp = exist[ii];
+			exist[ii] = exist[oo];
+			exist[oo] = exist[ii];
+		}
+
+		var other_sibling = other.nextSibling;
+		var other_parent = other.parentNode;
+		index.parentNode.insertBefore(other, index.nextSibling);
+		other_parent.insertBefore(index, other_sibling);
+
+		if(this.callback.update){
+			this.callback.update(exist[other], 'swap');
+			this.callback.update(exist[index], 'swap');
+		}
+	}
+
+	remove(index){
+		var exist = this.parentChilds || this.elements || this.virtualRefresh();
+
+		if(exist[index]){
+			var currentEl = exist[index];
+
+			if(this.callback.remove){
+				var currentRemoved = false;
+				var startRemove = function(){
+					if(currentRemoved) return;
+					currentRemoved = true;
+
+					currentEl.remove();
+				};
+
+				// Auto remove if return false
+				if(!this.callback.remove(currentEl, startRemove))
+					startRemove();
+			}
+
+			// Auto remove if no callback
+			else currentEl.remove();
+		}
+
+		if(this.elements !== void 0)
+			exist.splice(index, 1);
 	}
 
 	removeRange(index, other){
@@ -933,6 +971,9 @@ class ElementManipulator{
 
 		for (var i = index; i < other; i++)
 			exist[index].remove();
+
+		if(this.elements != void 0)
+			exist.splice(index, other-index);
 	}
 
 	clear(){
@@ -954,6 +995,9 @@ class ElementManipulator{
 
 			this.list.$virtual.reset(true);
 		}
+
+		if(this.elements !== void 0)
+			this.elements.length = 0;
 	}
 
 	insertAfter(index){
@@ -963,9 +1007,12 @@ class ElementManipulator{
 		if(exist.length === 0)
 			this.parentNode.insertBefore(temp, this.parentNode.lastElementChild);
 		else{
-			var referenceNode = exist[index - 1];
+			var referenceNode = exist[index-1];
 			referenceNode.parentNode.insertBefore(temp, referenceNode.nextSibling);
 		}
+
+		if(this.elements !== void 0)
+			exist.splice(index-1, 0, temp);
 
 		if(this.callback.create)
 			this.callback.create(temp);
@@ -983,6 +1030,9 @@ class ElementManipulator{
 				this.callback.create(temp);
 		}
 		else this.parentNode.insertBefore(temp, this.parentNode.lastElementChild);
+
+		if(this.elements !== void 0)
+			exist.unshift(temp);
 	}
 
 	append(index){
@@ -1012,6 +1062,9 @@ class ElementManipulator{
 				this.callback.create(temp);
 			return;
 		}
+
+		if(this.elements !== void 0)
+			exist.push(temp);
 
 		this.parentNode.appendChild(temp);
 		if(this.callback.create)
