@@ -53,6 +53,7 @@ sf.regex = {
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 
+	repeatedList:/(.*?) in (.*?)$/,
 	itemsObserve:/\b(_model_|_modelScope)\.([\w\[\].]+)/g,
 	parsePropertyPath:/(?:\[([\w]+)\]|\.([\w]+))/g,
 	getSingleMask:['([^\\w.]|^)','([^\\w:]|$)'], //gm

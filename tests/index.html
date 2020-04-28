@@ -189,11 +189,14 @@
                <label @click="handleClick(event, 2)">{{x.id}}</label>
             </li>
          </ul>
-         <div sf-repeat-this="nyan in list3">{{@exec
+         <div sf-repeat-this="key,nyan in list3">{{@exec
            for (var i = 0; i < nyan.length; i++) {
              {[ test[{{i}}] = {{ nyan[i] }}<br> ]}
            }
          }}</div>
+         <div sf-repeat-this="i,key,val in list4">
+           <span>{{ i }}. obj[{{ key }}] = {{ val }}</span><br>
+         </div>
       </sf-m><br><br>
 
       <!-- Model and Controller -->

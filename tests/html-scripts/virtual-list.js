@@ -46,6 +46,7 @@ sf.model.for('virtual-scroll', function(self, root){
 	}
 
 	self.list3 = [[1,2,3], [4,5,6]];
+	self.list4 = {a:'a',b:'b',c:'c'};
 });
 
 var aList = null;

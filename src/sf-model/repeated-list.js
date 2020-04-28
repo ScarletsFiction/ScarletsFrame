@@ -14,16 +14,22 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		element.removeAttribute('sf-repeat-this');
 		element.sf$componentIgnore = true;
 
-		var refName = script.split(' in ');
-		if(refName.length !== 2)
-			return console.error("'", script, "' should match the pattern like `item in items`");
+		var pattern = script.match(sf.regex.repeatedList);
+		if(pattern === null){
+			console.error("'", script, "' should match the pattern like `item in items`");
+			continue;
+		}
+		pattern = pattern.slice(1);
 
-		if(modelRef[refName[1]] === void 0){
-			//var temp = refName[1].split('.');
+		if(pattern[0].indexOf(',') !== -1)
+			pattern[0] = pattern[0].split(' ').join('').split(',');
+
+		if(modelRef[pattern[1]] === void 0){
+			//var temp = pattern[1].split('.');
 			//if(temp.length === 1)
-				modelRef[refName[1]] = [];
+				modelRef[pattern[1]] = [];
 			/*else{
-				refName[1] = temp.pop();
+				pattern[1] = temp.pop();
 				temp.shift();
 
 				if(temp.length !== 0)
@@ -31,7 +37,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 				if(warnUnsupport){
 					warnUnsupport = false;
-					console.warn("Currently nested RepeatedElement can't use parent's scope on it's scope");
+					console.warn("Currently nested RepeatedList can't use parent's scope on it's scope");
 				}
 			}*/
 		}
@@ -40,125 +46,224 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		if(modelRef.sf$bindedKey === void 0)
 			initBindingInformation(modelRef);
 
-		new RepeatedElement(modelRef, element, refName, element.parentNode, namespace, modelKeysRegex);
+		var constructor = modelRef[pattern[1]].constructor;
+		if(constructor === Array){
+			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
+			continue;
+		}
+
+		if(constructor === Object){
+			RepeatedProperty.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
+			continue;
+		}
+
+		console.error(pattern[1], modelRef[pattern[1]], "should be an array or object");
 	}
 }
 
-var _double_zero = [0,0]; // For arguments
-class RepeatedElement extends Array{
-	constructor(modelRef, element, refName, parentNode, namespace, modelKeysRegex){
-		if(modelRef.constructor === Number)
-			return Array(modelRef);
+function prepareRepeated(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
+	var callback = modelRef['on$'+pattern[1]] || {};
+	Object.defineProperty(modelRef, 'on$'+pattern[1], {
+		enumerable: true,
+		configurable: true,
+		get:function(){
+			return callback;
+		},
+		set:function(val){
+			Object.assign(callback, val);
+		}
+	});
 
-		var list = modelRef[refName[1]];
+	var compTemplate = (namespace || sf.component).registered[element.tagName.toLowerCase()];
+	if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
+		compTemplate[3] = element;
 
-		super(list.length);
+	var isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
+	hiddenProperty(this, '$EM', new ElementManipulator());
 
-		if(list.length !== 0)
-			for (var i = 0; i < list.length; i++) {
-				this[i] = list[i];
-			}
+	if(pattern[0].constructor === Array){
+		this.$EM.uniqPattern = pattern[0];
+		pattern[0] = pattern[0].pop();
+	}
 
-		list = null;
+	var template;
+	if(!isComponent){
+		element.setAttribute('sf-bind-list', pattern[1]);
 
-		var alone = (parentNode.children.length <= 1 || parentNode.textContent.trim().length === 0);
+		// Get reference for debugging
+		processingElement = element;
 
-		var callback = modelRef['on$'+refName[1]] || {};
-		Object.defineProperty(modelRef, 'on$'+refName[1], {
+		var container;
+		if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
+			container = 'svg';
+
+		template = self.extractPreprocess(element, pattern[0], modelRef, container, modelKeysRegex, true);
+	}
+
+	this.$EM.template = isComponent || template;
+	this.$EM.list = this;
+	this.$EM.parentNode = parentNode;
+	this.$EM.modelRef = modelRef;
+	this.$EM.isComponent = !!isComponent;
+	this.$EM.namespace = namespace;
+	this.$EM.template.mask = pattern[0];
+	this.$EM.elementRef = new WeakMap();
+	this.$EM.callback = callback; // Update callback
+
+	// check if alone
+	if(parentNode.children.length <= 1 || parentNode.textContent.trim().length === 0)
+		return true;
+
+	var that = this;
+	return function(injectElements){
+		var nextSibling = element.nextSibling;
+		element.remove();
+
+		that.$EM.bound_end = document.createComment('');
+		that.$EM.bound_start = document.createComment('');
+
+		parentNode.insertBefore(that.$EM.bound_start, nextSibling);
+		parentNode.insertBefore(that.$EM.bound_end, nextSibling);
+
+		that.$EM.elements = Array(that.length);
+
+		// Output to real DOM if not being used for virtual list
+		injectArrayElements(parentNode, that.$EM.bound_end, that, modelRef, parentNode, isComponent, that.$EM.template);
+	}
+}
+
+class RepeatedProperty{ // extends Object
+	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
+		var that = modelRef[pattern[1]];
+		hiddenProperty(that, '_list', Object.keys(that));
+
+		Object.setPrototypeOf(that, RepeatedProperty.prototype);
+		Object.defineProperty(modelRef, pattern[1], {
 			enumerable: true,
 			configurable: true,
 			get:function(){
-				return callback;
+				return that;
 			},
 			set:function(val){
-				Object.assign(callback, val);
+				var olds = that._list;
+				var news = Object.keys(val);
+
+				// Assign if keys order was similar
+				for (var a = 0; a < olds.length; a++) {
+					if(olds[a] === news[a]){
+						that[olds[a]] = val[olds[a]];
+						continue;
+					}
+					break;
+				}
+
+				// Return if all new value has been assigned
+				if(a === news.length && olds[a] === void 0)
+					return;
+
+				for (var i = a; i < olds.length; i++)
+					that.$delete(olds[i]);
+
+				for (var i = a; i < news.length; i++)
+					that.$add(news[i], val[news[i]]);
+
+				that._list = news;
 			}
 		});
 
-		var compTemplate = (namespace || sf.component).registered[element.tagName.toLowerCase()];
-		if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
-			compTemplate[3] = element;
-
-		var isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
-
-		var template;
-		if(!isComponent){
-			element.setAttribute('sf-bind-list', refName[1]);
-
-			// Get reference for debugging
-			processingElement = element;
-
-			var container;
-			if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
-				container = 'svg';
-
-			template = self.extractPreprocess(element, refName[0], modelRef, container, modelKeysRegex, true);
+		var alone = prepareRepeated.apply(that, arguments);
+		if(alone === true){
+			element.remove();
+			that.$EM.parentChilds = parentNode.children;
+			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, isComponent, template, namespace);
 		}
+		else alone();
+	}
+	$add(prop, val){
+		if(this[prop] === val)
+			return;
 
-		hiddenProperty(this, '$EM', new ElementManipulator());
-		this.$EM.template = isComponent || template;
-		this.$EM.list = this;
-		this.$EM.parentNode = parentNode;
-		this.$EM.modelRef = modelRef;
-		this.$EM.refName = refName;
-		this.$EM.elementRef = new WeakMap();
-		this.$EM.isComponent = !!isComponent;
-		this.$EM.namespace = namespace;
+		this[prop] = val;
+		this.$EM.append(prop);
+	}
+	$delete(prop){
+		Object.defineProperty(this, prop, {value:null});
+		this.$EM.remove(Object.keys(this).indexOf(prop));
+		delete this[prop];
+	}
+}
 
-		this.$EM.template.mask = refName[0];
+function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, isComponent, template, namespace){
+	var temp;
 
-		// Update callback
-		this.$EM.callback = callback;
+	if(that.constructor === RepeatedProperty){
+		temp = that;
+		that = Object.values(that);
+		that.$EM = temp.$EM;
+	}
 
-		var that = this;
-		function injectElements(tempDOM, beforeChild){
-			for (var i = 0; i < that.length; i++) {
-				var elem = that.$EM.elementRef.get(that[i]);
+	var len = that.length;
+	for (var i = 0; i < len; i++) {
+		var elem = that.$EM.elementRef.get(that[i]);
 
-				if(elem === void 0){
-					if(isComponent){
-						elem = new isComponent(that[i], namespace);
-						that[i] = elem.model;
-						// elem.setAttribute('sf-bind-list', refName[1]);
-					}
-					else{
-						elem = templateParser(template, that[i], false, modelRef, parentNode);
+		if(elem === void 0){
+			if(isComponent){
+				elem = new template(that[i], namespace);
+				that[i] = elem.model;
+			}
+			else{
+				elem = templateParser(template, that[i], false, modelRef, parentNode);
 
-						// Check if this is a component container
-						if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
-							that[i] = elem.model = elem.children[0].model;
-					}
+				// Check if this is a component container
+				if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
+					that[i] = elem.model = elem.children[0].model;
+			}
 
-					if(typeof that[i] === "object"){
-						if(isComponent === false)
-							self.bindElement(elem, modelRef, template, that[i]);
+			if(typeof that[i] === "object"){
+				if(isComponent === false)
+					self.bindElement(elem, modelRef, template, that[i]);
 
-						that.$EM.elementRef.set(that[i], elem);
-					}
-				}
-				else if(elem.model.$el === void 0){
-					// This is not a component, lets check if all property are equal
-					if(compareObject(elem.model, that[i]) === false){
-						elem = templateParser(template, that[i], false, modelRef, parentNode);
+				that.$EM.elementRef.set(that[i], elem);
+			}
+		}
+		else if(elem.model.$el === void 0){
+			// This is not a component, lets check if all property are equal
+			if(compareObject(elem.model, that[i]) === false){
+				elem = templateParser(template, that[i], false, modelRef, parentNode);
 
-						if(typeof that[i] === "object"){
-							if(isComponent === false)
-								self.bindElement(elem, modelRef, template, that[i]);
-	
-							that.$EM.elementRef.set(that[i], elem);
-						}
-					}
-				}
+				if(typeof that[i] === "object"){
+					if(isComponent === false)
+						self.bindElement(elem, modelRef, template, that[i]);
 
-				if(beforeChild === void 0)
-					tempDOM.appendChild(elem);
-				else{
-					that.$EM.elements.push(elem);
-					tempDOM.insertBefore(elem, beforeChild);
+					that.$EM.elementRef.set(that[i], elem);
 				}
 			}
 		}
 
+		if(beforeChild === void 0)
+			tempDOM.appendChild(elem);
+		else{
+			that.$EM.elements.push(elem);
+			tempDOM.insertBefore(elem, beforeChild);
+		}
+	}
+
+	if(temp !== void 0){
+		var keys = Object.keys(temp);
+
+		for (var i = 0; i < len; i++)
+			temp[keys[i]] = that[i];
+	}
+}
+
+class RepeatedList extends Array{
+	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
+		var that = modelRef[pattern[1]];
+		Object.setPrototypeOf(that, RepeatedList.prototype);
+
+		var alone = prepareRepeated.apply(that, arguments);
+
+		var template = that.$EM.template;
 		if(parentNode.classList.contains('sf-virtual-list')){
 			var ceiling = document.createElement(element.tagName);
 			ceiling.classList.add('virtual-spacer');
@@ -170,44 +275,32 @@ class RepeatedElement extends Array{
 			floor.classList.add('floor');
 			parentNode.appendChild(floor); // append
 
-			hiddenProperty(this, '$virtual', {});
+			hiddenProperty(that, '$virtual', {});
 
-			if(!alone)
+			if(alone !== true)
 				console.warn("Virtual list was initialized when the container has another child that was not sf-repeated element.", parentNode);
 
 			var tempDOM = document.createElement('div');
-			injectElements(tempDOM);
+			injectArrayElements(tempDOM, void 0, that, modelRef, parentNode, that.$EM.isComponent, template, namespace);
 
 			// Transfer virtual DOM
-			this.$virtual.dom = tempDOM;
-			this.$virtual.callback = callback;
+			that.$virtual.dom = tempDOM;
+			that.$virtual.callback = that.$EM.callback;
 
 			// Put the html example for obtaining it's size
 			parentNode.replaceChild(template.html, parentNode.children[1]);
-			internal.virtual_scroll.handle(this, parentNode);
+			internal.virtual_scroll.handle(that, parentNode);
 			template.html.remove(); // And remove it
 		}
-		else if(alone){
+		else if(alone === true){
 			// Output to real DOM if not being used for virtual list
-			injectElements(parentNode);
-			this.$EM.parentChilds = parentNode.children;
+			element.remove();
+			that.$EM.parentChilds = parentNode.children;
+			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, that.$EM.isComponent, template, namespace);
 		}
-		else{
-			this.$EM.bound_end = document.createComment('');
-			this.$EM.bound_start = document.createComment('');
+		else alone();
 
-			parentNode.insertBefore(this.$EM.bound_start, element);
-			parentNode.insertBefore(this.$EM.bound_end, element);
-
-			this.$EM.elements = Array(this.length);
-
-			// Output to real DOM if not being used for virtual list
-			injectElements(parentNode, this.$EM.bound_end);
-		}
-
-		element.remove();
-
-		Object.defineProperty(modelRef, refName[1], {
+		Object.defineProperty(modelRef, pattern[1], {
 			enumerable: true,
 			configurable: true,
 			get:function(){
@@ -215,8 +308,8 @@ class RepeatedElement extends Array{
 			},
 			set:function(val){
 				if(val.length === 0)
-					return that.splice(0);
-				return that.remake(val, true);
+					that.splice(0);
+				else that.remake(val, true);
 			}
 		});
 
@@ -327,6 +420,7 @@ class RepeatedElement extends Array{
 		return this.slice(0, arguments.length);
 	}
 
+	constructor(arr){return Array(arr)}
 	assign(whichIndex, withArray){
 		if(whichIndex.constructor !== Number){
 			withArray = whichIndex;
@@ -536,7 +630,7 @@ class ElementManipulator{
 		if(item === void 0) return;
 
 		var template = this.template;
-		var temp = this.elementRef.get(item);
+		var temp = this.elementRef && this.elementRef.get(item);
 
 		if(temp !== void 0){
 			if(temp.model.$el === void 0){
@@ -551,8 +645,9 @@ class ElementManipulator{
 					if(typeof item === "object"){
 						if(this.isComponent === false)
 							self.bindElement(temp, this.modelRef, template, item);
-	
-						this.elementRef.set(item, temp);
+
+						if(this.elementRef !== void 0)
+							this.elementRef.set(item, temp);
 					}
 				}
 			}
@@ -569,8 +664,9 @@ class ElementManipulator{
 		if(typeof item === "object"){
 			if(this.isComponent === false)
 				self.bindElement(temp, this.modelRef, template, item);
-	
-			this.elementRef.set(item, temp);
+
+			if(this.elementRef !== void 0)
+				this.elementRef.set(item, temp);
 		}
 
 		return temp;
@@ -653,7 +749,7 @@ class ElementManipulator{
 					}
 				}
 			}
-			
+
 			if(this.list.$virtual){
 				if(vCursor.floor === null && i < vEndRange)
 					this.parentNode.insertBefore(temp, this.parentNode.lastElementChild);

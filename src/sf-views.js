@@ -348,7 +348,6 @@ var self = sf.views = function View(selector, name){
 			return self;
 
 		onEvent[event].splice(i, 1);
-
 		return self;
 	}
 
