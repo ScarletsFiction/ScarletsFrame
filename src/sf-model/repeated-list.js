@@ -81,10 +81,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	var isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
 	hiddenProperty(this, '$EM', new ElementManipulator());
 
-	if(pattern[0].constructor === Array){
-		this.$EM.uniqPattern = pattern[0];
-		pattern[0] = pattern[0].pop();
-	}
+	var mask = pattern[0].constructor === Array ? pattern[0].pop() : pattern[0];
 
 	var template;
 	if(!isComponent){
@@ -97,7 +94,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
 			container = 'svg';
 
-		template = self.extractPreprocess(element, pattern[0], modelRef, container, modelKeysRegex, true);
+		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true);
 	}
 
 	this.$EM.template = isComponent || template;
@@ -106,7 +103,8 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	this.$EM.modelRef = modelRef;
 	this.$EM.isComponent = !!isComponent;
 	this.$EM.namespace = namespace;
-	this.$EM.template.mask = pattern[0];
+	this.$EM.template.mask = mask;
+	this.$EM.template.uniqPattern = pattern;
 	this.$EM.elementRef = new WeakMap();
 	this.$EM.callback = callback; // Update callback
 
@@ -174,22 +172,40 @@ class RepeatedProperty{ // extends Object
 		var alone = prepareRepeated.apply(that, arguments);
 		if(alone === true){
 			element.remove();
-			that.$EM.parentChilds = parentNode.children;
 			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, isComponent, template, namespace);
 		}
 		else alone();
 	}
-	$add(prop, val){
+
+	add(prop, val){
 		if(this[prop] === val)
 			return;
 
-		this[prop] = val;
-		this.$EM.append(prop);
+		if(this[prop] !== void 0)
+			this[prop] = val;
+		else{
+			this[prop] = val;
+			this.$EM.append(prop);
+			this._list.push(prop);
+		}
 	}
-	$delete(prop){
+
+	delete(prop){
+		var i = this._list.indexOf(prop);
+		if(i === -1)
+			return;
+
 		Object.defineProperty(this, prop, {value:null});
-		this.$EM.remove(Object.keys(this).indexOf(prop));
+		this.$EM.remove(i);
 		delete this[prop];
+
+		this._list.splice(i, 1);
+	}
+
+	getElement(prop){
+		if(typeof this[prop] === 'object')
+			return this.$EM.elementRef.get(this[prop]);
+		return (this.$EM.parentChilds || this.$EM.elements)[this._list.indexOf(prop)];
 	}
 }
 
@@ -243,7 +259,7 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, i
 		if(beforeChild === void 0)
 			tempDOM.appendChild(elem);
 		else{
-			that.$EM.elements.push(elem);
+			that.$EM.elements[i] = elem;
 			tempDOM.insertBefore(elem, beforeChild);
 		}
 	}
@@ -561,10 +577,8 @@ class RepeatedList extends Array{
 
 	getElement(index){
 		if(index.constructor === Number){
-			if(typeof this[index] !== 'object'){
-				var exist = this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh();
-				return exist[index];
-			}
+			if(typeof this[index] !== 'object')
+				return (this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh())[index];
 
 			return this.$EM.elementRef.get(this[index]);
 		}
