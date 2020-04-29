@@ -2,6 +2,8 @@
 // this may happen when list are removed (splice, pop, shift, hardRefresh)
 // and using property from root model (not the list property)
 
+// Known bugs: using keys for repeated list won't changed when refreshed
+
 // var warnUnsupport = true;
 var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
 	for (var i = 0; i < elements.length; i++) {
@@ -617,7 +619,12 @@ class RepeatedList extends Array{
 		return Array.prototype.indexOf.apply(this, arguments);
 	}
 
-	refresh(index, length, property){
+	reverse(){
+		this.$EM.reverse();
+		Array.prototype.reverse.call(this);
+	}
+
+	refresh(index, length){
 		if(index === void 0 || index.constructor === String){
 			index = 0;
 			length = this.length;
@@ -1090,5 +1097,29 @@ class ElementManipulator{
 
 		if(this.callback.create)
 			this.callback.create(temp);
+	}
+
+	reverse(){
+		if(this.parentChilds !== void 0){
+			var len = this.parentChilds.length;
+			if(len === 0)
+				return;
+
+			var beforeChild = this.parentChilds[0];
+			for (var i = 1; i < len; i++) {
+				this.parentNode.insertBefore(this.parentNode.lastElementChild, beforeChild);
+			}
+		}
+		else{
+			var elems = this.elements || this.virtualRefresh();
+			elems.reverse();
+
+			if(this.bound_end === void 0)
+				for (var i = 0; i < elems.length; i++)
+					this.parentNode.appendChild(elems[i]);
+			else
+				for (var i = 0; i < elems.length; i++)
+					this.parentNode.insertBefore(elems[i], this.bound_end);
+		}
 	}
 }

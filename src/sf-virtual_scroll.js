@@ -1,3 +1,4 @@
+var warnBugs = false;
 internal.virtual_scroll = new function(){
 	var self = this;
 	var scrollingByScript = false;
@@ -90,7 +91,14 @@ internal.virtual_scroll = new function(){
 				dynamicList = true;
 				dynamicHeight(list, parentNode, scroller);
 			}
-			else staticHeight(list, parentNode, scroller);
+			else{
+				if(warnBugs === false){
+					warnBugs = true;
+					console.warn("Currently virtual list with static height have bugs, try to add `sf-list-dynamic` on parent element's class list", parentNode);
+				}
+
+				staticHeight(list, parentNode, scroller);
+			}
 		}, 500);
 	}
 
