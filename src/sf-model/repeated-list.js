@@ -135,7 +135,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		that.$EM.elements = Array(that.length);
 
 		// Output to real DOM if not being used for virtual list
-		injectArrayElements(parentNode, that.$EM.bound_end, that, modelRef, parentNode, isComponent, that.$EM.template);
+		injectArrayElements(parentNode, that.$EM.bound_end, that, modelRef, parentNode);
 	}
 }
 
@@ -181,7 +181,7 @@ class RepeatedProperty{ // extends Object
 		var alone = prepareRepeated.apply(that, arguments);
 		if(alone === true){
 			element.remove();
-			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, isComponent, template, namespace);
+			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, namespace);
 		}
 		else alone();
 	}
@@ -228,8 +228,10 @@ class RepeatedProperty{ // extends Object
 	}
 }
 
-function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, isComponent, template, namespace){
-	var temp;
+function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, namespace){
+	var temp,
+		isComponent = that.$EM.isComponent,
+		template = that.$EM.template;
 
 	if(that.constructor === RepeatedProperty){
 		temp = that;
@@ -316,7 +318,7 @@ class RepeatedList extends Array{
 				console.warn("Virtual list was initialized when the container has another child that was not sf-repeated element.", parentNode);
 
 			var tempDOM = document.createElement('div');
-			injectArrayElements(tempDOM, void 0, that, modelRef, parentNode, that.$EM.isComponent, template, namespace);
+			injectArrayElements(tempDOM, void 0, that, modelRef, parentNode, namespace);
 
 			// Transfer virtual DOM
 			that.$virtual.dom = tempDOM;
@@ -331,7 +333,7 @@ class RepeatedList extends Array{
 			// Output to real DOM if not being used for virtual list
 			element.remove();
 			that.$EM.parentChilds = parentNode.children;
-			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, that.$EM.isComponent, template, namespace);
+			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, namespace);
 		}
 		else alone();
 
