@@ -675,13 +675,21 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			if(currentNode.textContent.indexOf('{{') !== -1){
 				if(extracting === void 0){
+					var theParent = currentNode.parentNode;
+
 					// If it's not single/regular template
 					if(currentNode.textContent.indexOf('{{@') !== -1 || enclosing !== -1)
-						temp.add(currentNode.parentNode); // get the element (from current text node)
+						temp.add(theParent); // get the element (from current text node)
 					else temp.add(currentNode);
 
-					if(currentNode.parentNode.sf$onlyAttribute !== void 0)
-						delete currentNode.parentNode.sf$onlyAttribute;
+					if(theParent.sf$onlyAttribute !== void 0)
+						delete theParent.sf$onlyAttribute;
+
+					// Remove because the parent will be removed
+					for (var i = collectOther.input.length-1; i >= 0; i--)
+						if(theParent.contains(collectOther.input[i]))
+							collectOther.input.splice(i, 1);
+
 					break;
 				}
 
