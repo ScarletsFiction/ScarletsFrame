@@ -80,7 +80,7 @@ function _escapeParse(html, vars){
 }
 
 var modelScript_ = /_result_|return/;
-function modelScript(mask, script){
+function modelScript(mask, script, repeatedListKey){
 	var which = script.match(modelScript_);
 
 	if(which === null)
@@ -94,7 +94,10 @@ function modelScript(mask, script){
 		script = 'var _model_='+mask+';'+script;
 
 	try{
-		return new Function(mask || '_model_', '_modelScope', '_escapeParse', script);
+		if(repeatedListKey === void 0)
+			return new Function(mask || '_model_', '_modelScope', '_escapeParse', script);
+		else 
+			return new Function(mask || '_model_', '_modelScope', '_escapeParse', repeatedListKey, script);
 	} catch(e){
 		console.log(script);
 		console.error(e);

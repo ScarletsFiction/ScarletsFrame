@@ -21,7 +21,7 @@ function elseIfHandle(else_, arg){
 // ==== Template parser ====
 var templateParser_regex = /{{%=([0-9]+)%/g;
 var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
-var templateExec = function(parse, item, atIndex, parsed){
+var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 	parsed = parsed || {};
 	var temp = null;
 
@@ -42,7 +42,7 @@ var templateExec = function(parse, item, atIndex, parsed){
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
-			temp = ref.get(arg[0], arg[1], _escapeParse);
+			temp = ref.get(arg[0], arg[1], _escapeParse, repeatListIndex);
 			if(temp === void 0)
 				temp = '';
 			else{
@@ -57,7 +57,7 @@ var templateExec = function(parse, item, atIndex, parsed){
 		}
 
 		if(ref.type === REF_EXEC){
-			parsed[i] = {type:ref.type, data:ref.get(arg[0], arg[1], _escapeParse)};
+			parsed[i] = {type:ref.type, data:ref.get(arg[0], arg[1], _escapeParse, repeatListIndex)};
 			continue;
 		}
 
@@ -66,12 +66,12 @@ var templateExec = function(parse, item, atIndex, parsed){
 			parsed[i] = {type:ref.type, data:''};
 
 			// If condition was not meet
-			if(!ref.if[0](arg[0], arg[1], _escapeParse)){
-				parsed[i].data = elseIfHandle(ref, arg);
+			if(!ref.if[0](arg[0], arg[1], _escapeParse, repeatListIndex)){
+				parsed[i].data = elseIfHandle(ref, arg, repeatListIndex);
 				continue;
 			}
 
-			parsed[i].data = ref.if[1](arg[0], arg[1], _escapeParse);
+			parsed[i].data = ref.if[1](arg[0], arg[1], _escapeParse, repeatListIndex);
 		}
 	}
 	return parsed;
@@ -128,12 +128,15 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 	}
 }
 
-var templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy){
+var templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy, repeatListIndex){
 	processingElement = template.html;
 
 	var html = original === true ? template.html : template.html.cloneNode(true);
 	var addresses = template.addresses;
-	var parsed = templateExec(template.parse, item);
+	var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);
+
+	// if(template.uniqPattern !== void 0)
+	// 	html.sf$repeatListIndex = repeatListIndex;
 
 	if(copy !== void 0){
 		var childs = html.childNodes;
@@ -275,7 +278,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 			changes[i] = i;
 	}
 
-	var parsed = templateExec(template.parse, item, changes);
+	var parsed = templateExec(template.parse, item, changes, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
 
 	var changesReference = element.sf$elementReferences;
 	var haveChanges = false;

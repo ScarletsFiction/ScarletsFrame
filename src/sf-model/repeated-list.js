@@ -81,7 +81,12 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	var isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
 	hiddenProperty(this, '$EM', new ElementManipulator());
 
-	var mask = pattern[0].constructor === Array ? pattern[0].pop() : pattern[0];
+	var mask, uniqPattern;
+	if(pattern[0].constructor === Array){
+		mask = pattern[0].pop();
+		uniqPattern = pattern[0][0];
+	}
+	else mask = pattern[0];
 
 	var template;
 	if(!isComponent){
@@ -94,7 +99,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.tagName !== 'SVG')
 			container = 'svg';
 
-		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true);
+		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
 	}
 
 	this.$EM.template = isComponent || template;
@@ -104,9 +109,11 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	this.$EM.isComponent = !!isComponent;
 	this.$EM.namespace = namespace;
 	this.$EM.template.mask = mask;
-	this.$EM.template.uniqPattern = pattern;
 	this.$EM.elementRef = new WeakMap();
 	this.$EM.callback = callback; // Update callback
+
+	if(uniqPattern !== void 0)
+		this.$EM.template.uniqPattern = uniqPattern;
 
 	// check if alone
 	if(parentNode.children.length <= 1 || parentNode.textContent.trim().length === 0)
@@ -238,7 +245,7 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, i
 				that[i] = elem.model;
 			}
 			else{
-				elem = templateParser(template, that[i], false, modelRef, parentNode);
+				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
 
 				// Check if this is a component container
 				if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
@@ -255,7 +262,7 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, i
 		else if(elem.model.$el === void 0){
 			// This is not a component, lets check if all property are equal
 			if(compareObject(elem.model, that[i]) === false){
-				elem = templateParser(template, that[i], false, modelRef, parentNode);
+				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
 
 				if(typeof that[i] === "object"){
 					if(isComponent === false)
@@ -660,7 +667,7 @@ class ElementManipulator{
 			if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
 				if(compareObject(temp.model, item) === false){
-					temp = templateParser(template, item, false, this.modelRef, this.parentNode);
+					temp = templateParser(template, item, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && index);
 
 					// Check if this is a component container
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
@@ -683,7 +690,7 @@ class ElementManipulator{
 			temp = new template(item, this.namespace);
 			this.list[index] = temp.model;
 		}
-		else temp = templateParser(template, item, false, this.modelRef, this.parentNode);
+		else temp = templateParser(template, item, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && index);
 
 		if(typeof item === "object"){
 			if(this.isComponent === false)
@@ -752,7 +759,7 @@ class ElementManipulator{
 					list[i] = temp.model;
 				}
 				else{
-					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode);
+					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode, void 0, this.template.uniqPattern && i);
 
 					// Check if this is a component container
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
@@ -772,7 +779,7 @@ class ElementManipulator{
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
 				if(compareObject(temp.model, list[i]) === false){
-					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode);
+					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode, void 0, this.template.uniqPattern && i);
 
 					if(typeof list[i] === "object"){
 						if(this.isComponent === false)
@@ -827,7 +834,7 @@ class ElementManipulator{
 					list[i] = temp.model;
 				}
 				else{
-					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode);
+					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode, void 0, template.uniqPattern && i);
 
 					// Check if this is a component container
 					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
@@ -847,7 +854,7 @@ class ElementManipulator{
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
 				if(compareObject(temp.model, list[i]) === false){
-					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode);
+					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode, void 0, template.uniqPattern && i);
 
 					if(typeof list[i] === "object"){
 						if(this.isComponent === false)

@@ -322,7 +322,7 @@ var createModelKeysRegex = internal.model.createModelKeysRegex = function(target
 	return obj;
 }
 
-self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex, preserveRegex){
+self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex, preserveRegex, repeatedListKey){
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
@@ -380,34 +380,34 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				current.data[0] = current.data[0].replace(sf.regex.itemsObserve, toObserve, template);
 
 				// Convert to function
-				current.get = modelScript(mask, current.data.shift());
+				current.get = modelScript(mask, current.data.shift(), repeatedListKey);
 				continue;
 			}
 
 			// Dynamic data
 			if(current.type === REF_IF){
 				var checkList = current.if.join(';');
-				current.if[0] = modelScript(mask, current.if[0]);
-				current.if[1] = modelScript(mask, current.if[1]);
+				current.if[0] = modelScript(mask, current.if[0], repeatedListKey);
+				current.if[1] = modelScript(mask, current.if[1], repeatedListKey);
 
 				if(current.elseValue !== null){
 					checkList += ';' + current.elseValue;
-					current.elseValue = modelScript(mask, current.elseValue);
+					current.elseValue = modelScript(mask, current.elseValue, repeatedListKey);
 				}
 
 				for (var a = 0; a < current.elseIf.length; a++) {
 					var refElif = current.elseIf[a];
 
 					checkList += refElif.join(';');
-					refElif[0] = modelScript(mask, refElif[0]);
-					refElif[1] = modelScript(mask, refElif[1]);
+					refElif[0] = modelScript(mask, refElif[0], repeatedListKey);
+					refElif[1] = modelScript(mask, refElif[1], repeatedListKey);
 				}
 			}
 			else if(current.type === REF_EXEC){
 				var checkList = current.data.shift();
 
 				// Convert to function
-				current.get = modelScript(mask, checkList);
+				current.get = modelScript(mask, checkList, repeatedListKey);
 			}
 
 			toObserve.template.i = i;

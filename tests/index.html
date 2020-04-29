@@ -191,11 +191,11 @@
          </ul>
          <div sf-repeat-this="key,nyan in list3">{{@exec
            for (var i = 0; i < nyan.length; i++) {
-             {[ test[{{i}}] = {{ nyan[i] }}<br> ]}
+             {[ {{key}}. test[{{i}}] = {{ nyan[i] }}<br> ]}
            }
          }}</div>
-         <div sf-repeat-this="i,key,val in list4">
-           <span>{{ i }}. obj[{{ key }}] = {{ val }}</span><br>
+         <div sf-repeat-this="key,val in list4">
+           <span>obj[{{ key }}] = {{ val }}</span><br>
          </div>
       </sf-m><br><br>
 
