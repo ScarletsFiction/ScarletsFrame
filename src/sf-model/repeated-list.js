@@ -207,6 +207,16 @@ class RepeatedProperty{ // extends Object
 			return this.$EM.elementRef.get(this[prop]);
 		return (this.$EM.parentChilds || this.$EM.elements)[this._list.indexOf(prop)];
 	}
+
+	refresh(){
+		var list = this._list;
+		for (var i = 0; i < list.length; i++) {
+			var elem = (this.$EM.parentChilds || this.$EM.elements)[i];
+
+			if(this[list[i]] !== elem.model)
+				elem.parentNode.replaceChild(this.$EM.createElement(list[i]), elem);
+		}
+	}
 }
 
 function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, isComponent, template, namespace){
@@ -1066,7 +1076,11 @@ class ElementManipulator{
 		if(this.elements !== void 0)
 			exist.push(temp);
 
-		this.parentNode.appendChild(temp);
+		if(this.bound_end !== void 0)
+			this.parentNode.insertBefore(temp, this.bound_end);
+		else
+			this.parentNode.appendChild(temp);
+
 		if(this.callback.create)
 			this.callback.create(temp);
 	}

@@ -66,6 +66,13 @@ $(function(){
 	}, 1000);
 
 	setTimeout(function(){
+		list.list4.add('z', 123);
+		list.list4.delete('b');
+		list.list4.c = 'refresh';
+		list.list4.refresh();
+	}, 3000);
+
+	setTimeout(function(){
 		list.list1 = list.list1b;
 
 		// Hard Refreshed
