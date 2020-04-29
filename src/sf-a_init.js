@@ -81,6 +81,9 @@ function parsePropertyPath(str){
 		return '';
 	}));
 
+	if(temp.length === 1 && temp[0].slice(-1) === ']')
+		temp[0] = temp.slice(0, -1);
+
 	return temp;
 }
 

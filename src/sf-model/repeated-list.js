@@ -249,7 +249,10 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, n
 				that[i] = elem.model;
 			}
 			else{
-				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
+				if(temp === void 0)
+					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
+				else
+					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
 
 				// Check if this is a component container
 				if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
@@ -266,7 +269,10 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, n
 		else if(elem.model.$el === void 0){
 			// This is not a component, lets check if all property are equal
 			if(compareObject(elem.model, that[i]) === false){
-				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
+				if(temp === void 0)
+					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
+				else
+					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
 
 				if(typeof that[i] === "object"){
 					if(isComponent === false)
