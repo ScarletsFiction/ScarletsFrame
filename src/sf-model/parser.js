@@ -55,7 +55,7 @@ var uniqueDataParser = function(html, template, _modelScope){
 		matched = dataParser(matched, null, template, _modelScope, vars, true)
 				.split('\\').join('\\\\').split('"').join('\\"').split("\n").join("\\\n");
 
-		return '_result_ += (function(){return _escapeParse("'+matched+'", ['+vars.join(',')+'])}).apply(null, arguments);';
+		return '_result_ += (function(){return _escapeParse("'+matched+'", ['+vars.join(',')+' ])}).apply(null, arguments);';
 	});
 
 	var preParsedReference = [];
@@ -206,9 +206,6 @@ function addressAttributes(currentNode, template){
 }
 
 function toObserve(full, model, properties){
-	if(properties.slice(-1) === ']')
-		properties = properties.slice(0, -1);
-
 	if(toObserve.uniqueCheck[properties] === true)
 		return;
 	toObserve.uniqueCheck[properties] = true;
