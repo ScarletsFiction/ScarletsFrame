@@ -128,6 +128,11 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 	var bindedKey = model.sf$bindedKey;
 
+	// if(propertyName !== 'one')
+	// 	console.error(bindedKey[propertyName], propertyName);
+	if(propertyName === 'stuff')
+		console.error(bindedKey[propertyName], propertyName);
+
 	if(bindedKey[propertyName] !== void 0){
 		var ref = bindedKey[propertyName];
 		if(ref.indexOf(callback) === -1)

@@ -206,6 +206,13 @@ function addressAttributes(currentNode, template){
 }
 
 function toObserve(full, model, properties){
+	if(properties.slice(-1) === ']')
+		properties = properties.slice(0, -1);
+
+	if(toObserve.uniqueCheck[properties] === true)
+		return;
+	toObserve.uniqueCheck[properties] = true;
+
 	var place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
 
 	// Get property name
@@ -545,9 +552,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	}
 
 	toObserve.template = template;
+	toObserve.uniqueCheck = {};
+
 	findModelProperty();
-	delete toObserve.template.i;
-	delete toObserve.template;
+
+	toObserve.template.i = void 0;
+	toObserve.template = void 0;
+	toObserve.uniqueCheck = void 0;
 
 	// Get the indexes for input bind
 	var specialInput = template.specialElement.input;
@@ -722,6 +733,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 			template.addresses = addressAttributes(current, template);
 			toObserve.template = template;
+			toObserve.uniqueCheck = {};
 
 			// Create as function
 			for (var i = 0; i < preParsedRef.length; i++) {
@@ -737,8 +749,8 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 				}
 			}
 
-			delete toObserve.template.i;
-			delete toObserve.template;
+			toObserve.template.i = void 0;
+			toObserve.template = void 0;
 
 			var parsed = templateExec(preParsedRef, modelRef);
 			var currentRef = [];
