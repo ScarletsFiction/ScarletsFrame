@@ -149,13 +149,12 @@ internal.router.parseRoutes = function(obj_, selectorList){
 
 			var hasChild = [];
 
-            var keys = Object.keys(ref);
-            for(var a = 0; a < keys.length; a++){
-                if(knownKeys.test(keys[a]))
+			for(var keys in ref) {
+                if(knownKeys.test(keys))
                 	continue;
 
-				hasChild.push(keys[a]);
-				addRoutes(ref[keys[a]], current, keys[a], route);
+				hasChild.push(keys);
+				addRoutes(ref[keys], current, keys, route);
                 break;
             }
 
@@ -900,10 +899,9 @@ self.goto = function(url){
 
 	var views = self.list;
 
-	var list = Object.keys(self.list);
-	for (var i = 0; i < list.length; i++) {
+	for(var list in self.list){
 		// For root path
-		if(list[i] === slash){
+		if(list === slash){
 			if(views[slash].currentPath !== parsed.paths)
 				views[slash].goto(parsed.paths);
 
@@ -911,8 +909,8 @@ self.goto = function(url){
 		}
 
 		// For hash path
-		if(parsed.hashes[list[i]] !== views[list[i]].currentPath)
-			views[list[i]].goto(parsed.hashes[list[i]] || '/');
+		if(parsed.hashes[list] !== views[list].currentPath)
+			views[list].goto(parsed.hashes[list] || '/');
 	}
 }
 

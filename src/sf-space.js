@@ -149,24 +149,21 @@ class Space{
 	}
 
 	self.destroy = function(){
-		var keys = Object.keys(this.root);
-		for (var i = 0; i < keys.length; i++) {
-			if(keys[i].indexOf(namespace) === 0){
-				this.root[keys[i]].$el.remove();
-				delete this.root[keys[i]];
+		for(var keys in this.root){
+			if(keys.indexOf(namespace) === 0){
+				this.root[keys].$el.remove();
+				delete this.root[keys];
 			}
 		}
 
-		var keys = Object.keys(this.components.registered);
-		for (var i = 0; i < keys.length; i++) {
-			if(keys[i].indexOf(namespace) === 0)
-				delete this.components.registered[keys[i]];
+		for(var keys in this.components.registered){
+			if(keys.indexOf(namespace) === 0)
+				delete this.components.registered[keys];
 		}
 
-		var keys = Object.keys(internal.component);
-		for (var i = 0; i < keys.length; i++) {
-			if(keys[i].indexOf(namespace) === 0)
-				delete internal.component[keys[i]];
+		for(var keys in internal.component){
+			if(keys.indexOf(namespace) === 0)
+				delete internal.component[keys];
 		}
 	}
 })();

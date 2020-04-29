@@ -174,13 +174,12 @@ var root_ = function(scope){
 
 // Let's check all pending model
 $(function(){
-	var keys = Object.keys(internal.modelPending);
-	for (var i = 0; i < keys.length; i++) {
-		var ref = internal.modelPending[keys[i]];
+	for(var keys in internal.modelPending){
+		var ref = internal.modelPending[keys];
 		for (var z = 0; z < ref.length; z++) {
 			sf.model.init(ref[z], ref[z].getAttribute('name'));
 		}
 
-		delete internal.modelPending[keys[i]];
+		delete internal.modelPending[keys];
 	}
 });

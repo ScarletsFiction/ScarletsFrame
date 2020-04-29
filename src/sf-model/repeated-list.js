@@ -292,10 +292,11 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, n
 	}
 
 	if(temp !== void 0){
-		var keys = Object.keys(temp);
-
-		for (var i = 0; i < len; i++)
-			temp[keys[i]] = that[i];
+		var i = 0;
+		for(var keys in temp){
+			temp[keys] = that[i];
+			i++;
+		}
 	}
 }
 

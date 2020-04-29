@@ -200,13 +200,12 @@ var $ = sf.dom; // Shortcut
 				return this.length !== 0 ? this[0].style[name] : '';
 
 			if(name.constructor === Object){
-				var keys = Object.keys(name);
-				for (var i = 0; i < keys.length; i++) {
-					if(keys[i].indexOf('-') === -1)
+				for(var key in name){
+					if(key.indexOf('-') === -1)
 						continue;
 
-					name[keys[i].replace(css_str, css_strRep)] = name[keys[i]];
-					delete name[keys[i]];
+					name[key.replace(css_str, css_strRep)] = name[key];
+					delete name[key];
 				}
 
 				for (var i = 0; i < this.length; i++)
@@ -557,9 +556,8 @@ var $ = sf.dom; // Shortcut
 			if(element.sf$eventListener === void 0)
 				return;
 
-			var events = Object.keys(element.sf$eventListener);
-			for (var i = 0; i < events.length; i++) {
-				self.off(element, events[i]);
+			for(var events in element.sf$eventListener) {
+				self.off(element, events);
 			}
 			return;
 		}

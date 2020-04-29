@@ -39,25 +39,21 @@ self.changeDefault = function(defaultLang){
 
 	function forComponents(){
 		var registered = sf.component.registered;
-		var keys = Object.keys(registered);
-
-		for (var i = 0; i < keys.length; i++) {
-			if(registered[keys[i]][3] !== void 0)
-				refreshTemplate(registered[keys[i]][3]);
+		for(var keys in registered){
+			if(registered[keys][3] !== void 0)
+				refreshTemplate(registered[keys][3]);
 		}
 	}
 
 	function forSpaceComponents(){
 		var list = sf.space.list;
-		var list_ = Object.keys(list);
 
-		for (var i = 0; i < list_.length; i++) {
-			var registered = list[list_[i]][""].registered;
-			var keys = Object.keys(registered);
+		for(var list_ in list){
+			var registered = list[list_][""].registered;
 
-			for (var a = 0; a < keys.length; a++) {
-				if(registered[keys[a]][3] !== void 0)
-					refreshTemplate(registered[keys[a]][3]);
+			for(var keys in registered){
+				if(registered[keys][3] !== void 0)
+					refreshTemplate(registered[keys][3]);
 			}
 		}
 	}
@@ -229,10 +225,7 @@ self.assign = function(model, keyPath, obj, callback){
 }
 
 function diveFill(obj1, obj2){
-	var keys = Object.keys(obj2);
-	for (var i = 0; i < keys.length; i++) {
-		var key = keys[i];
-
+	for(var key in obj2){
 		if(obj1[key] === void 0)
 			obj1[key] = obj2[key];
 
