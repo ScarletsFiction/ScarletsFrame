@@ -127,9 +127,6 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		element.remove();
 
 		that.$EM.bound_end = document.createComment('');
-		that.$EM.bound_start = document.createComment('');
-
-		parentNode.insertBefore(that.$EM.bound_start, nextSibling);
 		parentNode.insertBefore(that.$EM.bound_end, nextSibling);
 
 		that.$EM.elements = Array(that.length);
@@ -293,10 +290,8 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, n
 
 	if(temp !== void 0){
 		var i = 0;
-		for(var keys in temp){
-			temp[keys] = that[i];
-			i++;
-		}
+		for(var keys in temp)
+			temp[keys] = that[i++];
 	}
 }
 
