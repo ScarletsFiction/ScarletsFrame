@@ -144,4 +144,3 @@ sf.loader = new function(){
 		whenProgress = whenDOMReady = whenDOMLoaded = null;
 	}
 }
-sf.prototype.constructor = sf.loader.onFinish;
