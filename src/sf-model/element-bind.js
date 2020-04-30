@@ -77,8 +77,10 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			for (var i = 0, n = propertyName.length-1; i < n; i++) {
 				let value = model[propertyName[i]];
 
+				// ToDo: also support/apply for RepeatedProperty/RepeatedList
+
 				// Only apply if this is an Object/Array
-				if(value === void 0 || value === null || value.constructor !== Object && value.constructor !== Array)
+				if(value === void 0 || value === null || (value.constructor !== Object && value.constructor !== Array))
 					return;
 
 				Object.defineProperty(model, propertyName[i], {
