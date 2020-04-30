@@ -1,8 +1,8 @@
-// ToDo: repeated list that using root binding may have memory leak on sf$elementReference (because I haven't check it)
-// this may happen when list are removed (splice, pop, shift, hardRefresh)
-// and using property from root model (not the list property)
+// ToDo: repeated list that using root binding or using property from root model (not the list property)
+// will be slower on array operation because it's managing possible memory leak
 
 // Known bugs: using keys for repeated list won't changed when refreshed
+// - we also need to support bind into array key if specified
 
 // var warnUnsupport = true;
 var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
@@ -225,6 +225,8 @@ class RepeatedProperty{ // extends Object
 	}
 }
 
+// This is called only once when RepeatedProperty/RepeatedList is initializing
+// So we don't need to use cache
 function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, namespace){
 	var temp,
 		isComponent = that.$EM.isComponent,
@@ -237,47 +239,28 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, n
 	}
 
 	var len = that.length;
+	var elem;
 	for (var i = 0; i < len; i++) {
-		var elem = that.$EM.elementRef.get(that[i]);
-
-		if(elem === void 0){
-			if(isComponent){
-				elem = new template(that[i], namespace);
-				that[i] = elem.model;
-			}
-			else{
-				if(temp === void 0)
-					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
-				else
-					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
-
-				// Check if this is a component container
-				if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
-					that[i] = elem.model = elem.children[0].model;
-			}
-
-			if(typeof that[i] === "object"){
-				if(isComponent === false)
-					self.bindElement(elem, modelRef, template, that[i]);
-
-				that.$EM.elementRef.set(that[i], elem);
-			}
+		if(isComponent){
+			elem = new template(that[i], namespace);
+			that[i] = elem.model;
 		}
-		else if(elem.model.$el === void 0){
-			// This is not a component, lets check if all property are equal
-			if(compareObject(elem.model, that[i]) === false){
-				if(temp === void 0)
-					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
-				else
-					elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
+		else{
+			if(temp === void 0)
+				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
+			else
+				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
 
-				if(typeof that[i] === "object"){
-					if(isComponent === false)
-						self.bindElement(elem, modelRef, template, that[i]);
+			// Check if this is a component container
+			if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
+				that[i] = elem.model = elem.children[0].model;
+		}
 
-					that.$EM.elementRef.set(that[i], elem);
-				}
-			}
+		if(typeof that[i] === "object"){
+			if(isComponent === false)
+				self.bindElement(elem, modelRef, template, that[i]);
+
+			that.$EM.elementRef.set(that[i], elem);
 		}
 
 		if(beforeChild === void 0)
@@ -692,6 +675,10 @@ class ElementManipulator{
 							this.elementRef.set(item, temp);
 					}
 				}
+				else if(temp.sf$bindedBackup !== void 0){
+					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
+					temp.sf$bindedBackup = void 0;
+				}
 			}
 
 			return temp;
@@ -737,6 +724,9 @@ class ElementManipulator{
 
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
+		if(this.template.modelRefRoot_path.length !== 0)
+			this.clearBinding(exist, index);
+
 		if(index === 0 && list.$virtual === void 0)
 			this.parentNode.textContent = '';
 		else{
@@ -764,6 +754,7 @@ class ElementManipulator{
 
 		for (var i = index; i < list.length; i++) {
 			var temp = this.elementRef.get(list[i]);
+
 			if(temp === void 0){
 				if(this.isComponent){
 					temp = new this.template(list[i], this.namespace);
@@ -802,6 +793,10 @@ class ElementManipulator{
 							exist[i] = temp;
 					}
 				}
+				else if(temp.sf$bindedBackup !== void 0){
+					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
+					temp.sf$bindedBackup = void 0;
+				}
 			}
 
 			if(this.list.$virtual){
@@ -833,12 +828,16 @@ class ElementManipulator{
 		var overflow = list.length - other;
 		if(overflow < 0) other = other + overflow;
 
+		if(this.template.modelRefRoot_path.length !== 0)
+			this.clearBinding(exist, index, other);
+
 		for (var i = index; i < other; i++) {
 			var oldChild = exist[i];
 			if(oldChild === void 0 || list[i] === void 0)
 				break;
 
 			var temp = this.elementRef.get(list[i]);
+
 			if(temp === void 0){
 				if(this.isComponent){
 					temp = new template(list[i], this.namespace);
@@ -876,6 +875,10 @@ class ElementManipulator{
 						if(this.elements != void 0)
 							exist[i] = temp;
 					}
+				}
+				else if(temp.sf$bindedBackup !== void 0){
+					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
+					temp.sf$bindedBackup = void 0;
 				}
 			}
 
@@ -969,6 +972,9 @@ class ElementManipulator{
 	remove(index){
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
+		if(this.template.modelRefRoot_path.length !== 0)
+			this.clearBinding(exist, index, index+1);
+
 		if(exist[index]){
 			var currentEl = exist[index];
 
@@ -1000,6 +1006,9 @@ class ElementManipulator{
 		for (var i = index; i < other; i++)
 			exist[index].remove();
 
+		if(this.template.modelRefRoot_path.length !== 0)
+			this.clearBinding(exist, index, other);
+
 		if(this.elements != void 0)
 			exist.splice(index, other-index);
 	}
@@ -1009,6 +1018,9 @@ class ElementManipulator{
 
 		if(this.list.$virtual)
 			var spacer = [parentNode.firstElementChild, parentNode.lastElementChild];
+
+		if(this.template.modelRefRoot_path.length !== 0)
+			this.clearBinding(this.parentChilds || this.elements || this.virtualRefresh(), 0);
 
 		parentNode.textContent = '';
 
@@ -1126,4 +1138,80 @@ class ElementManipulator{
 					this.parentNode.insertBefore(elems[i], this.bound_end);
 		}
 	}
+
+	clearBinding(elemList, from, to){
+		if(to === void 0)
+			to = this.list.length;
+
+		var modelRoot = this.modelRef;
+		var binded = this.template.modelRefRoot_path;
+
+		if(elemList.constructor !== Array){
+			// Loop for every element between range first (important)
+			for (var i = from; i < to; i++) {
+				var elem = elemList.item(i);
+
+				// Loop for any related property
+				for (var a = binded.length-1; a >= 0; a--) {
+					var bindList = RE_getBindedList(modelRoot, binded[a]);
+					if(bindList === void 0)
+						continue;
+
+					for (var z = bindList.length-1; z >= 0; z--) {
+						if(bindList[z].element === elem){
+							if(elem.sf$bindedBackup === void 0)
+								elem.sf$bindedBackup = [];
+
+							elem.sf$bindedBackup.push([binded[a], bindList.splice(z, 1)[0]]);
+						}
+					}
+				}
+			}
+			return;
+		}
+
+		// Loop for any related property
+		for (var a = binded.length-1; a >= 0; a--) {
+			var bindList = RE_getBindedList(modelRoot, binded[a]);
+			if(bindList === void 0)
+				continue;
+
+			for (var z = bindList.length-1; z >= 0; z--) {
+				var i = elemList.indexOf(bindList[z].element);
+
+				// Is between range?
+				if(i === -1 || i < from ||  i >= to)
+					continue;
+
+				var elem = bindList[z].element;
+				if(elem.sf$bindedBackup === void 0)
+					elem.sf$bindedBackup = [];
+
+				elem.sf$bindedBackup.push([binded[a], bindList.splice(z, 1)[0]]);
+			}
+		}
+	}
+}
+
+function RE_restoreBindedList(modelRoot, lists){
+	// lists [paths, backup]
+	for (var i = 0; i < lists.length; i++) {
+		var bindList = RE_getBindedList(modelRoot, lists[i][0]);
+		if(bindList === void 0)
+			continue;
+
+		bindList.push(lists[i][1]);
+	}
+}
+
+// return sf$bindedKey or undefined
+function RE_getBindedList(modelRoot, binded){
+	if(binded.length === 1)
+		return modelRoot.sf$bindedKey[binded[0]];
+
+	var check = deepProperty(modelRoot, binded.slice(0, -1));
+	if(check === void 0 || check.sf$bindedKey === void 0)
+		return;
+
+	return check.sf$bindedKey[binded[binded.length - 1]];
 }

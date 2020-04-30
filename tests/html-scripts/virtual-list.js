@@ -132,12 +132,30 @@ $(function(){
 		}, 1000);
 
 		setTimeout(function(){
+			if(!list.list1.getElement(7).dummy) console.error("❌ Data on partial refresh was missing", list.list1[7]);
+			if(list.list1.getElement(8).dummy) console.error("❌ Data on element refresh was exist", list.list1[8]);
+		}, 500);
+
+		setTimeout(function(){
 			list.list1.move(5, 4); // move index 5 after index 4
 			list.list1.refresh(1); // Refresh second index
 		}, 2000);
 		setTimeout(function(){
 			list.list1.swap(3, 4); // swap / up one more time
 		}, 4000);
+
+		setTimeout(function(){
+			var lastLen = list.sf$bindedKey.one.length;
+			var backup = list.list1.splice(0);
+
+			setTimeout(function(){
+				list.list1 = backup;
+				var nowLen = list.sf$bindedKey.one.length;
+
+				if(nowLen !== lastLen)
+					console.error("❌ BindedKey length was different (old:"+lastLen+', now:'+nowLen+')', list.sf$bindedKey.one);
+			}, 1000);
+		}, 6000);
 
 		// Save dummy data to element
 		list.list1.getElement(7).dummy = true;
@@ -148,11 +166,6 @@ $(function(){
 		list.list1.getElement(8).dummy = true;
 		list.list1[8] = {id:'Element refresh'+vul};
 		list.list1.refresh(8, 1);
-
-		setTimeout(function(){
-			if(!list.list1.getElement(7).dummy) console.error("❌ Data on partial refresh was missing", list.list1[7]);
-			if(list.list1.getElement(8).dummy) console.error("❌ Data on element refresh was exist", list.list1[8]);
-		}, 500);
 
 		console.log("I got the last index", list.list1.getElement(list.list1.length-1) || '❌');
 	}, 2000);
