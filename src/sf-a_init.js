@@ -84,6 +84,18 @@ function parsePropertyPath(str){
 	return temp;
 }
 
+function stringifyPropertyPath(properties){
+	var remake = properties[0];
+	for (var i = 1; i < properties.length; i++) {
+		if(properties[i].constructor === Number)
+			remake += '['+properties[i]+']';
+		else
+			remake += '.'+properties[i];
+	}
+
+	return remake;
+}
+
 var _es = '%@~';
 function avoidQuotes(str, func, onQuotes){
 	str = str.split(_es).join('');

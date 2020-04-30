@@ -547,8 +547,10 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	toObserve.template = template;
 	findModelProperty();
 
-	toObserve.template.i = void 0;
+	delete toObserve.template.i;
 	toObserve.template = void 0;
+
+	revalidateTemplateRef(template, modelScope);
 
 	// Get the indexes for input bind
 	var specialInput = template.specialElement.input;
@@ -746,8 +748,10 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 				}
 			}
 
-			toObserve.template.i = void 0;
+			delete toObserve.template.i;
 			toObserve.template = void 0;
+
+			revalidateTemplateRef(template, modelRef);
 
 			var parsed = templateExec(preParsedRef, modelRef);
 			var currentRef = [];
@@ -788,4 +792,87 @@ function initBindingInformation(modelRef){
 		writable:true,
 		value:{}
 	});
+}
+
+function revalidateTemplateRef(template, modelRef){
+	revalidateBindingPath(template.modelRefRoot, template.modelRefRoot_path, modelRef);
+
+	// for repeated list if exist
+	if(template.modelRef_path !== void 0)
+		revalidateBindingPath(template.modelRef, template.modelRef_path, modelRef);
+}
+
+// This will affect syntheticTemplate validation on property observer
+function revalidateBindingPath(refRoot, paths, modelRef){
+	for (var i = 0; i < paths.length; i++) {
+		var path = paths[i];
+		var deep = deepProperty(modelRef, path.slice(0, -1));
+
+		// We're not bind the native stuff
+		if(path.indexOf('constructor') !== -1){
+			for(var keys in refRoot){
+				if(keys.indexOf('.constructor') !== -1)
+					delete refRoot[keys];
+			}
+
+			for (var a = i+1; a < paths.length; a++) {
+				if(paths[a].indexOf('constructor') !== -1)
+					paths.splice(a--, 1);
+			}
+
+			paths.splice(i, 1);
+			return;
+		}
+
+		// We can't verify it if not exist '-'
+		if(deep === void 0)
+			continue;
+
+		// Decrease one level, maybe because from calling string/number manipulation function like .slice or .toFixed
+		if(deep.constructor === String || deep.constructor === Number){
+			// if it's taking index of string, then decrease two level
+			if(path.length > 3 && path[path.length-2].constructor === Number)
+				path.splice(path.length-2);
+			else
+				path.splice(path.length-1);
+
+			// Remove other similar paths
+			that:for (var a = i+1; a < paths.length; a++) {
+				var check = paths[a];
+				for (var z = 0; z < path.length; z++) {
+					if(check[z] !== path[z])
+						continue that;
+				}
+
+				paths.splice(a--, 1);
+			}
+
+			// Replace the property, we need to search it and collect the index
+			var str = stringifyPropertyPath(path);
+			var collect = [];
+
+			for(var keys in refRoot){
+				if(keys.indexOf(str) === 0){
+					var rootIndex = refRoot[keys];
+					delete refRoot[keys];
+
+					for (var a = 0; a < rootIndex.length; a++) {
+						if(collect.indexOf(rootIndex[a]) === -1)
+							collect.push(rootIndex[a]);
+					}
+				}
+			}
+
+			refRoot[str] = collect;
+		}
+		// We're not binding the native stuff
+		else if((deep.constructor === Array && path[path.length-1] === 'length') || deep.constructor === Function){
+			// Delete the property
+			var str = stringifyPropertyPath(path);
+			for(var keys in refRoot){
+				if(keys.indexOf(str) === 0)
+					delete refRoot[keys];
+			}
+		}
+	}
 }

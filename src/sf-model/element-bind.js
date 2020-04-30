@@ -66,33 +66,15 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 	// Dive to the last object, create if not exist
 	if(propertyName.constructor === Array){
-		var remake = originalPropertyName[0];
-		for (var i = 1; i < originalPropertyName.length; i++) {
-			if(originalPropertyName[i].constructor === Number)
-				remake += '['+originalPropertyName[i]+']';
-			else
-				remake += '.'+originalPropertyName[i];
-		}
-
-		originalPropertyName = remake;
-
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];
 		else{
-			var lastProperty = propertyName[propertyName.length-1]
 			var deep = deepProperty(model, propertyName.slice(0, -1));
-
 			if(deep === void 0)
 				return;
 
-			// We're not binding the native stuff
-			if(lastProperty === 'constructor'
-				|| (deep.constructor === Array && lastProperty === 'length')
-				|| deep.constructor === Function)
-				return;
-
 			// Register every path as fixed object (where any property replacement will being assigned)
-			for (var i = 0; i < propertyName.length-1; i++) {
+			for (var i = 0, n = propertyName.length-1; i < n; i++) {
 				let value = model[propertyName[i]];
 
 				// Only apply if this is an Object/Array
@@ -114,7 +96,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 				model = value;
 			}
 
-			propertyName = lastProperty;
+			propertyName = propertyName[propertyName.length-1];
 		}
 	}
 
@@ -142,6 +124,9 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		}
 		return;
 	}
+
+	if(originalPropertyName.constructor === Array)
+		originalPropertyName = stringifyPropertyPath(originalPropertyName);
 
 	// For contributor: don't delete sf$bindedKey from model because can cause memory leak
 	bindedKey = bindedKey[propertyName] = [callback];
@@ -228,6 +213,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		element = template.html;
 	}
 
+	// modelRefRoot_path index is not related with modelRefRoot property/key position
 	var properties = template.modelRefRoot_path;
 	for (var i = 0; i < properties.length; i++) {
 		modelToViewBinding(modelScope, properties[i], {

@@ -67,12 +67,22 @@ sf.model.for('model-binding', function(self, root){
 	self.vuln = "{{self.vul}}{{@exec console.error('something not gud')}}"+vul;
 	self.vul = "this musn't being visible"+vul;
 
+	self.testObj = {
+		status:"a❌ this must be refreshed"
+	};
+
 	setTimeout(function(){
 		try{
 			sf.model.init(reinit);
 		}
 		catch(e){
 			console.error("✔️ Expected error", e);
+		}
+
+		self.testObj.status = "a✔️ this one ok";
+		if(!chk1.classList.value === 'dummy A✔️ this one ok' || chk1.textContent !== 'A✔️ this one ok'){
+			console.error('This one not refreshed', chk1);
+			console.error('should reflect with ->', self.testObj);
 		}
 	}, 1000);
 

@@ -15,6 +15,7 @@
         })();
       </script>
 
+      <!-- <script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.27.10/dist/scarletsframe.min.js'></script> -->
       <script src='/dist/scarletsframe.min.js'></script>
       <script>$ = sf.dom;</script>
 
@@ -242,7 +243,7 @@
             {{@if showHTML === true:
                {[<span>This 1st must not be displayed {{ stuff }}</span><br>]}
             }}
-            <span>Some bind: {{ stuff }}</span><br>
+            <span>Some bind: {{ stuff+stuff }}</span><br>
             {{@if showHTML === false:
                {[<span>'"\'\"This 2th must be displayed {{ stuff+"'\"" }} {{ stuffes }}</span>]}
             }}<br><br>
@@ -252,6 +253,11 @@
                 </span><br>]}
             }}
          </div>
+
+         <b>Test template content with function and attribute</b><br>
+          <div id="chk1" class="dummy {{  testObj.status[0].toUpperCase() + testObj.status.slice(1) }}">{{
+            testObj.status[0].toUpperCase() + testObj.status.slice(1)
+          }}</div>
 
          <b>Execution for the current model scope</b><br>
          <div>
@@ -333,8 +339,9 @@
         <!-- Bind the html content -->
         <div class="today">
           {{ one + ' ' + today.two }}
+          <div>
           <input sf-bind="today.two"/>
-          <input sf-bind="one"/>
+          <input sf-bind="one"/></div>
         </div>
 
         <div class="row">
