@@ -243,14 +243,13 @@ var self = sf.views = function View(selector, name){
 
 	var rootDOM = {};
 	self.selector = function(selector_, isChild, currentPath){
-		initialized = true;
-
 		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document.body)).getElementsByTagName(selector_ || selector);
 		if(DOM.length === 0) return false;
 
 		DOM = DOM[0];
-
 		if(DOM.sf$viewInitialized) return false;
+
+		initialized = true;
 
 		if(collection === null)
 			collection = DOM.getElementsByTagName('sf-page-view');
@@ -489,6 +488,13 @@ var self = sf.views = function View(selector, name){
 	self.goto = function(path, data, method, callback, _routeCount){
 		if(self.currentPath === path)
 			return;
+
+		if(initialized === false){
+			self.selector();
+
+			if(initialized === false)
+				return console.error("sf.views haven't finished initializing, and waiting for related parent element");
+		}
 
 		if(_routeCount === void 0){
 			for (var i = 0; i < onEvent.start.length; i++)
