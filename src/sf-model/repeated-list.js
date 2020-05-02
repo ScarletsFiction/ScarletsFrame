@@ -114,7 +114,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		EM.template.uniqPattern = uniqPattern;
 
 	// check if alone
-	if(parentNode.children.length <= 1 || parentNode.textContent.trim().length === 0)
+	if(parentNode.childNodes.length <= 1 || parentNode.textContent.trim().length === 0)
 		return true;
 
 	var that = this;
@@ -128,7 +128,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		EM.elements = Array(that.length);
 
 		// Output to real DOM if not being used for virtual list
-		injectArrayElements(parentNode, EM.bound_end, that, modelRef, parentNode);
+		injectArrayElements(EM, parentNode, EM.bound_end, that, modelRef, parentNode);
 	}
 }
 
@@ -165,10 +165,10 @@ class RepeatedProperty{ // extends Object
 						return;
 
 					for (var i = a; i < olds.length; i++)
-						that.$delete(olds[i]);
+						that.delete(olds[i]);
 
 					for (var i = a; i < news.length; i++)
-						that.$add(news[i], val[news[i]]);
+						that.set(news[i], val[news[i]]);
 
 					that._list = news;
 				}
@@ -185,7 +185,7 @@ class RepeatedProperty{ // extends Object
 		else alone();
 	}
 
-	add(prop, val){
+	set(prop, val){
 		if(this[prop] === val)
 			return;
 
@@ -212,7 +212,7 @@ class RepeatedProperty{ // extends Object
 
 	getElement(prop){
 		if(this.$EM.constructor === ElementManipulatorProxy)
-			return this.$EM.getElement_RP(this, prop);
+			return this.$EM.getElement_RP(this);
 
 		// If single RepeatedElement instance
 		if(typeof this[prop] === 'object')
@@ -230,7 +230,7 @@ class RepeatedProperty{ // extends Object
 			var elem = (this.$EM.parentChilds || this.$EM.elements)[i];
 
 			if(this[list[i]] !== elem.model)
-				elem.parentNode.replaceChild(this.$EM.createElement(list[i]), elem);
+				this.$EM.parentNode.replaceChild(this.$EM.createElement(list[i]), elem);
 		}
 	}
 }
@@ -641,7 +641,11 @@ class RepeatedList extends Array{
 		var overflow = this.length - length;
 		if(overflow < 0) length = length + overflow;
 
-		var elems = this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh();
+		if(this.$EM.constructor === ElementManipulatorProxy)
+			var elems = this.$EM.list[0].parentChilds || this.$EM.list[0].elements || this.$EM.list[0].virtualRefresh();
+		else
+			var elems = this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh();
+
 		for (var i = index; i < length; i++) {
 			// Create element if not exist
 			if(elems[i] === void 0){
@@ -657,7 +661,7 @@ class RepeatedList extends Array{
 			}
 
 			if(this.$EM.constructor === ElementManipulatorProxy)
-				var oldElem = this.$EM[0].elementRef.get(this[i]);
+				var oldElem = this.$EM.list[0].elementRef.get(this[i]);
 			else
 				var oldElem = this.$EM.elementRef.get(this[i]);
 
@@ -748,7 +752,7 @@ class ElementManipulator{
 		if(this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(exist, index);
 
-		if(index === 0 && list.$virtual === void 0)
+		if(index === 0 && list.$virtual === void 0 && this.bound_end === void 0)
 			this.parentNode.textContent = '';
 		else{
 			// Clear siblings after the index
@@ -1229,8 +1233,11 @@ class ElementManipulatorProxy{
 					continue;
 				}
 
-				if(instance[keys[a]] !== elem.model)
-					elem.parentNode.replaceChild(EM.createElement(keys[a]), elem);
+				if(instance[keys[a]] !== elem.model){
+					var newElem = EM.createElement(keys[a]);
+					(EM.parentChilds || EM.elements)[a] = newElem
+					EM.parentNode.replaceChild(newElem, elem);
+				}
 			}
 		}
 	}

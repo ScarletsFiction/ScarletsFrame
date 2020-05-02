@@ -63,7 +63,7 @@ $(function(){
 	var list = aList = sf.model('virtual-scroll');
 
 	setTimeout(function(){
-		list.list4.add('z', 123);
+		list.list4.set('z', 123);
 		list.list4.delete('b');
 		list.list4.c = 'refresh';
 		list.list4.refresh();
