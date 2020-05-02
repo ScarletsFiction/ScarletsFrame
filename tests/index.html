@@ -203,6 +203,7 @@
           <div sf-repeat-this="key,val in list4" @click="withKeyClick(key, val, 1)">
             <span><b>1-></b> obj[{{ key }}] = {{ val }}</span><br>
           </div>
+          bottom-boundary
         </sf-m>
 
         <!-- Repeat2 -->
@@ -215,6 +216,7 @@
            <div sf-repeat-this="key,val in list4" @click="withKeyClick(key, val, 2)">
              <span><b>2-></b> obj[{{ key }}] = {{ val }}</span><br>
            </div>
+           bottom-boundary
         </sf-m>
       </div>
       <br><br>
@@ -240,8 +242,6 @@
             <option value="id_ID">id_ID</option>
             <option value="ja_JP">ja_JP</option>
          </select><br>
-
-         {{ testText }}
 
          <input type="checkbox" value="check1" sf-bind="inputBinding3">Check 1
          <input type="checkbox" value="check2" sf-bind="inputBinding3">Check 2<br>
