@@ -164,10 +164,11 @@ function compareObject(obj1, obj2){
 	return true;
 }
 
-function hiddenProperty(obj, property, value){
+function hiddenProperty(obj, property, value, isWritable){
 	Object.defineProperty(obj, property, {
 		enumerable: false,
 		configurable: true,
+		writable: isWritable,
 		value: value
 	});
 }

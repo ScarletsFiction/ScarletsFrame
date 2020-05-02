@@ -22,10 +22,18 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		if(rootHandler.sf$listListener === void 0)
 			rootHandler.sf$listListener = {};
 
+		var withKey = false;
+		if(template.uniqPattern !== void 0)
+			withKey = true;
+
 		if(direct)
 			var func = eval(script);
-		else
-			var func = new Function('event', '_model_', '_modelScope', script);
+		else{
+			if(withKey)
+				var func = new Function('event', '_model_', '_modelScope', template.uniqPattern, script);
+			else
+				var func = new Function('event', '_model_', '_modelScope', script);
+		}
 
 		var listener = rootHandler.sf$listListener[name_];
 		if(listener === void 0){
@@ -77,7 +85,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 					// Found, stop event to other parent
 		    		event.stopPropagation();
 
-					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope);
+					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope, withKey && event.target.sf$repeatListIndex);
 				}
 
 				return;
@@ -88,7 +96,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 
 			var call = findEventFromList(void 0);
 			if(call !== void 0)
-				call.call(event.target, event, event.target.model, _modelScope);
+				call.call(event.target, event, event.target.model, _modelScope, withKey && event.target.sf$repeatListIndex);
 		};
 	}
 

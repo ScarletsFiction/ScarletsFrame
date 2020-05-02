@@ -26,35 +26,20 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		if(pattern[0].indexOf(',') !== -1)
 			pattern[0] = pattern[0].split(' ').join('').split(',');
 
-		if(modelRef[pattern[1]] === void 0){
-			//var temp = pattern[1].split('.');
-			//if(temp.length === 1)
-				modelRef[pattern[1]] = [];
-			/*else{
-				pattern[1] = temp.pop();
-				temp.shift();
-
-				if(temp.length !== 0)
-					modelRef = deepProperty(modelRef, temp);
-
-				if(warnUnsupport){
-					warnUnsupport = false;
-					console.warn("Currently nested RepeatedList can't use parent's scope on it's scope");
-				}
-			}*/
-		}
+		if(modelRef[pattern[1]] === void 0)
+			modelRef[pattern[1]] = [];
 
 		// Enable element binding
 		if(modelRef.sf$bindedKey === void 0)
 			initBindingInformation(modelRef);
 
 		var constructor = modelRef[pattern[1]].constructor;
-		if(constructor === Array){
+		if(constructor === Array || constructor === RepeatedList){
 			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 			continue;
 		}
 
-		if(constructor === Object){
+		if(constructor === Object || constructor === RepeatedProperty){
 			RepeatedProperty.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 			continue;
 		}
@@ -65,23 +50,31 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 function prepareRepeated(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
 	var callback = modelRef['on$'+pattern[1]] || {};
-	Object.defineProperty(modelRef, 'on$'+pattern[1], {
-		enumerable: true,
-		configurable: true,
-		get:function(){
-			return callback;
-		},
-		set:function(val){
-			Object.assign(callback, val);
-		}
-	});
 
 	var compTemplate = (namespace || sf.component).registered[element.tagName.toLowerCase()];
 	if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
 		compTemplate[3] = element;
 
 	var isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
-	hiddenProperty(this, '$EM', new ElementManipulator());
+
+	var EM = new ElementManipulator();
+	if(this.$EM === void 0){
+		hiddenProperty(this, '$EM', EM, true);
+		Object.defineProperty(modelRef, 'on$'+pattern[1], {
+			enumerable: true,
+			configurable: true,
+			get:function(){
+				return callback;
+			},
+			set:function(val){
+				Object.assign(callback, val);
+			}
+		});
+	}
+	else if(this.$EM.constructor === Array)
+		this.$EM.push(EM);
+	else
+		this.$EM = [this.$EM, EM];
 
 	var mask, uniqPattern;
 	if(pattern[0].constructor === Array){
@@ -104,18 +97,18 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
 	}
 
-	this.$EM.template = isComponent || template;
-	this.$EM.list = this;
-	this.$EM.parentNode = parentNode;
-	this.$EM.modelRef = modelRef;
-	this.$EM.isComponent = !!isComponent;
-	this.$EM.namespace = namespace;
-	this.$EM.template.mask = mask;
-	this.$EM.elementRef = new WeakMap();
-	this.$EM.callback = callback; // Update callback
+	EM.template = isComponent || template;
+	EM.list = this;
+	EM.parentNode = parentNode;
+	EM.modelRef = modelRef;
+	EM.isComponent = !!isComponent;
+	EM.namespace = namespace;
+	EM.template.mask = mask;
+	EM.elementRef = new WeakMap();
+	EM.callback = callback; // Update callback
 
 	if(uniqPattern !== void 0)
-		this.$EM.template.uniqPattern = uniqPattern;
+		EM.template.uniqPattern = uniqPattern;
 
 	// check if alone
 	if(parentNode.children.length <= 1 || parentNode.textContent.trim().length === 0)
@@ -126,59 +119,65 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		var nextSibling = element.nextSibling;
 		element.remove();
 
-		that.$EM.bound_end = document.createComment('');
-		parentNode.insertBefore(that.$EM.bound_end, nextSibling);
+		EM.bound_end = document.createComment('');
+		parentNode.insertBefore(EM.bound_end, nextSibling);
 
-		that.$EM.elements = Array(that.length);
+		EM.elements = Array(that.length);
 
 		// Output to real DOM if not being used for virtual list
-		injectArrayElements(parentNode, that.$EM.bound_end, that, modelRef, parentNode);
+		injectArrayElements(parentNode, EM.bound_end, that, modelRef, parentNode);
 	}
 }
 
 class RepeatedProperty{ // extends Object
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
 		var that = modelRef[pattern[1]];
-		hiddenProperty(that, '_list', Object.keys(that));
 
-		Object.setPrototypeOf(that, RepeatedProperty.prototype);
-		Object.defineProperty(modelRef, pattern[1], {
-			enumerable: true,
-			configurable: true,
-			get:function(){
-				return that;
-			},
-			set:function(val){
-				var olds = that._list;
-				var news = Object.keys(val);
+		// Initialize property once
+		if(that.constructor !== RepeatedProperty){
+			hiddenProperty(that, '_list', Object.keys(that));
 
-				// Assign if keys order was similar
-				for (var a = 0; a < olds.length; a++) {
-					if(olds[a] === news[a]){
-						that[olds[a]] = val[olds[a]];
-						continue;
+			Object.setPrototypeOf(that, RepeatedProperty.prototype);
+			Object.defineProperty(modelRef, pattern[1], {
+				enumerable: true,
+				configurable: true,
+				get:function(){
+					return that;
+				},
+				set:function(val){
+					var olds = that._list;
+					var news = Object.keys(val);
+
+					// Assign if keys order was similar
+					for (var a = 0; a < olds.length; a++) {
+						if(olds[a] === news[a]){
+							that[olds[a]] = val[olds[a]];
+							continue;
+						}
+						break;
 					}
-					break;
+
+					// Return if all new value has been assigned
+					if(a === news.length && olds[a] === void 0)
+						return;
+
+					for (var i = a; i < olds.length; i++)
+						that.$delete(olds[i]);
+
+					for (var i = a; i < news.length; i++)
+						that.$add(news[i], val[news[i]]);
+
+					that._list = news;
 				}
-
-				// Return if all new value has been assigned
-				if(a === news.length && olds[a] === void 0)
-					return;
-
-				for (var i = a; i < olds.length; i++)
-					that.$delete(olds[i]);
-
-				for (var i = a; i < news.length; i++)
-					that.$add(news[i], val[news[i]]);
-
-				that._list = news;
-			}
-		});
+			});
+		}
 
 		var alone = prepareRepeated.apply(that, arguments);
+		var EM = that.$EM.constructor === Array ? that.$EM[that.$EM.length-1] : that.$EM;
+
 		if(alone === true){
 			element.remove();
-			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, namespace);
+			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
 		}
 		else alone();
 	}
@@ -227,15 +226,14 @@ class RepeatedProperty{ // extends Object
 
 // This is called only once when RepeatedProperty/RepeatedList is initializing
 // So we don't need to use cache
-function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, namespace){
+function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNode, namespace){
 	var temp,
-		isComponent = that.$EM.isComponent,
-		template = that.$EM.template;
+		isComponent = EM.isComponent,
+		template = EM.template;
 
 	if(that.constructor === RepeatedProperty){
 		temp = that;
 		that = Object.values(that);
-		that.$EM = temp.$EM;
 	}
 
 	var len = that.length;
@@ -260,13 +258,13 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, n
 			if(isComponent === false)
 				self.bindElement(elem, modelRef, template, that[i]);
 
-			that.$EM.elementRef.set(that[i], elem);
+			EM.elementRef.set(that[i], elem);
 		}
 
 		if(beforeChild === void 0)
 			tempDOM.appendChild(elem);
 		else{
-			that.$EM.elements[i] = elem;
+			EM.elements[i] = elem;
 			tempDOM.insertBefore(elem, beforeChild);
 		}
 	}
@@ -281,11 +279,28 @@ function injectArrayElements(tempDOM, beforeChild, that, modelRef, parentNode, n
 class RepeatedList extends Array{
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
 		var that = modelRef[pattern[1]];
-		Object.setPrototypeOf(that, RepeatedList.prototype);
+
+		// Initialize property once
+		if(that.constructor !== RepeatedList){
+			Object.setPrototypeOf(that, RepeatedList.prototype);
+			Object.defineProperty(modelRef, pattern[1], {
+				enumerable: true,
+				configurable: true,
+				get:function(){
+					return that;
+				},
+				set:function(val){
+					if(val.length === 0)
+						that.splice(0);
+					else that.remake(val, true);
+				}
+			});
+		}
 
 		var alone = prepareRepeated.apply(that, arguments);
+		var EM = that.$EM.constructor === Array ? that.$EM[that.$EM.length-1] : that.$EM;
+		var template = EM.template;
 
-		var template = that.$EM.template;
 		if(parentNode.classList.contains('sf-virtual-list')){
 			var ceiling = document.createElement(element.tagName);
 			ceiling.classList.add('virtual-spacer');
@@ -303,11 +318,11 @@ class RepeatedList extends Array{
 				console.warn("Virtual list was initialized when the container has another child that was not sf-repeated element.", parentNode);
 
 			var tempDOM = document.createElement('div');
-			injectArrayElements(tempDOM, void 0, that, modelRef, parentNode, namespace);
+			injectArrayElements(EM, tempDOM, void 0, that, modelRef, parentNode, namespace);
 
 			// Transfer virtual DOM
 			that.$virtual.dom = tempDOM;
-			that.$virtual.callback = that.$EM.callback;
+			that.$virtual.callback = EM.callback;
 
 			// Put the html example for obtaining it's size
 			parentNode.replaceChild(template.html, parentNode.children[1]);
@@ -317,23 +332,10 @@ class RepeatedList extends Array{
 		else if(alone === true){
 			// Output to real DOM if not being used for virtual list
 			element.remove();
-			that.$EM.parentChilds = parentNode.children;
-			injectArrayElements(parentNode, void 0, that, modelRef, parentNode, namespace);
+			EM.parentChilds = parentNode.children;
+			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
 		}
 		else alone();
-
-		Object.defineProperty(modelRef, pattern[1], {
-			enumerable: true,
-			configurable: true,
-			get:function(){
-				return that;
-			},
-			set:function(val){
-				if(val.length === 0)
-					that.splice(0);
-				else that.remake(val, true);
-			}
-		});
 
 		// Wait for scroll plugin initialization
 		setTimeout(function(){

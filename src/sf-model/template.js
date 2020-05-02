@@ -135,8 +135,8 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	var addresses = template.addresses;
 	var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);
 
-	// if(template.uniqPattern !== void 0)
-	// 	html.sf$repeatListIndex = repeatListIndex;
+	if(template.uniqPattern !== void 0)
+		html.sf$repeatListIndex = repeatListIndex;
 
 	if(copy !== void 0){
 		var childs = html.childNodes;

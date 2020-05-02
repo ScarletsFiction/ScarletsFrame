@@ -157,48 +157,67 @@
 
       <!-- Virtual Scroll And Array Binding -->
       <sf-m name="virtual-scroll" id="reinit2">
-         <style type="text/css">
-            .scroller{
-               overflow-x: hidden;
-               overflow-y: scroll;
-               height: 200px;
-            }
-         </style>
-
-         <b>Virtual Scroll - Static Height & Scroll on parent</b>
-         <div data-simplebar style="height: 200px;">
-            <ul class="sf-virtual-list" scroll-parent-index="2">
-              <li sf-repeat-this="x in list1" data-id="{{x.id}}" @click="handleClick(event, 1)">
-                <label>{{ x.id+(false?"\' \"":'') }}</label>
-
-                {{@if x === list1[0]:
-                   x.first = true;"\' \"";
-                   {[<span> - Am I the ({{ one+(false?"\' \"":'') }}) one?</span>]}
-
-                @elseif x.first && x !== list1[0]:
-                   delete x.first;
-                   {[<span> - I'm no longer the {{ one }} one..</span>]}
-                }}
-              </li>
-            </ul>
-         </div><br>
-
-         <b>Virtual Scroll - Dynamic Height</b>
-         <i>Automatically scroll to item-11</i>
-         <ul class="scroller sf-virtual-list sf-list-dynamic">
-            <li sf-repeat-this="x in list2" data-id="{{x.id}}">
-               <label @click="handleClick(event, 2)">{{x.id}}</label>
-            </li>
-         </ul>
-         <div sf-repeat-this="key,nyan in list3">{{@exec
-           for (var i = 0; i < nyan.length; i++) {
-             {[ {{key}}. test[{{i}}] = {{ nyan[i] }}<br> ]}
+        <style type="text/css">
+           .scroller{
+              overflow-x: hidden;
+              overflow-y: scroll;
+              height: 200px;
            }
-         }}</div>
-         <div sf-repeat-this="key,val in list4">
-           <span>obj[{{ key }}] = {{ val }}</span><br>
-         </div>
-      </sf-m><br><br>
+        </style>
+
+        <b>Virtual Scroll - Static Height & Scroll on parent</b>
+        <div data-simplebar style="height: 200px;">
+           <ul class="sf-virtual-list" scroll-parent-index="2">
+             <li sf-repeat-this="x in list1" data-id="{{x.id}}" @click="handleClick(event, 1)">
+               <label>{{ x.id+(false?"\' \"":'') }}</label>
+
+               {{@if x === list1[0]:
+                  x.first = true;"\' \"";
+                  {[<span> - Am I the ({{ one+(false?"\' \"":'') }}) one?</span>]}
+
+               @elseif x.first && x !== list1[0]:
+                  delete x.first;
+                  {[<span> - I'm no longer the {{ one }} one..</span>]}
+               }}
+             </li>
+           </ul>
+        </div><br>
+
+        <b>Virtual Scroll - Dynamic Height</b>
+        <i>Automatically scroll to item-11</i>
+        <ul class="scroller sf-virtual-list sf-list-dynamic">
+           <li sf-repeat-this="x in list2" data-id="{{x.id}}">
+              <label @click="handleClick(event, 2)">{{x.id}}</label>
+           </li>
+        </ul>
+      </sf-m>
+
+      <div style="height: 150px;">
+        <!-- Repeat1 -->
+        <sf-m name="virtual-scroll" style="display:inline-block;width: 50%;float: left;">
+          <div sf-repeat-this="key,nyan in list3" @click="withKeyClick(key, nyan, 1)">{{@exec
+            for (var i = 0; i < nyan.length; i++) {
+              {[ <b>1-></b> {{key}}. test[{{i}}] = {{ nyan[i] }}<br> ]}
+            }
+          }}</div>
+          <div sf-repeat-this="key,val in list4" @click="withKeyClick(key, val, 1)">
+            <span><b>1-></b> obj[{{ key }}] = {{ val }}</span><br>
+          </div>
+        </sf-m>
+
+        <!-- Repeat2 -->
+        <sf-m name="virtual-scroll" style="display:inline-block;width: 50%;">
+           <div sf-repeat-this="key,nyan in list3" @click="withKeyClick(key, nyan, 2)">{{@exec
+             for (var i = 0; i < nyan.length; i++) {
+               {[ <b>2-></b> {{key}}. test[{{i}}] = {{ nyan[i] }}<br> ]}
+             }
+           }}</div>
+           <div sf-repeat-this="key,val in list4" @click="withKeyClick(key, val, 2)">
+             <span><b>2-></b> obj[{{ key }}] = {{ val }}</span><br>
+           </div>
+        </sf-m>
+      </div>
+      <br><br>
 
       <!-- Model and Controller -->
       <sf-m name="model-binding" id="reinit">
@@ -221,6 +240,8 @@
             <option value="id_ID">id_ID</option>
             <option value="ja_JP">ja_JP</option>
          </select><br>
+
+         {{ testText }}
 
          <input type="checkbox" value="check1" sf-bind="inputBinding3">Check 1
          <input type="checkbox" value="check2" sf-bind="inputBinding3">Check 2<br>

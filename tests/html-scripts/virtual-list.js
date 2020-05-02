@@ -1,4 +1,6 @@
 sf.model.for('virtual-scroll', function(self, root){
+	window.test = self;
+
 	self.handleClick = function(e, which){
 		// e.target.model ==> the item{}
 		// but let's try get from the index first
@@ -7,6 +9,10 @@ sf.model.for('virtual-scroll', function(self, root){
 			return console.log('list clicked 2', self.list2[self.list2.indexOf(e.target)]);
 
 		console.log('list clicked 1', self.list1[self.list1.indexOf(e.target)]);
+	}
+
+	self.withKeyClick = function(key, val, repeatID){
+		console.log('Clicked', key, val, repeatID);
 	}
 
 	self.vul = "this shouldn't be visible"+vul;
@@ -21,6 +27,9 @@ sf.model.for('virtual-scroll', function(self, root){
 	}
 
 	self.init = function(el){
+		if(self.$el.length !== 1)
+			return;
+
 		self.list1.unshift({id:'first thing'+vul});
 		self.list1.push({id:'second thing'+vul});
 		console.warn(el, "Element when init called", self.list1.getElement(0), self.list1.getElement(1));
@@ -51,10 +60,17 @@ sf.model.for('virtual-scroll', function(self, root){
 
 var aList = null;
 $(function(){
+	var list = aList = sf.model('virtual-scroll');
+
+	setTimeout(function(){
+		list.list4.add('z', 123);
+		list.list4.delete('b');
+		list.list4.c = 'refresh';
+		list.list4.refresh();
+	}, 3000);
+
 	if(minimalTest)
 		return;
-
-	var list = aList = sf.model('virtual-scroll');
 
 	setTimeout(function(){
 		list.list1.splice(0);
@@ -64,13 +80,6 @@ $(function(){
 		list.list1.push({id:"I'm inserted on last index"+vul});
 		list.list1.splice(2, 0, {id:"I'm at pos 3"+vul});
 	}, 1000);
-
-	setTimeout(function(){
-		list.list4.add('z', 123);
-		list.list4.delete('b');
-		list.list4.c = 'refresh';
-		list.list4.refresh();
-	}, 3000);
 
 	setTimeout(function(){
 		list.list1 = list.list1b;
