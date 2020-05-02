@@ -71,10 +71,13 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 			}
 		});
 	}
-	else if(this.$EM.constructor === Array)
-		this.$EM.push(EM);
-	else
-		this.$EM = [this.$EM, EM];
+	else if(this.$EM.constructor === ElementManipulatorProxy)
+		this.$EM.list.push(EM);
+	else{
+		var newList = [this.$EM, EM];
+		this.$EM = new ElementManipulatorProxy();
+		this.$EM.list = newList;
+	}
 
 	var mask, uniqPattern;
 	if(pattern[0].constructor === Array){
@@ -173,7 +176,7 @@ class RepeatedProperty{ // extends Object
 		}
 
 		var alone = prepareRepeated.apply(that, arguments);
-		var EM = that.$EM.constructor === Array ? that.$EM[that.$EM.length-1] : that.$EM;
+		var EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
 
 		if(alone === true){
 			element.remove();
@@ -208,12 +211,20 @@ class RepeatedProperty{ // extends Object
 	}
 
 	getElement(prop){
+		if(this.$EM.constructor === ElementManipulatorProxy)
+			return this.$EM.getElement_RP(this, prop);
+
+		// If single RepeatedElement instance
 		if(typeof this[prop] === 'object')
 			return this.$EM.elementRef.get(this[prop]);
 		return (this.$EM.parentChilds || this.$EM.elements)[this._list.indexOf(prop)];
 	}
 
 	refresh(){
+		if(this.$EM.constructor === ElementManipulatorProxy)
+			return this.$EM.refresh_RP(this);
+
+		// If single RepeatedElement instance
 		var list = this._list;
 		for (var i = 0; i < list.length; i++) {
 			var elem = (this.$EM.parentChilds || this.$EM.elements)[i];
@@ -298,7 +309,7 @@ class RepeatedList extends Array{
 		}
 
 		var alone = prepareRepeated.apply(that, arguments);
-		var EM = that.$EM.constructor === Array ? that.$EM[that.$EM.length-1] : that.$EM;
+		var EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
 		var template = EM.template;
 
 		if(parentNode.classList.contains('sf-virtual-list')){
@@ -584,6 +595,10 @@ class RepeatedList extends Array{
 	}
 
 	getElement(index){
+		if(this.$EM.constructor === ElementManipulatorProxy)
+			return this.$EM.getElement_RL(this, index);
+
+		// If single RepeatedElement instance
 		if(index.constructor === Number){
 			if(typeof this[index] !== 'object')
 				return (this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh())[index];
@@ -641,7 +656,11 @@ class RepeatedList extends Array{
 				return;
 			}
 
-			var oldElem = this.$EM.elementRef.get(this[i]);
+			if(this.$EM.constructor === ElementManipulatorProxy)
+				var oldElem = this.$EM[0].elementRef.get(this[i]);
+			else
+				var oldElem = this.$EM.elementRef.get(this[i]);
+
 			if(oldElem === void 0 || elems[i].model !== oldElem.model)
 				this.$EM.update(i, 1);
 		}
@@ -1192,6 +1211,124 @@ class ElementManipulator{
 				elem.sf$bindedBackup.push([binded[a], bindList.splice(z, 1)[0]]);
 			}
 		}
+	}
+}
+
+class ElementManipulatorProxy{
+	refresh_RP(instance){
+		var list = this.list;
+		var keys = instance._list;
+		for (var i = 0; i < list.length; i++) {
+			var EM = list[i];
+
+			for (var a = 0; a < keys.length; a++) {
+				var elem = (EM.parentChilds || EM.elements)[a];
+
+				if(elem === void 0){
+					EM.append(keys[a]);
+					continue;
+				}
+
+				if(instance[keys[a]] !== elem.model)
+					elem.parentNode.replaceChild(EM.createElement(keys[a]), elem);
+			}
+		}
+	}
+	getElement_RP(instance, prop){
+		var list = this.list;
+		var keys = instance._list;
+
+		var got = [];
+		for (var i = 0; i < list.length; i++) {
+			var val;
+			if(typeof this[prop] === 'object')
+				val = list[i].elementRef.get(instance[prop]);
+			else
+				val = (list[i].parentChilds || list[i].elements)[keys.indexOf(prop)];
+
+			if(val)
+				got.push(val);
+		}
+		return got;
+	}
+	getElement_RL(instance, index){
+		var list = this.list;
+		var got = [];
+
+		for (var i = 0; i < list.length; i++) {
+			var EM = list[i];
+			var val;
+
+			if(index.constructor === Number){
+				if(typeof instance[index] !== 'object')
+					val = (list[i].parentChilds || list[i].elements || list[i].virtualRefresh())[index];
+
+				val = list[i].elementRef.get(instance[index]);
+			}
+
+			val = list[i].elementRef.get(index);
+
+			if(val)
+				got.push(val);
+		}
+
+		return got;
+	}
+
+	hardRefresh(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].hardRefresh.apply(list[i], arguments);
+	}
+	update(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].update.apply(list[i], arguments);
+	}
+	move(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].move.apply(list[i], arguments);
+	}
+	swap(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].swap.apply(list[i], arguments);
+	}
+	remove(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].remove.apply(list[i], arguments);
+	}
+	removeRange(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].removeRange.apply(list[i], arguments);
+	}
+	clear(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].clear.apply(list[i], arguments);
+	}
+	insertAfter(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].insertAfter.apply(list[i], arguments);
+	}
+	prepend(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].prepend.apply(list[i], arguments);
+	}
+	append(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].append.apply(list[i], arguments);
+	}
+	reverse(){
+		var list = this.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].reverse.apply(list[i], arguments);
 	}
 }
 
