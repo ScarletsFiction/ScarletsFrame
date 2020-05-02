@@ -85,7 +85,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 					// Found, stop event to other parent
 		    		event.stopPropagation();
 
-					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope, withKey && event.target.sf$repeatListIndex);
+					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope, withKey && realThat.sf$repeatListIndex);
 				}
 
 				return;
