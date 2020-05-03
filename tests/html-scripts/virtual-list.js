@@ -54,7 +54,7 @@ sf.model.for('virtual-scroll', function(self, root){
 		}
 	}
 
-	self.list3 = [[1,2,3], [4,5,6]];
+	self.list3 = [[1,2], [3, 4], [5,6]];
 	self.list4 = {a:'a',b:'b',c:'c'};
 });
 
@@ -63,10 +63,14 @@ $(function(){
 	var list = aList = sf.model('virtual-scroll');
 
 	setTimeout(function(){
-		list.list4.set('z', 123);
-		list.list4.delete('b');
-		list.list4.c = 'refresh';
-		list.list4.refresh();
+		sf.set(list.list4, 'z', 'is b deleted?');
+		sf.delete(list.list4, 'b');
+		list.list4.c = 'refresh on c ok';
+		list.list4.z = 'refresh on z ok';
+
+		list.list3[1] = ['a','b'];
+		list.list3[2] = ['c', 'd'];
+		list.list3.refresh();
 	}, 3000);
 
 	if(minimalTest)

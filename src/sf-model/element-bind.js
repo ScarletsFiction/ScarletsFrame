@@ -1,9 +1,9 @@
-internal.model.removeModelBinding = function(ref, noBackup){
+// Component feature doesn't need this
+internal.model.removeModelBinding = function(ref){
 	if(ref === void 0)
 		return;
 
 	var bindedKey = ref.sf$bindedKey;
-	var temp = null;
 	for(var key in bindedKey){
 		if(bindedKey[key] === null)
 			continue;
@@ -22,40 +22,57 @@ internal.model.removeModelBinding = function(ref, noBackup){
 					bindedKey[key].input.splice(i, 1);
 			}
 
-		if(ref[key].constructor === String ||
-			ref[key].constructor === Number ||
-			ref[key].constructor === Boolean
-		){/* Ok */}
+		if(ref[key].constructor === RepeatedProperty || ref[key].constructor === RepeatedList){
+			var obj = ref[key];
 
-		else if(ref[key].constructor === Array){
-			if(ref[key].$virtual){
-				ref[key].$virtual.destroy();
-				ref[key].$virtual = void 0;
+			// Clean ElementManipulator first
+			if(obj.$EM.constructor === ElementManipulatorProxy){
+				for (var i = obj.$EM.length-1; i >= 0; i--) {
+					if(obj.$EM[i].parentNode.isConnected === false)
+						obj.$EM.splice(i, 1);
+				}
+
+				if(obj.$EM.length !== 0)
+					continue;
+			}
+			else if(obj.$EM.parentNode.isConnected)
+				continue;
+
+			// Clear virtual scroll
+			if(obj.$virtual){
+				obj.$virtual.destroy();
+				delete obj.$virtual;
 			}
 
-			// Reset property without copying the array to new reference
-			if(noBackup === void 0){
-				temp = ref[key].splice();
-				delete ref[key];
-				ref[key] = temp;
+			delete ref[key];
+			ref[key] = obj;
+
+			// Reset prototype without copying the array to new reference
+			if(obj.constructor === RepeatedList){
+				Object.setPrototypeOf(obj, Array.prototype);
+				continue;
 			}
-			else delete ref[key];
+
+			// Reset object proxies
+			Object.setPrototypeOf(obj, Object.prototype);
+			for(var objKey in obj){
+				var temp = obj[objKey];
+				delete obj[objKey];
+				obj[objKey] = temp;
+			}
+			continue;
 		}
-		else continue;
 
 		if(bindedKey[key].length === 0){
 			delete bindedKey[key];
 
-			if(Object.getOwnPropertyDescriptor(ref, key) === void 0)
+			if(Object.getOwnPropertyDescriptor(ref, key).set === void 0)
 				continue;
 
 			// Reconfigure / Remove property descriptor
-			if(noBackup === void 0){
-				var temp = ref[key];
-				delete ref[key];
-				ref[key] = temp;
-			}
-			else delete ref[key];
+			var temp = ref[key];
+			delete ref[key];
+			ref[key] = temp;
 		}
 	}
 }

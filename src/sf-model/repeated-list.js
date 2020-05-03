@@ -140,6 +140,10 @@ class RepeatedProperty{ // extends Object
 		if(that.constructor !== RepeatedProperty){
 			hiddenProperty(that, '_list', Object.keys(that));
 
+			// Proxy known property
+			for(var key in that)
+				ProxyProperty(that, key, true);
+
 			Object.setPrototypeOf(that, RepeatedProperty.prototype);
 			Object.defineProperty(modelRef, pattern[1], {
 				enumerable: true,
@@ -185,31 +189,6 @@ class RepeatedProperty{ // extends Object
 		else alone();
 	}
 
-	set(prop, val){
-		if(this[prop] === val)
-			return;
-
-		if(this[prop] !== void 0)
-			this[prop] = val;
-		else{
-			this[prop] = val;
-			this.$EM.append(prop);
-			this._list.push(prop);
-		}
-	}
-
-	delete(prop){
-		var i = this._list.indexOf(prop);
-		if(i === -1)
-			return;
-
-		Object.defineProperty(this, prop, {value:null});
-		this.$EM.remove(i);
-		delete this[prop];
-
-		this._list.splice(i, 1);
-	}
-
 	getElement(prop){
 		if(this.$EM.constructor === ElementManipulatorProxy)
 			return this.$EM.getElement_RP(this);
@@ -232,6 +211,52 @@ class RepeatedProperty{ // extends Object
 			if(this[list[i]] !== elem.model)
 				this.$EM.parentNode.replaceChild(this.$EM.createElement(list[i]), elem);
 		}
+	}
+}
+
+// Only for Object or RepeatedProperty
+sf.set = function(obj, prop, val){
+	if(obj[prop] === val)
+		return;
+
+	if(obj.$EM === void 0){
+		obj[prop] = val;
+		return;
+	}
+
+	if(obj[prop] === void 0){
+		obj[prop] = val;
+		ProxyProperty(obj, prop, false);
+
+		obj.$EM.append(prop);
+		obj._list.push(prop);
+	}
+}
+
+sf.delete = function(obj, prop){
+	var i = obj._list.indexOf(prop);
+	if(i === -1)
+		return;
+
+	obj.$EM.remove(i);
+	delete obj[prop];
+
+	obj._list.splice(i, 1);
+}
+
+function ProxyProperty(obj, prop, force){
+	if(force || Object.getOwnPropertyDescriptor(obj, prop).set === void 0){
+		var temp = obj[prop];
+
+		Object.defineProperty(obj, prop, {
+			configurable:true,
+			enumerable:true,
+			get:function(){return temp},
+			set:function(val){
+				temp = val;
+				obj.refresh(prop);
+			}
+		});
 	}
 }
 
