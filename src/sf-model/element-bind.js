@@ -5,34 +5,18 @@ internal.model.removeModelBinding = function(ref){
 
 	var bindedKey = ref.sf$bindedKey;
 	for(var key in bindedKey){
-		if(bindedKey[key] === null)
-			continue;
-
-		for (var i = bindedKey[key].length-1; i >= 0; i--) {
-			if(bindedKey[key][i].constructor === Function)
-				continue;
-
-			if(bindedKey[key][i].element.isConnected === false)
-				bindedKey[key].splice(i, 1);
-		}
-
-		if(bindedKey[key].input !== void 0)
-			for (var i = bindedKey[key].input.length-1; i >= 0; i--) {
-				if(bindedKey[key].input[i].isConnected === false)
-					bindedKey[key].input.splice(i, 1);
-			}
-
 		if(ref[key].constructor === RepeatedProperty || ref[key].constructor === RepeatedList){
 			var obj = ref[key];
 
 			// Clean ElementManipulator first
 			if(obj.$EM.constructor === ElementManipulatorProxy){
-				for (var i = obj.$EM.length-1; i >= 0; i--) {
-					if(obj.$EM[i].parentNode.isConnected === false)
-						obj.$EM.splice(i, 1);
+				var list = obj.$EM.list;
+				for (var i = list.length-1; i >= 0; i--) {
+					if(list[i].parentNode.isConnected === false)
+						list.splice(i, 1);
 				}
 
-				if(obj.$EM.length !== 0)
+				if(list.length !== 0)
 					continue;
 			}
 			else if(obj.$EM.parentNode.isConnected)
@@ -44,6 +28,7 @@ internal.model.removeModelBinding = function(ref){
 				delete obj.$virtual;
 			}
 
+			delete bindedKey[key];
 			delete ref[key];
 			ref[key] = obj;
 
@@ -60,8 +45,26 @@ internal.model.removeModelBinding = function(ref){
 				delete obj[objKey];
 				obj[objKey] = temp;
 			}
+
 			continue;
 		}
+
+		if(bindedKey[key] === null)
+			continue;
+
+		for (var i = bindedKey[key].length-1; i >= 0; i--) {
+			if(bindedKey[key][i].constructor === Function)
+				continue;
+
+			if(bindedKey[key][i].element.isConnected === false)
+				bindedKey[key].splice(i, 1);
+		}
+
+		if(bindedKey[key].input !== void 0)
+			for (var i = bindedKey[key].input.length-1; i >= 0; i--) {
+				if(bindedKey[key].input[i].isConnected === false)
+					bindedKey[key].input.splice(i, 1);
+			}
 
 		if(bindedKey[key].length === 0){
 			delete bindedKey[key];

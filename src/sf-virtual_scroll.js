@@ -54,7 +54,7 @@ internal.virtual_scroll = new function(){
 			virtual.dom.innerHTML = '';
 			offElementResize(parentNode);
 
-			list.$virtual = void 0;
+			delete list.$virtual;
 		}
 
 		virtual.resetViewport = function(){

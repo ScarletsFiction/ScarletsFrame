@@ -33,6 +33,8 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		if(modelRef.sf$bindedKey === void 0)
 			initBindingInformation(modelRef);
 
+		modelRef.sf$bindedKey[pattern[1]] = true;
+
 		var constructor = modelRef[pattern[1]].constructor;
 		if(constructor === Array || constructor === RepeatedList){
 			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
