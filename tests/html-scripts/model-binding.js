@@ -149,7 +149,7 @@ sf.model.for('components', function(self){
 
 sf.model('deep-property', function(self){
   self.one = 'One';
-  self.today = {two:'Two'};
+  self.today = {deep:{two:'Two'}};
   self.list = [];
 
   // Run when this model was initialized
@@ -168,7 +168,7 @@ sf.model('deep-property', function(self){
       if(self.$el('label').text().indexOf('One12') === -1)
         console.error('❌ Four Three - Two One, should be changed to -> Four Three - Two One12');
 
-      self.today.two += '12';
+      self.today.deep.two += '12';
       if(self.$el('.today').text().trim() !== 'One12 Two12')
         console.error('❌', self.$el('.today').text().trim(), ', should be ->', 'One12 Two12');
       if(self.$el('label').text().indexOf('Two12') === -1)

@@ -359,9 +359,9 @@
       <sf-m name="deep-property" class="container">
         <!-- Bind the html content -->
         <div class="today">
-          {{ one + ' ' + today.two }}
+          {{ one + ' ' + today.deep.two }}
           <div>
-          <input sf-bind="today.two"/>
+          <input sf-bind="today.deep.two"/>
           <input sf-bind="one"/></div>
         </div>
 
@@ -372,12 +372,12 @@
               <div class="checkbox">
                 <input sf-bind="item.four"/>
                 <input sf-bind="item.text.three"/>
-                <input sf-bind="today.two"/>
+                <input sf-bind="today.deep.two"/>
                 <input sf-bind="one"/>
                 <label>
                   {{ item.four + ' ' + item.text.three }}
                   <span> - </span>
-                  {{ today.two + ' ' + one }}
+                  {{ today.deep.two + ' ' + one }}
                 </label>
               </div>
             </li>

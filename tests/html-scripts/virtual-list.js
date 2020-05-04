@@ -71,6 +71,23 @@ $(function(){
 		list.list3[1] = ['a','b'];
 		list.list3[2] = ['c', 'd'];
 		list.list3.refresh();
+
+		// Test remove & re-add
+		setTimeout(function(){
+			$('[name="virtual-scroll"]').eq(-1)[0].outerHTML = `<sf-m name="virtual-scroll" style="display:inline-block;width: 50%;">
+           <div sf-repeat-this="key,nyan in list3" @click="withKeyClick(key, nyan, 2)">{{@exec
+             for (var i = 0; i < nyan.length; i++) {
+               {[ <b>2-></b> {{key}}. test[{{i}}] = {{ nyan[i] }}<br> ]}
+             }
+           }}</div>
+           <div sf-repeat-this="key,val in list4" @click="withKeyClick(key, val, 2)">
+             <span><b>2-></b> obj[{{ key }}] = {{ val }}</span><br>
+           </div>
+           bottom-boundary
+        </sf-m>`;
+
+		list.list4.z = 'refresh on z ok (2)';
+		}, 2000);
 	}, 3000);
 
 	if(minimalTest)

@@ -5,24 +5,45 @@ internal.model.removeModelBinding = function(ref, isDeep){
 
 	var bindedKey = ref.sf$bindedKey;
 	for(var key in bindedKey){
-		if(ref[key].constructor === RepeatedProperty || ref[key].constructor === RepeatedList){
+		if(ref[key] !== void 0 && (ref[key].constructor === RepeatedProperty || ref[key].constructor === RepeatedList)){
 			var obj = ref[key];
 
-			/// ToDo: deep remove
+			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
+			if(obj.constructor === RepeatedList){
+				for (var i = 0; i < obj.length; i++){
+					if(typeof obj[i] === 'object')
+						internal.model.removeModelBinding(obj[i]);
+					else break;
+				}
+			}
+			else{
+				for(var rp in obj){
+					if(typeof obj[rp] === 'object')
+						internal.model.removeModelBinding(obj[rp]);
+					else break;
+				}
+			}
 
 			// Clean ElementManipulator first
 			if(obj.$EM.constructor === ElementManipulatorProxy){
 				var list = obj.$EM.list;
 				for (var i = list.length-1; i >= 0; i--) {
-					if(list[i].parentNode.isConnected === false)
+					if(list[i].parentNode.isConnected === false){
+						if(!list[i].isComponent)
+							repeatedRemoveDeepBinding(obj, list[i].template.modelRef_path);
+
 						list.splice(i, 1);
+					}
 				}
 
 				if(list.length !== 0)
 					continue;
 			}
-			else if(obj.$EM.parentNode.isConnected)
-				continue;
+			else if(obj.$EM.parentNode.isConnected === false){
+				if(!obj.$EM.isComponent)
+					repeatedRemoveDeepBinding(obj, obj.$EM.template.modelRef_path);
+			}
+			else continue;
 
 			// Clear virtual scroll
 			if(obj.$virtual){
@@ -52,9 +73,6 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			continue;
 		}
 
-		if(bindedKey[key] === null)
-			continue;
-
 		var bindRef = bindedKey[key];
 		for (var i = bindRef.length-1; i >= 0; i--) {
 			if(bindRef[i].constructor === Function)
@@ -80,7 +98,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 		if(bindRef.length === 0){
 			delete bindedKey[key];
 
-			if(Object.getOwnPropertyDescriptor(ref, key).set === void 0)
+			if(ref[key] === void 0 || Object.getOwnPropertyDescriptor(ref, key).set === void 0)
 				continue;
 
 			// Reconfigure / Remove property descriptor
@@ -91,15 +109,44 @@ internal.model.removeModelBinding = function(ref, isDeep){
 	}
 
 	// Check for deeper sf$bindingKey
-	if(isDeep !== void 0)
+	if(isDeep !== void 0 || ref.sf$internal === void 0)
 		return;
 
 	var deep = ref.sf$internal.deepBinding;
 	for(var path in deep){
 		var model = deepProperty(ref, path.split('%$'));
-		console.log(model, ref, path.split('%$'));
 		if(model !== void 0)
 			internal.model.removeModelBinding(model, true);
+	}
+}
+
+function repeatedRemoveDeepBinding(obj, refPaths){
+	if(refPaths.length === 0)
+		return;
+
+	that:for (var a = 0; a < refPaths.length; a++) {
+		if(refPaths[a].length === 1)
+			continue;
+
+		var ref = refPaths[a].slice(0, -1);
+		if(obj.constructor === RepeatedList){
+			for (var i = 0; i < obj.length; i++) {
+				var deep = deepProperty(obj[i], ref);
+				if(deep === void 0)
+					continue;
+
+				internal.model.removeModelBinding(deep);
+			}
+			continue that;
+		}
+
+		for(var key in obj){
+			var deep = deepProperty(obj[key], ref);
+			if(deep === void 0)
+				continue;
+
+			internal.model.removeModelBinding(deep);
+		}
 	}
 }
 
@@ -126,17 +173,19 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 				if(value === void 0 || value === null || (value.constructor !== Object && value.constructor !== Array))
 					return;
 
-				Object.defineProperty(model, propertyName[i], {
-					enumerable: true,
-					configurable: true,
-					get:function(){
-						return value;
-					},
-					set:function(val){
-						Object.assign(value, val);
-						return val;
-					}
-				});
+				if(Object.getOwnPropertyDescriptor(model, propertyName[i]).set === void 0){
+					Object.defineProperty(model, propertyName[i], {
+						enumerable: true,
+						configurable: true,
+						get:function(){
+							return value;
+						},
+						set:function(val){
+							Object.assign(value, val);
+							return val;
+						}
+					});
+				}
 
 				model = value;
 			}

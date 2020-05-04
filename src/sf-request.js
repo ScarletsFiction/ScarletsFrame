@@ -16,7 +16,6 @@ var statusCode = sf.request.statusCode = {};
 sf.request.onerror = null;
 sf.request.onsuccess = null;
 
-// $.get('https://reqbin.com/echo/get/json').done(console.log);
 function custom(method, url, data, options, callback){
 	if(data && data.constructor === Function){
 		callback = data;
