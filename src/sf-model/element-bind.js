@@ -1,5 +1,5 @@
 // Component feature doesn't need this
-internal.model.removeModelBinding = function(ref){
+internal.model.removeModelBinding = function(ref, isDeep){
 	if(ref === void 0)
 		return;
 
@@ -7,6 +7,8 @@ internal.model.removeModelBinding = function(ref){
 	for(var key in bindedKey){
 		if(ref[key].constructor === RepeatedProperty || ref[key].constructor === RepeatedList){
 			var obj = ref[key];
+
+			/// ToDo: deep remove
 
 			// Clean ElementManipulator first
 			if(obj.$EM.constructor === ElementManipulatorProxy){
@@ -28,6 +30,7 @@ internal.model.removeModelBinding = function(ref){
 				delete obj.$virtual;
 			}
 
+			delete obj.$EM;
 			delete bindedKey[key];
 			delete ref[key];
 			ref[key] = obj;
@@ -52,21 +55,29 @@ internal.model.removeModelBinding = function(ref){
 		if(bindedKey[key] === null)
 			continue;
 
-		for (var i = bindedKey[key].length-1; i >= 0; i--) {
-			if(bindedKey[key][i].constructor === Function)
+		var bindRef = bindedKey[key];
+		for (var i = bindRef.length-1; i >= 0; i--) {
+			if(bindRef[i].constructor === Function)
 				continue;
 
-			if(bindedKey[key][i].element.isConnected === false)
-				bindedKey[key].splice(i, 1);
+			if(bindRef[i].element.isConnected === false)
+				bindRef.splice(i, 1);
 		}
 
-		if(bindedKey[key].input !== void 0)
-			for (var i = bindedKey[key].input.length-1; i >= 0; i--) {
-				if(bindedKey[key].input[i].isConnected === false)
-					bindedKey[key].input.splice(i, 1);
+		if(bindRef.input !== void 0){
+			for (var i = bindRef.input.length-1; i >= 0; i--) {
+				if(bindRef.input[i].isConnected === false)
+					bindRef.input.splice(i, 1);
 			}
 
-		if(bindedKey[key].length === 0){
+			if(bindRef.input.length === 0)
+				for (var i = bindRef.length-1; i >= 0; i--) {
+					if(bindRef[i] === inputBoundRun)
+						bindRef.splice(i, 1);
+				}
+		}
+
+		if(bindRef.length === 0){
 			delete bindedKey[key];
 
 			if(Object.getOwnPropertyDescriptor(ref, key).set === void 0)
@@ -77,6 +88,18 @@ internal.model.removeModelBinding = function(ref){
 			delete ref[key];
 			ref[key] = temp;
 		}
+	}
+
+	// Check for deeper sf$bindingKey
+	if(isDeep !== void 0)
+		return;
+
+	var deep = ref.sf$internal.deepBinding;
+	for(var path in deep){
+		var model = deepProperty(ref, path.split('%$'));
+		console.log(model, ref, path.split('%$'));
+		if(model !== void 0)
+			internal.model.removeModelBinding(model, true);
 	}
 }
 
@@ -147,9 +170,6 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		return;
 	}
 
-	if(originalPropertyName.constructor === Array)
-		originalPropertyName = stringifyPropertyPath(originalPropertyName);
-
 	// For contributor: don't delete sf$bindedKey from model because can cause memory leak
 	bindedKey = bindedKey[propertyName] = [callback];
 
@@ -163,6 +183,14 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	var desc = Object.getOwnPropertyDescriptor(model, propertyName);
 	if(desc === void 0 || desc.set !== void 0)
 		return;
+
+	if(originalPropertyName.constructor === Array){
+		// Cache deep sf$bindingKey path if this a shared model
+		if(originalModel.sf$internal !== void 0 && originalPropertyName.length !== 1)
+			originalModel.sf$internal.deepBinding[originalPropertyName.slice(0, -1).join('%$')] = true;
+
+		originalPropertyName = stringifyPropertyPath(originalPropertyName);
+	}
 
 	var objValue = model[propertyName]; // Object value
 	if(objValue === void 0 || objValue === null)

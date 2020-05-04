@@ -17,8 +17,10 @@ self.init = function(el, modelName, namespace){
 
 	model.$el.push(el);
 	if(model.sf$internal === void 0){
-		Object.defineProperty(model, 'sf$internal', {enumerabe:false, configurable:true, value:{}});
-		model.sf$internal.modelKeysRegex = createModelKeysRegex(el, model, null);
+		Object.defineProperty(model, 'sf$internal', {enumerabe:false, configurable:true, value:{
+			modelKeysRegex:createModelKeysRegex(el, model, null),
+			deepBinding:{}
+		}});
 	}
 
 	if(model.constructor !== Object){
