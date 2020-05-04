@@ -114,20 +114,18 @@ function startRequest(){
 		if(activeRequest !== false)
 			activeRequest.abort();
 
-		activeRequest = sf.ajax({
-			url:self.serverURL,
-			data:{
-				lang:self.default,
-				paths:JSON.stringify(pending)
-			},
-			dataType:'json',
-			method:'POST',
-			success:function(obj){
-				pending = false;
-				self.add(self.default, obj);
-			},
-			error:self.onError,
-		});
+		activeRequest = sf.request('POST', self.serverURL, {
+			lang:self.default,
+			paths:JSON.stringify(pending)
+		}, {
+			sendType:'JSON',
+			receiveType:'JSON',
+		})
+		.done(function(obj){
+			pending = false;
+			self.add(self.default, obj);
+		})
+		.fail(self.onError);
 	}, 500);
 }
 

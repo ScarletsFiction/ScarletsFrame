@@ -783,49 +783,49 @@ var self = sf.views = function View(selector, name){
 		for (var i = 0; i < onEvent.loading.length; i++)
 			if(onEvent.loading[i](_routeCount || 1, routeTotal)) return;
 
-		RouterLoading = sf.ajax({
-			url:window.location.origin + thePath,
-			method:method || 'GET',
-		    data:Object.assign(data || url.defaultData, {
+		RouterLoading = sf.request(
+			method || 'GET',
+			window.location.origin + thePath,
+			Object.assign(data || url.defaultData, {
 		        _sf_view:url.selector === void 0 ? selector : selectorList[url.selector].split(' ').pop()
-		    }),
-			success:function(html_content){
-				if(rejectResponse.test(html_content)){
-					return routeError_({status:403}, {
-						path:path,
-						requestURL:window.location.origin + thePath,
-						message:"Views request was received <html> while it was disallowed. Please check http response from Network Tab."
-					});
-				}
+		    })
+		)
+		.done(function(html_content){
+			if(rejectResponse.test(html_content)){
+				return routeError_({status:403}, {
+					path:path,
+					requestURL:window.location.origin + thePath,
+					message:"Views request was received <html> while it was disallowed. Please check http response from Network Tab."
+				});
+			}
 
-				// Create new element
-				var dom = document.createElement('sf-page-view');
-				dom.classList.add('page-prepare');
+			// Create new element
+			var dom = document.createElement('sf-page-view');
+			dom.classList.add('page-prepare');
+
+			var elements = sf.dom.parseElement(html_content);
+			for(var p=0, n=elements.length; p < n; p++){
+				dom.insertBefore(elements[0], null);
+			}
+
+			// Same as above but without the component initialization
+			if(url.templateURL !== void 0){
+				internal.component.skip = true;
+				var temp = document.createElement('sf-page-view');
+				temp.classList.add('page-prepare');
 
 				var elements = sf.dom.parseElement(html_content);
 				for(var p=0, n=elements.length; p < n; p++){
-					dom.insertBefore(elements[0], null);
+					temp.insertBefore(elements[0], null);
 				}
 
-				// Same as above but without the component initialization
-				if(url.templateURL !== void 0){
-					internal.component.skip = true;
-					var temp = document.createElement('sf-page-view');
-					temp.classList.add('page-prepare');
+				cachedURL[url.templateURL] = temp;
+				internal.component.skip = false;
+			}
 
-					var elements = sf.dom.parseElement(html_content);
-					for(var p=0, n=elements.length; p < n; p++){
-						temp.insertBefore(elements[0], null);
-					}
-
-					cachedURL[url.templateURL] = temp;
-					internal.component.skip = false;
-				}
-
-				afterDOMLoaded(dom);
-			},
-			error:routeError_
-		});
+			afterDOMLoaded(dom);
+		})
+		.fail(routeError_);
 		return true;
 	}
 
