@@ -48,6 +48,8 @@ function request(method, url, data, options, callback){
 	var xhr = new XMLHttpRequest();
 	options.beforeOpen && options.beforeOpen(xhr);
 
+	xhr.open(method, url, options.async || true, options.user, options.password);
+
 	if(options.headers)
 		for(var name in options.headers)
 			xhr.setRequestHeader(name, options.headers[name]);
@@ -58,7 +60,7 @@ function request(method, url, data, options, callback){
 			data = null;
 		}
 		else if(options.sendType === 'JSON'){
-			xhttp.setRequestHeader('Content-Type', 'application/json');
+			xhr.setRequestHeader('Content-Type', 'application/json');
 			data = JSON.stringify(data);
 		}
 		else{
@@ -100,6 +102,14 @@ function request(method, url, data, options, callback){
 		callback.always = func;
 		return xhr;
 	}
+	xhr.progress = function(func){
+		xhr.onprogress = xhr.onloadstart = func;
+		return xhr;
+	}
+	xhr.uploadProgress = function(func){
+		xhr.upload.onprogress = xhr.upload.onloadstart = func;
+		return xhr;
+	}
 
 	xhr.onerror = function(){
 		sf.request.onerror && sf.request.onerror(xhr);
@@ -127,8 +137,6 @@ function request(method, url, data, options, callback){
 		statusCode[xhr.status] && statusCode[xhr.status](xhr);
 		callback.always && callback.always(xhr.status);
 	}
-
-	xhr.open(method, url, options.async || true, options.user, options.password);
 
 	options.beforeSend && options.beforeSend(xhr);
 	xhr.send(data);

@@ -17,16 +17,11 @@ sf.API.prototype = {
 	put:function(url, data){
 		return this.request('PUT', this.url+url, data);
 	},
-	upload:function(url, formData, progress){
+	upload:function(url, formData){
 		if(formData.constructor !== FormData)
 			return console.error("Parameter 2 must be a FormData");
 
-		return this.request('POST', this.url+url, formData, progress && function(xhr){
-			xhr.upload.onprogress = function(ev){
-	        	if(ev.lengthComputable)
-	        	    progress(ev.loaded, ev.total);
-	        }
-		});
+		return this.request('POST', this.url+url, formData);
 	},
 	request:function(method, url, data, accessToken, beforeSend){
 		var type = typeof data;
