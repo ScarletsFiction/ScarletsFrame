@@ -127,7 +127,9 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		EM.bound_end = document.createComment('');
 		parentNode.insertBefore(EM.bound_end, nextSibling);
 
-		EM.elements = Array(that.length);
+		if(that.length !== void 0)
+			EM.elements = Array(that.length);
+		else EM.elements = [];
 
 		// Output to real DOM if not being used for virtual list
 		injectArrayElements(EM, parentNode, EM.bound_end, that, modelRef, parentNode);

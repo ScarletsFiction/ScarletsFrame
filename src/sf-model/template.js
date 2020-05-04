@@ -278,7 +278,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 			changes[i] = i;
 	}
 
-	var parsed = templateExec(template.parse, item, changes, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
+	var parsed = templateExec(template.parse, item, changes, void 0, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
 
 	var changesReference = element.sf$elementReferences;
 	var haveChanges = false;
