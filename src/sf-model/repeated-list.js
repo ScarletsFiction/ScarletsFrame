@@ -115,15 +115,15 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	if(uniqPattern !== void 0)
 		EM.template.uniqPattern = uniqPattern;
 
+	var nextSibling = element.nextSibling;
+	element.remove();
+
 	// check if alone
 	if(parentNode.childNodes.length <= 1 || parentNode.textContent.trim().length === 0)
 		return true;
 
 	var that = this;
 	return function(injectElements){
-		var nextSibling = element.nextSibling;
-		element.remove();
-
 		EM.bound_end = document.createComment('');
 		parentNode.insertBefore(EM.bound_end, nextSibling);
 
@@ -184,10 +184,8 @@ class RepeatedProperty{ // extends Object
 		var alone = prepareRepeated.apply(that, arguments);
 		var EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
 
-		if(alone === true){
-			element.remove();
+		if(alone === true)
 			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
-		}
 		else alone();
 	}
 
@@ -363,13 +361,12 @@ class RepeatedList extends Array{
 			that.$virtual.callback = EM.callback;
 
 			// Put the html example for obtaining it's size
-			parentNode.replaceChild(template.html, parentNode.children[1]);
+			parentNode.insertBefore(template.html, floor);
 			internal.virtual_scroll.handle(that, parentNode);
 			template.html.remove(); // And remove it
 		}
 		else if(alone === true){
 			// Output to real DOM if not being used for virtual list
-			element.remove();
 			EM.parentChilds = parentNode.children;
 			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
 		}

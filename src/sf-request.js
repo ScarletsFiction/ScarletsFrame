@@ -47,6 +47,11 @@ function request(method, url, data, options, callback){
 	var xhr = new XMLHttpRequest();
 	options.beforeOpen && options.beforeOpen(xhr);
 
+	if(method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE'){
+		url += (url.indexOf('?') === -1 ? '?' : '')+serializeQuery(data);
+		data = null;
+	}
+
 	xhr.open(method, url, options.async || true, options.user, options.password);
 
 	if(options.headers)
@@ -54,11 +59,7 @@ function request(method, url, data, options, callback){
 			xhr.setRequestHeader(name, options.headers[name]);
 
 	if(typeof data === 'object'){
-		if(method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE'){
-			url += (url.indexOf('?') === -1 ? '?' : '')+serializeQuery(data);
-			data = null;
-		}
-		else if(options.sendType === 'JSON'){
+		if(options.sendType === 'JSON'){
 			xhr.setRequestHeader('Content-Type', 'application/json');
 			data = JSON.stringify(data);
 		}
@@ -123,7 +124,7 @@ function request(method, url, data, options, callback){
 					callback.done && callback.done(JSON.parse(xhr.responseText), xhr.status);
 					sf.request.onsuccess && sf.request.onsuccess(xhr);
 				}catch(e){
-					callback.fail && callback.fail('parseerror');
+					callback.fail && callback.fail('parseerror', xhr.responseText);
 				}
 			}
 			else{
@@ -131,7 +132,16 @@ function request(method, url, data, options, callback){
 				sf.request.onsuccess && sf.request.onsuccess(xhr);
 			}
 		}
-		else callback.fail && callback.fail(xhr.status);
+		else if(callback.fail){
+			if(options.receiveType === 'JSON'){
+				try{
+					callback.fail(xhr.status, JSON.parse(xhr.responseText));
+				}catch(e){
+					callback.fail(xhr.status, xhr.responseText);
+				}
+			}
+			else callback.fail(xhr.status, xhr.responseText);
+		}
 
 		statusCode[xhr.status] && statusCode[xhr.status](xhr);
 		callback.always && callback.always(xhr.status);

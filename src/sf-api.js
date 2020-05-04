@@ -1,47 +1,47 @@
-sf.API = function API(url){
-	this.url = url;
-	this.accessToken = false;
-	this.mask = true;
-}
-
-sf.API.prototype = {
-	get:function(url, data){
+class API{
+	constructor(url){
+		this.url = url;
+		this.accessToken = false;
+		this.mask = true;
+	}
+	get(url, data){
 		return this.request('GET', this.url+url, data);
-	},
-	post:function(url, data){
+	}
+	post(url, data){
 		return this.request('POST', this.url+url, data);
-	},
-	delete:function(url, data){
+	}
+	delete(url, data){
 		return this.request('DELETE', this.url+url, data);
-	},
-	put:function(url, data){
+	}
+	put(url, data){
 		return this.request('PUT', this.url+url, data);
-	},
-	upload:function(url, formData){
+	}
+	upload(url, formData){
 		if(formData.constructor !== FormData)
 			return console.error("Parameter 2 must be a FormData");
 
 		return this.request('POST', this.url+url, formData);
-	},
-	request:function(method, url, data, accessToken, beforeSend){
-		var type = typeof data;
-		if(type !== 'object' && type !== 'function')
+	}
+	request(method, url, data, beforeSend){
+		if(data === void 0)
 			data = {};
 
 		if(this.mask){
-			var options = {sendType:'JSON', receiveType:'JSON'};
+			var options = {receiveType:'JSON'};
 
-			if(data.constructor !== FormData){
-				options.contentType = "application/json";
+			if(data.constructor === FormData)
+				data.append('_method', method.toUpperCase());
+			else{
+				options.sendType = 'JSON';
 				data._method = method.toUpperCase();
 			}
-			else data.append('_method', method.toUpperCase());
 		}
 		else var options = {};
 
 		if(this.accessToken){
+			var accessToken = this.accessToken;
 			options.beforeSend = function(xhr){
-			    xhr.setRequestHeader('X-Authorization', 'Bearer '+this.accessToken);
+			    xhr.setRequestHeader('X-Authorization', 'Bearer '+accessToken);
 			    beforeSend && beforeSend(xhr);
 			}
 		}
@@ -53,3 +53,5 @@ sf.API.prototype = {
 		return sf.request(method, url, data, options);
 	}
 };
+
+sf.API = API;
