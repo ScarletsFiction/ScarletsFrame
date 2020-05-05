@@ -15,7 +15,7 @@ self.init = function(el, modelName, namespace){
 	if(model.$el === void 0)
 		model.$el = $();
 
-	model.$el.push(el);
+	model.$el = model.$el.push(el) || model.$el;
 	if(model.sf$internal === void 0){
 		Object.defineProperty(model, 'sf$internal', {enumerabe:false, configurable:true, value:{
 			modelKeysRegex:createModelKeysRegex(el, model, null),

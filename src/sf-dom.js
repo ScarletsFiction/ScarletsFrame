@@ -5,30 +5,29 @@ sf.dom = function(selector, context){
 		if(selector === void 0){
 			var temp = function(sel){return temp.find(sel)};
 
-			if(IE11 === false)
-				Object.defineProperty(temp, 'length', {writable:true, enumerable:false, value:0});
-
+			if(IE11)
+				Object.defineProperty(temp, '_', {value:true});
 			return Object.setPrototypeOf(temp, DOMList.prototype);
 		}
-		else return new DOMList([]);
+		else return _DOMList([]);
 	}
 	else if(selector.constructor === Function)
 		return sf.loader.onFinish(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
-		return new DOMList(sf.dom.parseElement(selector, true));
+		return _DOMList(sf.dom.parseElement(selector, true));
 	else if(context){
 		if(context.classList === void 0)
 			return context.find(selector);
-		return new DOMList(context.querySelectorAll(selector));
+		return _DOMList(context.querySelectorAll(selector));
 	}
 	else if(selector.constructor === String)
-		return new DOMList(document.querySelectorAll(selector));
-	return new DOMList(selector);
+		return _DOMList(document.querySelectorAll(selector));
+	return _DOMList(selector);
 }
 
 function DOMList(elements){
 	if(elements === null){
-		this.length = 0;
+    	this.length = 0;
 		return this;
 	}
 
@@ -38,16 +37,41 @@ function DOMList(elements){
 		return this;
 	}
 
-    for (var i = 0; i < elements.length; i += 1) {
-      this[i] = elements[i];
-    }
+    for (var i = 0; i < elements.length; i += 1)
+    	this[i] = elements[i];
 
-    this.length = elements.length;
+	this.length = elements.length;
 	return this;
+}
+
+function _DOMList(list){
+	if(list.length === void 0)
+		return new DOMList(list);
+
+	var length = list.length;
+	Object.setPrototypeOf(list, DOMList.prototype);
+	list.length = length;
+	return list;
 }
 
 var $ = sf.dom; // Shortcut
 
+// Fix for IE11 and Safari, due to lack of writable length
+function recreateDOMList($el, length){
+	var args = ['sel'];
+	for (var i = 1; i < length; i++)
+		args.push('a'+i);
+
+	var obj = {};
+	var temp = Function('o', 'return function('+args.join(',')+'){return o.find(sel)}')(obj);
+	for (var i = 0; i < length; i++)
+		temp[i] = $el[i];
+
+	obj.find = function(sel){return temp.find(sel)};
+
+	Object.defineProperty(temp, '_', {value:true});
+	return Object.setPrototypeOf(temp, DOMList.prototype);
+}
 ;(function(){
 	var self = sf.dom;
 
@@ -57,10 +81,22 @@ var $ = sf.dom; // Shortcut
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
 	self.fn = DOMList.prototype = {
 		push:function(el){
-			if(IE11)
+			if(this[0] === void 0){
 				this[0] = el;
-			else
-				this[this.length++] = el;
+
+				if(IE11 === false)
+					Object.defineProperty(this, 'length', {writable:true, enumerable:false, value:1});
+				return;
+			}
+
+			if(this._){
+				var news = recreateDOMList(this, this.length+1);
+				news[this.length] = el;
+
+				return news;
+			}
+
+			this[this.length++] = el;
 		},
 		indexOf:function(el){
 			for (var i = 0; i < this.length; i++) {
@@ -69,61 +105,67 @@ var $ = sf.dom; // Shortcut
 			}
 			return -1;
 		},
-		splice:function(i){
-			for (var n = this.length - 1; i < n; i++) {
+		splice:function(i, count){
+			if(i < 0)
+				i = this.length + i;
+
+			if(count === void 0)
+				count = this.length - i;
+
+			for (var n = this.length - count; i < n; i++)
+				this[i] = this[i + count];
+
+			if(this._ === true)
+				return recreateDOMList(this, this.length - count);
+
+			this.length -= count;
+			for (var i = this.length, n = this.length + count; i < n; i++)
 				delete this[i];
-				this[i] = this[i+1];
-			}
-			this.length--;
-		},
-		add:function(el){
-			this[this.length++] = el;
-			return this;
 		},
 		find:function(selector){
 			if(this.length === 1) // Optimize perf ~66%
-				return new DOMList(this[0].querySelectorAll(selector));
+				return _DOMList(this[0].querySelectorAll(selector));
 
 			var t = [];
 			for (var i = 0; i < this.length; i++)
 				t.push.apply(t, this[i].querySelectorAll(selector));
-			return new DOMList(t);
+			return _DOMList(t);
 		},
 		parent:function(selector){
 			if(this.length === 1){
 				if(selector)
-					return new DOMList(this[0].closest(selector));
-				return new DOMList(this[0].parentNode);
+					return _DOMList(this[0].closest(selector));
+				return _DOMList(this[0].parentNode);
 			}
 
 			var t = [];
 			for (var i = 0; i < this.length; i++)
 				t.push.apply(t, this[i].closest(selector));
-			return new DOMList(t);
+			return _DOMList(t);
 		},
 		prev:function(selector){
 			var t;
 			if(this.length !== 0)
 				t = self.prevAll(this[0], selector, false, true);
-			return new DOMList(t || []);
+			return _DOMList(t || []);
 		},
 		prevAll:function(selector){
 			var t = [];
 			for (var i = 0; i < this.length; i++)
 				t.push.apply(t, self.prevAll(this[i], selector));
-			return new DOMList(t);
+			return _DOMList(t);
 		},
 		next:function(selector){
 			var t;
 			if(this.length !== 0)
 				t = self.prevAll(this[0], selector, true, true);
-			return new DOMList(t || []);
+			return _DOMList(t || []);
 		},
 		nextAll:function(selector){
 			var t = [];
 			for (var i = 0; i < this.length; i++)
 				t.push.apply(t, self.prevAll(this[i], selector, true));
-			return new DOMList(t);
+			return _DOMList(t);
 		},
 		children:function(selector){
 			var t = [];
@@ -136,7 +178,7 @@ var $ = sf.dom; // Shortcut
 						t.push(child[i]);
 				}
 			}
-			return new DOMList(t);
+			return _DOMList(t);
 		},
 
 		// Action only
@@ -339,9 +381,9 @@ var $ = sf.dom; // Shortcut
 				i = this.length + i;
 
 			if(count === void 0)
-				return new DOMList(this[i]);
+				return _DOMList(this[i]);
 
-			return new DOMList(this.slice(i, count > 0 ? count : void 0));			
+			return _DOMList(this.slice(i, count > 0 ? count : void 0));			
 		},
 		insertAfter:function(el){
 			var parent = el.parentNode;
@@ -407,6 +449,8 @@ var $ = sf.dom; // Shortcut
 		resize:function(d){return this.trigger('resize', d, true)},
 		scroll:function(d){return this.trigger('scroll', d, true)},
 	};
+
+	self.fn.add = self.fn.push;
 
 	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);

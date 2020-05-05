@@ -269,7 +269,9 @@ sf.component = function(name, options, func, namespace){
 				return;
 		}
 
-		newObj.$el.push(element);
+		// Component always will always have one element
+		newObj.$el[0] = element;
+
 		element.model = newObj;
 		element.sf$controlled = newID;
 		element.sf$componentFrom = name;
