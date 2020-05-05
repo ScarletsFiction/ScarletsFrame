@@ -205,13 +205,22 @@ class RepeatedProperty{ // extends Object
 		if(this.$EM.constructor === ElementManipulatorProxy)
 			return this.$EM.refresh_RP(this);
 
+		var elemList = (this.$EM.parentChilds || this.$EM.elements);
+		if(elemList === void 0)
+			return;
+
 		// If single RepeatedElement instance
 		var list = this._list;
 		for (var i = 0; i < list.length; i++) {
-			var elem = (this.$EM.parentChilds || this.$EM.elements)[i];
+			var elem = elemList[i];
 
-			if(this[list[i]] !== elem.model)
-				this.$EM.parentNode.replaceChild(this.$EM.createElement(list[i]), elem);
+			if(this[list[i]] !== elem.model){
+				var newElem = this.$EM.createElement(list[i]);
+				this.$EM.parentNode.replaceChild(newElem, elem);
+
+				if(this.$EM.elements !== void 0)
+					elemList[i] = newElem;
+			}
 		}
 	}
 }
@@ -1250,9 +1259,13 @@ class ElementManipulatorProxy{
 		var keys = instance._list;
 		for (var i = 0; i < list.length; i++) {
 			var EM = list[i];
+			var elemList = (EM.parentChilds || EM.elements);
+
+			if(elemList === void 0)
+				continue;
 
 			for (var a = 0; a < keys.length; a++) {
-				var elem = (EM.parentChilds || EM.elements)[a];
+				var elem = elemList[a];
 
 				if(elem === void 0){
 					EM.append(keys[a]);
@@ -1261,8 +1274,10 @@ class ElementManipulatorProxy{
 
 				if(instance[keys[a]] !== elem.model){
 					var newElem = EM.createElement(keys[a]);
-					(EM.parentChilds || EM.elements)[a] = newElem
 					EM.parentNode.replaceChild(newElem, elem);
+
+					if(EM.elements !== void 0)
+						elemList[a] = newElem;
 				}
 			}
 		}
