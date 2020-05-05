@@ -25,27 +25,394 @@ sf.dom = function(selector, context){
 	return _DOMList(selector);
 }
 
-function DOMList(elements){
-	if(elements === null){
-    	this.length = 0;
+var $ = sf.dom; // Shortcut
+
+var css_str = /\-([a-z0-9])/;
+var css_strRep = function(f, m){return m.toUpperCase()};
+class DOMList{
+	constructor(elements){
+		if(elements === null){
+	    	this.length = 0;
+			return this;
+		}
+
+		if(elements.length === void 0){
+			this[0] = elements;
+			this.length = 1;
+			return this;
+		}
+
+	    for (var i = 0; i < elements.length; i += 1)
+	    	this[i] = elements[i];
+
+		this.length = elements.length;
+		return this;
+	}
+	push(el){
+		if(this[0] === void 0){
+			this[0] = el;
+
+			if(IE11 === false)
+				Object.defineProperty(this, 'length', {writable:true, enumerable:false, value:1});
+			return;
+		}
+
+		if(this._){
+			var news = recreateDOMList(this, this.length+1);
+			news[this.length] = el;
+
+			return news;
+		}
+
+		this[this.length++] = el;
+	}
+	splice(i, count){
+		if(i < 0)
+			i = this.length + i;
+
+		if(count === void 0)
+			count = this.length - i;
+
+		for (var n = this.length - count; i < n; i++)
+			this[i] = this[i + count];
+
+		if(this._ === true)
+			return recreateDOMList(this, this.length - count);
+
+		this.length -= count;
+		for (var i = this.length, n = this.length + count; i < n; i++)
+			delete this[i];
+	}
+	find(selector){
+		if(this.length === 1) // Optimize perf ~66%
+			return _DOMList(this[0].querySelectorAll(selector));
+
+		var t = [];
+		for (var i = 0; i < this.length; i++)
+			t.push.apply(t, this[i].querySelectorAll(selector));
+		return _DOMList(t);
+	}
+	parent(selector){
+		if(this.length === 1){
+			if(selector)
+				return _DOMList(this[0].closest(selector));
+			return _DOMList(this[0].parentNode);
+		}
+
+		var t = [];
+		for (var i = 0; i < this.length; i++)
+			t.push.apply(t, this[i].closest(selector));
+		return _DOMList(t);
+	}
+	prev(selector){
+		var t;
+		if(this.length !== 0)
+			t = $.prevAll(this[0], selector, false, true);
+		return _DOMList(t || []);
+	}
+	prevAll(selector){
+		var t = [];
+		for (var i = 0; i < this.length; i++)
+			t.push.apply(t, $.prevAll(this[i], selector));
+		return _DOMList(t);
+	}
+	next(selector){
+		var t;
+		if(this.length !== 0)
+			t = $.prevAll(this[0], selector, true, true);
+		return _DOMList(t || []);
+	}
+	nextAll(selector){
+		var t = [];
+		for (var i = 0; i < this.length; i++)
+			t.push.apply(t, $.prevAll(this[i], selector, true));
+		return _DOMList(t);
+	}
+	children(selector){
+		var t = [];
+
+		for (var a = 0; a < this.length; a++) {
+			var child = this[a].children;
+
+			for (var i = 0; i < child.length; i++){
+				if(child[i].matches(selector))
+					t.push(child[i]);
+			}
+		}
+		return _DOMList(t);
+	}
+
+	// Action only
+	remove(){
+		for (var i = 0; i < this.length; i++)
+			this[i].remove();
+		return this;
+	}
+	empty(){
+		for (var i = 0; i < this.length; i++)
+			this[i].textContent = '';
+		return this;
+	}
+	addClass(name){
+		for (var i = 0; i < this.length; i++)
+			DOMTokenList.prototype.add.apply(this[i].classList, name.split(' '));
+		return this;
+	}
+	removeClass(name){
+		for (var i = 0; i < this.length; i++)
+			DOMTokenList.prototype.remove.apply(this[i].classList, name.split(' '));
+		return this;
+	}
+	toggleClass(name){
+		for (var i = 0; i < this.length; i++)
+			DOMTokenList.prototype.toggle.apply(this[i].classList, name.split(' '));
+		return this;
+	}
+	hasClass(name){
+		for (var i = 0; i < this.length; i++)
+			if(this[i].classList.contains(name))
+				return true;
+		return false;
+	}
+	prop(name, value){
+		if(value === void 0)
+			return this.length !== 0 ? this[0][name] : '';
+
+		for (var i = 0; i < this.length; i++)
+			this[i][name] = value;
+
+		return this;
+	}
+	attr(name, value){
+		if(value === void 0)
+			return this.length !== 0 ? this[0].getAttribute(name) : '';
+
+		for (var i = 0; i < this.length; i++)
+			this[i].setAttribute(name, value);
+
+		return this;
+	}
+	removeAttr(name){
+		for (var i = 0; i < this.length; i++)
+			this[i].removeAttribute(name);
+
+		return this;
+	}
+	css(name, value){
+		if(value === void 0 && name.constructor === String)
+			return this.length !== 0 ? this[0].style[name] : '';
+
+		if(name.constructor === Object){
+			for(var key in name){
+				if(key.indexOf('-') === -1)
+					continue;
+
+				name[key.replace(css_str, css_strRep)] = name[key];
+				delete name[key];
+			}
+
+			for (var i = 0; i < this.length; i++)
+				Object.assign(this[i].style, name);
+
+			return this;
+		}
+
+		name = name.replace(css_str, css_strRep);
+
+		for (var i = 0; i < this.length; i++)
+			this[i].style[name] = value;
+
+		return this;
+	}
+	on(event, selector, callback, options){
+		for (var i = 0; i < this.length; i++){
+			if(internal.model.specialEvent[event] !== void 0){
+				internal.model.specialEvent[event](this[i], null, callback);
+				continue;
+			}
+
+			$.on(this[i], event, selector, callback, options);
+		}
+
+		return this;
+	}
+	off(event, selector, callback, options){
+		for (var i = 0; i < this.length; i++){
+			if(event === void 0){
+				$.off(this[i]);
+				continue;
+			}
+
+			if(internal.model.specialEvent[event] !== void 0){
+				if(this[i]['sf$eventDestroy_'+event] !== void 0)
+					this[i]['sf$eventDestroy_'+event]();
+
+				continue;
+			}
+
+			$.off(this[i], event, selector, callback, options);
+		}
+		return this;
+	}
+	once(event, selector, callback){
+		for (var i = 0; i < this.length; i++)
+			$.once(this[i], event, selector, callback);
+		return this;
+	}
+	trigger(events, data, direct) {
+		events = events.split(' ');
+		for (var i = 0; i < events.length; i++) {
+			var event = events[i];
+			for (var j = 0; j < this.length; j++) {
+				if(direct === true){
+					this[j][event]();
+					continue;
+				}
+
+				var evt;
+				try {
+					evt = new window.CustomEvent(event, {detail: data, bubbles: true, cancelable: true});
+				} catch (e) {
+					evt = document.createEvent('Event');
+					evt.initEvent(event, true, true);
+					evt.detail = data;
+				}
+
+				this[j].dispatchEvent(evt);
+			}
+		}
+		return this;
+	}
+	animateKey(name, callback, duration){
+		for (var i = 0; i < this.length; i++)
+			$.animateKey(this[i], name, callback, duration);
+		return this;
+	}
+	each(callback){
+		for (var i = 0; i < this.length; i++)
+			callback.call(this[i], i, this);
+		return this;
+	}
+	data(key, value){
+		if(value === void 0)
+			return this.length !== 0 && this[0].$data ? this[0].$data[key] : void 0;
+
+		for (var i = 0; i < this.length; i++){
+			if(this[i].$data === void 0)
+				this[i].$data = {};
+			this[i].$data[key] = value;
+		}
+		return this;
+	}
+	removeData(key){
+		for (var i = 0; i < this.length; i++){
+			if(this[i].$data === void 0)
+				continue;
+
+			delete this[i].$data[key];
+		}
+		return this;
+	}
+	append(element){
+		if(element.constructor === Array || element.classList === void 0){
+			for (var i = 0; i < element.length; i++)
+				this[0].append(element[i]);
+		}
+		else{
+			if(element.constructor === String)
+				this[0].insertAdjacentHTML('beforeEnd', element);
+			else this[0].append(element);
+		}
+		return this;
+	}
+	prepend(element){
+		if(element.constructor === Array || element.classList === void 0){
+			for (var i = 0; i < element.length; i++)
+				this[0].prepend(element[i]);
+		}
+		else{
+			if(element.constructor === String)
+				this[0].insertAdjacentHTML('afterBegin', element);
+			else this[0].prepend(element);
+		}
+		return this;
+	}
+	eq(i, count){
+		if(i < 0)
+			i = this.length + i;
+
+		if(count === void 0)
+			return _DOMList(this[i]);
+
+		return _DOMList(this.slice(i, count > 0 ? count : void 0));			
+	}
+	insertAfter(el){
+		var parent = el.parentNode;
+		parent.insertBefore(this[0], el.nextSibling);
+
+		for (var i = 1; i < this.length; i++)
+			parent.insertBefore(this[i], this[i-1]);
+		return this;
+	}
+	insertBefore(el){
+		var parent = el.parentNode;
+		for (var i = 0; i < this.length; i++)
+			parent.insertBefore(this[i], el);
 		return this;
 	}
 
-	if(elements.length === void 0){
-		this[0] = elements;
-		this.length = 1;
+	text(text){
+		if(text === void 0)
+			return this.length !== 0 ? this[0].textContent : '';
+
+		for (var i = 0; i < this.length; i++)
+			this[i].textContent = text;
+		return this;
+	}
+	html(text){
+		if(text === void 0)
+			return this.length !== 0 ? this[0].innerHTML : '';
+
+		for (var i = 0; i < this.length; i++)
+			this[i].innerHTML = text;
+		return this;
+	}
+	val(text){
+		if(text === void 0)
+			return this.length !== 0 ? this[0].value : '';
+
+		for (var i = 0; i < this.length; i++)
+			this[i].text = text;
 		return this;
 	}
 
-    for (var i = 0; i < elements.length; i += 1)
-    	this[i] = elements[i];
-
-	this.length = elements.length;
-	return this;
+	// Event trigger shortcut
+	click(d){return this.trigger('click', d, true)}
+	blur(d){return this.trigger('blur', d, true)}
+	focus(d){return this.trigger('focus', d, true)}
+	focusin(d){return this.trigger('focusin', d)}
+	focusout(d){return this.trigger('focusout', d)}
+	keyup(d){return this.trigger('keyup', d)}
+	keydown(d){return this.trigger('keydown', d)}
+	keypress(d){return this.trigger('keypress', d)}
+	submit(d){return this.trigger('submit', d)}
+	change(d){return this.trigger('change', d)}
+	mousedown(d){return this.trigger('mousedown', d)}
+	mousemove(d){return this.trigger('mousemove', d)}
+	mouseup(d){return this.trigger('mouseup', d)}
+	mouseenter(d){return this.trigger('mouseenter', d)}
+	mouseleave(d){return this.trigger('mouseleave', d)}
+	mouseout(d){return this.trigger('mouseout', d)}
+	mouseover(d){return this.trigger('mouseover', d)}
+	touchstart(d){return this.trigger('touchstart', d)}
+	touchend(d){return this.trigger('touchend', d)}
+	touchmove(d){return this.trigger('touchmove', d)}
+	resize(d){return this.trigger('resize', d, true)}
+	scroll(d){return this.trigger('scroll', d, true)}
 }
 
 function _DOMList(list){
-	if(list.length === void 0)
+	if(!list || list.length === void 0 || list.constructor === HTMLCollection)
 		return new DOMList(list);
 
 	var length = list.length;
@@ -53,8 +420,6 @@ function _DOMList(list){
 	list.length = length;
 	return list;
 }
-
-var $ = sf.dom; // Shortcut
 
 // Fix for IE11 and Safari, due to lack of writable length
 function recreateDOMList($el, length){
@@ -75,382 +440,17 @@ function recreateDOMList($el, length){
 ;(function(){
 	var self = sf.dom;
 
-	var css_str = /\-([a-z0-9])/;
-	var css_strRep = function(f, m){return m.toUpperCase()};
-
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
-	self.fn = DOMList.prototype = {
-		push:function(el){
-			if(this[0] === void 0){
-				this[0] = el;
-
-				if(IE11 === false)
-					Object.defineProperty(this, 'length', {writable:true, enumerable:false, value:1});
-				return;
-			}
-
-			if(this._){
-				var news = recreateDOMList(this, this.length+1);
-				news[this.length] = el;
-
-				return news;
-			}
-
-			this[this.length++] = el;
-		},
-		indexOf:function(el){
-			for (var i = 0; i < this.length; i++) {
-				if(this[i] === el)
-					return i;
-			}
-			return -1;
-		},
-		splice:function(i, count){
-			if(i < 0)
-				i = this.length + i;
-
-			if(count === void 0)
-				count = this.length - i;
-
-			for (var n = this.length - count; i < n; i++)
-				this[i] = this[i + count];
-
-			if(this._ === true)
-				return recreateDOMList(this, this.length - count);
-
-			this.length -= count;
-			for (var i = this.length, n = this.length + count; i < n; i++)
-				delete this[i];
-		},
-		find:function(selector){
-			if(this.length === 1) // Optimize perf ~66%
-				return _DOMList(this[0].querySelectorAll(selector));
-
-			var t = [];
-			for (var i = 0; i < this.length; i++)
-				t.push.apply(t, this[i].querySelectorAll(selector));
-			return _DOMList(t);
-		},
-		parent:function(selector){
-			if(this.length === 1){
-				if(selector)
-					return _DOMList(this[0].closest(selector));
-				return _DOMList(this[0].parentNode);
-			}
-
-			var t = [];
-			for (var i = 0; i < this.length; i++)
-				t.push.apply(t, this[i].closest(selector));
-			return _DOMList(t);
-		},
-		prev:function(selector){
-			var t;
-			if(this.length !== 0)
-				t = self.prevAll(this[0], selector, false, true);
-			return _DOMList(t || []);
-		},
-		prevAll:function(selector){
-			var t = [];
-			for (var i = 0; i < this.length; i++)
-				t.push.apply(t, self.prevAll(this[i], selector));
-			return _DOMList(t);
-		},
-		next:function(selector){
-			var t;
-			if(this.length !== 0)
-				t = self.prevAll(this[0], selector, true, true);
-			return _DOMList(t || []);
-		},
-		nextAll:function(selector){
-			var t = [];
-			for (var i = 0; i < this.length; i++)
-				t.push.apply(t, self.prevAll(this[i], selector, true));
-			return _DOMList(t);
-		},
-		children:function(selector){
-			var t = [];
-
-			for (var a = 0; a < this.length; a++) {
-				var child = this[a].children;
-
-				for (var i = 0; i < child.length; i++){
-					if(child[i].matches(selector))
-						t.push(child[i]);
-				}
-			}
-			return _DOMList(t);
-		},
-
-		// Action only
-		remove:function(){
-			for (var i = 0; i < this.length; i++)
-				this[i].remove();
-			return this;
-		},
-		empty:function(){
-			for (var i = 0; i < this.length; i++)
-				this[i].textContent = '';
-			return this;
-		},
-		addClass:function(name){
-			for (var i = 0; i < this.length; i++)
-				DOMTokenList.prototype.add.apply(this[i].classList, name.split(' '));
-			return this;
-		},
-		removeClass:function(name){
-			for (var i = 0; i < this.length; i++)
-				DOMTokenList.prototype.remove.apply(this[i].classList, name.split(' '));
-			return this;
-		},
-		toggleClass:function(name){
-			for (var i = 0; i < this.length; i++)
-				DOMTokenList.prototype.toggle.apply(this[i].classList, name.split(' '));
-			return this;
-		},
-		hasClass:function(name){
-			for (var i = 0; i < this.length; i++)
-				if(this[i].classList.contains(name))
-					return true;
-			return false;
-		},
-		prop:function(name, value){
-			if(value === void 0)
-				return this.length !== 0 ? this[0][name] : '';
-
-			for (var i = 0; i < this.length; i++)
-				this[i][name] = value;
-
-			return this;
-		},
-		attr:function(name, value){
-			if(value === void 0)
-				return this.length !== 0 ? this[0].getAttribute(name) : '';
-
-			for (var i = 0; i < this.length; i++)
-				this[i].setAttribute(name, value);
-
-			return this;
-		},
-		removeAttr:function(name){
-			for (var i = 0; i < this.length; i++)
-				this[i].removeAttribute(name);
-
-			return this;
-		},
-		css:function(name, value){
-			if(value === void 0 && name.constructor === String)
-				return this.length !== 0 ? this[0].style[name] : '';
-
-			if(name.constructor === Object){
-				for(var key in name){
-					if(key.indexOf('-') === -1)
-						continue;
-
-					name[key.replace(css_str, css_strRep)] = name[key];
-					delete name[key];
-				}
-
-				for (var i = 0; i < this.length; i++)
-					Object.assign(this[i].style, name);
-
-				return this;
-			}
-
-			name = name.replace(css_str, css_strRep);
-
-			for (var i = 0; i < this.length; i++)
-				this[i].style[name] = value;
-
-			return this;
-		},
-		on:function(event, selector, callback, options){
-			for (var i = 0; i < this.length; i++){
-				if(internal.model.specialEvent[event] !== void 0){
-					internal.model.specialEvent[event](this[i], null, callback);
-					continue;
-				}
-
-				self.on(this[i], event, selector, callback, options);
-			}
-
-			return this;
-		},
-		off:function(event, selector, callback, options){
-			for (var i = 0; i < this.length; i++){
-				if(event === void 0){
-					self.off(this[i]);
-					continue;
-				}
-
-				if(internal.model.specialEvent[event] !== void 0){
-					if(this[i]['sf$eventDestroy_'+event] !== void 0)
-						this[i]['sf$eventDestroy_'+event]();
-
-					continue;
-				}
-
-				self.off(this[i], event, selector, callback, options);
-			}
-			return this;
-		},
-		once:function(event, selector, callback){
-			for (var i = 0; i < this.length; i++)
-				self.once(this[i], event, selector, callback);
-			return this;
-		},
-		trigger:function(events, data, direct) {
-			events = events.split(' ');
-			for (var i = 0; i < events.length; i++) {
-				var event = events[i];
-				for (var j = 0; j < this.length; j++) {
-					if(direct === true){
-						this[j][event]();
-						continue;
-					}
-
-					var evt;
-					try {
-						evt = new window.CustomEvent(event, {detail: data, bubbles: true, cancelable: true});
-					} catch (e) {
-						evt = document.createEvent('Event');
-						evt.initEvent(event, true, true);
-						evt.detail = data;
-					}
-
-					this[j].dispatchEvent(evt);
-				}
-			}
-			return this;
-		},
-		animateKey:function(name, callback, duration){
-			for (var i = 0; i < this.length; i++)
-				self.animateKey(this[i], name, callback, duration);
-			return this;
-		},
-		each:function(callback){
-			for (var i = 0; i < this.length; i++)
-				callback.call(this[i], i, this);
-			return this;
-		},
-		data:function(key, value){
-			if(value === void 0)
-				return this.length !== 0 && this[0].$data ? this[0].$data[key] : void 0;
-
-			for (var i = 0; i < this.length; i++){
-				if(this[i].$data === void 0)
-					this[i].$data = {};
-				this[i].$data[key] = value;
-			}
-			return this;
-		},
-		removeData:function(key){
-			for (var i = 0; i < this.length; i++){
-				if(this[i].$data === void 0)
-					continue;
-
-				delete this[i].$data[key];
-			}
-			return this;
-		},
-		append:function(element){
-			if(element.constructor === Array || element.classList === void 0){
-				for (var i = 0; i < element.length; i++)
-					this[0].append(element[i]);
-			}
-			else{
-				if(element.constructor === String)
-					this[0].insertAdjacentHTML('beforeEnd', element);
-				else this[0].append(element);
-			}
-			return this;
-		},
-		prepend:function(element){
-			if(element.constructor === Array || element.classList === void 0){
-				for (var i = 0; i < element.length; i++)
-					this[0].prepend(element[i]);
-			}
-			else{
-				if(element.constructor === String)
-					this[0].insertAdjacentHTML('afterBegin', element);
-				else this[0].prepend(element);
-			}
-			return this;
-		},
-		eq:function(i, count){
-			if(i < 0)
-				i = this.length + i;
-
-			if(count === void 0)
-				return _DOMList(this[i]);
-
-			return _DOMList(this.slice(i, count > 0 ? count : void 0));			
-		},
-		insertAfter:function(el){
-			var parent = el.parentNode;
-			parent.insertBefore(this[0], el.nextSibling);
-
-			for (var i = 1; i < this.length; i++)
-				parent.insertBefore(this[i], this[i-1]);
-			return this;
-		},
-		insertBefore:function(el){
-			var parent = el.parentNode;
-			for (var i = 0; i < this.length; i++)
-				parent.insertBefore(this[i], el);
-			return this;
-		},
-
-		text:function(text){
-			if(text === void 0)
-				return this.length !== 0 ? this[0].textContent : '';
-
-			for (var i = 0; i < this.length; i++)
-				this[i].textContent = text;
-			return this;
-		},
-		html:function(text){
-			if(text === void 0)
-				return this.length !== 0 ? this[0].innerHTML : '';
-
-			for (var i = 0; i < this.length; i++)
-				this[i].innerHTML = text;
-			return this;
-		},
-		val:function(text){
-			if(text === void 0)
-				return this.length !== 0 ? this[0].value : '';
-
-			for (var i = 0; i < this.length; i++)
-				this[i].text = text;
-			return this;
-		},
-
-		// Event trigger shortcut
-		click:function(d){return this.trigger('click', d, true)},
-		blur:function(d){return this.trigger('blur', d, true)},
-		focus:function(d){return this.trigger('focus', d, true)},
-		focusin:function(d){return this.trigger('focusin', d)},
-		focusout:function(d){return this.trigger('focusout', d)},
-		keyup:function(d){return this.trigger('keyup', d)},
-		keydown:function(d){return this.trigger('keydown', d)},
-		keypress:function(d){return this.trigger('keypress', d)},
-		submit:function(d){return this.trigger('submit', d)},
-		change:function(d){return this.trigger('change', d)},
-		mousedown:function(d){return this.trigger('mousedown', d)},
-		mousemove:function(d){return this.trigger('mousemove', d)},
-		mouseup:function(d){return this.trigger('mouseup', d)},
-		mouseenter:function(d){return this.trigger('mouseenter', d)},
-		mouseleave:function(d){return this.trigger('mouseleave', d)},
-		mouseout:function(d){return this.trigger('mouseout', d)},
-		mouseover:function(d){return this.trigger('mouseover', d)},
-		touchstart:function(d){return this.trigger('touchstart', d)},
-		touchend:function(d){return this.trigger('touchend', d)},
-		touchmove:function(d){return this.trigger('touchmove', d)},
-		resize:function(d){return this.trigger('resize', d, true)},
-		scroll:function(d){return this.trigger('scroll', d, true)},
-	};
-
+	self.fn = DOMList.prototype;
 	self.fn.add = self.fn.push;
+
+	// Bring array feature that not modifying current length
+	self.fn.indexOf = Array.prototype.indexOf;
+	self.fn.forEach = Array.prototype.forEach;
+	self.fn.concat = Array.prototype.concat;
+	self.fn.reverse = Array.prototype.reverse;
+	self.fn.slice = Array.prototype.slice;
+	self.fn.filter = Array.prototype.filter;
 
 	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);
