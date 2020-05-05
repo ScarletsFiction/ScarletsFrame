@@ -1,6 +1,6 @@
 var $ = sf.dom;
 var vul = '';
-var minimalTest = 0;
+var minimalTest = 1;
 
 // This framework is vulnerable if any alert displayed
 // or console.error is being outputted

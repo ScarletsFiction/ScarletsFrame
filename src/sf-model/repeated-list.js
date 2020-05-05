@@ -18,7 +18,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 		var pattern = script.match(sf.regex.repeatedList);
 		if(pattern === null){
-			console.error("'", script, "' should match the pattern like `item in items`");
+			console.error("'", script, "' should match the pattern like `key,val in list`");
 			continue;
 		}
 		pattern = pattern.slice(1);
@@ -26,16 +26,30 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		if(pattern[0].indexOf(',') !== -1)
 			pattern[0] = pattern[0].split(' ').join('').split(',');
 
-		if(modelRef[pattern[1]] === void 0)
-			modelRef[pattern[1]] = [];
+		var target = modelRef[pattern[1]];
+		if(target === void 0){
+			var isDeep = parsePropertyPath(pattern[1]);
+			if(isDeep.length !== 1){
+				pattern[1] = isDeep;
+				target = deepProperty(modelRef, isDeep);
 
-		// Enable element binding
-		if(modelRef.sf$bindedKey === void 0)
-			initBindingInformation(modelRef);
+				// Cache deep
+				if(modelRef.sf$internal)
+					modelRef.sf$internal[isDeep.slice(0, -1).join('%$')] = true;
+			}
 
-		modelRef.sf$bindedKey[pattern[1]] = true;
+			if(target === void 0)
+				modelRef[pattern[1]] = target = [];
+		}
+		else{
+			// Enable element binding
+			if(modelRef.sf$bindedKey === void 0)
+				initBindingInformation(modelRef);
 
-		var constructor = modelRef[pattern[1]].constructor;
+			modelRef.sf$bindedKey[pattern[1]] = true;
+		}
+
+		var constructor = target.constructor;
 		if(constructor === Array || constructor === RepeatedList){
 			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 			continue;
@@ -138,7 +152,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 class RepeatedProperty{ // extends Object
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-		var that = modelRef[pattern[1]];
+		var that = pattern[1].constructor === String ? modelRef[pattern[1]] : deepProperty(modelRef, pattern[1]);
 
 		// Initialize property once
 		if(that.constructor !== RepeatedProperty){
@@ -147,6 +161,8 @@ class RepeatedProperty{ // extends Object
 			// Proxy known property
 			for(var key in that)
 				ProxyProperty(that, key, true);
+
+			var target = pattern[1].constructor !== Array ? modelRef : deepProperty(modelRef, pattern[1].slice(0, -1));
 
 			Object.setPrototypeOf(that, RepeatedProperty.prototype);
 			Object.defineProperty(modelRef, pattern[1], {
@@ -325,10 +341,12 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 
 class RepeatedList extends Array{
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-		var that = modelRef[pattern[1]];
+		var that = pattern[1].constructor === String ? modelRef[pattern[1]] : deepProperty(modelRef, pattern[1]);
 
 		// Initialize property once
 		if(that.constructor !== RepeatedList){
+			var target = pattern[1].constructor !== Array ? modelRef : deepProperty(modelRef, pattern[1].slice(0, -1));
+
 			Object.setPrototypeOf(that, RepeatedList.prototype);
 			Object.defineProperty(modelRef, pattern[1], {
 				enumerable: true,

@@ -280,6 +280,10 @@
             testObj.status[0].toUpperCase() + testObj.status.slice(1)
           }}</div>
 
+          <div sf-repeat-this="i,x in testObj.deep" class="dummy {{  x.status[0].toUpperCase() + x.status.slice(1) }}">{{
+            x.status[0].toUpperCase() + x.status.slice(1)
+          }}</div>
+
          <b>Execution for the current model scope</b><br>
          <div>
             <div>

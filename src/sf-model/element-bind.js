@@ -167,10 +167,8 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			for (var i = 0, n = propertyName.length-1; i < n; i++) {
 				let value = model[propertyName[i]];
 
-				// ToDo: also support/apply for RepeatedProperty/RepeatedList
-
-				// Only apply if this is an Object/Array
-				if(value === void 0 || value === null || (value.constructor !== Object && value.constructor !== Array))
+				// Return if this not an object
+				if(typeof value !== 'object')
 					return;
 
 				if(Object.getOwnPropertyDescriptor(model, propertyName[i]).set === void 0){
@@ -322,6 +320,12 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 	}
 
 	if(template.modelRef_path !== void 0){
+		// Check if there are pending revalidation
+		if(template.modelRef_path.revalidate){
+			delete template.modelRef_path.revalidate;
+			revalidateBindingPath(template.modelRef, template.modelRef_path, localModel);
+		}
+
 		properties = template.modelRef_path;
 		for (var i = 0; i < properties.length; i++) {
 			modelToViewBinding(localModel, properties[i], {

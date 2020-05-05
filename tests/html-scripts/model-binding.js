@@ -1,6 +1,6 @@
-var binding = null;
+var model = null;
 sf.model.for('model-binding', function(self, root){
-	binding = self;
+	model = self;
 
 	setTimeout(function(){
 		var self = root('model-binding');
@@ -68,18 +68,22 @@ sf.model.for('model-binding', function(self, root){
 	self.vul = vul;
 
 	self.testObj = {
-		status:"a❌ this must be refreshed"
+		status:"a❌ this must be refreshed",
+		deep:{
+			b:{status:"b❌ this must be refreshed"},
+			c:{status:"c❌ this must be refreshed"},
+		}
 	};
 
 	setTimeout(function(){
-		try{
-			sf.model.init(reinit);
-		}
+		try{sf.model.init(reinit);}
 		catch(e){
 			console.error("✔️ Expected error", e);
 		}
 
 		self.testObj.status = "a✔️ this one ok"+vul;
+		self.testObj.deep.b.status = "b✔️ this one ok"+vul;
+		self.testObj.deep.c.status = "c✔️ this one ok"+vul;
 		if(!chk1.classList.value === 'dummy A✔️ this one ok'+vul || chk1.textContent !== 'A✔️ this one ok'+vul){
 			console.error('This one not refreshed', chk1);
 			console.error('should reflect with ->', self.testObj);

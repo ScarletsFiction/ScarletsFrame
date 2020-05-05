@@ -798,8 +798,10 @@ function revalidateTemplateRef(template, modelRef){
 	revalidateBindingPath(template.modelRefRoot, template.modelRefRoot_path, modelRef);
 
 	// for repeated list if exist
-	if(template.modelRef_path !== void 0)
+	if(template.modelRef_path !== void 0 && template.modelRef_path.length !== 0){
+		template.modelRef_path.revalidate = true;
 		revalidateBindingPath(template.modelRef, template.modelRef_path, modelRef);
+	}
 }
 
 // This will affect syntheticTemplate validation on property observer
