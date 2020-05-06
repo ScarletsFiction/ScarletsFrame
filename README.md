@@ -25,6 +25,18 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 - [Virtual Scroll](https://playcode.io/224164?tabs=model.js&output)
 - [Language](https://jsbin.com/delayeb/edit?html,js,output)
 
+## Install with CDN link
+You can download minified js from this repository or use this CDN link.<br>
+```html
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js'></script>
+```
+
+For supporting older browser you need to add [core-js and webcomponentsjs](#polyfill-for-older-browser) polyfill.<br>
+But if you develop only for modern browser and focus for performance it's recommended for using below, you may still need to polyfill PointerEvent for Safari/Firefox desktop browser.
+```html
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.es6.js'></script>
+```
+
 ## Install from template
 For starting the development environment, let's use the [default template](https://github.com/StefansArya/scarletsframe-default).
 
@@ -47,12 +59,6 @@ $ npm start
 
 # Or use gulp
 $ gulp
-```
-
-## Install with CDN link
-You can download minified js from this repository or use this CDN link
-```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js'></script>
 ```
 
 ### Polyfill for older browser

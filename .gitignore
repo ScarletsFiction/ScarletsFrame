@@ -4,3 +4,4 @@
 *.map
 /dist/scarletsframe.js
 /dist/scarletsframe.min.js
+/dist/scarletsframe.es6.js
