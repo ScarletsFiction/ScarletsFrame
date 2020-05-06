@@ -107,3 +107,6 @@ sf.events = (function(){
 
 	return Events;
 })();
+
+if(!window.TouchEvent)
+	window.TouchEvent = void 0;
