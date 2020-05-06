@@ -424,7 +424,7 @@ internal.virtual_scroll = new function(){
 		scroller.addEventListener('scroll', checkCursorPosition, {capture:true, passive:true});
 
 		// For preventing scroll jump if scrolling over than viewport
-		if(scroller === parentNode && navigator.userAgent.indexOf('Chrom') !== -1){
+		if(scroller === parentNode && navigator.userAgent.includes('Chrom')){
 			$.on(parentNode, 'mousedown', function(){
 				scrollFocused = true;
 			});

@@ -74,7 +74,7 @@ sf.model = function(name, options, func, namespace){
 	self.modelKeys = function(modelRef){
 		var keys = Object.keys(modelRef);
 		for (var i = keys.length - 1; i >= 0; i--) {
-			if(keys[i].indexOf('$') !== -1)
+			if(keys[i].includes('$'))
 				keys.splice(i, 1);
 		}
 

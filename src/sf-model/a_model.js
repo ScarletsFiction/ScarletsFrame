@@ -92,7 +92,7 @@ function modelScript(mask, script, repeatedListKey){
 	else
 		script = script.split('@return').join('return');
 
-	if(mask && script.indexOf('_model_') !== -1)
+	if(mask && script.includes('_model_'))
 		script = 'var _model_='+mask+';'+script;
 
 	try{

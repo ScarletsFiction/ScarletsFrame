@@ -23,7 +23,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		}
 		pattern = pattern.slice(1);
 
-		if(pattern[0].indexOf(',') !== -1)
+		if(pattern[0].includes(','))
 			pattern[0] = pattern[0].split(' ').join('').split(',');
 
 		var target = modelRef[pattern[1]];
@@ -158,10 +158,6 @@ class RepeatedProperty{ // extends Object
 		if(that.constructor !== RepeatedProperty){
 			hiddenProperty(that, '_list', Object.keys(that));
 
-			// Proxy known property
-			for(var key in that)
-				ProxyProperty(that, key, true);
-
 			var target = pattern[1].constructor !== Array ? modelRef : deepProperty(modelRef, pattern[1].slice(0, -1));
 
 			Object.setPrototypeOf(that, RepeatedProperty.prototype);
@@ -201,6 +197,10 @@ class RepeatedProperty{ // extends Object
 
 		var alone = prepareRepeated.apply(that, arguments);
 		var EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
+
+		// Proxy known property
+		for(var key in that)
+			ProxyProperty(that, key, true);
 
 		if(alone === true)
 			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
@@ -261,6 +261,11 @@ sf.set = function(obj, prop, val){
 }
 
 sf.delete = function(obj, prop){
+	if(obj.$EM === void 0){
+		delete obj[prop];
+		return;
+	}
+
 	var i = obj._list.indexOf(prop);
 	if(i === -1)
 		return;
@@ -407,7 +412,7 @@ class RepeatedList extends Array{
 			if(scroller === null) return;
 
 			var computed = getComputedStyle(scroller);
-			if(computed.backfaceVisibility === 'hidden' || computed.overflow.indexOf('hidden') !== -1)
+			if(computed.backfaceVisibility === 'hidden' || computed.overflow.includes('hidden'))
 				return;
 
 			scroller.classList.add('sf-scroll-element');

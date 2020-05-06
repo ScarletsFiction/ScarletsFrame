@@ -151,7 +151,7 @@ function addressAttributes(currentNode, template){
 	var keys = [];
 	var indexes = 0;
 	for (var a = attrs.length - 1; a >= 0; a--) {
-		var found = attrs[a].value.indexOf('{{%=') !== -1;
+		var found = attrs[a].value.includes('{{%=');
 		if(attrs[a].name[0] === '@'){
 			// No template processing for this
 			if(found){
@@ -217,7 +217,7 @@ function toObserve(full, model, properties){
 		else
 			toObserve.template.modelRefRoot_path.push(parsePropertyPath(properties));
 	}
-	else if(place[properties].indexOf(toObserve.template.i) === -1)
+	else if(place[properties].includes(toObserve.template.i) === false)
 		place[properties].push(toObserve.template.i);
 
 	return full;
@@ -590,7 +590,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 		var attrs = targetNode.attributes;
 		for (var a = 0; a < attrs.length; a++) {
-			if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
+			if(attrs[a].name[0] === '@' || attrs[a].value.includes('{{')){
 				temp.add(targetNode);
 				targetNode.sf$onlyAttribute = true;
 				break;
@@ -629,13 +629,13 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				collectOther.input.push(currentNode);
 
 			// Skip any custom element
-			if(currentNode.hasAttribute('sf-parse') === false && currentNode.tagName.indexOf('-') !== -1){
+			if(currentNode.hasAttribute('sf-parse') === false && currentNode.tagName.includes('-')){
 				if(currentNode.tagName !== 'SF-PAGE-VIEW' || currentNode.parentNode.hasAttribute('sf-parse') === false)
 					continue;
 			}
 
 			for (var a = 0; a < attrs.length; a++) {
-				if(attrs[a].name[0] === '@' || attrs[a].value.indexOf('{{') !== -1){
+				if(attrs[a].name[0] === '@' || attrs[a].value.includes('{{')){
 					temp.add(currentNode);
 					currentNode.sf$onlyAttribute = true;
 					break;
@@ -668,12 +668,12 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			// Continue here when enclosed template {[...]} was skipped
 
-			if(currentNode.textContent.indexOf('{{') !== -1){
+			if(currentNode.textContent.includes('{{')){
 				if(extracting === void 0){
 					var theParent = currentNode.parentNode;
 
 					// If it's not single/regular template
-					if(currentNode.textContent.indexOf('{{@') !== -1 || enclosing !== -1)
+					if(currentNode.textContent.includes('{{@') || enclosing !== -1)
 						temp.add(theParent); // get the element (from current text node)
 					else temp.add(currentNode);
 
@@ -708,7 +708,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 		// Get reference for debugging
 		var current = processingElement = nodes[a];
 
-		if(current.nodeType === 3 && binded.indexOf(current.parentNode) === -1){
+		if(current.nodeType === 3 && binded.includes(current.parentNode) === false){
 			self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
 			binded.push(current.parentNode);
 			continue;
@@ -727,7 +727,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 			for (var i = 0; i < attrs.length; i++) {
 				var attr = attrs[i];
 
-				if(attr.value.indexOf('{{') !== -1)
+				if(attr.value.includes('{{'))
 					attr.value = dataParser(attr.value, null, template, modelRef, preParsedRef);
 			}
 
@@ -770,7 +770,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 		}
 
 		// Double check if the child element already bound to prevent vulnerability
-		if(current.innerHTML.indexOf('sf-bind-list') !== -1 && current.tagName !== 'SF-M'){
+		if(current.innerHTML.includes('sf-bind-list') && current.tagName !== 'SF-M'){
 			console.error("Can't parse element that already parsed with other component", current);
 			console.log("To fix this, the sf-m element need to be initialized before the component-element");
 			console.log(nodes);
@@ -811,14 +811,14 @@ function revalidateBindingPath(refRoot, paths, modelRef){
 		var deep = deepProperty(modelRef, path.slice(0, -1));
 
 		// We're not bind the native stuff
-		if(path.indexOf('constructor') !== -1){
+		if(path.includes('constructor')){
 			for(var keys in refRoot){
-				if(keys.indexOf('.constructor') !== -1)
+				if(keys.includes('.constructor'))
 					delete refRoot[keys];
 			}
 
 			for (var a = i+1; a < paths.length; a++) {
-				if(paths[a].indexOf('constructor') !== -1)
+				if(paths[a].includes('constructor'))
 					paths.splice(a--, 1);
 			}
 
@@ -859,7 +859,7 @@ function revalidateBindingPath(refRoot, paths, modelRef){
 					delete refRoot[keys];
 
 					for (var a = 0; a < rootIndex.length; a++) {
-						if(collect.indexOf(rootIndex[a]) === -1)
+						if(collect.includes(rootIndex[a]) === false)
 							collect.push(rootIndex[a]);
 					}
 				}

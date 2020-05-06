@@ -142,11 +142,11 @@ var assignElementData = {
 			}
 		}
 		else for (var i = 0, n = list.length; i < n; i++)
-			list[i].selected = val.indexOf(typeData === Number ? Number(list[i].value) : list[i].value) !== -1;
+			list[i].selected = val.includes(typeData === Number ? Number(list[i].value) : list[i].value);
 	},
 	checkbox:function(val, element){
 		if(val.constructor === Array)
-			element.checked = val.indexOf(element.typeData === Number ? Number(element.value) : element.value) !== -1;
+			element.checked = val.includes(element.typeData === Number ? Number(element.value) : element.value);
 		else if(val.constructor === Boolean)
 			element.checked = Boolean(val);
 		else{

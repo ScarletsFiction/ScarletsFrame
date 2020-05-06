@@ -63,7 +63,7 @@ $(function(){
 		var path = this.href.replace(window.location.origin, '');
 
 		// If it's different domain
-		if(path.indexOf('//') !== -1){
+		if(path.includes('//')){
 			sf.views.onCrossing(this.href, this.getAttribute('target'));
 			return;
 		}
@@ -305,7 +305,7 @@ var self = sf.views = function View(selector, name){
 	};
 
 	self.on = function(event, func){
-		if(event.indexOf(' ') !== -1){
+		if(event.includes(' ')){
 			event = event.split(' ');
 			for (var i = 0; i < event.length; i++) {
 				self.on(event[i], func);
@@ -317,14 +317,14 @@ var self = sf.views = function View(selector, name){
 		if(onEvent[event] === void 0)
 			return console.error("Event '"+event+"' was not exist");
 
-		if(onEvent[event].indexOf(func) === -1)
+		if(onEvent[event].includes(func) === false)
 			onEvent[event].push(func);
 
 		return self;
 	}
 
 	self.off = function(event, func){
-		if(event.indexOf(' ') !== -1){
+		if(event.includes(' ')){
 			event = event.split(' ');
 			for (var i = 0; i < event.length; i++) {
 				self.off(event[i], func);
@@ -441,7 +441,7 @@ var self = sf.views = function View(selector, name){
 		var parentSimilarity = null;
 
 		for (var i = 0; i < self.relatedDOM.length; i++) {
-			if(relatedPage.indexOf(self.relatedDOM[i]) === -1){
+			if(relatedPage.includes(self.relatedDOM[i]) === false){
 				if(lastSibling === null){
 					lastSibling = self.relatedDOM[i];
 					parentSimilarity = lastSibling.parentNode;

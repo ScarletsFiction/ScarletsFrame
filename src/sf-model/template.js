@@ -32,7 +32,7 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 				i = atIndex;
 				n = i+1;
 			}
-			else if(atIndex.indexOf(i) === -1)
+			else if(atIndex.includes(i) === false)
 				continue;
 		}
 

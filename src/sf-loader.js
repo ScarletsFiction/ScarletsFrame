@@ -13,17 +13,17 @@ sf.loader = new function(){
 	// Make event listener
 	self.onFinish = function(func){
 		if(self.DOMWasLoaded) return func();
-		if(whenDOMLoaded.indexOf(func) !== -1) return;
+		if(whenDOMLoaded.includes(func)) return;
 		whenDOMLoaded.push(func);
 	}
 	self.domReady = function(func){
 		if(self.DOMReady) return func();
-		if(whenDOMReady.indexOf(func) !== -1) return;
+		if(whenDOMReady.includes(func)) return;
 		whenDOMReady.push(func);
 	}
 	self.onProgress = function(func){
 		if(self.DOMWasLoaded) return func(self.loadedContent, self.totalContent);
-		if(whenProgress.indexOf(func) !== -1) return;
+		if(whenProgress.includes(func)) return;
 		whenProgress.push(func);
 	}
 

@@ -414,7 +414,7 @@ function refreshLang(list, noPending){
 }
 
 function assignSquareBracket(elem, value){
-	if(value.indexOf('[') !== -1){
+	if(value.includes('[')){
 		value = value.replace(/(?=[^\\]|^)\[(.*?)\]/g, function(full, match){
 			return '*#'+match+'*#';
 		}).split('*#');
@@ -504,10 +504,10 @@ function elementReferencesRefresh(elem){
 				// It would need to add more `eRef[i].textContent` on the template
 				if(hasBracket.length === 3){ // text, [element], text
 					var found = false;
-					if(hasBracket[0].indexOf('{') !== -1)
+					if(hasBracket[0].includes('{'))
 						found = 0;
 
-					if(hasBracket[2].indexOf('{') !== -1){
+					if(hasBracket[2].includes('{')){
 						if(found !== false){
 							console.error('Currently only one square language template that can be combined with model template');
 							continue;
@@ -547,7 +547,7 @@ function elementReferencesRefresh(elem){
 			}
 
 			// Avoid translating on different value that not supposed to be translated
-			if(parse_index.indexOf(match) === -1){
+			if(parse_index.includes(match) === false){
 				validMatch = false;
 				return full;
 			}

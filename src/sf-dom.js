@@ -204,7 +204,7 @@ class DOMList{
 
 		if(name.constructor === Object){
 			for(var key in name){
-				if(key.indexOf('-') === -1)
+				if(key.includes('-') === false)
 					continue;
 
 				name[key.replace(css_str, css_strRep)] = name[key];
@@ -451,6 +451,7 @@ function recreateDOMList($el, length){
 	self.fn.reverse = Array.prototype.reverse;
 	self.fn.slice = Array.prototype.slice;
 	self.fn.filter = Array.prototype.filter;
+	self.fn.includes = Array.prototype.includes;
 
 	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);
@@ -528,7 +529,7 @@ function recreateDOMList($el, length){
 	 * @return null
 	 */
 	self.on = function(element, event, selector, callback, options){
-		if(event.indexOf(' ') !== -1){
+		if(event.includes(' ')){
 			event = event.split(' ');
 			for (var i = 0; i < event.length; i++) {
 				self.on(element, event[i], selector, callback, options);

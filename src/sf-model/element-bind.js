@@ -204,7 +204,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 	if(bindedKey[propertyName] !== void 0){
 		var ref = bindedKey[propertyName];
-		if(ref.indexOf(callback) === -1)
+		if(ref.includes(callback) === false)
 			ref.push(callback);
 
 		if(elementBind !== void 0){
@@ -301,7 +301,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 
 		if(element.parentNode !== null){
 			var newElem = template.html;
-			if(element.tagName.indexOf('-') !== -1)
+			if(element.tagName.includes('-'))
 				element.sf$componentIgnore = true;
 
 			element.parentNode.replaceChild(newElem, element);
