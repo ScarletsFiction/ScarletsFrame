@@ -81,18 +81,11 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 					return;
 
 				var call = findEventFromList($.getSelector(event.target, true, realThat));
-				if(call !== void 0){
-					// Found, stop event to other parent
-		    		event.stopPropagation();
-
+				if(call !== void 0)
 					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope, withKey && realThat.sf$repeatListIndex);
-				}
 
 				return;
 			}
-
-			// Stop callback from other parent
-	    	event.stopPropagation();
 
 			var call = findEventFromList(void 0);
 			if(call !== void 0)
@@ -143,22 +136,33 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		keys.delete('capture');
 	}
 
-	if(eventName.indexOf('mouse') === 0){
-		eventName = 'pointer'+eventName.slice(5);
+	if(keys.has('right') && (eventName.includes('mouse') || eventName.includes('pointer'))){
+		if(eventName.includes('mouse'))
+			eventName = 'pointer'+eventName.slice(5);
 
 		// Prevent context menu on mouse event
-		if(keys.has('right'))
-			(rootHandler || that).addEventListener('contextmenu', function(ev){
-				ev.preventDefault();
-				ev.stopPropagation();
-				ev.stopImmediatePropagation();
-			}, options);
+		(rootHandler || that).addEventListener('contextmenu', function(ev){
+			ev.preventDefault();
+		}, options);
 	}
 
 	if(specialEvent[eventName]){
 		specialEvent[eventName](that, keys, script, _modelScope, rootHandler);
 		return;
 	}
+
+	var pointerCode = 0;
+	if(keys.has('left')) pointerCode |= 1;
+	if(keys.has('middle')) pointerCode |= 2;
+	if(keys.has('right')) pointerCode |= 4;
+	if(keys.has('4th')) pointerCode |= 8;
+	if(keys.has('5th')) pointerCode |= 16;
+
+	var modsCode = 0;
+	if(keys.has('ctrl')) modsCode |= 1;
+	if(keys.has('alt')) modsCode |= 2;
+	if(keys.has('shift')) modsCode |= 4;
+	if(keys.has('meta')) modsCode |= 8;
 
 	if(direct && keys.size === 0)
 		var callback = script;
@@ -174,11 +178,11 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 				ev.stopPropagation();
 			}
 
-			if(ev.ctrlKey !== void 0){
-				if(ev.ctrlKey !== keys.has('ctrl')
-					|| ev.altKey !== keys.has('alt')
-					|| ev.shiftKey !== keys.has('shift')
-					|| ev.metaKey !== keys.has('meta'))
+			if(ev.ctrlKey !== void 0 && modsCode === 0){
+				if(modsCode & 1 && ev.ctrlKey !== true
+					|| modsCode & 2 && ev.altKey !== true
+					|| modsCode & 4 && ev.shiftKey !== true
+					|| modsCode & 8 && ev.metaKey !== true)
 					return;
 			}
 
@@ -197,12 +201,8 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 			8 : 4th button (typically the "Browser Back" button)
 			16 : 5th button (typically the "Browser Forward" button)
 			*/
-			else if(ev.constructor === PointerEvent){
-				if(!(ev.buttons & 1) && keys.has('left')
-					|| !(ev.buttons & 2) && keys.has('right')
-					|| !(ev.buttons & 4) && keys.has('middle')
-					|| !(ev.buttons & 8) && keys.has('4th')
-					|| !(ev.buttons & 16) && keys.has('5th'))
+			else if(ev.constructor === MouseEvent || ev.constructor === PointerEvent){
+				if(pointerCode !== 0 && !(ev.buttons === 0 ? pointerCode & (1 << (ev.which-1)) : ev.buttons === pointerCode))
 					return;
 
 				ev.preventDefault();
@@ -432,9 +432,9 @@ function touchGesture(that, callback){
 			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 			lastAngle = startAngle = Math.atan2(dy, dx) * 180/Math.PI;
 
-			ev.scale = 
-			ev.angle = 
-			ev.totalScale = 
+			ev.scale =
+			ev.angle =
+			ev.totalScale =
 			ev.totalAngle = 0;
 
 			callback(ev);
