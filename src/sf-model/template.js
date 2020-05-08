@@ -133,7 +133,13 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 	var html = original === true ? template.html : template.html.cloneNode(true);
 	var addresses = template.addresses;
-	var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);
+
+	try{
+		var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);
+	}catch(e){
+		console.error("Error when processing:", template.html, item, modelRef);
+		throw e;
+	}
 
 	if(template.uniqPattern !== void 0)
 		html.sf$repeatListIndex = repeatListIndex;
