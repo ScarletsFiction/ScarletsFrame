@@ -202,8 +202,11 @@ class RepeatedProperty{ // extends Object
 		for(var key in that)
 			ProxyProperty(that, key, true);
 
-		if(alone === true)
+		if(alone === true){
+			// Output to real DOM if not being used for virtual list
+			EM.parentChilds = parentNode.children;
 			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
+		}
 		else alone();
 	}
 
@@ -1113,7 +1116,7 @@ class ElementManipulator{
 
 			this.list.$virtual.dom.textContent = '';
 
-			spacer[1].style.height = 
+			spacer[1].style.height =
 			spacer[0].style.height = 0;
 
 			this.list.$virtual.reset(true);
