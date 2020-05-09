@@ -175,7 +175,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 				ev.stopPropagation();
 			}
 
-			if(ev.ctrlKey !== void 0 && modsCode === 0){
+			if(ev.ctrlKey !== void 0 && modsCode !== 0){
 				if(modsCode & 1 && ev.ctrlKey !== true
 					|| modsCode & 2 && ev.altKey !== true
 					|| modsCode & 4 && ev.shiftKey !== true
