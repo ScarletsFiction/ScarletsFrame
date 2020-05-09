@@ -314,19 +314,13 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	var len = that.length;
 	var elem;
 	for (var i = 0; i < len; i++) {
-		if(isComponent){
+		if(isComponent)
 			elem = new template(that[i], namespace, EM.asScope);
-			that[i] = elem.model;
-		}
 		else{
 			if(temp === void 0)
 				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
 			else
 				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
-
-			// Check if this is a component container
-			if(elem.childElementCount === 1 && elem.children[0].model !== void 0)
-				that[i] = elem.model = elem.children[0].model;
 		}
 
 		if(typeof that[i] === "object"){
@@ -753,10 +747,6 @@ class ElementManipulator{
 				if(compareObject(temp.model, item) === false){
 					temp = templateParser(template, item, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && index);
 
-					// Check if this is a component container
-					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
-						item = temp.model = temp.children[0].model;
-
 					if(typeof item === "object"){
 						if(this.isComponent === false)
 							self.bindElement(temp, this.modelRef, template, item);
@@ -774,10 +764,8 @@ class ElementManipulator{
 			return temp;
 		}
 
-		if(template.constructor === Function){
+		if(template.constructor === Function)
 			temp = new template(item, this.namespace, this.asScope);
-			this.list[index] = temp.model;
-		}
 		else temp = templateParser(template, item, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && index);
 
 		if(typeof item === "object"){
@@ -846,17 +834,10 @@ class ElementManipulator{
 			var temp = this.elementRef.get(list[i]);
 
 			if(temp === void 0){
-				if(this.isComponent){
+				if(this.isComponent)
 					temp = new this.template(list[i], this.namespace, this.asScope);
-					list[i] = temp.model;
-				}
-				else{
+				else
 					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode, void 0, this.template.uniqPattern && i);
-
-					// Check if this is a component container
-					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
-						list[i] = temp.model = temp.children[0].model;
-				}
 
 				if(typeof list[i] === "object"){
 					if(this.isComponent === false)
@@ -929,17 +910,10 @@ class ElementManipulator{
 			var temp = this.elementRef.get(list[i]);
 
 			if(temp === void 0){
-				if(this.isComponent){
+				if(this.isComponent)
 					temp = new template(list[i], this.namespace, this.asScope);
-					list[i] = temp.model;
-				}
-				else{
+				else
 					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode, void 0, template.uniqPattern && i);
-
-					// Check if this is a component container
-					if(temp.childElementCount === 1 && temp.children[0].model !== void 0)
-						list[i] = temp.model = temp.children[0].model;
-				}
 
 				if(typeof list[i] === "object"){
 					if(this.isComponent === false)
