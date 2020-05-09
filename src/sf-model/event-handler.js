@@ -137,9 +137,6 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	}
 
 	if(keys.has('right') && (eventName.includes('mouse') || eventName.includes('pointer'))){
-		if(eventName.includes('mouse'))
-			eventName = 'pointer'+eventName.slice(5);
-
 		// Prevent context menu on mouse event
 		(rootHandler || that).addEventListener('contextmenu', function(ev){
 			ev.preventDefault();
