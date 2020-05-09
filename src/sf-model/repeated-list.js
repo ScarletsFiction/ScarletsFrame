@@ -102,6 +102,8 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	}
 	else mask = pattern[0];
 
+	EM.asScope = void 0;
+
 	var template;
 	if(!isComponent){
 		element.setAttribute('sf-bind-list', pattern[1]);
@@ -115,6 +117,8 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
 	}
+	else if(element.hasAttribute('sf-as-scope'))
+		EM.asScope = true;
 
 	EM.template = isComponent || template;
 	EM.list = this;
@@ -311,7 +315,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	var elem;
 	for (var i = 0; i < len; i++) {
 		if(isComponent){
-			elem = new template(that[i], namespace);
+			elem = new template(that[i], namespace, EM.asScope);
 			that[i] = elem.model;
 		}
 		else{
@@ -771,7 +775,7 @@ class ElementManipulator{
 		}
 
 		if(template.constructor === Function){
-			temp = new template(item, this.namespace);
+			temp = new template(item, this.namespace, this.asScope);
 			this.list[index] = temp.model;
 		}
 		else temp = templateParser(template, item, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && index);
@@ -810,7 +814,7 @@ class ElementManipulator{
 
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
-		if(this.template.modelRefRoot_path.length !== 0)
+		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(exist, index);
 
 		if(index === 0 && list.$virtual === void 0 && this.bound_end === void 0)
@@ -843,7 +847,7 @@ class ElementManipulator{
 
 			if(temp === void 0){
 				if(this.isComponent){
-					temp = new this.template(list[i], this.namespace);
+					temp = new this.template(list[i], this.namespace, this.asScope);
 					list[i] = temp.model;
 				}
 				else{
@@ -914,7 +918,7 @@ class ElementManipulator{
 		var overflow = list.length - other;
 		if(overflow < 0) other = other + overflow;
 
-		if(this.template.modelRefRoot_path.length !== 0)
+		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(exist, index, other);
 
 		for (var i = index; i < other; i++) {
@@ -926,7 +930,7 @@ class ElementManipulator{
 
 			if(temp === void 0){
 				if(this.isComponent){
-					temp = new template(list[i], this.namespace);
+					temp = new template(list[i], this.namespace, this.asScope);
 					list[i] = temp.model;
 				}
 				else{
@@ -1058,7 +1062,7 @@ class ElementManipulator{
 	remove(index){
 		var exist = this.parentChilds || this.elements || this.virtualRefresh();
 
-		if(this.template.modelRefRoot_path.length !== 0)
+		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(exist, index, index+1);
 
 		if(exist[index]){
@@ -1092,7 +1096,7 @@ class ElementManipulator{
 		for (var i = index; i < other; i++)
 			exist[index].remove();
 
-		if(this.template.modelRefRoot_path.length !== 0)
+		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(exist, index, other);
 
 		if(this.elements != void 0)
@@ -1105,7 +1109,7 @@ class ElementManipulator{
 		if(this.list.$virtual)
 			var spacer = [parentNode.firstElementChild, parentNode.lastElementChild];
 
-		if(this.template.modelRefRoot_path.length !== 0)
+		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(this.parentChilds || this.elements || this.virtualRefresh(), 0);
 
 		parentNode.textContent = '';
