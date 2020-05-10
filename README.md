@@ -27,12 +27,12 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 
 ## Install with CDN link
 You can download minified js from this repository or use this CDN link.<br>
+For supporting older browser you need to add [core-js and webcomponentsjs](#polyfill-for-older-browser) polyfill.<br>
 ```html
 <script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js'></script>
 ```
 
-For supporting older browser you need to add [core-js and webcomponentsjs](#polyfill-for-older-browser) polyfill.<br>
-But if you develop only for modern browser and focus for performance it's recommended for using below, you may still need to polyfill PointerEvent for Safari/Firefox desktop browser.
+But if you develop only for modern browser and focus for performance it's recommended for using below, you may still to polyfill PointerEvent for Safari/Firefox desktop browser.
 ```html
 <script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.es6.js'></script>
 ```
