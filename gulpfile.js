@@ -12,7 +12,7 @@ gulp.task('enableCompile', function(done){
   babel = require("gulp-babel");
   removeOldMap('dist/');
 
-  done();
+  done && done();
 });
 
 var dateMinify = {};
@@ -71,7 +71,7 @@ gulp.task('js-es5', function(){
               ie: "11"
             },
             modules: false,
-            loose: true
+            loose: false
           }
         ]
       ]
@@ -101,17 +101,11 @@ gulp.task('default', function(){
 function ie11(){
   require('./tests/server.js');
 
-  enableCompile();
-  gulp.watch(['src/**/*.js'], gulp.series('watch-js'));
+  gulp.task('enableCompile')();
+  gulp.watch(['src/**/*.js'], gulp.series('js-es5'));
 }
 
 gulp.task('ie11', ie11);
-
-gulp.task('ie11Fast', function(){
-  fast = true;
-  ie11();
-});
-
 gulp.task('compile', gulp.parallel(['enableCompile', 'js-es6', 'js-es5']));
 
 function swallowError(error){

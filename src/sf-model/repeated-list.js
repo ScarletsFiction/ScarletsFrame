@@ -65,18 +65,28 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 }
 
 function prepareRepeated(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-	var callback = modelRef['on$'+pattern[1]] || {};
+	var callback, prop, targetDeep;
+	if(pattern[1].constructor !== Array){
+		targetDeep = modelRef;
+		prop = pattern[1];
+	}
+	else{
+		targetDeep = deepProperty(modelRef, pattern[1].slice(0, -1));
+		prop = pattern[1][pattern[1].length - 1];
+	}
+
+	callback = targetDeep['on$'+prop] || {};
 
 	var compTemplate = (namespace || sf.component).registered[element.tagName.toLowerCase()];
 	if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
 		compTemplate[3] = element;
 
 	var isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
-
 	var EM = new ElementManipulator();
+
 	if(this.$EM === void 0){
 		hiddenProperty(this, '$EM', EM, true);
-		Object.defineProperty(modelRef, 'on$'+pattern[1], {
+		Object.defineProperty(targetDeep, 'on$'+prop, {
 			enumerable: true,
 			configurable: true,
 			get:function(){
@@ -106,7 +116,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 	var template;
 	if(!isComponent){
-		element.setAttribute('sf-bind-list', pattern[1]);
+		element.setAttribute('sf-bind-list', prop);
 
 		// Get reference for debugging
 		processingElement = element;
@@ -162,10 +172,18 @@ class RepeatedProperty{ // extends Object
 		if(that.constructor !== RepeatedProperty){
 			hiddenProperty(that, '_list', Object.keys(that));
 
-			var target = pattern[1].constructor !== Array ? modelRef : deepProperty(modelRef, pattern[1].slice(0, -1));
+			var target, prop;
+			if(pattern[1].constructor !== Array){
+				target = modelRef;
+				prop = pattern[1];
+			}
+			else{
+				target = deepProperty(modelRef, pattern[1].slice(0, -1));
+				prop = pattern[1][pattern[1].length-1];
+			}
 
 			Object.setPrototypeOf(that, RepeatedProperty.prototype);
-			Object.defineProperty(modelRef, pattern[1], {
+			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
 				get:function(){
@@ -351,10 +369,18 @@ class RepeatedList extends Array{
 
 		// Initialize property once
 		if(that.constructor !== RepeatedList){
-			var target = pattern[1].constructor !== Array ? modelRef : deepProperty(modelRef, pattern[1].slice(0, -1));
+			var target, prop;
+			if(pattern[1].constructor !== Array){
+				target = modelRef;
+				prop = pattern[1];
+			}
+			else{
+				target = deepProperty(modelRef, pattern[1].slice(0, -1));
+				prop = pattern[1][pattern[1].length-1];
+			}
 
 			Object.setPrototypeOf(that, RepeatedList.prototype);
-			Object.defineProperty(modelRef, pattern[1], {
+			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
 				get:function(){
