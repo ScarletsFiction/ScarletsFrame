@@ -92,7 +92,15 @@ sf.component = function(name, options, func, namespace){
 
 			if(outerHTML.template){
 				templatePath = outerHTML.template;
-				template = window.templates && window.templates[outerHTML.template];
+				if(window.templates){
+					if(window.templates[outerHTML.template]){
+						template = window.templates[outerHTML.template];
+
+						if(!outerHTML.keepTemplate)
+							delete window.templates[outerHTML.template];
+					}
+					else throw new Error("Template was not found for path: "+outerHTML.template);
+				}
 			}
 			else if(outerHTML.html)
 				template = outerHTML.html;
@@ -287,7 +295,7 @@ sf.component = function(name, options, func, namespace){
 		function Wrapper(){
 			return Reflect.construct(Class, arguments, Object.getPrototypeOf(this).constructor);
 		}
-		Wrapper.prototype = Object.create(Class.prototype, {constructor:{value: Wrapper, enumerable: false, writable: true, configurable: true}}); 
+		Wrapper.prototype = Object.create(Class.prototype, {constructor:{value: Wrapper, enumerable: false, writable: true, configurable: true}});
 		return Object.setPrototypeOf(Wrapper, Class);
 	})(HTMLElement);
 

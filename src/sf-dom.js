@@ -13,7 +13,7 @@ sf.dom = function(selector, context){
 	}
 	else if(selector.constructor === Function)
 		return sf.loader.onFinish(selector);
-	else if(selector[0] === '<' || selector[selector.length-1] === '>') 
+	else if(selector[0] === '<' || selector[selector.length-1] === '>')
 		return _DOMList(sf.dom.parseElement(selector, true));
 	else if(context){
 		if(context.classList === void 0)
@@ -344,7 +344,7 @@ class DOMList{
 		if(count === void 0)
 			return _DOMList(this[i]);
 
-		return _DOMList(this.slice(i, count > 0 ? count : void 0));			
+		return _DOMList(this.slice(i, count > 0 ? count : void 0));
 	}
 	insertAfter(el){
 		var parent = el.parentNode;
@@ -537,6 +537,12 @@ function recreateDOMList($el, length){
 			return;
 		}
 
+		if(callback !== void 0 && callback.constructor === Object){
+			var temp = options;
+			options = callback;
+			callback = temp;
+		}
+
 		if(selector.constructor === Function){
 			callback = selector;
 			selector = null;
@@ -545,12 +551,6 @@ function recreateDOMList($el, length){
 		else if(selector.constructor === Object){
 			options = selector;
 			selector = null;
-		}
-
-		if(callback.constructor === Object){
-			var temp = options;
-			options = callback;
-			callback = temp;
 		}
 
 		if(selector){
