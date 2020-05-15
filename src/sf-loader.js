@@ -56,7 +56,7 @@ sf.loader = new function(){
 		}
 	}
 
-	self.js = function(list){
+	self.js = function(list, async){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
@@ -71,7 +71,7 @@ sf.loader = new function(){
 		for(var i = 0; i < list.length; i++){
 			var s = document.createElement('script');
 	        s.type = "text/javascript";
-	        s.async = true;
+	        if(async) s.async = true;
 	        s.src = list[i];
 	        s.addEventListener('load', sf.loader.f, {once:true});
 	        s.addEventListener('error', sf.loader.f, {once:true});
