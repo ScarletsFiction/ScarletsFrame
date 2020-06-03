@@ -412,7 +412,7 @@ class DOMList{
 }
 
 function _DOMList(list){
-	if(!list || list.length === void 0 || list.constructor === HTMLCollection)
+	if(!list || list.forEach === void 0 || list.constructor !== NodeList)
 		return new DOMList(list);
 
 	var length = list.length;
