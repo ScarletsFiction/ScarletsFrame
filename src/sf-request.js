@@ -58,7 +58,7 @@ function request(method, url, data, options, callback){
 		for(var name in options.headers)
 			xhr.setRequestHeader(name, options.headers[name]);
 
-	if(typeof data === 'object'){
+	if(typeof data === 'object' && data !== null && data.constructor !== FormData){
 		if(options.sendType === 'JSON'){
 			xhr.setRequestHeader('Content-Type', 'application/json');
 			data = JSON.stringify(data);
