@@ -45,10 +45,10 @@ var sf = function(stuff, returnNode){
 };
 
 sf.internal = {};
-sf.regex = {
+sfRegex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	scopeVar:'(^|[^.\\]\\w])',
-	escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
+	// escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
 
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
@@ -64,9 +64,58 @@ sf.regex = {
 	anyOperation:/[ =(+-]/,
 };
 
+;(function(){
+	function createScope(value){
+		return {configurable:true, enumerable:true,
+			get:function(){return value},
+			set:function(val){
+				value = val;
+			}
+		};
+	}
+
+	sf.link = function(obj, key, val){
+		var candidate = false;
+
+		function check(temp){
+			if(temp === void 0)
+				return;
+
+			if(temp.set !== void 0){
+				// Can we handle it?
+				if(candidate !== false && temp.set !== candidate.set)
+					throw new Error("There are more than one object that have different set descriptor");
+
+				candidate = temp;
+				return;
+			}
+
+			if(candidate === false && val === void 0)
+				val = temp.value;
+		}
+
+		if(obj.constructor === Array)
+			for (var i = 0; i < obj.length; i++)
+				check(Object.getOwnPropertyDescriptor(obj[i], key));
+		else
+			for(var key in obj)
+				check(Object.getOwnPropertyDescriptor(obj[key], key));
+
+		if(candidate === false)
+			candidate = createScope(val);
+
+		if(obj.constructor === Array)
+			for (var i = 0; i < obj.length; i++)
+				Object.defineProperty(obj[i], key, candidate);
+		else
+			for(var key in obj)
+				Object.defineProperty(obj[key], key, candidate);
+	}
+})();
+
 function parsePropertyPath(str){
 	var temp = [];
-	temp.unshift(str.replace(sf.regex.parsePropertyPath, function(full, g1, g2){
+	temp.unshift(str.replace(sfRegex.parsePropertyPath, function(full, g1, g2){
 		if(g1 !== void 0){
 			if(isNaN(g1) === false)
 				g1 = Number(g1);
@@ -101,7 +150,7 @@ function avoidQuotes(str, func, onQuotes){
 	str = str.split(_es).join('');
 
 	var temp = [];
-	str = str.replace(sf.regex.getQuotes, function(full){
+	str = str.replace(sfRegex.getQuotes, function(full){
 		temp.push(full);
 		return _es+(temp.length-1)+_es;
 	});
