@@ -233,13 +233,22 @@ class RepeatedProperty{ // extends Object
 	}
 
 	getElement(prop){
-		if(this.$EM.constructor === ElementManipulatorProxy)
-			return this.$EM.getElement_RP(this);
+		var $EM = this.$EM;
+		if($EM.constructor === ElementManipulatorProxy)
+			$EM = $EM.list[0];
 
 		// If single RepeatedElement instance
 		if(typeof this[prop] === 'object')
-			return this.$EM.elementRef.get(this[prop]);
-		return (this.$EM.parentChilds || this.$EM.elements)[this._list.indexOf(prop)];
+			return $EM.elementRef.get(this[prop]);
+		return ($EM.parentChilds || $EM.elements)[this._list.indexOf(prop)];
+	}
+
+	// Return array
+	getElements(index){
+		if(this.$EM.constructor === ElementManipulatorProxy)
+			return this.$EM.getElement_RP(this, index);
+
+		return [this.getElement(index)];
 	}
 
 	refresh(){
@@ -679,19 +688,29 @@ class RepeatedList extends Array{
 			this.$virtual.reinitCursor();
 	}
 
+	// Return single element from first $EM
 	getElement(index){
-		if(this.$EM.constructor === ElementManipulatorProxy)
-			return this.$EM.getElement_RL(this, index);
+		var $EM = this.$EM;
+		if($EM.constructor === ElementManipulatorProxy)
+			$EM = $EM.list[0];
 
 		// If single RepeatedElement instance
 		if(index.constructor === Number){
 			if(typeof this[index] !== 'object')
-				return (this.$EM.parentChilds || this.$EM.elements || this.$EM.virtualRefresh())[index];
+				return ($EM.parentChilds || $EM.elements || $EM.virtualRefresh())[index];
 
-			return this.$EM.elementRef.get(this[index]);
+			return $EM.elementRef.get(this[index]);
 		}
 
-		return this.$EM.elementRef.get(index);
+		return $EM.elementRef.get(index);
+	}
+
+	// Return array
+	getElements(index){
+		if(this.$EM.constructor === ElementManipulatorProxy)
+			return this.$EM.getElement_RL(this, index);
+
+		return [this.getElement(index)];
 	}
 
 	indexOf(item){
@@ -1340,11 +1359,10 @@ class ElementManipulatorProxy{
 			if(index.constructor === Number){
 				if(typeof instance[index] !== 'object')
 					val = (list[i].parentChilds || list[i].elements || list[i].virtualRefresh())[index];
-
-				val = list[i].elementRef.get(instance[index]);
+				else
+					val = list[i].elementRef.get(instance[index]);
 			}
-
-			val = list[i].elementRef.get(index);
+			else val = list[i].elementRef.get(index);
 
 			if(val)
 				got.push(val);
