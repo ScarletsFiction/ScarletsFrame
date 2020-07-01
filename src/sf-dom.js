@@ -835,16 +835,18 @@ function recreateDOMList($el, length){
 	}
 
 	self.childIndexes = function(array, context){
-		if(array.length === 0)
+		if(array.length === 0) // 2ms
 			return context;
 
 		var element = context || documentElement;
 
-		if(array[0].constructor === String && element.id !== array[0].substr(1))
+		if(array[0].constructor === String && element.id !== array[0].substr(1)) // 3.9ms
 			element = element.querySelector(array[0]);
 
-		for (var i = 0; i < array.length; i++) {
-			element = element.childNodes.item(array[i]);
+		for (var i = 0; i < array.length; i++) { // 36ms
+			element = array[i] === 0
+				? element.firstChild
+				: element.childNodes.item(array[i]); // 37ms
 
 			if(element === null)
 				return null;

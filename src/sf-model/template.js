@@ -22,7 +22,7 @@ function elseIfHandle(else_, arg){
 var templateParser_regex = /{{%=([0-9]+)%/g;
 var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
-	parsed = parsed || {};
+	parsed = parsed || (new Array(parse.length));
 	var temp = null;
 
 	// Get or evaluate static or dynamic data
@@ -38,7 +38,7 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 
 		var ref = parse[i];
 		var arg = ref.data;
-		arg[0] = item;
+		arg[0] = item; //7ms
 
 		// Direct evaluation type
 		if(ref.type === REF_DIRECT){
@@ -52,18 +52,18 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 					temp = String(temp);
 			}
 
-			parsed[i] = {type:ref.type, data:temp};
+			parsed[i] = {type:REF_DIRECT, data:temp};
 			continue;
 		}
 
 		if(ref.type === REF_EXEC){
-			parsed[i] = {type:ref.type, data:ref.get(arg[0], arg[1], _escapeParse, repeatListIndex)};
+			parsed[i] = {type:REF_EXEC, data:ref.get(arg[0], arg[1], _escapeParse, repeatListIndex)};
 			continue;
 		}
 
 		// Conditional type
 		if(ref.type === REF_IF){
-			parsed[i] = {type:ref.type, data:''};
+			parsed[i] = {type:REF_IF, data:''};
 
 			// If condition was not meet
 			if(!ref.if[0](arg[0], arg[1], _escapeParse, repeatListIndex)){
@@ -90,7 +90,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 		}
 
 		var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
-			(current.tagName === 'INPUT' && sf.regex.inputAttributeType.test(current.type) === false)
+			(current.tagName === 'INPUT' && sfRegex.inputAttributeType.test(current.type) === false)
 		));
 
 		var temp = {
@@ -135,7 +135,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	var addresses = template.addresses;
 
 	try{
-		var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);
+		var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);  //18ms
 	}catch(e){
 		console.error("Error when processing:", template.html, item, modelRef);
 		throw e;
@@ -165,7 +165,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	// Find element where the data belongs to
 	for (var i = 0; i < addresses.length; i++) {
 		var ref = addresses[i];
-		var current = $.childIndexes(ref.address, html);
+		var current = $.childIndexes(ref.address, html); //26ms
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
@@ -183,7 +183,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			});
 
 			if(ref.direct !== void 0){
-				refA.textContent = parsed[ref.direct].data;
+				refA.textContent = parsed[ref.direct].data; //40ms
 				continue;
 			}
 
@@ -244,9 +244,9 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	if(template.specialElement.input.length !== 0){
 		// Process element for input bind
 		var specialInput = template.specialElement.input;
-		var specialInput_ = [];
+		var specialInput_ = new Array(specialInput.length);
 		for (var i = 0; i < specialInput.length; i++) {
-			specialInput_.push($.childIndexes(specialInput[i], html));
+			specialInput_[i] = $.childIndexes(specialInput[i], html);
 		}
 
 		bindInput(specialInput_, item, template.mask, modelRef);
@@ -255,9 +255,9 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	if(template.specialElement.repeat.length !== 0){
 		// Process element for sf-repeat-this
 		var specialRepeat = template.specialElement.repeat;
-		var specialRepeat_ = [];
+		var specialRepeat_ = new Array(specialRepeat.length);
 		for (var i = 0; i < specialRepeat.length; i++) {
-			specialRepeat_.push($.childIndexes(specialRepeat[i], html));
+			specialRepeat_[i] = $.childIndexes(specialRepeat[i], html);
 		}
 
 		repeatedListBinding(specialRepeat_, item, void 0, template);

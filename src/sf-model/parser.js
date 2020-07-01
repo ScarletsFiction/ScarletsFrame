@@ -8,7 +8,7 @@ var dataParser = function(html, _model_, template, _modelScope, preParsedReferen
 	var preParsed = [];
 	var lastParsedIndex = preParsedReference.length;
 
-	var prepared = html.replace(sf.regex.dataParser, function(actual, temp){
+	var prepared = html.replace(sfRegex.dataParser, function(actual, temp){
 		temp = avoidQuotes(temp, function(temp_){
 			// Unescape HTML
 			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
@@ -47,8 +47,8 @@ var dataParser = function(html, _model_, template, _modelScope, preParsedReferen
 // Dynamic data parser
 var uniqueDataParser = function(html, template, _modelScope){
 	// Build script preparation
-	html = html.replace(sf.regex.allTemplateBracket, function(full, matched){ // {[ ... ]}
-		if(sf.regex.anyCurlyBracket.test(matched) === false) // {{ ... }}
+	html = html.replace(sfRegex.allTemplateBracket, function(full, matched){ // {[ ... ]}
+		if(sfRegex.anyCurlyBracket.test(matched) === false) // {{ ... }}
 			return "_result_ += '"+matched.split("\\").join("\\\\").split("'").join("\\'").split("\n").join("\\\n")+"'";
 
 		var vars = [];
@@ -59,7 +59,7 @@ var uniqueDataParser = function(html, template, _modelScope){
 	});
 
 	var preParsedReference = [];
-	var prepared = html.replace(sf.regex.uniqueDataParser, function(actual, temp){
+	var prepared = html.replace(sfRegex.uniqueDataParser, function(actual, temp){
 		temp = avoidQuotes(temp, function(temp_){
 			// Unescape HTML
 			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
@@ -133,14 +133,14 @@ var findElse = function(text){
 
 	var obj = {
 		if:text.shift(),
-		elseIf:[],
 		elseValue:else_
 	};
 
 	// Separate condition script and value
+	obj.elseIf = new Array(text.length);
 	for (var i = 0; i < text.length; i++) {
 		var val = text[i].split(':');
-		obj.elseIf.push([val.shift(), val.join(':')]);
+		obj.elseIf[i] = [val.shift(), val.join(':')];
 	}
 
 	return obj;
@@ -223,7 +223,7 @@ function toObserve(full, model, properties){
 	return full;
 }
 
-// Return element or 
+// Return element or
 internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic){
 	var reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
 	var injectTemplate = targetNode.getElementsByTagName('sf-template');
@@ -314,9 +314,9 @@ var createModelKeysRegex = internal.model.createModelKeysRegex = function(target
 	var obj = {};
 
 	// Don't match text inside quote, or object keys
-	obj.modelRefRoot_regex = RegExp(sf.regex.scopeVar+'('+modelKeys+')', 'g');
+	obj.modelRefRoot_regex = new RegExp(sfRegex.scopeVar+'('+modelKeys+')', 'g');
 	if(mask !== null)
-		obj.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
+		obj.modelRef_regex = new RegExp(sfRegex.getSingleMask.join(mask), 'gm');
 
 	obj.modelRef_regex_mask = mask;
 	return obj;
@@ -350,7 +350,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// For preparing the next model too
 	if(template.modelRef_regex_mask !== mask){
-		template.modelRef_regex = RegExp(sf.regex.getSingleMask.join(mask), 'gm');
+		template.modelRef_regex = RegExp(sfRegex.getSingleMask.join(mask), 'gm');
 		template.modelRef_regex_mask = mask;
 	}
 
@@ -377,7 +377,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			// Text or attribute
 			if(current.type === REF_DIRECT){
 				toObserve.template.i = i;
-				current.data[0] = current.data[0].replace(sf.regex.itemsObserve, toObserve, template, true);
+				current.data[0] = current.data[0].replace(sfRegex.itemsObserve, toObserve, template, true);
 
 				// Convert to function
 				current.get = modelScript(mask, current.data.shift(), repeatedListKey);
@@ -411,7 +411,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			}
 
 			toObserve.template.i = i;
-			checkList.split('"').join("'").replace(sf.regex.itemsObserve, toObserve);
+			checkList.split('"').join("'").replace(sfRegex.itemsObserve, toObserve);
 		}
 	}
 
@@ -662,7 +662,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			// Start enclosed if closing pattern was found
 			var enclosed = currentNode.textContent.indexOf(']}');
 			if(enclosed !== -1 && (enclosing === -1 || enclosing > enclosed)){ // avoid {[ ... ]}
-				enclosedHTMLParse = true; // when ]} ... 
+				enclosedHTMLParse = true; // when ]} ...
 				continue;
 			}
 
@@ -740,7 +740,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 				if(ref.type === REF_DIRECT){
 					toObserve.template.i = i;
-					ref.data[0] = ref.data[0].replace(sf.regex.itemsObserve, toObserve);
+					ref.data[0] = ref.data[0].replace(sfRegex.itemsObserve, toObserve);
 
 					// Convert to function
 					ref.get = modelScript(void 0, ref.data.shift());

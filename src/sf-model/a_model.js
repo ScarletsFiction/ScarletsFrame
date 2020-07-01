@@ -62,7 +62,7 @@ function trimIndentation(text){
 	if(indent === void 0) return text;
 	indent = indent.length - indent.trim().length;
 	if(indent === 0) return text;
-	return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
+	return text.replace(new RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
 }
 
 function _escapeParse(html, vars){
@@ -98,7 +98,7 @@ function modelScript(mask, script, repeatedListKey){
 	try{
 		if(repeatedListKey === void 0)
 			return new Function(mask || '_model_', '_modelScope', '_escapeParse', script);
-		else 
+		else
 			return new Function(mask || '_model_', '_modelScope', '_escapeParse', repeatedListKey, script);
 	} catch(e){
 		console.log(script);

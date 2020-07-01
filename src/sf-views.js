@@ -99,7 +99,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				keys.push(match);
 				return '/([^/]+)';
 			});
-			var route = RegExp('^' + regex + '$');
+			var route = new RegExp('^' + regex + '$');
 
 			if(ref.url !== void 0)
 				route.url = ref.url;
@@ -160,7 +160,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 
             if(hasChild.length !== 0){
             	route.hasChild = hasChild;
-            	route.forChild = RegExp(regex);
+            	route.forChild = new RegExp(regex);
             }
 
 			routes.push(route);

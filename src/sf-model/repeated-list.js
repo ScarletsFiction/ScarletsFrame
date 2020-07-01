@@ -16,7 +16,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		element.removeAttribute('sf-repeat-this');
 		element.sf$componentIgnore = true;
 
-		var pattern = script.match(sf.regex.repeatedList);
+		var pattern = script.match(sfRegex.repeatedList);
 		if(pattern === null){
 			console.error("'", script, "' should match the pattern like `key,val in list`");
 			continue;
@@ -156,7 +156,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		parentNode.insertBefore(EM.bound_end, nextSibling);
 
 		if(that.length !== void 0)
-			EM.elements = Array(that.length);
+			EM.elements = new Array(that.length);
 		else EM.elements = [];
 
 		// Output to real DOM if not being used for virtual list
@@ -540,7 +540,7 @@ class RepeatedList extends Array{
 		return this.slice(0, arguments.length);
 	}
 
-	constructor(arr){return Array(arr)}
+	constructor(arr){return new Array(arr)}
 	assign(whichIndex, withArray){
 		if(whichIndex.constructor !== Number){
 			withArray = whichIndex;
@@ -999,7 +999,7 @@ class ElementManipulator{
 		if(overflow < 0)
 			count += overflow;
 
-		var vDOM = Array(count);
+		var vDOM = new Array(count);
 		for (var i = 0; i < count; i++) {
 			vDOM[i] = exist[from + i];
 			vDOM[i].remove();

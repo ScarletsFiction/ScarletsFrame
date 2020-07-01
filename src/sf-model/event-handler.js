@@ -4,7 +4,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	var direct = false;
 	var script = data.value;
 	script = avoidQuotes(script, function(script_){
-		if(sf.regex.anyOperation.test(script_) === false)
+		if(sfRegex.anyOperation.test(script_) === false)
 			direct = true;
 
 		// Replace variable to refer to current scope

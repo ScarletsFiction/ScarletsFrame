@@ -13,13 +13,13 @@ sf.component = function(name, options, func, namespace){
 	}
 
 	if(sf.component.registered[name]){
-		var ret = [];
 		var component = document.body.getElementsByTagName(name);
 		if(component.length === 0)
-			return ret;
+			return [];
 
+		var ret = new Array(component.length);
 		for (var i = 0, n = component.length; i < n; i++)
-			ret.push(component[i].model);
+			ret[i] = component[i].model;
 
 		return ret;
 	}
