@@ -81,6 +81,8 @@ sf.component = function(name, options, func, namespace){
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
+		else if(hotReload)
+			hotComponentRefresh(scope, name, func);
 	}
 
 	self.html = function(name, outerHTML, namespace, retry){
@@ -150,6 +152,8 @@ sf.component = function(name, options, func, namespace){
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
+		else if(hotReload)
+			hotComponentTemplate(scope, name, temp);
 	}
 
 	var tempDOM = document.createElement('div');
@@ -208,8 +212,14 @@ sf.component = function(name, options, func, namespace){
 		// Call function that handle scope
 		registrar[0](newObj, (namespace || sf.model), $item);
 		if(newObj.constructor !== Object){
-			proxyClass(newObj, newObj.constructor);
+			proxyClass(newObj);
 			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
+		}
+
+		// Save the item for hot reloading
+		if(hotReload){
+			newObj.$el.$item = $item;
+			hotComponentAdd(scope, name, newObj);
 		}
 
 		if(registrar[4] === void 0)
@@ -381,6 +391,9 @@ sf.component = function(name, options, func, namespace){
 
 				if(that.model.destroy)
 					that.model.destroy();
+
+				if(hotReload)
+					hotComponentRemove(that);
 			}, 500);
 		};
 

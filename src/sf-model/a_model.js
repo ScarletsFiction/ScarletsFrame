@@ -24,8 +24,8 @@ self.init = function(el, modelName, namespace){
 	}
 
 	if(model.constructor !== Object){
-		if(model.sf$internal.methodProxied !== true){
-			proxyClass(model, model.constructor);
+		if(model.sf$internal.proxied === void 0){
+			proxyClass(model);
 			model.sf$internal.proxied = true;
 		}
 
