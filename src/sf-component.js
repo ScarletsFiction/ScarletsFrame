@@ -153,7 +153,7 @@ sf.component = function(name, options, func, namespace){
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
 		else if(hotReload)
-			hotComponentTemplate(scope, name, temp);
+			hotComponentTemplate(scope, name);
 	}
 
 	var tempDOM = document.createElement('div');
@@ -200,7 +200,6 @@ sf.component = function(name, options, func, namespace){
 			$item[attr[i].nodeName] = attr[i].value;
 		}
 
-		var newID = name+'@'+(registrar[2]++);
 		var newObj = (asScope ? $item : (
 			inherit !== void 0 ? new inherit() : {}
 		));
@@ -291,8 +290,7 @@ sf.component = function(name, options, func, namespace){
 		newObj.$el[0] = element;
 
 		element.model = newObj;
-		element.sf$controlled = newID;
-		element.sf$componentFrom = name;
+		element.sf$controlled = name;
 
 		element.sf$initTriggered = true;
 		return element;
