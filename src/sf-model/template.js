@@ -293,12 +293,12 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.dynamicFlag !== void 0){ // Dynamic data
 			if(parsed[cRef.direct] !== void 0){
-				var tDOM = Array.from($.parseElement(parsed[cRef.direct].data)).reverse();
+				var tDOM = Array.from($.parseElement(parsed[cRef.direct].data));
 				var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 				var notExist = false;
 
 				// Replace if exist, skip if similar
-				for (var a = 0; a < tDOM.length; a++) {
+				for (var a = tDOM.length-1; a >= 0; a--) {
 					if(currentDOM[a] === void 0){
 						notExist = true;
 						break;
@@ -310,7 +310,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 				// Add if not exist
 				if(notExist){
-					for (var a = tDOM.length - 1; a >= 0; a--)
+					for (var a = 0; a < tDOM.length; a++)
 						cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
 				}
 
