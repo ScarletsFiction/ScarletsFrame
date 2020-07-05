@@ -44,7 +44,7 @@ function reapplyScope(proxy, space, scope, func){
 	function refunction(prop, replacement){
 		var proxier = proxy[prop];
 		if(proxier === void 0){
-			if(scope[prop] && scope[prop].ref !== void 0 && scope[prop].protoFunc === void 0)
+			if(scope[prop] && scope[prop].ref !== void 0)
 				proxier = proxy[prop] = scope[prop];
 			else{
 				proxier = proxy[prop] = function(){
@@ -53,7 +53,11 @@ function reapplyScope(proxy, space, scope, func){
 			}
 		}
 
-		proxier.ref = replacement || scope[prop];
+		if(proxier.protoFunc !== void 0)
+			proxier.ref = replacement || proxier.ref;
+		else
+			proxier.ref = replacement || scope[prop];
+
 		scope[prop] = proxier;
 	}
 
@@ -86,6 +90,7 @@ function reapplyScope(proxy, space, scope, func){
 		return true;
 	}}), space, (scope.$el && scope.$el.$item) || {});
 
+	scope.hotReloaded && scope.hotReloaded(scope);
 	enabled = false;
 }
 
@@ -136,10 +141,11 @@ function hotComponentRemove(el){
 
 // On component scope reregistered
 function hotComponentRefresh(space, name, func){
-	var list = proxySpace.get(space)[name];
-
-	if(list === void 0)
+	var list = proxySpace.get(space);
+	if(list === void 0 || list[name] === void 0)
 		return;
+
+	list = list[name];
 
 	for (var i = 0; i < list.length; i++){
 		var proxy = proxyComponent.get(list[i]);

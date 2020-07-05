@@ -251,11 +251,6 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(registrar[4] === void 0)
 			registrar[4] = internal.model.createModelKeysRegex(element, newObj, null);
 
-		if(registrar[2] !== void 0){
-			registrar[2].push(newObj);
-			element.sf$collection = registrar[2];
-		}
-
 		if(element.childNodes.length === 0){
 			var temp = registrar[3];
 			var tempDOM = temp.tempDOM;
@@ -308,6 +303,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			newObj.$el[0] = element;
 			if(element.sf$componentIgnore === true)
 				return;
+		}
+
+		if(registrar[2] !== void 0){
+			registrar[2].push(newObj);
+			element.sf$collection = registrar[2];
 		}
 
 		element.model = newObj;
