@@ -1,4 +1,5 @@
 // ToDo: put bindedkey that hold binding information to the element so sf-lang can use from it
+// Need more performance optimization
 
 ;(function(){
 
@@ -164,7 +165,7 @@ function getMany(paths, obj, callback){
 
 		if(temp)
 			value[paths[i]] = temp;
-		else 
+		else
 			missing.push(paths[i]);
 	}
 
@@ -383,12 +384,10 @@ function refreshLang(list, noPending){
 	if(parentElement.size === 0)
 		return;
 
-	parentElement = Array.from(parentElement);
 	var appliedElement = new Set();
 
 	// Reapply template
-	for (var a = 0; a < parentElement.length; a++) {
-		var elem = parentElement[a];
+	for(var elem of parentElement){
 		elem.sf_lang = self.default;
 
 		var model = elem.model;
@@ -453,7 +452,7 @@ function assignSquareBracket(elem, value){
 			}
 
 			// This may rare case, but does found other node type?
-			whenEven = !whenEven; 
+			whenEven = !whenEven;
 		}
 
 		if(nodes[a] !== void 0 && nodes[a].nodeType === 3)
@@ -462,7 +461,7 @@ function assignSquareBracket(elem, value){
 	else{
 		if(elem.nodeType !== 3 && elem.firstChild !== null)
 			elem.firstChild.textContent = value;
-		else 
+		else
 			elem.textContent = value;
 	}
 }

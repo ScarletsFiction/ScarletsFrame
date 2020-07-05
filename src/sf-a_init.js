@@ -44,6 +44,7 @@ var sf = function(stuff, returnNode){
 	}
 };
 
+var hotReload = false;
 var sfRegex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	scopeVar:'(^|[^.\\]\\w])',
@@ -266,21 +267,19 @@ function proxyClass(scope){
 
 	var list = new Set();
 	getPrototypeMethods(list, parent);
-	list = Array.from(list);
 
-	for(var i=0; i<list.length; i++){
-		var key = list[i];
-
+	for(var key of list){
 		// Proxy only when child method has similar name with the parent
 		if(scope[key] !== proto[key] && scope[key].ref === void 0){
-			var tempFunc = scope[key];
-			let tempProxy = scope[key] = function(){
+			let tempProxy = function(){
 				scope.super = tempProxy.protoFunc;
 				return tempProxy.ref.apply(scope, arguments);
 			}
 
-			tempProxy.ref = tempFunc;
+			tempProxy.ref = scope[key];
 			tempProxy.protoFunc = proto[key];
+
+			scope[key] = tempProxy;
 		}
 	}
 }

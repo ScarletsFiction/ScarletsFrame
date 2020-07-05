@@ -69,9 +69,9 @@ sf.component = function(name, options, func, namespace){
 		// internal.component.tagName.add(name.toUpperCase());
 		var scope = namespace || self;
 
-		// 0=Function for scope, 1=DOM Contructor, 2=incremental ID, 3=Template
+		// 0=Function for scope, 1=DOM Contructor, 2=reserved ID, 3=Template
 		if(scope.registered[name] === void 0)
-			scope.registered[name] = [func, void 0, 0, void 0, void 0]; // index 1 is $ComponentConstructor
+			scope.registered[name] = new Array(5); // index 1 is $ComponentConstructor
 
 		scope.registered[name][0] = func;
 		var construct = defineComponent(name);
@@ -83,6 +83,9 @@ sf.component = function(name, options, func, namespace){
 			checkWaiting(name, namespace);
 		else if(hotReload)
 			hotComponentRefresh(scope, name, func);
+
+		// ToDo: return list of created component
+		// return [];
 	}
 
 	self.html = function(name, outerHTML, namespace, retry){
@@ -97,6 +100,9 @@ sf.component = function(name, options, func, namespace){
 				if(window.templates){
 					if(window.templates[outerHTML.template]){
 						template = window.templates[outerHTML.template];
+
+						if(hotReload && proxyTemplate[outerHTML.template] === void 0)
+							proxyTemplate[outerHTML.template] = [scope, name];
 
 						if(!outerHTML.keepTemplate)
 							delete window.templates[outerHTML.template];
@@ -120,9 +126,9 @@ sf.component = function(name, options, func, namespace){
 			outerHTML = template;
 		}
 
-		// 0=Function for scope, 1=DOM Contructor, 2=incremental ID, 3=Template, 4=ModelRegex
+		// 0=Function for scope, 1=DOM Contructor, 2=reserved ID, 3=Template, 4=ModelRegex
 		if(scope.registered[name] === void 0)
-			scope.registered[name] = [void 0, void 0, 0, void 0, void 0];
+			scope.registered[name] = new Array(5);
 
 		var temp;
 		if(outerHTML.constructor === String)

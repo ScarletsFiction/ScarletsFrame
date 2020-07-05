@@ -1,6 +1,7 @@
 var $ = sf.dom;
 var vul = '';
 var minimalTest = 1;
+sf.hotReload(2);
 
 // This framework is vulnerable if any alert displayed
 // or console.error is being outputted
@@ -65,7 +66,7 @@ sf.model.for('image', {extend: ImgModel}, function(self, root){
 
 setTimeout(function(){
 	var a = sf.model.queuePreprocess(document.body);
-	console.log(a.length ? '❌' : '✔️', "Trying to reinit", a.length, "element (must be 0)");
+	console.log(a.size ? '❌' : '✔️', "Trying to reinit", a.size, "element (must be 0)");
 	sf.model.parsePreprocess(a);
 }, 10000);
 

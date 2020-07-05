@@ -43,26 +43,89 @@ views.addRoute([
 				]
 			}
 		]
+	},{
+		path:'/test/urlTemp',
+		template:'route/urlTemp',
+
+		'nested-view':[
+			{
+				path:'/:nest',
+				template:'route/lv1',
+
+				'nested2-view':[
+					{
+						path:'/:nest',
+						template:'route/lv2',
+					}
+				]
+			}
+		]
 	}
 ]);
 
+setTimeout(function(){
+	views.goto('/test/urlTemp/1/1');
+	setTimeout(function(){
+		history.replaceState({}, '', '/');
+	}, 500);
+}, 1000);
+
+window.templates['route/urlTemp.html'] = `<div>This is template page
+	<sf-m name="test-page1"><div>{{ text }}</div></sf-m>
+    <nested-view>Raw Henlo</nested-view>
+</div>`;
+window.templates['route/lv1.html'] = `<div>This is nest 1
+	<nested2-view>Default exist</nested2-view>
+</div>`;
+window.templates['route/lv2.html'] = `<div>This is nest 2
+	<test-nest2></test-nest2>
+</div>`;
+
+setTimeout(function(){
+	window.templates['route/urlTemp.html'] = `<div>This is reloaded template page
+		<sf-m name="test-page1"><div>{{ text }}</div></sf-m>
+	    <nested-view>Raw Henlo</nested-view>
+	</div>`;
+	window.templates['route/lv1.html'] = `<div>This is reloaded nest 1
+		<nested2-view>Default reloaded exist</nested2-view>
+	</div>`;
+	window.templates['route/lv2.html'] = `<div>This is reloaded nest 2
+		<test-nest2></test-nest2>
+	</div>`;
+	window.templates = window.templates; // trigger hot reload
+
+	setTimeout(function(){
+		sf.model('test-page1').text = 'Hello from reloaded template';
+		sf.model('test-nest1').text = 'Hello from reloaded template';
+
+		var comp = sf.component('test-nest2')[0];
+		if(comp !== void 0)
+			sf.component('test-nest2')[0].text = 'Hello from reloaded template';
+
+		setTimeout(function(){
+			var len = $('custom-view').html().split('reloaded').length;
+			if(len !== 6)
+				console.error("❌ Reloaded views is should be 6 but got", len);
+			else console.log("✔️ Reloaded views are working");
+		}, 500);
+	}, 500);
+}, 5000);
+
 class TestPage{}
 
-sf.model.for('test-page1', {extend:TestPage}, function(self){
-	self.text = "Hello from page 1";
+sf.model('test-page1', {extend:TestPage}, function(self){
+	self.text = "Hello from template";
 });
 
-sf.model.for('test-page1-nest1', {extend:TestPage}, function(self){
+sf.model('test-nest1', {extend:TestPage}, function(self){
 	self.text = "Hello from nest 1";
 });
 
-sf.model.for('test-page1-nest2', {extend:TestPage}, function(self){
+sf.component('test-nest2', {extend:TestPage}, function(self){
 	self.text = "Hello from nest 2";
 });
 
-sf.model.for('test-page2', {extend:TestPage}, function(self){
-	self.text = "Hello from page 2";
-});
+sf.component('test-nest2', '<div>{{ text }}</div>');
 
 views.on('start', function(from, to){
 	console.log("Navigating from", from, "to", to);

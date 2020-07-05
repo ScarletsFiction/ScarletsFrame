@@ -39,3 +39,21 @@ sf.component('my-obj', function(self, root){
 		self.list.push(self.test);
 	}
 });
+
+setTimeout(function(){
+	testSpace.model('obj', function(self, root){
+		self.list = ['refreshed',2,3+vul];
+	});
+
+	testSpace.component('my-obj', function(self, root){
+		self.list = ['refreshed',2,3+vul];
+	});
+
+	sf.model('obj', function(self, root){
+		self.list = ['refreshedA',2,1+vul];
+	});
+
+	sf.component('my-obj', function(self, root){
+		self.list = ['refreshedA',2,1+vul];
+	});
+}, 5000);

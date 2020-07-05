@@ -10,6 +10,19 @@
 // 	}
 // }
 
+window.templates = {
+	'test/reserved.html':`
+ reserve index
+ <sf-reserved name="test"></sf-reserved>
+ ?`,
+	'test/template.html':`is something
+<sf-template path="test/absolute.html"></sf-template> as one
+and <sf-template path="./relative.html"></sf-template> as two<br>
+from window.templates?`,
+	'test/absolute.html':'(1. {{ binds }})',
+	'test/relative.html':'(2. {{ binds }})',
+};
+
 function InheritComponent(){}
 InheritComponent.construct = function(root, item){
 	this.nyam = true;
@@ -49,6 +62,72 @@ sf.component.html('comp-test', '<div sf-lang="translated">1. translated {{ data 
 	<div>item: {{ item }}</div>\
 <br>');
 
+// Hot reload test
+setTimeout(function(){
+	sf.component.for('comp-test', {extend: InheritComponent}, function(self, root, item){
+		self.item = item;
+		self.tries = [5,6,7+vul];
+		self.data = 'zxc refreshed'+vul;
+		self.select = function(zx){
+			console.log('self.super after refresh returning', self.super(zx));
+
+			self.tries[self.tries.indexOf(zx)] += 10;
+			self.tries.refresh();
+		}
+	});
+
+	sf.component.html('comp-test', '<div sf-lang="translated">1. translated {{ data }}</div>\
+		<input type="text" sf-bind="data">\
+		<div class="sf-virtual-list"><span sf-repeat-this="num in tries"><a @click="select(num)">{{num}}</a>,</span></div>\
+		<div>refreshed: {{ item }}</div>\
+	<br>');
+
+	templates['test/reserved.html'] = `
+	 refreshed: index
+	 <sf-reserved name="test"></sf-reserved>
+	 ?`;
+
+	templates['test/template.html'] = `is something
+	<sf-template path="test/absolute.html"></sf-template> as one
+	and <sf-template path="./relative.html"></sf-template> as two<br>
+	from refreshed: window.templates?`;
+
+	templates = templates;
+
+	setTimeout(function(){
+		var list = $('comp-test');
+		var hasError = false;
+		for (var i = 0; i < list.length; i++) {
+			if(list[i].innerHTML.indexOf('refreshed:') === -1){
+				console.error("❌ Reloaded component HTML is not working", list[i]);
+				hasError = true;
+				break;
+			}
+		}
+
+		list = $('dynamic-reserved');
+		for (var i = 0; i < list.length; i++) {
+			if(list[i].innerHTML.indexOf('refreshed:') === -1){
+				console.error("❌ Reloaded dynamic-reserved is not working", list[i]);
+				hasError = true;
+				break;
+			}
+		}
+
+		list = $('dynamic-template');
+		for (var i = 0; i < list.length; i++) {
+			if(list[i].innerHTML.indexOf('refreshed:') === -1){
+				console.error("❌ Reloaded dynamic-template HTML is not working", list[i]);
+				hasError = true;
+				break;
+			}
+		}
+
+		if(hasError === false)
+			console.log("✔️ It seems component HTML reload was working");
+	}, 500);
+}, 5000);
+
 $(function(){
 	var elem2 = new $CompTest('from javascript');
 	nyam.appendChild(elem2);
@@ -72,16 +151,3 @@ sf.component('dynamic-reserved', {template:'test/reserved.html'}, function(self,
 sf.component('dynamic-template', {template:'test/template.html'}, function(self, root){
 	self.binds = 'OK working';
 });
-
-window.templates = {
-	'test/reserved.html':`
- reserve index
- <sf-reserved name="test"></sf-reserved>
- ?`,
-	'test/template.html':`is something
-<sf-template path="test/absolute.html"></sf-template> as one 
-and <sf-template path="./relative.html"></sf-template> as two<br>
-from window.templates?`,
-	'test/absolute.html':'(1. {{ binds }})',
-	'test/relative.html':'(2. {{ binds }})',
-};
