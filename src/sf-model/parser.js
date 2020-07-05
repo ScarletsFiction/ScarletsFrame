@@ -441,11 +441,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		input:[],
 	};
 
+	// It seems we can't use for.. of because need to do from backward
 	// Start addressing
-	var nodes = self.queuePreprocess(copy, true, template.specialElement).reverse();
+	var nodes = Array.from(self.queuePreprocess(copy, true, template.specialElement));
 	var addressed = [];
 
-	for (var i = 0; i < nodes.length; i++) {
+	for (var i = nodes.length - 1; i >= 0; i--) {
 		var temp = {
 			nodeType:nodes[i].nodeType
 		};
@@ -582,11 +583,9 @@ var enclosedHTMLParse = false;
 var excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
 self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 	var childNodes = targetNode.childNodes;
-	var firstCall = false;
 
 	if(temp === void 0){
 		temp = new Set();
-		firstCall = true;
 
 		var attrs = targetNode.attributes;
 		for (var a = 0; a < attrs.length; a++) {
@@ -698,15 +697,15 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 		}
 	}
 
-	if(firstCall)
-		return Array.from(temp);
+	return temp;
 }
 
 self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 	var binded = [];
-	for (var a = 0; a < nodes.length; a++) {
+
+	for(var current of nodes){
 		// Get reference for debugging
-		var current = processingElement = nodes[a];
+		processingElement = current;
 
 		if(current.nodeType === 3 && binded.includes(current.parentNode) === false){
 			self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
