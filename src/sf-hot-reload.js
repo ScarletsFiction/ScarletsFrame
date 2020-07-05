@@ -1,10 +1,10 @@
 // Allow direct function replacement to accelerate development
 // Note: this feature will allocate more small memory and small slow down
-// ToDo: Model, Component, Events, Space, Views
-var hotReload = false;
+// ToDo: Model, Component, Space, Views
 var hotReloadAll = false; // All model property
 
-var proxyModel, proxySpace, proxyComponent, internalProp = {};
+var proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
+var backupTemplate, backupCompTempl;
 
 sf.hotReload = function(mode){
 	if(hotReload) return;
@@ -13,12 +13,16 @@ sf.hotReload = function(mode){
 	else if(mode === 2)
 		hotReloadAll = hotReload = true;
 
+	backupTemplate = {};
+	backupCompTempl = new WeakMap();
 	proxyModel = new WeakMap();
 	proxyComponent = new WeakMap();
+	proxyTemplate = {};
 	proxySpace = new WeakMap(/*
 		(Space) => {compName:[scopes]}
 	*/);
 
+	internalProp = {};
 	['init', 'reinit', 'destroy', '$el'].forEach(function(val){
 		internalProp[val] = true;
 	});
@@ -48,7 +52,8 @@ function reapplyScope(proxy, space, scope, func){
 			}
 		}
 
-		proxier.ref = replacement || scope[prop];
+		if(proxier.ref === void 0)
+			proxier.ref = replacement || scope[prop];
 		scope[prop] = proxier;
 	}
 
@@ -117,15 +122,19 @@ function hotComponentAdd(space, name, scope){
 
 function hotComponentRemove(el){
 	var proxy = proxySpace.get(el.sf$space);
-	var list = proxy[el.sf$componentFrom];
+	if(proxy === void 0)
+		return;
 
+	var list = proxy[el.sf$controlled];
 	list.splice(list.indexOf(el.model), 1);
 }
 
 // On component scope reregistered
-// ToDo: the third arguments need to be saved on model (currently using empty obj)
 function hotComponentRefresh(space, name, func){
 	var list = proxySpace.get(space)[name];
+
+	if(list === void 0)
+		return;
 
 	for (var i = 0; i < list.length; i++){
 		var proxy = proxyComponent.get(list[i]);
@@ -138,12 +147,72 @@ function hotComponentRefresh(space, name, func){
 	}
 }
 
-// Refresh views
-function hotTemplate(templates){
+// For views and component template
+// The element will be destroyed and created a new one
+// The scope will remain same, but init will be recalled
 
+// Refresh views html and component
+function hotTemplate(templates){
+	var vList = sf.views.list;
+	var changes = {};
+
+	for(var path in templates){
+		if(backupTemplate[path] === void 0 || backupTemplate[path] === templates[path])
+			continue;
+
+		var forComp = proxyTemplate[path]; // [space, name]
+		if(forComp !== void 0){
+			var compTemp = forComp[0].registered[forComp[1]];
+			if(compTemp !== void 0 && compTemp[3] !== void 0)
+				sf.component.html(forComp[1], {template:path}, forComp[0]);
+
+			continue;
+		}
+
+		// for views only
+		changes[path] = true;
+	}
+
+	for(var name in vList){
+		var routes = vList[name].routes;
+		var sfPageViews = $('sf-page-view', vList[name].rootDOM);
+
+		for (var i = 0; i < sfPageViews.length; i++) {
+			var page = sfPageViews[i];
+			var pageTemplate = page.sf$templatePath;
+			if(pageTemplate === void 0 || changes[pageTemplate] === void 0)
+				continue;
+
+			// console.error('!!! views need reload', route, vList[name]);
+			page.innerHTML = templates[pageTemplate];
+
+			page.routeCached.html = sf.dom.parseElement('<template>'+templates[pageTemplate]+'</template>', true)[0];
+
+			// Replace with the old nested view
+			var nesteds = page.sf$viewSelector;
+			for(var nested in nesteds){
+				var el = page.querySelector(nested);
+				el.parentNode.replaceChild(nesteds[nested], el);
+			}
+		}
+	}
+
+	backupTemplate = Object.assign({}, templates);
 }
 
 // Refresh component html
-function hotComponentTemplate(scope, name, newElement){
+function hotComponentTemplate(scope, name){
+	var compTemp = scope.registered[name];
+	var newEl = scope.registered[name][3];
 
+	if(backupCompTempl.has(compTemp)){
+		if(backupCompTempl.get(compTemp).innerHTML === newEl.innerHTML)
+			return;
+
+		console.error('!!! component need reload', newEl.innerHTML);
+
+		console.log(234234, scope.registered[name]);
+	}
+
+	backupCompTempl.set(compTemp, newEl);
 }

@@ -241,8 +241,8 @@ var self = sf.views = function View(selector, name){
 			parent.sf$cachedDOM.shift().remove();
 	}
 
-	var rootDOM = {};
-	self.selector = function(selector_, isChild, currentPath){
+	var rootDOM = self.rootDOM = {};
+	function getSelector(selector_, isChild, currentPath){
 		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document.body)).getElementsByTagName(selector_ || selector);
 		if(DOM.length === 0) return false;
 
@@ -283,7 +283,7 @@ var self = sf.views = function View(selector, name){
 
 		if(!isChild){
 			self.currentDOM = temp;
-			rootDOM = DOM;
+			rootDOM = self.rootDOM = DOM;
 			return true;
 		}
 
@@ -353,7 +353,7 @@ var self = sf.views = function View(selector, name){
 		routes.push.apply(routes, internal.router.parseRoutes(obj, selectorList));
 
 		if(!initialized)
-			self.selector();
+			getSelector();
 
 		if(!firstRouted && name){
 			$(function(){
@@ -490,7 +490,7 @@ var self = sf.views = function View(selector, name){
 			return;
 
 		if(initialized === false){
-			self.selector();
+			getSelector();
 
 			if(initialized === false)
 				return console.error("sf.views haven't finished initializing, and waiting for related parent element");
@@ -552,7 +552,7 @@ var self = sf.views = function View(selector, name){
 			if(rootDOM.nodeType !== void 0)
 				rootDOM = {};
 
-			if(self.selector() === false)
+			if(getSelector() === false)
 				return console.error(name, "can't route to", path, "because element with selector '"+selector+"' was not found");
 		}
 
@@ -652,10 +652,13 @@ var self = sf.views = function View(selector, name){
 					selectorElement = dom.sf$viewSelector = {};
 			}
 
+			if(hotReload && url.template !== void 0)
+				dom.sf$templatePath = url.template;
+
 			if(url.hasChild){
 				var pendingShowed = [];
 				for (var i = 0; i < url.hasChild.length; i++) {
-					selectorElement[url.hasChild[i]] = self.selector(url.hasChild[i], dom, path);
+					selectorElement[url.hasChild[i]] = getSelector(url.hasChild[i], dom, path);
 					var tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
 
 					if(tempPageView)
@@ -756,6 +759,9 @@ var self = sf.views = function View(selector, name){
 
 			// Create new element
 			url.html = sf.dom.parseElement('<template>'+window.templates[url.template+'.html']+'</template>', true)[0];
+
+			if(hotReload)
+				url.template = url.template+'.html';
 		}
 
 		if(url.html){
