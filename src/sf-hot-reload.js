@@ -220,18 +220,19 @@ function hotComponentTemplate(scope, name){
 		if(backupCompTempl.get(registrar).innerHTML === newEl.innerHTML)
 			return;
 
-		var temp = registrar[3];
-		var tempDOM = temp.tempDOM;
-		var models = registrar[2];
-
-		temp = prepareComponentTemplate(temp, tempDOM, name, models[0], registrar);
-		tempDOM = temp.tempDOM;
-
-		var freezed = models.slice(0); // freeze to avoid infinity loop if have any nest
+		var freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
 		for (var z = 0; z < freezed.length; z++) {
 			var model = freezed[z];
 			var element = model.$el[0];
 			element.textContent = '';
+
+			if(registrar[3].constructor !== Object){
+				var temp = registrar[3];
+				var tempDOM = temp.tempDOM;
+
+				temp = prepareComponentTemplate(temp, tempDOM, name, model, registrar);
+				tempDOM = temp.tempDOM;
+			}
 
 			// Create new object, but using registrar[3] as prototype
 			var copy = Object.create(temp);

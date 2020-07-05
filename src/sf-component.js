@@ -35,6 +35,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 	if(isDynamic === false)
 		registrar[3] = temp;
+
+	// We need to improve sf-reserved to reduce re-extraction
 	else{
 		isDynamic.tempDOM = tempDOM;
 		registrar[3] = isDynamic;
