@@ -7,11 +7,12 @@ var proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 var backupTemplate, backupCompTempl;
 
 sf.hotReload = function(mode){
-	if(hotReload) return;
 	if(mode === 1)
 		hotReload = true;
 	else if(mode === 2)
 		hotReloadAll = hotReload = true;
+
+	if(proxyModel !== void 0) return;
 
 	backupTemplate = {};
 	backupCompTempl = new WeakMap();
@@ -43,7 +44,7 @@ function reapplyScope(proxy, space, scope, func){
 	function refunction(prop, replacement){
 		var proxier = proxy[prop];
 		if(proxier === void 0){
-			if(scope[prop] && scope[prop].ref !== void 0)
+			if(scope[prop] && scope[prop].ref !== void 0 && scope[prop].protoFunc === void 0)
 				proxier = proxy[prop] = scope[prop];
 			else{
 				proxier = proxy[prop] = function(){
@@ -52,8 +53,7 @@ function reapplyScope(proxy, space, scope, func){
 			}
 		}
 
-		if(proxier.ref === void 0)
-			proxier.ref = replacement || scope[prop];
+		proxier.ref = replacement || scope[prop];
 		scope[prop] = proxier;
 	}
 
@@ -69,19 +69,24 @@ function reapplyScope(proxy, space, scope, func){
 		return;
 	}
 
+	var enabled = true;
 	func(new Proxy(scope, {set:function(obj, prop, val){
-		if(internalProp[prop] === true){ // Skip function that related with framework
+		// Skip function that related with framework
+		// And skip if proxy is not enabled
+		if(enabled === false || internalProp[prop] === true){
 			obj[prop] = val;
 			return true;
 		}
 
 		if(val.constructor === Function)
 			refunction(prop, val);
-		else if(hotReloadAll === true)
-			obj[prop] = val; // Assign non-function value
+		else if(obj[prop] === void 0 || hotReloadAll === true)
+			obj[prop] = val; // Reassign non-function value
 
 		return true;
 	}}), space, (scope.$el && scope.$el.$item) || {});
+
+	enabled = false;
 }
 
 // On model scope reregistered
@@ -162,8 +167,8 @@ function hotTemplate(templates){
 
 		var forComp = proxyTemplate[path]; // [space, name]
 		if(forComp !== void 0){
-			var compTemp = forComp[0].registered[forComp[1]];
-			if(compTemp !== void 0 && compTemp[3] !== void 0)
+			var registrar = forComp[0].registered[forComp[1]];
+			if(registrar !== void 0 && registrar[3] !== void 0)
 				sf.component.html(forComp[1], {template:path}, forComp[0]);
 
 			continue;
@@ -202,17 +207,50 @@ function hotTemplate(templates){
 
 // Refresh component html
 function hotComponentTemplate(scope, name){
-	var compTemp = scope.registered[name];
+	var registrar = scope.registered[name];
 	var newEl = scope.registered[name][3];
 
-	if(backupCompTempl.has(compTemp)){
-		if(backupCompTempl.get(compTemp).innerHTML === newEl.innerHTML)
+	if(backupCompTempl.has(registrar)){
+		if(backupCompTempl.get(registrar).innerHTML === newEl.innerHTML)
 			return;
 
-		console.error('!!! component need reload', newEl.innerHTML);
+		var temp = registrar[3];
+		var tempDOM = temp.tempDOM;
+		var models = registrar[2];
 
-		console.log(234234, scope.registered[name]);
+		temp = prepareComponentTemplate(temp, tempDOM, name, models[0], registrar);
+		tempDOM = temp.tempDOM;
+
+		var freezed = models.slice(0); // freeze to avoid infinity loop if have any nest
+		for (var z = 0; z < freezed.length; z++) {
+			var model = freezed[z];
+			var element = model.$el[0];
+			element.textContent = '';
+
+			// Create new object, but using registrar[3] as prototype
+			var copy = Object.create(temp);
+
+			if(copy.parse.length !== 0){
+				copy.parse = copy.parse.slice(0);
+
+				// Deep copy the original properties to new object
+				for (var i = 0; i < copy.parse.length; i++) {
+					copy.parse[i] = Object.create(copy.parse[i]);
+					copy.parse[i].data = [null, model];
+				}
+			}
+
+			if(tempDOM === true)
+				var parsed = internal.model.templateParser(copy, model, void 0, void 0, void 0, element);
+			else{
+				var parsed = internal.model.templateParser(copy, model);
+				element.appendChild(parsed);
+			}
+
+			element.sf$elementReferences = parsed.sf$elementReferences;
+			sf.model.bindElement(element, model, copy);
+		}
 	}
 
-	backupCompTempl.set(compTemp, newEl);
+	backupCompTempl.set(registrar, newEl);
 }

@@ -98,6 +98,9 @@ setTimeout(function(){
 		var list = $('comp-test');
 		var hasError = false;
 		for (var i = 0; i < list.length; i++) {
+			if(list[i].id === 'henlos' || list[i].id.indexOf('deep') !== -1)
+				continue;
+
 			if(list[i].innerHTML.indexOf('refreshed:') === -1){
 				console.error("❌ Reloaded component HTML is not working", list[i]);
 				hasError = true;

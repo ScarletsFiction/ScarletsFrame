@@ -83,7 +83,7 @@ window.templates['route/lv2.html'] = `<div>This is nest 2
 
 setTimeout(function(){
 	window.templates['route/urlTemp.html'] = `<div>This is reloaded template page
-		<sf-m name="test-page1"><div>{{ text }}</div></sf-m>
+		<sf-m name="test-page1"><div>html reloaded: {{ text }}</div></sf-m>
 	    <nested-view>Raw Henlo</nested-view>
 	</div>`;
 	window.templates['route/lv1.html'] = `<div>This is reloaded nest 1
@@ -95,17 +95,22 @@ setTimeout(function(){
 	window.templates = window.templates; // trigger hot reload
 
 	setTimeout(function(){
-		sf.model('test-page1').text = 'Hello from reloaded template';
-		sf.model('test-nest1').text = 'Hello from reloaded template';
+		sf.model('test-page1', function(self){
+			self.text = 'scope reloaded page 1';
+		})
+		sf.model('test-nest1', function(self){
+			self.text = 'scope reloaded nest 1';
+		})
+		sf.component('test-nest2', {extend:TestPage}, function(self){
+			self.text = "scope reloaded nest 2";
+		});
 
-		var comp = sf.component('test-nest2')[0];
-		if(comp !== void 0)
-			sf.component('test-nest2')[0].text = 'Hello from reloaded template';
+		sf.component('test-nest2', '<div>html reloaded: {{ text }}</div>');
 
 		setTimeout(function(){
 			var len = $('custom-view').html().split('reloaded').length;
-			if(len !== 6)
-				console.error("❌ Reloaded views is should be 6 but got", len);
+			if(len !== 8)
+				console.error("❌ Reloaded views is should be 8 but got", len);
 			else console.log("✔️ Reloaded views are working");
 		}, 500);
 	}, 500);

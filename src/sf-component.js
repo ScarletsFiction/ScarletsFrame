@@ -27,6 +27,23 @@ sf.component = function(name, options, func, namespace){
 	return [];
 }
 
+function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
+	tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
+
+	var isDynamic = internal.model.templateInjector(temp, newObj, true);
+	temp = sf.model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
+
+	if(isDynamic === false)
+		registrar[3] = temp;
+	else{
+		isDynamic.tempDOM = tempDOM;
+		registrar[3] = isDynamic;
+	}
+
+	temp.tempDOM = tempDOM;
+	return temp;
+}
+
 ;(function(){
 	var self = sf.component;
 	internal.component = {};
@@ -69,9 +86,12 @@ sf.component = function(name, options, func, namespace){
 		// internal.component.tagName.add(name.toUpperCase());
 		var scope = namespace || self;
 
-		// 0=Function for scope, 1=DOM Contructor, 2=reserved ID, 3=Template
+		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template
 		if(scope.registered[name] === void 0)
 			scope.registered[name] = new Array(5); // index 1 is $ComponentConstructor
+
+		if((options.exports || hotReload) && scope.registered[name][2] === void 0)
+			scope.registered[name][2] = [];
 
 		scope.registered[name][0] = func;
 		var construct = defineComponent(name);
@@ -84,8 +104,9 @@ sf.component = function(name, options, func, namespace){
 		else if(hotReload)
 			hotComponentRefresh(scope, name, func);
 
-		// ToDo: return list of created component
-		// return [];
+		// Return list of created component
+		if(options.exports)
+			return scope.registered[name][2];
 	}
 
 	self.html = function(name, outerHTML, namespace, retry){
@@ -126,7 +147,7 @@ sf.component = function(name, options, func, namespace){
 			outerHTML = template;
 		}
 
-		// 0=Function for scope, 1=DOM Contructor, 2=reserved ID, 3=Template, 4=ModelRegex
+		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template, 4=ModelRegex
 		if(scope.registered[name] === void 0)
 			scope.registered[name] = new Array(5);
 
@@ -158,7 +179,7 @@ sf.component = function(name, options, func, namespace){
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
-		else if(hotReload)
+		if(hotReload)
 			hotComponentTemplate(scope, name);
 	}
 
@@ -230,26 +251,19 @@ sf.component = function(name, options, func, namespace){
 		if(registrar[4] === void 0)
 			registrar[4] = internal.model.createModelKeysRegex(element, newObj, null);
 
+		if(registrar[2] !== void 0){
+			registrar[2].push(newObj);
+			element.sf$collection = registrar[2];
+		}
+
 		if(element.childNodes.length === 0){
 			var temp = registrar[3];
 			var tempDOM = temp.tempDOM;
 
 			// Create template here because we have the sample model
 			if(temp.constructor !== Object){
-				tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
-
-				var isDynamic = internal.model.templateInjector(temp, newObj, true);
-
-				temp = sf.model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
-
-				if(isDynamic === false)
-					registrar[3] = temp;
-				else{
-					isDynamic.tempDOM = tempDOM;
-					registrar[3] = isDynamic;
-				}
-
-				temp.tempDOM = tempDOM;
+				temp = prepareComponentTemplate(temp, tempDOM, name, newObj, registrar);
+				tempDOM = temp.tempDOM;
 			}
 
 			// Create new object, but using registrar[3] as prototype
@@ -274,6 +288,9 @@ sf.component = function(name, options, func, namespace){
 
 			element.sf$elementReferences = parsed.sf$elementReferences;
 			sf.model.bindElement(element, newObj, copy);
+
+			// Component always will always have one element
+			newObj.$el[0] = element;
 		}
 
 		// Custom component that written on the DOM
@@ -288,12 +305,10 @@ sf.component = function(name, options, func, namespace){
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
 
+			newObj.$el[0] = element;
 			if(element.sf$componentIgnore === true)
 				return;
 		}
-
-		// Component always will always have one element
-		newObj.$el[0] = element;
 
 		element.model = newObj;
 		element.sf$controlled = name;
@@ -395,6 +410,9 @@ sf.component = function(name, options, func, namespace){
 
 				if(that.model.destroy)
 					that.model.destroy();
+
+				if(that.sf$collection !== void 0)
+					that.sf$collection.splice(that.sf$collection.indexOf(that.model), 1);
 
 				if(hotReload)
 					hotComponentRemove(that);

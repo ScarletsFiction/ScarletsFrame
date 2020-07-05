@@ -59,9 +59,13 @@ sf.model = function(name, options, func, namespace){
 
 		var scope = namespace || self;
 
+		var scopeTemp;
 		if(hotReload)
 			hotModel(scope, name, func);
-		else func(scope(name), scope);
+		else{
+			scopeTemp = scope(name);
+			func(scopeTemp, scope);
+		}
 
 		if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
 			var temp = internal.modelPending[name];
@@ -71,6 +75,9 @@ sf.model = function(name, options, func, namespace){
 
 			delete internal.modelPending[name];
 		}
+
+		// Return model scope
+		return scopeTemp || scope(name);
 	}
 
 	// Get property of the model
