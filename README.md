@@ -65,7 +65,7 @@ $ gulp
 If you want to support some old browser, you need to add some polyfill before the framework.<br>
 It's working on Chrome version 26 and should working on Android KitKat stock browser.<br>
 For Safari or iOS browser you may need to polyfill PointerEvent too<br>
-Not supported on IE11 because the error line can't be debugged.
+Some feature not work on IE11.
 ```html
 <script type="text/javascript">
   // Polyfill for Old Browser

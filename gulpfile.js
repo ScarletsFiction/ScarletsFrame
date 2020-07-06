@@ -36,15 +36,19 @@ var theOrderES5 = [
   'src/sf-component.js',
   'src/sf-model/*.js',
   'src/**/*.js',
+  '!src/sf-hot-reload.js',
   'src/sf-z_end.js',
 ];
+
 var theOrderES6 = theOrderES5.slice(1);
+var devTest = theOrderES6.slice(0);
+devTest.splice(-2, 1);
 
 gulp.task('watch-js', function(){
   removeOldMap('dist/');
 
   // Set the order
-  return gulp.src(theOrderES6)
+  return gulp.src(devTest)
     .pipe(sourcemaps.init())
     .pipe(concat('scarletsframe.js'))
     .pipe(sourcemaps.write('.', dateMinify))
@@ -93,6 +97,16 @@ gulp.task('js-es6', function(){
     .pipe(gulp.dest('dist'));
 });
 
+gulp.task('js-hot', function(){
+  return gulp.src(devTest)
+    .pipe(sourcemaps.init())
+    .pipe(concat('scarletsframe.hot.js'))
+    .pipe(uglify())
+    .pipe(header(theHeader))
+    .pipe(sourcemaps.write('.', dateMinify))
+    .pipe(gulp.dest('dist'));
+});
+
 gulp.task('default', function(){
   require('./tests/server.js');
   gulp.watch(['src/**/*.js'], gulp.series('watch-js'));
@@ -106,7 +120,7 @@ function ie11(){
 }
 
 gulp.task('ie11', ie11);
-gulp.task('compile', gulp.parallel(['enableCompile', 'js-es6', 'js-es5']));
+gulp.task('compile', gulp.parallel(['enableCompile', 'js-es6', 'js-es5', 'js-hot']));
 
 function swallowError(error){
   console.log(error.message)

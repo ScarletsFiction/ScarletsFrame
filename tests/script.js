@@ -65,7 +65,12 @@ sf.model.for('image', {extend: ImgModel}, function(self, root){
 });
 
 setTimeout(function(){
-	var a = sf.model.queuePreprocess(document.body);
+	var a = sf.model.queuePreprocess(document.body, void 0, {
+		repeat:[],
+		input:[]
+	});
+	if(a.size !== 0)
+		console.log(Array.from(a));
 	console.log(a.size ? '❌' : '✔️', "Trying to reinit", a.size, "element (must be 0)");
 	sf.model.parsePreprocess(a);
 }, 10000);
