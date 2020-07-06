@@ -127,7 +127,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 						if(hotReload && proxyTemplate[outerHTML.template] === void 0)
 							proxyTemplate[outerHTML.template] = [scope, name];
 
-						if(!outerHTML.keepTemplate)
+						if(!outerHTML.keepTemplate && hotReload === false)
 							delete window.templates[outerHTML.template];
 					}
 					else throw new Error("Template was not found for path: "+outerHTML.template);
