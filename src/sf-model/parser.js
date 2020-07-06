@@ -305,7 +305,7 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 }
 
 var createModelKeysRegex = internal.model.createModelKeysRegex = function(targetNode, modelScope, mask){
-	var modelKeys = self.modelKeys(modelScope).join('|');
+	var modelKeys = self.modelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
 		throw new Error("Template model was not found");

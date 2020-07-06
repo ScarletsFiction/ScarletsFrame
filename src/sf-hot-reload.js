@@ -1,6 +1,5 @@
 // Allow direct function replacement to accelerate development
 // Note: this feature will allocate more small memory and small slow down
-// ToDo: Model, Component, Space, Views
 var hotReloadAll = false; // All model property
 
 var proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;

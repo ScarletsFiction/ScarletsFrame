@@ -81,20 +81,47 @@ sf.model = function(name, options, func, namespace){
 	}
 
 	// Get property of the model
-	self.modelKeys = function(modelRef){
-		var keys = Object.keys(modelRef);
-		for (var i = keys.length - 1; i >= 0; i--) {
-			if(keys[i].includes('$'))
-				keys.splice(i, 1);
-		}
-
+	self.modelKeys = function(modelRef, toString){
 		// it maybe custom class
 		if(modelRef.constructor !== Object && modelRef.constructor !== Array){
-			keys = new Set(keys);
+			var keys = new Set();
+			for(var key in modelRef){
+				if(key.includes('$'))
+					continue;
+
+				keys.add(key);
+			}
+
 			getStaticMethods(keys, modelRef.constructor);
 			getPrototypeMethods(keys, modelRef.constructor);
-			keys = Array.from(keys);
+
+			if(toString){
+				var temp = '';
+				for(var key of keys){
+					if(temp.length === 0){
+						temp += key;
+						continue;
+					}
+
+					temp += `|${key}`;
+				}
+
+				return temp;
+			}
+
+			return Array.from(keys);
 		}
+
+		var keys = [];
+		for(var key in modelRef){
+			if(key.includes('$'))
+				continue;
+
+			keys.push(key);
+		}
+
+		if(toString)
+			return keys.join('|');
 
 		return keys;
 	}

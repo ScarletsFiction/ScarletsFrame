@@ -1,5 +1,5 @@
 function eventHandler(that, data, _modelScope, rootHandler, template){
-	var modelKeys = sf.model.modelKeys(_modelScope).join('|');
+	var modelKeys = sf.model.modelKeys(_modelScope, true);
 
 	var direct = false;
 	var script = data.value;
