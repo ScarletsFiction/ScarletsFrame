@@ -5,6 +5,9 @@ var hotReloadAll = false; // All model property
 var proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 var backupTemplate, backupCompTempl;
 
+;(function(){
+var gEval = routerEval;
+
 sf.hotReload = function(mode){
 	if(mode === 1)
 		hotReload = true;
@@ -37,7 +40,18 @@ sf.hotReload = function(mode){
 			return templates;
 		}
 	});
+
+	// Register event
+	setTimeout(function(){
+		if(window.___browserSync___ !== void 0){
+			var socket = window.___browserSync___.socket;
+			socket.on('sf-hot-js', gEval);
+			socket.on('sf-hot-html', gEval);
+		}
+	}, 1000);
 }
+
+})();
 
 function reapplyScope(proxy, space, scope, func){
 	function refunction(prop, replacement){
@@ -165,6 +179,7 @@ function hotComponentRefresh(space, name, func){
 function hotTemplate(templates){
 	var vList = sf.views.list;
 	var changes = {};
+	var tempTemplate = Object.assign({}, templates);
 
 	for(var path in templates){
 		if(backupTemplate[path] === void 0 || backupTemplate[path] === templates[path])
@@ -206,7 +221,7 @@ function hotTemplate(templates){
 		}
 	}
 
-	backupTemplate = Object.assign({}, templates);
+	backupTemplate = tempTemplate;
 }
 
 // Refresh component html
