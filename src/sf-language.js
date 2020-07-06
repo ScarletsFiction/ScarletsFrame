@@ -1,6 +1,4 @@
 // ToDo: put bindedkey that hold binding information to the element so sf-lang can use from it
-// Need more performance optimization
-
 ;(function(){
 
 var self = sf.lang = function(el){
@@ -247,7 +245,7 @@ self.init = function(el){
 	if(self.list[self.default] === void 0)
 		self.list[self.default] = {};
 
-	refreshLang(Array.from(list));
+	refreshLang(list);
 
 	if(pending !== false && self.serverURL !== false){
 		var callback = function(){
@@ -292,18 +290,6 @@ function diveObject(obj, path, setValue){
 }
 
 internal.language.refreshLang = function(el){
-	if(el.constructor === Array){
-		var arr = [];
-		for (var i = 0; i < el.length; i++) {
-			if(el[i].hasAttribute === void 0)
-				continue;
-
-			if(el[i].hasAttribute('sf-lang'))
-				arr.push(el[i]);
-		}
-		return refreshLang(arr);
-	}
-
 	if(el.hasAttribute === void 0)
 		return;
 
@@ -314,7 +300,7 @@ internal.language.refreshLang = function(el){
 	if(el.length === 0)
 		return;
 
-	refreshLang(Array.from(el));
+	refreshLang(el);
 };
 
 function refreshLang(list, noPending){
