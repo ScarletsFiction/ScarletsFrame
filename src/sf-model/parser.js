@@ -322,6 +322,7 @@ var createModelKeysRegex = internal.model.createModelKeysRegex = function(target
 	return obj;
 }
 
+// ToDo: need performance optimization
 self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex, preserveRegex, repeatedListKey){
 	// Remove repeated list from further process
 	// To avoid data parser

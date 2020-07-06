@@ -193,7 +193,6 @@ function hotTemplate(templates){
 			if(pageTemplate === void 0 || changes[pageTemplate] === void 0)
 				continue;
 
-			// console.error('!!! views need reload', route, vList[name]);
 			page.innerHTML = templates[pageTemplate];
 
 			page.routeCached.html = sf.dom.parseElement('<template>'+templates[pageTemplate]+'</template>', true)[0];
@@ -223,7 +222,17 @@ function hotComponentTemplate(scope, name){
 		for (var z = 0; z < freezed.length; z++) {
 			var model = freezed[z];
 			var element = model.$el[0];
+
+			var parentNode = element.parentNode;
+			var nextNode = element.nextSibling;
+
+			// Detach from DOM tree first
+			if(parentNode !== null)
+				element.remove();
 			element.textContent = '';
+
+			// Clear old DOM linker
+			internal.model.removeModelBinding(model);
 
 			if(registrar[3].constructor !== Object){
 				var temp = registrar[3];
@@ -255,6 +264,10 @@ function hotComponentTemplate(scope, name){
 
 			element.sf$elementReferences = parsed.sf$elementReferences;
 			sf.model.bindElement(element, model, copy);
+
+			// Put it back after children was ready
+			if(parentNode !== null)
+				parentNode.insertBefore(element, nextNode);
 		}
 	}
 
