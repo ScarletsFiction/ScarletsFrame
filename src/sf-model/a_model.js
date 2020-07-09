@@ -23,7 +23,7 @@ self.init = function(el, modelName, namespace){
 		}});
 	}
 
-	if(model.constructor !== Object){
+	if(model.constructor !== Obj){
 		if(model.sf$internal.proxied === void 0){
 			proxyClass(model);
 			model.sf$internal.proxied = true;
@@ -45,7 +45,7 @@ self.init = function(el, modelName, namespace){
 	if(model.init !== void 0)
 		model.init(el);
 
-	if(model.constructor !== Object)
+	if(model.constructor !== Obj)
 		model.constructor.init && model.constructor.init.call(model, (namespace || sf.model), el);
 }
 

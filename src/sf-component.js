@@ -330,6 +330,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		return Object.setPrototypeOf(Wrapper, Class);
 	})(HTMLElement);
 
+	if(window.sf$proxy)
+		window.sf$defineComponent = defineComponent;
+
 	// name = 'tag-name'
 	function defineComponent(name){
 		var have = customElements.get(name);

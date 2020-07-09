@@ -226,7 +226,7 @@ function diveFill(obj1, obj2){
 		if(obj1[key] === void 0)
 			obj1[key] = obj2[key];
 
-		else if(obj2[key].constructor === Object)
+		else if(obj2[key].constructor === Obj)
 			diveFill(obj1[key], obj2[key]);
 	}
 }

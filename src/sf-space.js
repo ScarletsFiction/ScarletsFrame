@@ -1,8 +1,10 @@
+// ToDo: component list on registrar[2] still using same reference
+
 sf.space = function(namespace, options){
 	return new Space(namespace, options);
 };
 
-// { name:{ '':{}, id:{}, ... } }
+// { name:{ default:{}, id:{}, ... } }
 sf.space.list = {};
 function getNamespace(name, id){
 	var scope = sf.space.list[name];
@@ -10,11 +12,11 @@ function getNamespace(name, id){
 		scope = sf.space.list[name] = {};
 
 	if(scope[id] === void 0){
-		var ref = scope[''];
+		var ref = scope['default'];
 		if(ref === void 0){
-			ref = scope[''] = createRoot_({}, {});
+			ref = scope['default'] = createRoot_({}, {});
 
-			if(id === '')
+			if(id === 'default')
 				return ref;
 		}
 
@@ -72,7 +74,7 @@ internal.space = {
 		if(root.sf$space.modelFunc[name] === void 0)
 			return root.sf$space.modelFunc[name] = [[elem, name, root.sf$space]];
 
-		if(root.sf$space.modelFunc[name].constructor === Array)
+		if(root.sf$space.modelFunc[name].constructor === Arr)
 			return root.sf$space.modelFunc[name].push([elem, name, root.sf$space]);
 
 		sf.model.init(elem, name, root.sf$space);
@@ -88,15 +90,16 @@ class Space{
 			throw new Error('`namespace` must be lowercase');
 
 		this.namespace = namespace;
-		this.scope = getNamespace(this.namespace, '');
+		this.default = getNamespace(namespace, 'default');
 
-		if(options){
+		this.list = sf.space.list[namespace];
+
+		if(options)
 			this.templatePath = options.templatePath;
-		}
 	}
 
 	getScope(index){
-		return getNamespace(this.namespace, index || '');
+		return getNamespace(this.namespace, index || 'default');
 	}
 
 	createHTML(index){
@@ -115,7 +118,7 @@ class Space{
 	}
 
 	destroy(){
-		
+
 	}
 }
 
@@ -129,10 +132,10 @@ class Space{
 				internal.modelInherit[name] = options.extend;
 			}
 
-			var old = this.scope.modelFunc[name];
-			this.scope.modelFunc[name] = func;
+			var old = this.default.modelFunc[name];
+			this.default.modelFunc[name] = func;
 
-			if(old !== void 0 && old.constructor === Array)
+			if(old !== void 0 && old.constructor === Arr)
 				for (var i = 0; i < old.length; i++){
 					var arg = old[i];
 					sf.model.init(arg[0], arg[1], arg[2]);
@@ -141,11 +144,11 @@ class Space{
 			return;
 		}
 
-		sf.model(name, options, func, this.scope);
+		sf.model(name, options, func, this.default);
 	}
 
 	self.component = function(name, options, func){
-		return sf.component(name, options, func, this.scope);
+		return sf.component(name, options, func, this.default);
 	}
 
 	self.destroy = function(){
@@ -193,7 +196,7 @@ class SFSpace extends HTMLElement {
 				continue;
 
 			this.sf$spaceName = name;
-			this.sf$spaceID = this.attributes[i].value;
+			this.sf$spaceID = this.attributes[i].value || 'default';
 			break;
 		}
 

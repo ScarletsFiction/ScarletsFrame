@@ -143,4 +143,7 @@ sf.loader = new function(){
 
 		whenProgress = whenDOMReady = whenDOMLoaded = null;
 	}
+
+	if(window.sf$proxy)
+		window.sf$proxy.sfLoaderTrigger = waitResources;
 }

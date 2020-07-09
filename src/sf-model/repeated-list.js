@@ -50,17 +50,18 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 		}
 
 		var constructor = target.constructor;
-		if(constructor === Array || constructor === RepeatedList){
+
+		if(constructor === Arr || constructor === RL){
 			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 			continue;
 		}
 
-		if(constructor === Object || constructor === RepeatedProperty){
+		if(constructor === Obj || constructor === RP){
 			RepeatedProperty.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 			continue;
 		}
 
-		console.error(pattern[1], modelRef[pattern[1]], "should be an array or object");
+		console.error(pattern[1], target, "should be an array or object but got", constructor);
 	}
 }
 
@@ -1426,6 +1427,21 @@ class ElementManipulatorProxy{
 		for (var i = 0; i < list.length; i++)
 			list[i].reverse.apply(list[i], arguments);
 	}
+}
+
+
+var RL = RepeatedList, RP = RepeatedProperty;
+if(window.sf$proxy){
+	ElementManipulatorProxy = window.sf$proxy.EMP;
+	RL = window.sf$proxy.RL;
+	RP = window.sf$proxy.RP;
+}
+else{
+	forProxying.RL = RepeatedList;
+	forProxying.RP = RepeatedProperty;
+	forProxying.EMP = ElementManipulatorProxy;
+	forProxying.Array = Array;
+	forProxying.Object = Object;
 }
 
 function RE_restoreBindedList(modelRoot, lists){

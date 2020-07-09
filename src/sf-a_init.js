@@ -28,6 +28,14 @@ if(typeof document === void 0)
 // ===== Module Init =====
 var internal = {};
 var privateRoot = {};
+var forProxying = {};
+
+// For comparing dynamic reference
+var Arr = Array, Obj = Object;
+if(opener !== null){
+	Arr = opener.Array;
+	Obj = opener.Object;
+}
 
 var sf = function(stuff, returnNode){
 	// If it's Node type
@@ -186,7 +194,7 @@ function compareObject(obj1, obj2){
 	if(!obj1 || !obj2)
 		return false;
 
-	if(obj1.constructor === Array){
+	if(obj1.constructor === Arr){
 		if(obj1.length !== obj2.length)
 			return false;
 

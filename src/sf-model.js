@@ -83,7 +83,7 @@ sf.model = function(name, options, func, namespace){
 	// Get property of the model
 	self.modelKeys = function(modelRef, toString){
 		// it maybe custom class
-		if(modelRef.constructor !== Object && modelRef.constructor !== Array){
+		if(modelRef.constructor !== Obj && modelRef.constructor !== Arr){
 			var keys = new Set();
 			for(var key in modelRef){
 				if(key.includes('$'))

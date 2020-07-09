@@ -6,7 +6,7 @@ var callInputListener = function(ref, value){
 		var newValue;
 		var old = ref.sfModel[ref.sfBounded];
 
-		if(old !== null && old !== void 0 && old.constructor === Array)
+		if(old !== null && old !== void 0 && old.constructor === Arr)
 			old = old.slice(0);
 
 		try{
@@ -91,7 +91,7 @@ var inputCheckBoxBound = function(e){
 		}
 	}
 
-	if(constructor === Array){
+	if(constructor === Arr){
 		var i = model[ref.sfBounded].indexOf(value);
 
 		if(i === -1 && ref.checked === true)
@@ -134,7 +134,7 @@ var assignElementData = {
 		var list = element.options;
 		var typeData = element.typeData;
 
-		if(val.constructor !== Array){
+		if(val.constructor !== Arr){
 			for (var i = 0, n = list.length; i < n; i++) {
 				if(typeData === String)
 					list[i].selected = list[i].value === val;
@@ -145,7 +145,7 @@ var assignElementData = {
 			list[i].selected = val.includes(typeData === Number ? Number(list[i].value) : list[i].value);
 	},
 	checkbox:function(val, element){
-		if(val.constructor === Array)
+		if(val.constructor === Arr)
 			element.checked = val.includes(element.typeData === Number ? Number(element.value) : element.value);
 		else if(val.constructor === Boolean)
 			element.checked = Boolean(val);
@@ -194,6 +194,9 @@ var inputBoundRun = function(val, elements){
 		elements[i].dispatchEvent(ev);
 	}
 }
+
+// For dynamic reference checking
+inputBoundRun.inputBoundRun = true;
 
 var triggerInputEvent = function(e){
 	if(e.fromSFFramework === true) return;
