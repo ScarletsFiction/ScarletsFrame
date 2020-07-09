@@ -90,7 +90,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 
 			if(bindRef.input.length === 0)
 				for (var i = bindRef.length-1; i >= 0; i--) {
-					if(bindRef[i] === inputBoundRun)
+					if(bindRef[i].inputBoundRun)
 						bindRef.splice(i, 1);
 				}
 		}
@@ -155,7 +155,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	var originalPropertyName = propertyName;
 
 	// Dive to the last object, create if not exist
-	if(propertyName.constructor === Array){
+	if(propertyName.constructor === Arr){
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];
 		else{
@@ -193,7 +193,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	}
 
 	// We can't redefine length on array
-	if(model.constructor === Array && propertyName === 'length')
+	if(model.constructor === Arr && propertyName === 'length')
 		return;
 
 	// Enable multiple element binding
@@ -231,7 +231,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	if(desc === void 0 || desc.set !== void 0)
 		return;
 
-	if(originalPropertyName.constructor === Array){
+	if(originalPropertyName.constructor === Arr){
 		// Cache deep sf$bindingKey path if this a shared model
 		if(originalModel.sf$internal !== void 0 && originalPropertyName.length !== 1)
 			originalModel.sf$internal.deepBinding[originalPropertyName.slice(0, -1).join('%$')] = true;
@@ -257,7 +257,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		},
 		set:function(val){
 			if(objValue !== val){
-				var newValue, noFeedback;
+				var newValue, noFeedback, temp;
 				if(inputBoundRunning === false && _m2v !== void 0){
 					newValue = _m2v.call(model, objValue, val);
 
@@ -271,12 +271,13 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 				objValue = newValue !== void 0 ? newValue : val;
 
 				for (var i = 0; i < bindedKey.length; i++) {
-					if(inputBoundRun === bindedKey[i]){
-						bindedKey[i](objValue, bindedKey.input);
+					temp = bindedKey[i];
+					if(temp.inputBoundRun){
+						temp(objValue, bindedKey.input);
 						continue;
 					}
 
-					syntheticTemplate(bindedKey[i].element, bindedKey[i].template, originalPropertyName, originalModel); // false === no update
+					syntheticTemplate(temp.element, temp.template, originalPropertyName, originalModel); // false === no update
 				}
 
 				if(noFeedback) objValue = val;
@@ -302,7 +303,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		if(element.parentNode !== null){
 			var newElem = template.html;
 			if(element.tagName.includes('-'))
-				element.sf$componentIgnore = true;
+				newElem.sf$componentIgnore = true;
 
 			element.parentNode.replaceChild(newElem, element);
 		}
