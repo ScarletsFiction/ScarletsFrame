@@ -285,9 +285,6 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 			element.sf$elementReferences = parsed.sf$elementReferences;
 			sf.model.bindElement(element, newObj, copy);
-
-			// Component always will always have one element
-			newObj.$el[0] = element;
 		}
 
 		// Custom component that written on the DOM
@@ -302,10 +299,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
 
-			newObj.$el[0] = element;
 			if(element.sf$componentIgnore === true)
-				return;
+				element = newObj.$el[0];
 		}
+
+		// Component always will always have one element
+		newObj.$el[0] = element;
 
 		if(registrar[2] !== void 0){
 			registrar[2].push(newObj);

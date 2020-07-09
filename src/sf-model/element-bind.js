@@ -302,8 +302,11 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 
 		if(element.parentNode !== null){
 			var newElem = template.html;
-			if(element.tagName.includes('-'))
+			if(element.tagName.includes('-')){
 				newElem.sf$componentIgnore = true;
+				element.sf$componentIgnore = true;
+				modelScope.$el[0] = newElem;
+			}
 
 			element.parentNode.replaceChild(newElem, element);
 		}
