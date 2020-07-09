@@ -51,6 +51,7 @@ sf.hotReload = function(mode){
 				socket.on('sf-hot-js', gEval);
 				socket.on('sf-hot-html', gEval);
 			}
+			else console.log("HotReload: Failed to listen to browserSync");
 		}, 1000);
 	});
 }
@@ -72,8 +73,12 @@ function reapplyScope(proxy, space, scope, func){
 
 		if(proxier.protoFunc !== void 0)
 			proxier.ref = replacement || proxier.ref;
-		else
-			proxier.ref = replacement || scope[prop];
+		else{
+			var ref = (replacement || scope[prop]);
+
+			if(proxier !== ref)
+				proxier.ref = ref;
+		}
 
 		scope[prop] = proxier;
 	}
@@ -84,7 +89,7 @@ function reapplyScope(proxy, space, scope, func){
 			if(internalProp[prop] === true) // Skip function that related with framework
 				continue;
 
-			if(scope[prop].constructor === Function)
+			if(scope[prop] && scope[prop].constructor === Function)
 				refunction(prop);
 		}
 		return;
