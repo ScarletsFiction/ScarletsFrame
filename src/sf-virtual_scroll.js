@@ -190,7 +190,7 @@ internal.virtual_scroll = new function(){
 
 			if(vCursor.floor === null)
 				vCursor.ceiling = virtual.dom.lastElementChild;
-			else 
+			else
 				vCursor.ceiling = vCursor.floor.previousElementSibling;
 
 			ceiling.style.height = ceilingHeight+'px';
@@ -253,7 +253,7 @@ internal.virtual_scroll = new function(){
 
 			if(vCursor.ceiling === null)
 				vCursor.floor = virtual.dom.firstElementChild;
-			else 
+			else
 				vCursor.floor = vCursor.ceiling.nextElementSibling;
 
 			ceiling.style.height = ceilingHeight+'px';
@@ -603,7 +603,7 @@ internal.virtual_scroll = new function(){
 			refreshScrollBounding(index, virtual.bounding, list, parentNode);
 
 			temp = parentNode.children[prepareCount - reduce + 1];
-	
+
 			if(temp !== void 0)
 				scroller.scrollTop = temp.offsetTop - scroller.offsetTop;
 		}
@@ -620,7 +620,7 @@ internal.virtual_scroll = new function(){
 
 	function getAbsoluteHeight(el){
 	  var styles = window.getComputedStyle(el);
-	  var margin = parseInt(styles['marginTop']) + parseInt(styles['marginBottom']);
+	  var margin = parseInt(styles.marginTop) + parseInt(styles.marginBottom);
 	  return el.offsetHeight + margin || 0;
 	}
 
@@ -641,7 +641,7 @@ internal.virtual_scroll = new function(){
 			if(temp === void 0) break;
 			exist.push(temp);
 		}
-		
+
 		// Get elements length
 		var elementLength = list.$virtual.dom.childElementCount + length;
 

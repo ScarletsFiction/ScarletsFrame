@@ -12,9 +12,9 @@ function getNamespace(name, id){
 		scope = sf.space.list[name] = {};
 
 	if(scope[id] === void 0){
-		var ref = scope['default'];
+		var ref = scope.default;
 		if(ref === void 0){
-			ref = scope['default'] = createRoot_({}, {});
+			ref = scope.default = createRoot_({}, {});
 
 			if(id === 'default')
 				return ref;
