@@ -51,7 +51,7 @@ sf.hotReload = function(mode){
 				socket.on('sf-hot-js', gEval);
 				socket.on('sf-hot-html', gEval);
 			}
-			else console.log("HotReload: Failed to listen to browserSync");
+			else console.error("HotReload: Failed to listen to browserSync");
 		}, 1000);
 	});
 }

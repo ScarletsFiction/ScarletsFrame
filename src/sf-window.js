@@ -8,8 +8,9 @@ var windowDestroyListener = false;
 sf.window = {
 	list:[],
 	destroy:function(){
-		for (var i = 0; i < this.list.length; i++)
-			this.list[i].close();
+		var list = sf.window.list;
+		for (var i = 0; i < list.length; i++)
+			list[i].close();
 	},
 	create:function(options, onLoaded){
 		if(options === void 0)
@@ -59,10 +60,10 @@ sf.window = {
 		linker.loaded = function(){
 			windows.push(linker);
 
-			linker.sf.lang.list = {};
-			linker.sf.lang.default = 'en_US';
-			linker.sf.lang.serverURL = false;
-			linker.sf.lang.interpolate = {}
+			linker.sf.lang.list = sf.lang.list;
+			linker.sf.lang.default = sf.lang.default;
+			linker.sf.lang.serverURL = true;
+			linker.sf.lang.interpolate = sf.lang.interpolate;
 
 			linker.templates = window.templates;
 			linker.sf.space.list = sf.space.list;
@@ -101,6 +102,8 @@ sf.window = {
 				language: linker.sf.lang,
 				url: linker.sf.url
 			});
+
+			linker.sf.lang.init(linker.document.body);
 		}
 
 		if(options.title === void 0)

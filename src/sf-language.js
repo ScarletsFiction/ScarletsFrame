@@ -36,6 +36,14 @@ self.add = function(lang, obj){
 self.changeDefault = function(defaultLang){
 	self.default = defaultLang;
 
+	// Maybe have create other window?
+	if(windowDestroyListener !== false && sf.window.list.length !== 0){
+		var windows = sf.window.list;
+
+		for (var i = 0; i < windows.length; i++)
+			windows[i].sf.lang.changeDefault(defaultLang);
+	}
+
 	function forComponents(){
 		var registered = sf.component.registered;
 		for(var keys in registered){
@@ -47,8 +55,8 @@ self.changeDefault = function(defaultLang){
 	function forSpaceComponents(){
 		var list = sf.space.list;
 
-		for(var list_ in list){
-			var registered = list[list_][""].registered;
+		for(var name in list){
+			var registered = list[name].default.registered;
 
 			for(var keys in registered){
 				if(registered[keys][3] !== void 0)
@@ -87,6 +95,12 @@ function interpolate(text, obj){
 
 var waiting = false;
 var pendingCallback = [];
+
+if(window.sf$proxy === void 0)
+	forProxying.langPendingCallback = pendingCallback;
+else
+	pendingCallback = window.sf$proxy.langPendingCallback;
+
 self.get = function(path, obj, callback){
 	if(obj !== void 0 && obj.constructor === Function){
 		callback = obj;
@@ -103,7 +117,7 @@ self.get = function(path, obj, callback){
 }
 
 function startRequest(){
-	if(pending === false || self.serverURL === false)
+	if(pending === false || self.serverURL === false || window.sf$proxy !== void 0)
 		return;
 
 	// Request to server after 500ms
@@ -567,6 +581,11 @@ function refreshTemplate(template){
 
 		found = true;
 		var value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
+
+		if(value === void 0){
+			console.error(`Can't found '${elem.getAttribute('sf-lang')}' for ${self.default}, in`, self.list[self.default], ", maybe the language wasn't fully loaded");
+			continue;
+		}
 
 		value = value.replace(/{(.*?)}/, function(full, match){
 			if(isNaN(match) === false)
