@@ -299,8 +299,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			internal.model.bindInput(specialElement.input, newObj);
 			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
 
-			if(element.sf$componentIgnore === true)
+			if(element.sf$componentIgnore === true){
 				element = newObj.$el[0];
+
+				if(namespace !== void 0)
+					element.sf$space = namespace;
+			}
 		}
 
 		// Component always will always have one element

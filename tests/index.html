@@ -353,15 +353,29 @@
       </div>
 
       <sf-space test-space="asd">
-        Inner namespace testing
-        <sf-m name="obj" id="obj1">{{ test }} - <span sf-repeat-this="num in list">{{num}}.</span></sf-m>
-        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
+        Inner namespace 1 testing
+        <sf-m name="obj" id="obj1">
+          <span>{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span></span>
+          <input sf-bind="test"></input>
+        </sf-m>
+        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span></my-obj>
+      </sf-space><br>
+      <sf-space test-space="zxc">
+        Inner namespace 2 testing
+        <sf-m name="obj" id="obj1">
+          <span>{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span></span>
+          <input sf-bind="test"></input>
+        </sf-m>
+        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span></my-obj>
       </sf-space>
 
       <div>
         Outer namespace testing
-        <sf-m name="obj" id="obj2">{{ test }} - <span sf-repeat-this="num in list">{{num}}.</span></sf-m>
-        <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
+        <sf-m name="obj" id="obj2">
+          <span>{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span></span>
+          <input sf-bind="test"></input>
+        </sf-m>
+        <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span></my-obj>
       </div>
 
       <sf-m name="deep-property" class="container">
