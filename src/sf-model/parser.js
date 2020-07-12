@@ -166,7 +166,7 @@ function addressAttributes(currentNode, template){
 
 			keys.push({
 				name:attrs[a].name,
-				value:attrs[a].value,
+				value:attrs[a].value.trim(),
 				event:true
 			});
 
@@ -177,7 +177,7 @@ function addressAttributes(currentNode, template){
 			if(attrs[a].name[0] === ':'){
 				var key = {
 					name:attrs[a].name.slice(1),
-					value:attrs[a].value
+					value:attrs[a].value.trim()
 				};
 
 				currentNode.removeAttribute(attrs[a].name);
@@ -185,7 +185,7 @@ function addressAttributes(currentNode, template){
 			}
 			else var key = {
 				name:attrs[a].name,
-				value:attrs[a].value
+				value:attrs[a].value.trim()
 			};
 
 			indexes = [];
@@ -196,8 +196,11 @@ function addressAttributes(currentNode, template){
 
 			if(found === '' && indexes.length === 1)
 				key.direct = indexes[0];
-			else
+			else{
 				key.parse_index = indexes;
+				key.value = key.value.replace(/[\t\r\n]/g, '').replace(/ {2,}/g, ' ').split(templateParser_regex_split);
+				parseIndexAllocate(key.value);
+			}
 
 			keys.push(key);
 		}
@@ -536,7 +539,8 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			if(innerHTML === '' && indexes.length === 1)
 				temp.direct = indexes[0];
 			else{
-				temp.value = nodes[i].textContent.replace(/[ \t]{2,}/g, ' ');
+				temp.value = nodes[i].textContent.replace(/[ \t]{2,}/g, ' ').split(templateParser_regex_split);
+				parseIndexAllocate(temp.value);
 				temp.parse_index = indexes;
 			}
 

@@ -20,6 +20,7 @@ function elseIfHandle(else_, arg){
 
 // ==== Template parser ====
 var templateParser_regex = /{{%=([0-9]+)%/g;
+var templateParser_regex_split = /{{%=[0-9]+%/g;
 var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 	parsed = parsed || (new Array(parse.length));
@@ -117,14 +118,21 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 		if(refB.name === 'value' && isValueInput === true){
 			var temp = current.value;
 			current.removeAttribute('value');
-			current.value = temp;
-			current.value = current.value.replace(templateParser_regex, function(full, match){
+			if(refB.value)
+				current.value = applyParseIndex(refB.value, refB.parse_index, parsed);
+
+			else current.value = temp.replace(templateParser_regex, function(full, match){
 				return parsed[match].data;
 			});
 		}
-		else current.setAttribute(refB.name, (refB.value || current.value).replace(templateParser_regex, function(full, match){
+		else{
+			if(refB.value)
+				current.setAttribute(refB.name, applyParseIndex(refB.value, refB.parse_index, parsed));
+
+			else current.setAttribute(refB.name, current.value.replace(templateParser_regex, function(full, match){
 				return parsed[match].data;
 			}));
+		}
 	}
 }
 
@@ -314,9 +322,8 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 				// Remove if over index
 				else{
-					for (var a = tDOM.length; a < currentDOM.length; a++) {
+					for (var a = tDOM.length; a < currentDOM.length; a++)
 						currentDOM[a].remove();
-					}
 				}
 
 				haveChanges = true;
@@ -332,10 +339,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 						continue changes;
 				}
 
-				var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
-					return parsed[match].data;
-				});
-
+				var temp = applyParseIndex(cRef.ref.value, index, parsed);
 				if(cRef.textContent.textContent === temp) continue;
 				cRef.textContent.textContent = temp;
 
@@ -351,12 +355,10 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 				var ref_ = cRef.textContent;
 				// Remove old element if exist
 				if(ref_.sf$haveChilds === true){
-					while(ref_.previousSibling && ref_.previousSibling.sf$childRoot === ref_){
+					while(ref_.previousSibling && ref_.previousSibling.sf$childRoot === ref_)
 						ref_.previousSibling.remove();
-					}
 				}
 
-				// if(item['each$'+])
 				ref_.textContent = value;
 			}
 			continue;
@@ -364,13 +366,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.attribute !== void 0){ // Attributes
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				var temp = cRef.ref.value.replace(templateParser_regex, function(full, match){
-					if(parsed[match] === void 0)
-						templateExec(template.parse, item, Number(match), parsed);
-
-					return parsed[match].data;
-				});
-
+				var temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
 				if(cRef.attribute.value === temp) continue;
 				cRef.attribute.value = temp;
 
@@ -381,7 +377,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 			// Direct value
 			if(parsed[cRef.ref.direct]){
 				var value = parsed[cRef.ref.direct].data;
-				if(cRef.attribute.value == value) continue;
+				if(cRef.attribute.value == value) continue; // non-strict compare
 				cRef.attribute.value = value;
 
 				haveChanges = true;

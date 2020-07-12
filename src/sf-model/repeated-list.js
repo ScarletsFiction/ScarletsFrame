@@ -1,4 +1,4 @@
-// ToDo: repeated list that using root binding or using property from root model (not the list property)
+// Info: repeated list that using root binding or using property from root model (not the list property)
 // will be slower on array operation because it's managing possible memory leak
 
 // Known bugs: using keys for repeated list won't changed when refreshed

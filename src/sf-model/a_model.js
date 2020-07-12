@@ -105,3 +105,23 @@ function modelScript(mask, script, repeatedListKey){
 		console.error(e);
 	}
 }
+
+function applyParseIndex(templateValue, indexes, parsed, templateParse, item){
+	for (var i = 0; i < indexes.length; i++){
+		var a = indexes[i];
+		if(parsed[a] === void 0 && templateParse !== void 0)
+			templateExec(templateParse, item, a, parsed);
+
+		templateValue[2*i+1] = parsed[a].data;
+	}
+
+	return templateValue.join('');
+}
+
+var parseIndexAllocate = internal.model.parseIndexAllocate = function(arr){
+	for (var i = arr.length-1; i > 0; i--)
+		arr.splice(i, 0, void 0);
+
+	if(arr[arr.length-1] === '')
+		arr.pop();
+}

@@ -466,6 +466,7 @@ function assignSquareBracket(elem, value){
 	}
 }
 
+var templateParser_regex_split = /{{%=[0-9]+%/g;
 function elementReferencesRefresh(elem){
 	var eRef = elem.sf$elementReferences;
 	var processed = false;
@@ -553,7 +554,8 @@ function elementReferencesRefresh(elem){
 
 			validMatch++;
 			return '{{%='+match+'%';
-		});
+		}).split(templateParser_regex_split);
+		internal.model.parseIndexAllocate(value);
 
 		if(validMatch === false || validMatch !== parse_index.length)
 			continue;
