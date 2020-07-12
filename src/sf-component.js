@@ -359,7 +359,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				var haveSpace = namespace || elem.closest('sf-space');
 				if(haveSpace !== null){
 					if(haveSpace.constructor === Space)
-						haveSpace = haveSpace.scope;
+						haveSpace = haveSpace.default;
 
 					internal.space.initComponent(haveSpace, tagName, elem, $item, asScope);
 					return elem;
