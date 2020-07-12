@@ -383,6 +383,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 				temp = parsed[cRef.ref.direct].data;
 				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}
+			else continue;
 
 			cRef.attribute.value = temp;
 			haveChanges = true;
@@ -396,6 +397,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 			// Direct value
 			else if(parsed[cRef.ref.direct])
 				temp = parsed[cRef.ref.direct].data;
+			else continue;
 
 			if(cRef.style.cssText === temp) continue;
 			cRef.style.cssText = temp;
