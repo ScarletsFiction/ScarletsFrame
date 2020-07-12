@@ -269,7 +269,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item){
 	if(property !== void 0){
 		var changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
-		if(changes === void 0 || changes === null || changes.length === 0){
+		if(!changes || changes.length === 0){
 			console.log(element, template, property, item);
 			console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
 			return false;
@@ -279,9 +279,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 		if(template.parse.length === 0)
 			return false;
 
-		var changes = new Array(template.parse.length);
-		for (var i = 0; i < changes.length; i++)
-			changes[i] = i;
+		var changes = void 0;
 	}
 
 	var parsed = templateExec(template.parse, item, changes, void 0, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
