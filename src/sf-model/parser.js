@@ -618,12 +618,11 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled !== void 0)
 				continue;
 
-			var attrs = currentNode.attributes;
-
 			// Skip element and it's childs that already bound to prevent vulnerability
-			if(attrs['sf-bind-list'] !== void 0)
+			if(currentNode.model !== void 0)
 				continue;
 
+			var attrs = currentNode.attributes;
 			if(attrs['sf-repeat-this'] !== void 0){
 				collectOther.repeat.push(currentNode);
 				continue;

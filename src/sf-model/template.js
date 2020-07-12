@@ -94,10 +94,17 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 			(current.tagName === 'INPUT' && sfRegex.inputAttributeType.test(current.type) === false)
 		));
 
-		var temp = {
-			attribute:isValueInput === true ? current : current.attributes[refB.name],
-			ref:refB
-		};
+		var temp = {ref:refB};
+
+		if(refB.name === 'style')
+			temp.style = current.style;
+		else{
+			temp.attribute = isValueInput === true
+				? current
+				: (refB.name === 'class'
+				   ? current.classList
+				   : current.attributes[refB.name]);
+		}
 
 		if(current.hasAttribute('sf-lang'))
 			temp.sf_lang = current;
@@ -293,7 +300,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 	var parsed = templateExec(template.parse, item, changes, void 0, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
 
 	var changesReference = element.sf$elementReferences;
-	var haveChanges = false;
+	var haveChanges = false, temp;
 	changes:for (var i = 0; i < changesReference.length; i++) {
 		var cRef = changesReference[i];
 
@@ -339,7 +346,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 						continue changes;
 				}
 
-				var temp = applyParseIndex(cRef.ref.value, index, parsed);
+				temp = applyParseIndex(cRef.ref.value, index, parsed);
 				if(cRef.textContent.textContent === temp) continue;
 				cRef.textContent.textContent = temp;
 
@@ -349,8 +356,8 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 			// Direct value
 			if(parsed[cRef.ref.direct]){
-				var value = parsed[cRef.ref.direct].data;
-				if(cRef.textContent.textContent === value) continue;
+				temp = parsed[cRef.ref.direct].data;
+				if(cRef.textContent.textContent === temp) continue;
 
 				var ref_ = cRef.textContent;
 				// Remove old element if exist
@@ -359,29 +366,40 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 						ref_.previousSibling.remove();
 				}
 
-				ref_.textContent = value;
+				ref_.textContent = temp;
+				haveChanges = true;
 			}
 			continue;
 		}
 
 		if(cRef.attribute !== void 0){ // Attributes
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				var temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
+				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
 				if(cRef.attribute.value === temp) continue;
-				cRef.attribute.value = temp;
-
-				haveChanges = true;
-				continue;
 			}
 
 			// Direct value
-			if(parsed[cRef.ref.direct]){
-				var value = parsed[cRef.ref.direct].data;
-				if(cRef.attribute.value == value) continue; // non-strict compare
-				cRef.attribute.value = value;
-
-				haveChanges = true;
+			else if(parsed[cRef.ref.direct]){
+				temp = parsed[cRef.ref.direct].data;
+				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}
+
+			cRef.attribute.value = temp;
+			haveChanges = true;
+			continue;
+		}
+
+		if(cRef.style !== void 0){ // Styles
+			if(cRef.ref.parse_index !== void 0) // Multiple
+				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
+
+			// Direct value
+			else if(parsed[cRef.ref.direct])
+				temp = parsed[cRef.ref.direct].data;
+
+			if(cRef.style.cssText === temp) continue;
+			cRef.style.cssText = temp;
+			haveChanges = true;
 		}
 	}
 
