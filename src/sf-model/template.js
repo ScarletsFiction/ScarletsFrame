@@ -153,6 +153,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 		var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);  //18ms
 	}catch(e){
 		console.error("Error when processing:", template.html, item, modelRef);
+		sf.onerror && sf.onerror(e);
 		throw e;
 	}
 

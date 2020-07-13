@@ -18,7 +18,10 @@ var callInputListener = function(ref, value){
 				if(newValue !== void 0)
 					ref.sfFeedback = true;
 			}
-		}catch(e){console.error(e)}
+		}catch(e){
+			console.error(e);
+			sf.onerror && sf.onerror(e);
+		}
 
 		return newValue;
 	}

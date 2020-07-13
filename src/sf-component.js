@@ -429,7 +429,10 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		try{
 		  customElements.define(tagName, func);
-		}catch(err){console.error(err)}
+		}catch(err){
+			console.error(err);
+			sf.onerror && sf.onerror(e);
+		}
 
 		return func;
 	}

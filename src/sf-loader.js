@@ -105,6 +105,7 @@ sf.loader = new function(){
 						whenDOMReady[i]();
 					} catch(e) {
 						console.error(e);
+						sf.onerror && sf.onerror(e);
 					}
 				}
 			}
@@ -138,6 +139,7 @@ sf.loader = new function(){
 				whenDOMLoaded[i]();
 			} catch(e){
 				console.error(e);
+				sf.onerror && sf.onerror(e);
 			}
 		}
 

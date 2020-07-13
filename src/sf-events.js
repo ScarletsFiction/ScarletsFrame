@@ -25,6 +25,7 @@ sf.events = (function(){
 							ref[i]();
 						} catch(e) {
 							console.error(e);
+							sf.onerror && sf.onerror(e);
 						}
 					}
 
@@ -61,6 +62,7 @@ sf.events = (function(){
 							callback.splice(i--, 1);
 					} catch(e) {
 						console.error(e);
+						sf.onerror && sf.onerror(e);
 					}
 				}
 			}

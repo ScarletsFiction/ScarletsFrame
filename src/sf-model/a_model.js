@@ -103,6 +103,7 @@ function modelScript(mask, script, repeatedListKey){
 	} catch(e){
 		console.log(script);
 		console.error(e);
+		sf.onerror && sf.onerror(e);
 	}
 }
 
