@@ -314,7 +314,7 @@ class DOMList{
 		return this;
 	}
 	append(element){
-		if(element.constructor === Array || element.classList === void 0){
+		if(element.constructor === Array){
 			for (var i = 0; i < element.length; i++)
 				this[0].append(element[i]);
 		}
@@ -326,7 +326,7 @@ class DOMList{
 		return this;
 	}
 	prepend(element){
-		if(element.constructor === Array || element.classList === void 0){
+		if(element.constructor === Array){
 			for (var i = 0; i < element.length; i++)
 				this[0].prepend(element[i]);
 		}
