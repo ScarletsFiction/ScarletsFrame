@@ -155,7 +155,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	var originalPropertyName = propertyName;
 
 	// Dive to the last object, create if not exist
-	if(propertyName.constructor === Arr){
+	if(propertyName.constructor === Array){
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];
 		else{
@@ -193,7 +193,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	}
 
 	// We can't redefine length on array
-	if(model.constructor === Arr && propertyName === 'length')
+	if(model.constructor === Array && propertyName === 'length')
 		return;
 
 	// Enable multiple element binding
@@ -231,7 +231,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	if(desc === void 0 || desc.set !== void 0)
 		return;
 
-	if(originalPropertyName.constructor === Arr){
+	if(originalPropertyName.constructor === Array){
 		// Cache deep sf$bindingKey path if this a shared model
 		if(originalModel.sf$internal !== void 0 && originalPropertyName.length !== 1)
 			originalModel.sf$internal.deepBinding[originalPropertyName.slice(0, -1).join('%$')] = true;

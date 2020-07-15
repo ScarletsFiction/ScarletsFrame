@@ -104,7 +104,7 @@ function reapplyScope(proxy, space, scope, func){
 			return true;
 		}
 
-		if(val.constructor === Function)
+		if(val && val.constructor === Function)
 			refunction(prop, val);
 		else if(obj[prop] === void 0 || hotReloadAll === true)
 			obj[prop] = val; // Reassign non-function value

@@ -21,8 +21,10 @@ sf.window = {
 			window.addEventListener('beforeunload', this.destroy);
 		}
 
-		var template = options.templateHTML;
-		if(options.templatePath)
+		var template;
+		if(options.templateHTML)
+			template = options.templateHTML;
+		else if(options.templatePath)
 			template = window.templates[options.templatePath];
 		else if(options.templateURL)
 			console.log("Haven't been implemented");
@@ -89,12 +91,12 @@ sf.window = {
 				portComponentDefinition(linker, space.default.registered, ref.default.registered);
 			}
 
-			if(options.globals){
-				for(var prop in options.globals)
-					linker[prop] = options.globals[prop];
+			for(var prop in window){
+				if(linker[prop] === void 0)
+					linker[prop] = window[prop];
 			}
 
-			linker.document.body.innerHTML = template;
+			$(linker.document.body).append(template);
 			linker.sf$proxy.sfLoaderTrigger();
 
 			onLoaded && onLoaded({
@@ -138,11 +140,15 @@ function portComponentDefinition(linker, from, into){
 
 		if(ref[3] !== void 0){
 			if(ref[3].constructor === Object){
-				var html = Object.assign({}, ref[3]);
-				html.html = $.parseElement(html.html.outerHTML)[0];
-				ref[3] = html;
+				var template = Object.create(ref[3]);
+				ref[3] = template;
+				template.html = $.parseElement(template.html.outerHTML)[0];
 			}
-			else ref[3] = $.parseElement(ref[3].outerHTML)[0];
+			else{
+				var tempDOM = ref[3].tempDOM;
+				ref[3] = $.parseElement(ref[3].outerHTML)[0];
+				ref[3].tempDOM = tempDOM;
+			}
 		}
 
 		ref[1] = linker.sf$defineComponent(name);
