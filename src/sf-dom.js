@@ -764,7 +764,10 @@ function recreateDOMList($el, length){
 	var emptyDOM = document.createElement('div');
 	self.parseElement = function(html, elementOnly){
 		emptyDOM.innerHTML = '<template>'+html+'</template>';
-		return emptyDOM.firstElementChild.content[elementOnly ? 'children' : 'childNodes'] || [];
+
+		if(elementOnly)
+			return emptyDOM.firstElementChild.content.children || [];
+		return emptyDOM.firstElementChild.content.childNodes || [];
 	}
 
 	self.escapeText = function(text){
