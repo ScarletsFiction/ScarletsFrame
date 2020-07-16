@@ -21,14 +21,9 @@ sf.window = {
 			window.addEventListener('beforeunload', this.destroy);
 		}
 
-		var template = options.templateHTML;
-		if(template){
-			if(template.constructor !== String){
-				console.warn('templateHTML.outerHTML will be used instead');
-				console.warn('Please make sure to escape HTML if this was generated with any user input');
-				template = template.outerHTML;
-			}
-		}
+		var template;
+		if(options.templateHTML)
+			template = options.templateHTML;
 		else if(options.templatePath)
 			template = window.templates[options.templatePath];
 		else if(options.templateURL)
@@ -101,7 +96,8 @@ sf.window = {
 					linker[prop] = window[prop];
 			}
 
-			linker.document.body.innerHTML = template;
+			linker.document.body.textContent = '';
+			$(linker.document.body).append(template);
 			linker.sf$proxy.sfLoaderTrigger();
 
 			onLoaded && onLoaded({
