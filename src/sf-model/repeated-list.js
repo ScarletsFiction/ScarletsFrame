@@ -66,14 +66,13 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 }
 
 function prepareRepeated(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-	var callback, prop, targetDeep;
-	if(pattern[1].constructor !== Array){
+	var callback, prop = pattern[1], targetDeep;
+
+	if(prop.constructor !== Array)
 		targetDeep = modelRef;
-		prop = pattern[1];
-	}
 	else{
-		targetDeep = deepProperty(modelRef, pattern[1].slice(0, -1));
-		prop = pattern[1][pattern[1].length - 1];
+		targetDeep = deepProperty(modelRef, prop.slice(0, -1));
+		prop = prop[prop.length - 1];
 	}
 
 	callback = targetDeep['on$'+prop] || {};
@@ -106,12 +105,11 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		this.$EM.list = newList;
 	}
 
-	var mask, uniqPattern;
-	if(pattern[0].constructor === Array){
-		mask = pattern[0].pop();
-		uniqPattern = pattern[0][0];
+	var mask = pattern[0], uniqPattern;
+	if(mask.constructor === Array){
+		uniqPattern = mask[0];
+		mask = mask.pop();
 	}
-	else mask = pattern[0];
 
 	EM.asScope = void 0;
 
@@ -167,20 +165,19 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 class RepeatedProperty{ // extends Object
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-		var that = pattern[1].constructor === String ? modelRef[pattern[1]] : deepProperty(modelRef, pattern[1]);
+		var prop = pattern[1];
+		var that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
 
 		// Initialize property once
 		if(that.constructor !== RepeatedProperty){
 			hiddenProperty(that, '_list', Object.keys(that));
 
-			var target, prop;
-			if(pattern[1].constructor !== Array){
+			var target;
+			if(prop.constructor !== Array)
 				target = modelRef;
-				prop = pattern[1];
-			}
 			else{
-				target = deepProperty(modelRef, pattern[1].slice(0, -1));
-				prop = pattern[1][pattern[1].length-1];
+				target = deepProperty(modelRef, prop.slice(0, -1));
+				prop = prop[prop.length-1];
 			}
 
 			Object.setPrototypeOf(that, RepeatedProperty.prototype);
@@ -375,18 +372,17 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 
 class RepeatedList extends Array{
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-		var that = pattern[1].constructor === String ? modelRef[pattern[1]] : deepProperty(modelRef, pattern[1]);
+		var prop = pattern[1];
+		var that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
 
 		// Initialize property once
 		if(that.constructor !== RepeatedList){
-			var target, prop;
-			if(pattern[1].constructor !== Array){
+			var target;
+			if(prop.constructor !== Array)
 				target = modelRef;
-				prop = pattern[1];
-			}
 			else{
-				target = deepProperty(modelRef, pattern[1].slice(0, -1));
-				prop = pattern[1][pattern[1].length-1];
+				target = deepProperty(modelRef, prop.slice(0, -1));
+				prop = prop[prop.length-1];
 			}
 
 			Object.setPrototypeOf(that, RepeatedList.prototype);
@@ -464,18 +460,12 @@ class RepeatedList extends Array{
 
 	push(){
 		var lastLength = this.length;
-		this.length += arguments.length;
-
-		for (var i = lastLength, n = 0; i < this.length; i++)
-			this[i] = arguments[n++];
+		Array.prototype.push.apply(this, arguments);
 
 		if(arguments.length === 1)
 			this.$EM.append(lastLength);
 
-		else{
-			for (var i = 0; i < arguments.length; i++)
-				this.$EM.append(lastLength + i);
-		}
+		else this.$EM.hardRefresh(lastLength);
 
 		return this.length;
 	}
@@ -877,19 +867,20 @@ class ElementManipulator{
 			exist.length = list.length;
 
 		for (var i = index; i < list.length; i++) {
-			var temp = this.elementRef.get(list[i]);
+			var ref = list[i];
+			var temp = this.elementRef.get(ref);
 
 			if(temp === void 0){
 				if(this.isComponent)
-					temp = new this.template(list[i], this.namespace, this.asScope);
+					temp = new this.template(ref, this.namespace, this.asScope);
 				else
-					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode, void 0, this.template.uniqPattern && i);
+					temp = templateParser(this.template, ref, false, this.modelRef, this.parentNode, void 0, this.template.uniqPattern && i);
 
-				if(typeof list[i] === "object"){
+				if(typeof ref === "object"){
 					if(this.isComponent === false)
-						self.bindElement(temp, this.modelRef, this.template, list[i]);
+						self.bindElement(temp, this.modelRef, this.template, ref);
 
-					this.elementRef.set(list[i], temp);
+					this.elementRef.set(ref, temp);
 
 					if(this.elements !== void 0)
 						exist[i] = temp;
@@ -897,14 +888,14 @@ class ElementManipulator{
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
-				if(compareObject(temp.model, list[i]) === false){
-					temp = templateParser(this.template, list[i], false, this.modelRef, this.parentNode, void 0, this.template.uniqPattern && i);
+				if(compareObject(temp.model, ref) === false){
+					temp = templateParser(this.template, ref, false, this.modelRef, this.parentNode, void 0, this.template.uniqPattern && i);
 
-					if(typeof list[i] === "object"){
+					if(typeof ref === "object"){
 						if(this.isComponent === false)
-							self.bindElement(temp, this.modelRef, this.template, list[i]);
+							self.bindElement(temp, this.modelRef, this.template, ref);
 
-						this.elementRef.set(list[i], temp);
+						this.elementRef.set(ref, temp);
 
 						if(this.elements !== void 0)
 							exist[i] = temp;
@@ -953,19 +944,20 @@ class ElementManipulator{
 			if(oldChild === void 0 || list[i] === void 0)
 				break;
 
-			var temp = this.elementRef.get(list[i]);
+			var ref = list[i];
+			var temp = this.elementRef.get(ref);
 
 			if(temp === void 0){
 				if(this.isComponent)
-					temp = new template(list[i], this.namespace, this.asScope);
+					temp = new template(ref, this.namespace, this.asScope);
 				else
-					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode, void 0, template.uniqPattern && i);
+					temp = templateParser(template, ref, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && i);
 
-				if(typeof list[i] === "object"){
+				if(typeof ref === "object"){
 					if(this.isComponent === false)
-						self.bindElement(temp, this.modelRef, template, list[i]);
+						self.bindElement(temp, this.modelRef, template, ref);
 
-					this.elementRef.set(list[i], temp);
+					this.elementRef.set(ref, temp);
 
 					if(this.elements != void 0)
 						exist[i] = temp;
@@ -973,14 +965,14 @@ class ElementManipulator{
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
-				if(compareObject(temp.model, list[i]) === false){
-					temp = templateParser(template, list[i], false, this.modelRef, this.parentNode, void 0, template.uniqPattern && i);
+				if(compareObject(temp.model, ref) === false){
+					temp = templateParser(template, ref, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && i);
 
-					if(typeof list[i] === "object"){
+					if(typeof ref === "object"){
 						if(this.isComponent === false)
-							self.bindElement(temp, this.modelRef, template, list[i]);
+							self.bindElement(temp, this.modelRef, template, ref);
 
-						this.elementRef.set(list[i], temp);
+						this.elementRef.set(ref, temp);
 
 						if(this.elements != void 0)
 							exist[i] = temp;
@@ -1020,10 +1012,8 @@ class ElementManipulator{
 			count += overflow;
 
 		var vDOM = new Array(count);
-		for (var i = 0; i < count; i++) {
-			vDOM[i] = exist[from + i];
-			vDOM[i].remove();
-		}
+		for (var i = 0; i < count; i++)
+			(vDOM[i] = exist[from + i]).remove();
 
 		var nextSibling = exist[to] || null;
 		var theParent = nextSibling && nextSibling.parentNode;
@@ -1359,11 +1349,11 @@ class ElementManipulatorProxy{
 
 			if(index.constructor === Number){
 				if(typeof instance[index] !== 'object')
-					val = (list[i].parentChilds || list[i].elements || list[i].virtualRefresh())[index];
+					val = (EM.parentChilds || EM.elements || EM.virtualRefresh())[index];
 				else
-					val = list[i].elementRef.get(instance[index]);
+					val = EM.elementRef.get(instance[index]);
 			}
-			else val = list[i].elementRef.get(index);
+			else val = EM.elementRef.get(index);
 
 			if(val)
 				got.push(val);

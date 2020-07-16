@@ -52,22 +52,23 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		var findEventFromList = function(arr){
 			// Partial array compare ([0,1,2] with [0,1,2,3,4] ==> true)
 			parent:for (var i = 0; i < listener.length; i++) {
+				var ref = listener[i];
 				if(arr === void 0){
-					if(listener[i][0].length !== 0)
+					if(ref[0].length !== 0)
 						continue;
 
-					found = listener[i][0];
-					return listener[i][1];
+					found = ref[0];
+					return ref[1];
 				}
 
-				var ref = listener[i][0];
-				for (var z = 0; z < ref.length; z++) {
-					if(ref[z] !== arr[z])
+				var ref2 = ref[0];
+				for (var z = 0; z < ref2.length; z++) {
+					if(ref2[z] !== arr[z])
 						continue parent;
 				}
 
-				found = listener[i][0];
-				return listener[i][1];
+				found = ref[0];
+				return ref[1];
 			}
 
 			return;

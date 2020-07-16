@@ -92,8 +92,9 @@ var uniqueDataParser = function(html, template, _modelScope){
 				elseIf.elseValue = elseIf.elseValue.trim();
 
 			for (var i = 0; i < elseIf.elseIf.length; i++) {
-				elseIf.elseIf[i][0] = elseIf.elseIf[i][0].trim();
-				elseIf.elseIf[i][1] = elseIf.elseIf[i][1].trim();
+				var ref = elseIf.elseIf[i];
+				ref[0] = ref[0].trim();
+				ref[1] = ref[1].trim();
 			}
 
 			// Push data
@@ -237,9 +238,10 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 			throw new Error("<sf-template> need `window.templates` to be loaded first");
 
 		for (var i = injectTemplate.length - 1; i >= 0; i--) {
-			var path = injectTemplate[i].getAttribute('path')
+			var ref = injectTemplate[i];
+			var path = ref.getAttribute('path')
 			if(path === null){
-				path = injectTemplate[i].getAttribute('get-path');
+				path = ref.getAttribute('get-path');
 
 				if(path !== null) // below got undefined if not found
 					path = deepProperty(window, parsePropertyPath(path));
@@ -255,19 +257,19 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 				}
 			}
 			else {
-				path = injectTemplate[i].getAttribute('get-html');
+				path = ref.getAttribute('get-html');
 				serve = deepProperty(window, parsePropertyPath(path));
 			}
 
 			if(serve === void 0){
-				console.log(injectTemplate[i], 'Template path was not found', path);
-				injectTemplate[i].remove();
+				console.log(ref, 'Template path was not found', path);
+				ref.remove();
 				continue;
 			}
 
 			serve = $.parseElement(serve);
-			$(serve).insertBefore(injectTemplate[i].nextSibling || injectTemplate[i]);
-			injectTemplate[i].remove();
+			$(serve).insertBefore(ref.nextSibling || ref);
+			ref.remove();
 		}
 	}
 
@@ -291,15 +293,16 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 		else{
 			var temp = modelScope.sf$reserved;
 			for (var i = reservedTemplate.length - 1; i >= 0; i--) {
-				var serve = temp[reservedTemplate[i].getAttribute('name')];
+				var ref = reservedTemplate[i];
+				var serve = temp[ref.getAttribute('name')];
 				if(serve === void 0){
-					reservedTemplate[i].remove();
+					ref.remove();
 					continue;
 				}
 
 				serve = $.parseElement(serve);
-				$(serve).insertBefore(reservedTemplate[i].nextSibling || reservedTemplate[i]);
-				reservedTemplate[i].remove();
+				$(serve).insertBefore(ref.nextSibling || ref);
+				ref.remove();
 			}
 		}
 	}
@@ -451,17 +454,18 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	var addressed = [];
 
 	for (var i = nodes.length - 1; i >= 0; i--) {
+		var ref = nodes[i];
 		var temp = {
-			nodeType:nodes[i].nodeType
+			nodeType:ref.nodeType
 		};
 
 		if(temp.nodeType === 1){ // Element
-			temp.attributes = addressAttributes(nodes[i], template);
-			temp.address = $.getSelector(nodes[i], true);
+			temp.attributes = addressAttributes(ref, template);
+			temp.address = $.getSelector(ref, true);
 		}
 
 		else if(temp.nodeType === 3){ // Text node
-			var innerHTML = nodes[i].textContent;
+			var innerHTML = ref.textContent;
 			var indexes = [];
 
 			innerHTML.replace(/{{%%=([0-9]+)/gm, function(full, match){
@@ -474,17 +478,17 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				for (var a = 0; a < innerHTML.length; a++) {
 					innerHTML[a] = trimIndentation(innerHTML[a]).trim();
 				}
-				nodes[i].textContent = innerHTML.shift();
+				ref.textContent = innerHTML.shift();
 
-				var parent = nodes[i].parentNode;
-				var nextSibling = nodes[i].nextSibling;
+				var parent = ref.parentNode;
+				var nextSibling = ref.nextSibling;
 
 				// Dynamic boundary start
 				var addressStart = null;
-				if(indexes.length !== 0 && nodes[i].textContent.length !== 0)
-					addressStart = $.getSelector(nodes[i], true);
-				else if(nodes[i].previousSibling !== null)
-					addressStart = $.getSelector(nodes[i].previousSibling, true);
+				if(indexes.length !== 0 && ref.textContent.length !== 0)
+					addressStart = $.getSelector(ref, true);
+				else if(ref.previousSibling !== null)
+					addressStart = $.getSelector(ref.previousSibling, true);
 
 				// Find boundary ends
 				var commentFlag = addressed.length;
@@ -515,8 +519,8 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				}
 
 				// Merge boundary address
-				if(nodes[i].textContent === ''){
-					nodes[i].remove();
+				if(ref.textContent === ''){
+					ref.remove();
 
 					// Process the comment flag only
 					for (var a = commentFlag; a < addressed.length; a++) {
@@ -525,13 +529,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 					}
 					continue;
 				}
-				else if(nodes[i].textContent.search(/{{%=[0-9]+%/) === -1)
+				else if(ref.textContent.search(/{{%=[0-9]+%/) === -1)
 					continue;
 			}
 
 			// Check if it's only model value
 			indexes = [];
-			innerHTML = nodes[i].textContent.replace(templateParser_regex, function(full, match){
+			innerHTML = ref.textContent.replace(templateParser_regex, function(full, match){
 				indexes.push(Number(match));
 				return '';
 			});
@@ -539,12 +543,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			if(innerHTML === '' && indexes.length === 1)
 				temp.direct = indexes[0];
 			else{
-				temp.value = nodes[i].textContent.replace(/[ \t]{2,}/g, ' ').split(templateParser_regex_split);
+				temp.value = ref.textContent.replace(/[ \t]{2,}/g, ' ').split(templateParser_regex_split);
 				parseIndexAllocate(temp.value);
 				temp.parse_index = indexes;
 			}
 
-			temp.address = $.getSelector(nodes[i], true);
+			temp.address = $.getSelector(ref, true);
 		}
 
 		addressed.push(temp);

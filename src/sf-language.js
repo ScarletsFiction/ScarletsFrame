@@ -427,27 +427,28 @@ function assignSquareBracket(elem, value){
 		var nodes = elem.childNodes;
 		var whenEven = true;
 		for (var a = 0; a < value.length; a++) {
+			var ref = nodes[a];
 			if((a % 2 === 0) === whenEven){ // text node
-				if(nodes[a] === void 0) // no nodes
+				if(ref === void 0) // no nodes
 					elem.appendChild(document.createTextNode(value[a]));
-				else if(nodes[a].nodeType === 3) // text node
-					nodes[a].textContent = value[a];
+				else if(ref.nodeType === 3) // text node
+					ref.textContent = value[a];
 				else // element node
-					elem.insertBefore(document.createTextNode(value[a]), nodes[a]);
+					elem.insertBefore(document.createTextNode(value[a]), ref);
 
 				continue;
 			}
 
-			if(nodes[a] === void 0){
+			if(ref === void 0){
 				console.error("[Language] square bracket found, but element was not found for:", value[a]);
 				continue;
 			}
 
-			if(nodes[a].nodeType === 1){ // element node
+			if(ref.nodeType === 1){ // element node
 				if(value[a][0] === '{') // Check if this was template
 					continue;
 
-				nodes[a].textContent = value[a];
+				ref.textContent = value[a];
 				continue;
 			}
 
@@ -455,8 +456,8 @@ function assignSquareBracket(elem, value){
 			whenEven = !whenEven;
 		}
 
-		if(nodes[a] !== void 0 && nodes[a].nodeType === 3)
-			nodes[a].remove();
+		if(ref !== void 0 && ref.nodeType === 3)
+			ref.remove();
 	}
 	else{
 		if(elem.nodeType !== 3 && elem.firstChild !== null)

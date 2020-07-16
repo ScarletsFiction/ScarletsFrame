@@ -645,12 +645,13 @@ function recreateDOMList($el, length){
 		else{
 			var ref = element.sf$eventListener;
 			if(ref !== void 0 && ref[event] !== void 0){
-				for (var i = ref[event].length - 1; i >= 0; i--) {
-					if(selector && ref[event][i].selector !== selector)
+				var ref2 = ref[event];
+				for (var i = ref2.length - 1; i >= 0; i--) {
+					if(selector && ref2[i].selector !== selector)
 						continue;
 
-					var options = ref[event][i].options;
-					element.removeEventListener(event, ref[event].splice(i, 1)[0], options);
+					var options = ref2[i].options;
+					element.removeEventListener(event, ref2.splice(i, 1)[0], options);
 				}
 
 				delete element.sf$eventListener[event];

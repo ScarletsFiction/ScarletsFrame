@@ -89,16 +89,18 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		var scope = namespace || self;
 
 		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template
-		if(scope.registered[name] === void 0)
-			scope.registered[name] = new Array(5); // index 1 is $ComponentConstructor
+		var registrar = scope.registered[name];
+		if(registrar === void 0)
+			registrar = scope.registered[name] = new Array(5);
+			// index 1 is $ComponentConstructor
 
-		if((options.exports || hotReload) && scope.registered[name][2] === void 0)
-			scope.registered[name][2] = [];
+		if((options.exports || hotReload) && registrar[2] === void 0)
+			registrar[2] = [];
 
-		scope.registered[name][0] = func;
+		registrar[0] = func;
 		var construct = defineComponent(name);
 
-		scope.registered[name][1] = construct;
+		registrar[1] = construct;
 		window['$'+construct.name] = construct;
 
 		if(waitingHTML[name] !== void 0)
@@ -108,7 +110,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		// Return list of created component
 		if(options.exports)
-			return scope.registered[name][2];
+			return registrar[2];
 	}
 
 	self.html = function(name, outerHTML, namespace, retry){
@@ -150,8 +152,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		}
 
 		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template, 4=ModelRegex
-		if(scope.registered[name] === void 0)
-			scope.registered[name] = new Array(5);
+		var registrar = scope.registered[name];
+		if(registrar === void 0)
+			registrar = scope.registered[name] = new Array(5);
 
 		var temp;
 		if(outerHTML.constructor === String)
@@ -159,14 +162,14 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		else temp = outerHTML;
 
 		if(temp.length === 1)
-			scope.registered[name][3] = temp[0];
+			registrar[3] = temp[0];
 		else{
 			var tempDOM = document.createElement('div');
 			tempDOM.tempDOM = true;
 			for (var i = temp.length - 1; i >= 0; i--) {
 				tempDOM.insertBefore(temp[i], tempDOM.firstChild);
 			}
-			scope.registered[name][3] = tempDOM;
+			registrar[3] = tempDOM;
 		}
 
 		if(templatePath !== false){
@@ -176,7 +179,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if(templatePath !== '')
 				templatePath += '/';
 
-			scope.registered[name][3].templatePath = templatePath;
+			registrar[3].templatePath = templatePath;
 		}
 
 		if(waitingHTML[name] !== void 0)
