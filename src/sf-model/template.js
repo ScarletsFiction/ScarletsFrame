@@ -49,7 +49,7 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			else{
 				if(temp.constructor === Object)
 					temp = JSON.stringify(temp);
-				if(temp.constructor !== String)
+				else if(temp.constructor !== String)
 					temp = String(temp);
 			}
 
@@ -125,21 +125,9 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 		if(refB.name === 'value' && isValueInput === true){
 			var temp = current.value;
 			current.removeAttribute('value');
-			if(refB.value)
-				current.value = applyParseIndex(refB.value, refB.parse_index, parsed);
-
-			else current.value = temp.replace(templateParser_regex, function(full, match){
-				return parsed[match].data;
-			});
+			current.value = applyParseIndex(refB.value, refB.parse_index, parsed);
 		}
-		else{
-			if(refB.value)
-				current.setAttribute(refB.name, applyParseIndex(refB.value, refB.parse_index, parsed));
-
-			else current.setAttribute(refB.name, current.value.replace(templateParser_regex, function(full, match){
-				return parsed[match].data;
-			}));
-		}
+		else current.setAttribute(refB.name, applyParseIndex(refB.value, refB.parse_index, parsed));
 	}
 }
 
@@ -185,7 +173,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
-			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference, rootHandler, template);
+			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference, rootHandler, template); //26ms
 			continue;
 		}
 
@@ -204,9 +192,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			}
 
 			// Below is used for multiple/dynamic data
-			refA.textContent = refA.textContent.replace(templateParser_regex, function(full, match){
-				return parsed[match].data;
-			});
+			current.textContent = applyParseIndex(ref.value, ref.parse_index, parsed);
 			continue;
 		}
 
