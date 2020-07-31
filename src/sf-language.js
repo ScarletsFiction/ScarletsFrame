@@ -418,9 +418,6 @@ function assignSquareBracket(elem, value){
 			return '*#'+match+'*#';
 		}).split('*#');
 
-		if(value[value.length-1] === '')
-			value.pop();
-
 		// Odd = element for [text]
 		// Even = text only
 
@@ -476,7 +473,7 @@ function elementReferencesRefresh(elem){
 		if(eRef[i].textContent !== void 0){
 			var parent = eRef[i].textContent.parentElement;
 
-			if(parent.hasAttribute('sf-lang') === false)
+			if(parent === null || parent.hasAttribute('sf-lang') === false)
 				continue;
 
 			var key = parent.getAttribute('sf-lang');
@@ -510,7 +507,7 @@ function elementReferencesRefresh(elem){
 
 					if(hasBracket[2].includes('{')){
 						if(found !== false){
-							console.error('Currently only one square language template that can be combined with model template');
+							console.error('Currently only one mustache around square language template that supported');
 							continue;
 						}
 
@@ -522,7 +519,7 @@ function elementReferencesRefresh(elem){
 					eRef[i].textContent = elem.childNodes[found];
 				}
 				else{
-					console.error('Currently only one square language template that can be combined with model template');
+					console.error('Currently only one square language template that can be combined with mustache');
 					continue;
 				}
 			}
