@@ -452,9 +452,6 @@ function assignSquareBracket(elem, value){
 			// This may rare case, but does found other node type?
 			whenEven = !whenEven;
 		}
-
-		if(ref !== void 0 && ref.nodeType === 3)
-			ref.remove();
 	}
 	else{
 		if(elem.nodeType !== 3 && elem.firstChild !== null)
