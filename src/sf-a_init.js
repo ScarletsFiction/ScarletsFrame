@@ -155,7 +155,7 @@ function stringifyPropertyPath(properties){
 
 var _es = '%@~';
 function avoidQuotes(str, func, onQuotes){
-	str = str.split(_es).join('');
+	str = str.split(_es).join('-');
 
 	var temp = [];
 	str = str.replace(sfRegex.getQuotes, function(full){

@@ -4,6 +4,8 @@
 // Please be careful when you're passing the eval argument
 // .apply() or spread ...array is slower than direct function call
 // object[0] is slower than array[0]
+
+// ToDo: directly create parse_index from here
 var dataParser = function(html, _model_, template, _modelScope, preParsedReference, justName){
 	var preParsed = [];
 	var lastParsedIndex = preParsedReference.length;
@@ -23,7 +25,7 @@ var dataParser = function(html, _model_, template, _modelScope, preParsedReferen
 			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
 				return before+'_modelScope.'+matched;
 			});
-		}).split('_model_._modelScope.').join('_model_.').split('%@~_modelScope.').join('%@~');
+		});
 
 		temp = temp.trim();
 
@@ -74,7 +76,7 @@ var uniqueDataParser = function(html, template, _modelScope){
 			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
 				return before+'_modelScope.'+matched;
 			});
-		}).split('_model_._modelScope.').join('_model_.').split('%@~_modelScope.').join('%@~');
+		});
 
 		var check = false;
 		check = temp.split('@if ');
@@ -455,9 +457,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	for (var i = nodes.length - 1; i >= 0; i--) {
 		var ref = nodes[i];
-		var temp = {
-			nodeType:ref.nodeType
-		};
+		var temp = {nodeType: ref.nodeType};
 
 		if(temp.nodeType === 1){ // Element
 			temp.attributes = addressAttributes(ref, template);

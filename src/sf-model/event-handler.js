@@ -10,7 +10,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		// Replace variable to refer to current scope
 		return script_.replace(template.modelRefRoot_regex, function(full, before, matched){
 			return before+'_modelScope.'+matched;
-		}).split('%@~_modelScope.').join('%@~');
+		});
 	});
 
 	var name_ = data.name.slice(1);

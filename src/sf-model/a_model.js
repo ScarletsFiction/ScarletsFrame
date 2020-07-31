@@ -65,6 +65,7 @@ function trimIndentation(text){
 	return text.replace(new RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
 }
 
+// ToDo: Perf
 function _escapeParse(html, vars){
 	return avoidQuotes(html, function(noQuot){
 		// Escape for value in HTML
@@ -75,7 +76,7 @@ function _escapeParse(html, vars){
 		// Escape for value in attributes
 		return inQuot.replace(templateParser_regex, function(full, match){
 			return vars[match] && vars[match].constructor === String
-				? vars[match].split('"').join('&quot;').split("'").join("&quot;")
+				? vars[match].split('"').join('&quot;').split("'").join("&#39;")
 				: vars[match];
 		});
 	});
