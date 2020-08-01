@@ -236,6 +236,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		that = null;
 }
 
+var toDegree = 180/Math.PI;
 var specialEvent = internal.model.specialEvent = {
 	taphold:function(that, keys, script, _modelScope){
 		var set = new Set();
@@ -428,7 +429,7 @@ function touchGesture(that, callback){
 			var dy = pointers[1].clientY - pointers[0].clientY;
 
 			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
-			lastAngle = startAngle = Math.atan2(dy, dx) * 180/Math.PI;
+			lastAngle = startAngle = Math.atan2(dy, dx) * toDegree;
 
 			ev.scale =
 			ev.angle =
@@ -447,11 +448,13 @@ function touchGesture(that, callback){
 		ev.stopImmediatePropagation();
 		findAnd(1, ev);
 
-		var dx = pointers[1].clientX - pointers[0].clientX;
-		var dy = pointers[1].clientY - pointers[0].clientY;
+		var p1 = pointers[0];
+		var p2 = pointers[1];
+		var dx = p2.clientX - p1.clientX;
+		var dy = p2.clientY - p1.clientY;
 
 		var currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
-		var currentAngle = Math.atan2(dy, dx) * 180/Math.PI;
+		var currentAngle = Math.atan2(dy, dx) * toDegree;
 
 		ev.scale = currentScale - lastScale;
 		ev.angle = currentAngle - lastAngle;
