@@ -19,6 +19,7 @@ sf.model.for('virtual-scroll', function(self, root){
 	self.list1 = [];
 	self.list1b = [];
 	self.one = 'first'+vul;
+	self.id = 'test id';
 
 	for (var i = 1; i <= 50; i++) {
 		self.list1b.push({

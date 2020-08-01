@@ -169,7 +169,7 @@
            }
         </style>
 
-        <b>Virtual Scroll - Static Height & Scroll on parent</b>
+        <b>Virtual Scroll - Static Height & Scroll on parent {{ id }}</b>
         <div data-simplebar style="height: 200px;">
            <ul class="sf-virtual-list" scroll-parent-index="2">
              <li sf-repeat-this="x in list1" data-id="{{x.id}}" @click="handleClick(event, 1)">
@@ -201,7 +201,7 @@
         <sf-m name="virtual-scroll" style="display:inline-block;width: 50%;float: left;">
           <div sf-repeat-this="key,nyan in list3" @click="withKeyClick(key, nyan, 1)">{{@exec
             for (var i = 0; i < nyan.length; i++) {
-              {[ <b>1-></b> {{key}}. test[{{i}}] = {{ nyan[i] }}<br> ]}
+              {[ <b>1-></b> "'{{key}}. test[{{i}}] = {{ nyan[i] }}'"<br> ]}
             }
           }}</div>
           <div sf-repeat-this="key,val in list4" @click="withKeyClick(key, val, 1)">
@@ -231,7 +231,7 @@
 
          <input type="text" sf-into="inputBinding1" onkeyup="sf(this).onKeyUp(event)" value="One way binding"><br>
          <input type="text" sf-bind="inputBinding1"><br>
-         <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }}</span><br><br>
+         <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }} <b>hay</b> nyam {{inputBinding2}} <u>ahoy</u></span><br><br>
 
          <span class="bold" style="
             font-weight: {{ bold ? 'bold' : 'unset' }};
@@ -295,7 +295,7 @@
             	var bindThis = prefix;
 
                for(var i = 1; i <= 5; i++){
-                  {[<span attr="{{ bindThis }}">{{ bindThis }}{{ i }}</span><br>]}
+                  {[<span attr="{{ bindThis }} o{{ i }}">{{ bindThis }}{{ i }}</span><br>]}
                }
 
                var calculate = (5+4);
@@ -429,7 +429,7 @@
             },
             custom:{
               el:{
-                iB1:"Variable content: {inputBinding1}",
+                iB1:"Variable content: {inputBinding1} [hay] nyam {inputBinding2.text} [ahoy]",
                 iB2:"Above content: {inputBinding2.text}",
                 iB3:"It's {inputBinding2.text}"
               }
@@ -440,7 +440,7 @@
             translated:"terjemahankan {data}"+vul,
             custom:{
               el:{
-                iB1:"Kontent variabel: {inputBinding1}"+vul,
+                iB1:"Kontent variabel: {inputBinding2.text} nyam [halo] {inputBinding1} [uhay]"+vul,
                 iB2:"Kontent diatas: {inputBinding2.text}",
                 iB3:"Itu adalah {inputBinding2.text}"+vul
               }

@@ -93,4 +93,12 @@ window.templates['space/test.html'] = `
   </sf-m>
   <my-obj id="1" @click="inc">{{ test }} - <span sf-repeat-this="num in list">{{num}},</span></my-obj>
 </sf-space>
+
+<div id="lang-test">
+   <p sf-lang="hello.other.side" onclick="sf.lang.changeDefault('id_ID')">a<b>b</b>c</p>
+   <input type="text" sf-lang="i'm.here" placeholder="" />
+
+   <p sf-lang="my.test" onclick="sf.lang.changeDefault('ja_JP')"></p>
+   <p sf-lang="second" onclick="sf.lang.changeDefault('en_US')"></p>
+</div>
 `;
