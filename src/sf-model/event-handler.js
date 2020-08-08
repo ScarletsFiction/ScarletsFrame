@@ -121,6 +121,8 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	}
 
 	keys = new Set(keys);
+	if(rejectUntrusted)
+		keys.add('trusted');
 
 	var options = {};
 	if(keys.has('once')){
@@ -155,27 +157,24 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	}
 
 	var pointerCode = 0;
-	if(keys.has('left')) pointerCode |= 1;
-	if(keys.has('middle')) pointerCode |= 2;
-	if(keys.has('right')) pointerCode |= 4;
-	if(keys.has('4th')) pointerCode |= 8;
-	if(keys.has('5th')) pointerCode |= 16;
+	if(keys.has('left')){ pointerCode |= 1; keys.delete('left'); }
+	if(keys.has('middle')){ pointerCode |= 2; keys.delete('middle'); }
+	if(keys.has('right')){ pointerCode |= 4; keys.delete('right'); }
+	if(keys.has('4th')){ pointerCode |= 8; keys.delete('4th'); }
+	if(keys.has('5th')){ pointerCode |= 16; keys.delete('5th'); }
 
 	var modsCode = 0;
-	if(keys.has('ctrl')) modsCode |= 1;
-	if(keys.has('alt')) modsCode |= 2;
-	if(keys.has('shift')) modsCode |= 4;
-	if(keys.has('meta')) modsCode |= 8;
+	if(keys.has('ctrl')){ modsCode |= 1; keys.delete('ctrl'); }
+	if(keys.has('alt')){ modsCode |= 2; keys.delete('alt'); }
+	if(keys.has('shift')){ modsCode |= 4; keys.delete('shift'); }
+	if(keys.has('meta')){ modsCode |= 8; keys.delete('meta'); }
 
-	if(direct && keys.size === 0)
+	if(direct && keys.size === 0 && pointerCode === 0 && modsCode === 0)
 		var callback = script;
 	else{
 		var callback = function(ev){
-			if(ev.isTrusted === false && keys.has('trusted'))
-				return;
-
-			if(rejectUntrusted && ev.isTrusted === false){
-				if(sf.security.report)
+			if(ev.isTrusted === false && keys.has('trusted')){
+				if(rejectUntrusted && sf.security.report)
 					sf.security.report(ev);
 
 				return;
