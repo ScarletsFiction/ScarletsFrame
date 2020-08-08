@@ -541,8 +541,11 @@ class RepeatedList extends Array{
 	}
 
 	constructor(arr){return new Array(arr)}
-	assign(whichIndex, withArray){
+	assign(whichIndex, withArray, rules){
 		if(whichIndex.constructor !== Number){
+			if(withArray !== void 0 && withArray.constructor === Object)
+				rules = withArray;
+
 			withArray = whichIndex;
 			whichIndex = 0;
 		}
@@ -550,9 +553,93 @@ class RepeatedList extends Array{
 		if(withArray.constructor !== Array)
 			withArray = [withArray];
 
-		for(var i = 0; i < withArray.length; i++){
+		if(rules !== void 0){
+			var temp = {};
+
+			for(var key in rules){
+				if(key.slice(-1) === ']'){
+					var k = key.split('[');
+					switch(k[1]){
+						case "!]":
+						if(temp.b === void 0) temp.b = [];
+						temp.b.push({key:key[0], val:rules[key]});
+						break;
+						case "<]":
+						if(temp.c === void 0) temp.c = [];
+						temp.c.push({key:key[0], val:rules[key]});
+						break;
+						case "<=]":
+						if(temp.d === void 0) temp.d = [];
+						temp.d.push({key:key[0], val:rules[key]});
+						break;
+						case ">]":
+						if(temp.e === void 0) temp.e = [];
+						temp.e.push({key:key[0], val:rules[key]});
+						break;
+						case ">=]":
+						if(temp.f === void 0) temp.f = [];
+						temp.f.push({key:key[0], val:rules[key]});
+						break;
+						default:
+						if(temp.a === void 0) temp.a = [];
+						temp.a.push({key:key[0], val:rules[key]});
+						break;
+					}
+				}
+			}
+
+			rules = temp;
+		}
+
+		that:for(var i = 0; i < withArray.length; i++){
 			if(i === this.length)
 				break;
+
+			if(rules !== void 0){
+				var temp1 = withArray[i];
+				if(rules.a !== void 0){
+					for(var z=0, n=rules.a.length; z < n; z++){
+						var temp2 = rules.a[z];
+						if(temp1[temp2.key] !== temp2.val)
+							continue that;
+					}
+				}
+				if(rules.b !== void 0){
+					for(var z=0, n=rules.b.length; z < n; z++){
+						var temp2 = rules.b[z];
+						if(temp1[temp2.key] === temp2.val)
+							continue that;
+					}
+				}
+				if(rules.c !== void 0){
+					for(var z=0, n=rules.c.length; z < n; z++){
+						var temp2 = rules.c[z];
+						if(temp1[temp2.key] >= temp2.val)
+							continue that;
+					}
+				}
+				if(rules.d !== void 0){
+					for(var z=0, n=rules.d.length; z < n; z++){
+						var temp2 = rules.d[z];
+						if(temp1[temp2.key] > temp2.val)
+							continue that;
+					}
+				}
+				if(rules.e !== void 0){
+					for(var z=0, n=rules.e.length; z < n; z++){
+						var temp2 = rules.e[z];
+						if(temp1[temp2.key] <= temp2.val)
+							continue that;
+					}
+				}
+				if(rules.f !== void 0){
+					for(var z=0, n=rules.f.length; z < n; z++){
+						var temp2 = rules.f[z];
+						if(temp1[temp2.key] < temp2.val)
+							continue that;
+					}
+				}
+			}
 
 			if(this[i + whichIndex] !== withArray[i])
 				Object.assign(this[i + whichIndex], withArray[i]);
