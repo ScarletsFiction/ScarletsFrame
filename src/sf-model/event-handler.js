@@ -1,3 +1,8 @@
+var rejectUntrusted = false;
+sf.security = function(level){
+	if(level & 1) rejectUntrusted = true;
+}
+
 function eventHandler(that, data, _modelScope, rootHandler, template){
 	var modelKeys = sf.model.modelKeys(_modelScope, true);
 
@@ -168,6 +173,13 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		var callback = function(ev){
 			if(ev.isTrusted === false && keys.has('trusted'))
 				return;
+
+			if(rejectUntrusted && ev.isTrusted === false){
+				if(sf.security.report)
+					sf.security.report(ev);
+
+				return;
+			}
 
 			if(keys.has('stop'))
 				ev.stopPropagation();
