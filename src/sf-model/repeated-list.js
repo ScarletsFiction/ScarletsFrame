@@ -553,7 +553,7 @@ class RepeatedList extends Array{
 		if(withArray.constructor !== Array)
 			withArray = [withArray];
 
-		if(rules !== void 0){
+		if(rules !== void 0 && rules.constructor === String){
 			var temp = {};
 
 			for(var key in rules){
@@ -596,49 +596,52 @@ class RepeatedList extends Array{
 				break;
 
 			if(rules !== void 0){
-				var temp1 = withArray[i];
-				if(rules.a !== void 0){
-					for(var z=0, n=rules.a.length; z < n; z++){
-						var temp2 = rules.a[z];
-						if(temp1[temp2.key] !== temp2.val)
-							continue that;
+				if(rules.constructor === Array){
+					var temp1 = withArray[i];
+					if(rules.a !== void 0){
+						for(var z=0, n=rules.a.length; z < n; z++){
+							var temp2 = rules.a[z];
+							if(temp1[temp2.key] !== temp2.val)
+								continue that;
+						}
+					}
+					if(rules.b !== void 0){
+						for(var z=0, n=rules.b.length; z < n; z++){
+							var temp2 = rules.b[z];
+							if(temp1[temp2.key] === temp2.val)
+								continue that;
+						}
+					}
+					if(rules.c !== void 0){
+						for(var z=0, n=rules.c.length; z < n; z++){
+							var temp2 = rules.c[z];
+							if(temp1[temp2.key] >= temp2.val)
+								continue that;
+						}
+					}
+					if(rules.d !== void 0){
+						for(var z=0, n=rules.d.length; z < n; z++){
+							var temp2 = rules.d[z];
+							if(temp1[temp2.key] > temp2.val)
+								continue that;
+						}
+					}
+					if(rules.e !== void 0){
+						for(var z=0, n=rules.e.length; z < n; z++){
+							var temp2 = rules.e[z];
+							if(temp1[temp2.key] <= temp2.val)
+								continue that;
+						}
+					}
+					if(rules.f !== void 0){
+						for(var z=0, n=rules.f.length; z < n; z++){
+							var temp2 = rules.f[z];
+							if(temp1[temp2.key] < temp2.val)
+								continue that;
+						}
 					}
 				}
-				if(rules.b !== void 0){
-					for(var z=0, n=rules.b.length; z < n; z++){
-						var temp2 = rules.b[z];
-						if(temp1[temp2.key] === temp2.val)
-							continue that;
-					}
-				}
-				if(rules.c !== void 0){
-					for(var z=0, n=rules.c.length; z < n; z++){
-						var temp2 = rules.c[z];
-						if(temp1[temp2.key] >= temp2.val)
-							continue that;
-					}
-				}
-				if(rules.d !== void 0){
-					for(var z=0, n=rules.d.length; z < n; z++){
-						var temp2 = rules.d[z];
-						if(temp1[temp2.key] > temp2.val)
-							continue that;
-					}
-				}
-				if(rules.e !== void 0){
-					for(var z=0, n=rules.e.length; z < n; z++){
-						var temp2 = rules.e[z];
-						if(temp1[temp2.key] <= temp2.val)
-							continue that;
-					}
-				}
-				if(rules.f !== void 0){
-					for(var z=0, n=rules.f.length; z < n; z++){
-						var temp2 = rules.f[z];
-						if(temp1[temp2.key] < temp2.val)
-							continue that;
-					}
-				}
+				else rules(withArray[i]);
 			}
 
 			if(this[i + whichIndex] !== withArray[i])
