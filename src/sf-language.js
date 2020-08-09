@@ -48,7 +48,7 @@ self.changeDefault = function(defaultLang){
 		var registered = sf.component.registered;
 		for(var keys in registered){
 			if(registered[keys][3] !== void 0)
-				refreshTemplate(registered[keys][3]);
+				refreshTemplate(registered[keys]);
 		}
 	}
 
@@ -60,7 +60,7 @@ self.changeDefault = function(defaultLang){
 
 			for(var keys in registered){
 				if(registered[keys][3] !== void 0)
-					refreshTemplate(registered[keys][3]);
+					refreshTemplate(registered[keys]);
 			}
 		}
 	}
@@ -324,6 +324,7 @@ function refreshLang(list, noPending){
 	if(defaultLang === void 0)
 		defaultLang = self.list[self.default] = {};
 
+	var checks = new WeakSet();
 	for (var i = list.length-1; i >= 0; i--) {
 		if((list[i].sf_lang === self.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
 			list.splice(i, 1);
@@ -331,6 +332,10 @@ function refreshLang(list, noPending){
 		}
 
 		var elem = list[i];
+		if(checks.has(elem))
+			continue;
+
+		checks.add(elem);
 
 		// Preserve model/component binding
 		// We will reapply the template later
@@ -349,6 +354,7 @@ function refreshLang(list, noPending){
 					parentElement.add(modelElement);
 					continue;
 				}
+				continue;
 			}
 		}
 
@@ -367,18 +373,13 @@ function refreshLang(list, noPending){
 			continue;
 		}
 
-		var z = 0;
-		value = value.replace(/{(.*?)}/, function(full, match){
-			return '{{'+match+'}}';
-		});
-
 		if(noPending === true)
 			list.splice(i, 1);
 
 		if(elem.hasAttribute('placeholder'))
 			elem.setAttribute('placeholder', value);
 		else
-			assignSquareBracket(elem, value);
+			assignSquareBracket(value, elem);
 	}
 
 	if(parentElement.size === 0)
@@ -386,7 +387,7 @@ function refreshLang(list, noPending){
 
 	var appliedElement = new Set();
 
-	// Reapply template
+	// Reapply template (component)
 	for(var elem of parentElement){
 		elem.sf_lang = self.default;
 
@@ -412,163 +413,177 @@ function refreshLang(list, noPending){
 	}
 }
 
-function assignSquareBracket(elem, value){
-	if(value.includes('[')){
-		value = value.replace(/(?=[^\\]|^)\[(.*?)\]/g, function(full, match){
-			return '*#'+match+'*#';
-		}).split('*#');
-
-		// Odd = element for [text]
-		// Even = text only
-
-		var nodes = elem.childNodes;
-		var whenEven = true;
-		for (var a = 0; a < value.length; a++) {
-			var ref = nodes[a];
-			if((a % 2 === 0) === whenEven){ // text node
-				if(ref === void 0) // no nodes
-					elem.appendChild(document.createTextNode(value[a]));
-				else if(ref.nodeType === 3) // text node
-					ref.textContent = value[a];
-				else // element node
-					elem.insertBefore(document.createTextNode(value[a]), ref);
-
-				continue;
-			}
-
-			if(ref === void 0){
-				console.error("[Language] square bracket found, but element was not found for:", value[a]);
-				continue;
-			}
-
-			if(ref.nodeType === 1){ // element node
-				if(value[a][0] === '{') // Check if this was template
-					continue;
-
-				ref.textContent = value[a];
-				continue;
-			}
-
-			// This may rare case, but does found other node type?
-			whenEven = !whenEven;
-		}
-	}
-	else{
-		if(elem.nodeType !== 3 && elem.firstChild !== null)
-			elem.firstChild.textContent = value;
-		else
-			elem.textContent = value;
-	}
-}
-
 var templateParser_regex_split = /{{%=[0-9]+%/g;
 function elementReferencesRefresh(elem){
 	var eRef = elem.sf$elementReferences;
 	var processed = false;
+	var template = eRef.template;
 
-	for (var i = 0; i < eRef.length; i++) {
-		if(eRef[i].textContent !== void 0){
-			var parent = eRef[i].textContent.parentElement;
+	for (var i = eRef.length-1; i >= 0; i--) {
+		var elemRef = eRef[i];
+		if(elemRef.textContent !== void 0){
+			var parent = elemRef.textContent.parentElement;
 
 			if(parent === null || parent.hasAttribute('sf-lang') === false)
 				continue;
 
 			var key = parent.getAttribute('sf-lang');
 		}
-		else if(eRef[i].sf_lang !== void 0){
-			var parent = eRef[i].sf_lang;
-			var key = eRef[i].sf_lang.getAttribute('sf-lang');
+		else if(elemRef.sf_lang !== void 0){
+			var parent = elemRef.sf_lang;
+			var key = elemRef.sf_lang.getAttribute('sf-lang');
 		}
 		else continue;
 
 		var value = diveObject(self.list[self.default], key);
-
 		if(value === void 0){
 			if(pending === false)
 				pending = {};
 
 			diveObject(pending, key, 1);
-			pendingElement.push(elem);
+			pendingElement.push(parent);
 			return; // Let's process it later for current element
 		}
 
-		if(eRef[i].textContent !== void 0){
-			var hasBracket = value.split(/(?=[^\\]|^)\[(.*?)\]/g);
-			if(hasBracket.length !== 1){
-				// ToDo: add more support for complex model and language
-				// It would need to add more `eRef[i].textContent` on the template
-				if(hasBracket.length === 3){ // text, [element], text
-					var found = false;
-					if(hasBracket[0].includes('{'))
-						found = 0;
+		// Different behaviour
+		if(elemRef.attribute !== void 0){
+			createParseIndex(value, elemRef.ref, template);
 
-					if(hasBracket[2].includes('{')){
-						if(found !== false){
-							console.error('Currently only one mustache around square language template that supported');
-							continue;
-						}
-
-						found = 2;
-					}
-
-					assignSquareBracket(elem, value);
-					value = hasBracket[found];
-					eRef[i].textContent = elem.childNodes[found];
-				}
-				else{
-					console.error('Currently only one square language template that can be combined with mustache');
-					continue;
-				}
+			// Refresh it now
+			// ToDo: fix value that fail/undefined if it's from RepeatedList/Property
+			if(elemRef.ref.name === 'value'){
+				var refB = elemRef.ref;
+				elemRef.attribute.value = internal.model.applyParseIndex(refB.value, refB.parse_index, [], template.parse);
 			}
+			continue;
 		}
 
-		var template = eRef.template;
-		var parse_index = eRef[i].ref.parse_index;
-		var validMatch = 0;
-		value = value.replace(/{(.*?)}/, function(full, match){
-			if(validMatch === false)
-				return full;
+		// Remove because we would remake that
+		eRef.splice(i, 1);
 
-			if(isNaN(match) !== false){
-				if(template.modelRefRoot[match] !== void 0)
-					match = template.modelRefRoot[match][0];
-
-				else if(template.modelRef !== void 0 && template.modelRef[match] !== void 0)
-					match = template.modelRef[match][0];
-				else{
-					console.error("Language can't find existing model template for '"+match+"' from", Object.keys(template.modelRefRoot));
-					return '';
-				}
-			}
-
-			// Avoid translating on different value that not supposed to be translated
-			if(parse_index.includes(match) === false){
-				validMatch = false;
-				return full;
-			}
-
-			validMatch++;
-			return '{{%='+match+'%';
-		}).split(templateParser_regex_split);
-		internal.model.parseIndexAllocate(value);
-
-		if(validMatch === false || validMatch !== parse_index.length)
+		if(!assignSquareBracket(value, parent, template, eRef))
 			continue;
 
-		eRef[i].ref.value = value;
 		processed = true;
 	}
 
 	return processed;
 }
 
+function assignSquareBracket(value, elem, template, eRef){
+	value = value.replace(/%\*&/g, '-');
+	var tags = {};
+
+	var squares = [];
+	value = value.replace(/\[([a-zA-Z0-9\-]+):(.*?)\]/g, function(full, tag, match){
+		squares.push({tag:tag.toUpperCase(), val:match});
+		return '%*&';
+	}).split('%*&');
+
+	var childNodes = elem.childNodes;
+	var backup = {};
+	for(var a=0, n=childNodes.length; a<n; a++){
+		var place, elemBackup = childNodes[a];
+		if(elemBackup.nodeType === 3){
+			place = backup._text;
+			if(place === void 0)
+				place = backup._text = [];
+		}
+		else if(elemBackup.nodeType === 1){
+			place = backup[elemBackup.tagName];
+			if(place === void 0)
+				place = backup[elemBackup.tagName] = [];
+		}
+		else continue;
+
+		place.push(elemBackup);
+	}
+
+	var found = template && true;
+	elem.textContent = value[0];
+	found = found && elementRebinding(template, eRef, elem.firstChild, elem);
+
+	for (var a = 1; a < value.length; a++) {
+		var square = squares[a-1];
+		var elemBackup = backup[square.tag];
+		if(elemBackup === void 0 || elemBackup.length === 0)
+			elemBackup = document.createElement(square.tag);
+		else elemBackup = elemBackup.pop();
+
+		elemBackup.textContent = square.val;
+		elem.appendChild(elemBackup);
+		found = found && elementRebinding(template, eRef, elemBackup.firstChild, elem);
+
+		var elemBackup = backup._text;
+		if(elemBackup === void 0 || elemBackup.length === 0)
+			elemBackup = new Text(value[a]);
+		else{
+			elemBackup = elemBackup.pop();
+			elemBackup.textContent = value[a];
+		}
+
+		elem.appendChild(elemBackup);
+		found = found && elementRebinding(template, eRef, elemBackup, elem);
+	}
+
+	if(found === false && template)
+		return false;
+	return true;
+}
+
+function createParseIndex(text, remakeRef, template){
+	var parse_index = []
+	var value = text.replace(/{(.*?)}/g, function(full, match){
+		if(isNaN(match) !== false){
+			if(template.modelRefRoot[match] !== void 0)
+				match = template.modelRefRoot[match][0];
+
+			else if(template.modelRef !== void 0 && template.modelRef[match] !== void 0)
+				match = template.modelRef[match][0];
+			else{
+				console.error("Language can't find existing model binding for '"+match+"' from", Object.keys(template.modelRefRoot), template);
+				return '';
+			}
+		}
+
+		parse_index.push(match);
+		return '%*&';
+	});
+
+	if(parse_index.length === 0)
+		return false;
+
+	remakeRef.parse_index = parse_index;
+	remakeRef.value = value.split('%*&');
+	internal.model.parseIndexAllocate(remakeRef);
+	return true;
+}
+
+function elementRebinding(template, eRef, elem, parentNode){
+	var remake = {
+		textContent:elem,
+		ref:{
+			address:$.getSelector(elem, true, parentNode),
+			nodeType:3
+		}
+	};
+
+	if(createParseIndex(elem.textContent, remake.ref, template))
+		eRef.push(remake);
+
+	return true;
+}
+
 function refreshTemplate(template){
+	var collections = template[2];
+	template = template[3];
+
 	var addresses = template.addresses;
 	if(addresses === void 0)
 		return;
 
 	var found = false;
-	for (var i = 0; i < addresses.length; i++) {
+	for (var i = addresses.length-1; i >= 0; i--) {
 		if(addresses[i].skipSFLang || addresses[i].value === void 0)
 			continue;
 
@@ -577,29 +592,23 @@ function refreshTemplate(template){
 			continue;
 
 		found = true;
-		var value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
 
+		var value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
 		if(value === void 0){
 			console.error(`Can't found '${elem.getAttribute('sf-lang')}' for ${self.default}, in`, self.list[self.default], ", maybe the language wasn't fully loaded");
 			continue;
 		}
 
-		value = value.replace(/{(.*?)}/, function(full, match){
-			if(isNaN(match) === false)
-				return '{{%='+match+'%';
+		addresses.splice(i, 1);
 
-			if(template.modelRefRoot[match] !== void 0)
-				return '{{%='+template.modelRefRoot[match][0]+'%';
+		var eRef = [];
+		assignSquareBracket(value, elem, template, eRef);
 
-			if(template.modelRef !== void 0 && template.modelRef[match] !== void 0)
-				return '{{%='+template.modelRef[match][0]+'%';
-
-			console.error("Language binding can't find existing model binding for", match, "from", Object.keys(template.modelRefRoot));
-			return '';
-		});
-
-		addresses[i].value = value;
-		assignSquareBracket(elem, value);
+		for (var a = 0; a < eRef.length; a++){
+			var ref = eRef[a].ref;
+			ref.address = $.getSelector($.childIndexes(ref.address, elem), true, template.html);
+			addresses.push(ref);
+		}
 	}
 
 	if(found === false)
