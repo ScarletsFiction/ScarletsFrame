@@ -1,4 +1,3 @@
-// ToDo: put bindedkey that hold binding information to the element so sf-lang can use from it
 ;(function(){
 
 var self = sf.lang = function(el){
@@ -385,7 +384,7 @@ function refreshLang(list, noPending){
 	if(parentElement.size === 0)
 		return;
 
-	var appliedElement = new Set();
+	var appliedElement = new WeakSet();
 
 	// Reapply template (component)
 	for(var elem of parentElement){
@@ -465,6 +464,12 @@ function elementReferencesRefresh(elem){
 			continue;
 
 		processed = true;
+	}
+
+	// Fix memory leak
+	for (var i = eRef.length-1; i >= 0; i--) {
+		if(eRef[i].textContent && eRef[i].textContent.isConnected === false)
+			eRef.splice(i, 1);
 	}
 
 	return processed;
