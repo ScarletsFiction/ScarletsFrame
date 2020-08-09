@@ -531,6 +531,9 @@ function assignSquareBracket(value, elem, template, eRef){
 		found = found && elementRebinding(template, eRef, elemBackup, elem);
 	}
 
+	if(value[a-1] === '')
+		elemBackup.remove();
+
 	if(found === false && template)
 		return false;
 	return true;
