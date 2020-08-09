@@ -121,8 +121,6 @@ var applyParseIndex = internal.model.applyParseIndex = function(templateValue, i
 }
 
 var parseIndexAllocate = internal.model.parseIndexAllocate = function(arr){
-	arr = arr.value;
-
 	for (var i = arr.length-1; i > 0; i--)
 		arr.splice(i, 0, void 0);
 

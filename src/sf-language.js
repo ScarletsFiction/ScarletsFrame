@@ -560,7 +560,7 @@ function createParseIndex(text, remakeRef, template){
 
 	remakeRef.parse_index = parse_index;
 	remakeRef.value = value.split('%*&');
-	internal.model.parseIndexAllocate(remakeRef);
+	internal.model.parseIndexAllocate(remakeRef.value);
 	return true;
 }
 

@@ -202,7 +202,7 @@ function addressAttributes(currentNode, template){
 			else{
 				key.parse_index = indexes;
 				key.value = key.value.replace(/[\t\r\n]/g, '').replace(/ {2,}/g, ' ').split(templateParser_regex_split);
-				parseIndexAllocate(key);
+				parseIndexAllocate(key.value);
 			}
 
 			keys.push(key);
@@ -544,7 +544,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				temp.direct = indexes[0];
 			else{
 				temp.value = ref.textContent.replace(/[ \t]{2,}/g, ' ').split(templateParser_regex_split);
-				parseIndexAllocate(temp);
+				parseIndexAllocate(temp.value);
 				temp.parse_index = indexes;
 			}
 
