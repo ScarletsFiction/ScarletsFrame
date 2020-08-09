@@ -418,10 +418,10 @@
         $(function(){
           sf.lang.default = 'en_US';
           sf.lang.add('en_US', {
-            translated:"{data} translated"+vul,
+            translated:"translated {data}[b:bo {data} ld]"+vul,
             hello:{
               other:{
-                side:"Hello from the [other] side"+vul
+                side:"Hello from the [b:other] side"+vul
               }
             },
             "i'm":{
@@ -429,31 +429,31 @@
             },
             custom:{
               el:{
-                iB1:"Variable content: {inputBinding1} [hay] nyam {inputBinding2.text} [ahoy]",
+                iB1:"Variable content: {inputBinding1} [b:hay] nyam {inputBinding2.text} [b:ahoy]",
                 iB2:"Above content: {inputBinding2.text}",
                 iB3:"It's {inputBinding2.text}"
               }
             },
-            test:{complex:'custom {data} [{item}] here'}
+            test:{complex:'custom {data} [b:{item}] here'}
           });
           sf.lang.add('id_ID', {
-            translated:"terjemahankan {data}"+vul,
+            translated:"terjemahankan [b:bold] {data}"+vul,
             custom:{
               el:{
-                iB1:"Kontent variabel: {inputBinding2.text} nyam [halo] {inputBinding1} [uhay]"+vul,
+                iB1:"Kontent variabel: {inputBinding2.text} nyam [b:halo] {inputBinding1} [b:uhay]"+vul,
                 iB2:"Kontent diatas: {inputBinding2.text}",
                 iB3:"Itu adalah {inputBinding2.text}"+vul
               }
             },
             hello:{
               other:{
-                side:"Halo dari sisi [lain]"+vul
+                side:"Halo dari sisi [b:lain]"+vul
               }
             },
             "i'm":{
               here:"Aku disini!"
             },
-            test:{complex:'contoh {data} disini [{item}]'}
+            test:{complex:'contoh {data} disini [b:{item}]'}
           });
 
           sf.lang.serverURL = '/test/lang';

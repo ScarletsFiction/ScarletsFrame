@@ -28,10 +28,10 @@ var languages = {
         }
     },
     ja_JP:{
-        translated:'{data}翻訳済み',
+        translated:'{data} [b:bold]翻訳済み',
         hello:{
             other:{
-                side:"[反対側]からこんにちは"
+                side:"[b:反対側]からこんにちは"
             }
         },
         "i'm":{
@@ -56,14 +56,14 @@ var languages = {
             iB3:"それは{inputBinding2.text}です"
           }
         },
-        test:{complex:'[{item}] {data} japan test'}
+        test:{complex:'[b:{item}] {data} japan test'}
     }
 };
 
 module.exports = {
     // URL path
     path: '/test/lang',
- 
+
     // Response handler
     response:function(req, res, closeConnection){
         var lang = languages[req.post.lang];
@@ -118,7 +118,7 @@ module.exports = {
 
         closeConnection(JSON.stringify(obj));
     },
- 
+
     // Scope initialization after script loaded
     scope:function(ref, allRef){}
 }
