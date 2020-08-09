@@ -108,7 +108,7 @@ function modelScript(mask, script, repeatedListKey){
 	}
 }
 
-function applyParseIndex(templateValue, indexes, parsed, templateParse, item){
+var applyParseIndex = internal.model.applyParseIndex = function(templateValue, indexes, parsed, templateParse, item){
 	for (var i = 0; i < indexes.length; i++){
 		var a = indexes[i];
 		if(parsed[a] === void 0 && templateParse !== void 0)
@@ -121,6 +121,8 @@ function applyParseIndex(templateValue, indexes, parsed, templateParse, item){
 }
 
 var parseIndexAllocate = internal.model.parseIndexAllocate = function(arr){
+	arr = arr.value;
+
 	for (var i = arr.length-1; i > 0; i--)
 		arr.splice(i, 0, void 0);
 
