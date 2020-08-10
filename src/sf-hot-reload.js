@@ -246,6 +246,10 @@ function hotComponentTemplate(scope, name){
 			var model = freezed[z];
 			var element = model.$el[0];
 
+			// Don't refresh component that not declared with sf.component.html
+			if(element.sf$elementReferences === void 0)
+				continue;
+
 			var parentNode = element.parentNode;
 			var nextNode = element.nextSibling;
 
