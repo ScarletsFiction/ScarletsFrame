@@ -81,12 +81,13 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 
 		// We need to get element with 'sf-bind-list' and check current element before processing
 		script = function(event){
-			if(event.target.sf$bindList === void 0){
-				var realThat = findBindListElement(event.target);
+			var elem = event.target;
+			if(!elem.sf$elementReferences || !elem.sf$elementReferences.template.bindList){
+				var realThat = findBindListElement(elem);
 				if(realThat === null)
 					return;
 
-				var call = findEventFromList($.getSelector(event.target, true, realThat));
+				var call = findEventFromList($.getSelector(elem, true, realThat));
 				if(call !== void 0)
 					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope, withKey && realThat.sf$repeatListIndex);
 

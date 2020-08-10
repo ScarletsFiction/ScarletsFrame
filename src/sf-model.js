@@ -21,8 +21,10 @@ sf.model = function(name, options, func, namespace){
 function findBindListElement(el){
 	do{
 		el = el.parentNode;
-	} while(el !== null && el.sf$bindList === void 0);
-	return el;
+		if(el.sf$elementReferences && el.sf$elementReferences.template.bindList)
+			return el;
+	} while(el !== null);
+	return null;
 }
 
 ;(function(){
@@ -33,7 +35,7 @@ function findBindListElement(el){
 
 	// Find an index for the element on the list
 	self.index = function(element){
-		if(element.sf$bindList === void 0)
+		if(!element.sf$elementReferences || !element.sf$elementReferences.template.bindList)
 			element = findBindListElement(element);
 
 		if(element === null)
@@ -50,7 +52,7 @@ function findBindListElement(el){
 			element = element.previousElementSibling;
 		}
 
-		var ref = currentElement.sf$bindList;
+		var ref = currentElement.sf$elementReferences && currentElement.sf$elementReferences.template.bindList;
 		if(!ref || ref.$virtual === void 0) return i;
 
 		return i + ref.$virtual.DOMCursor - 1;
