@@ -296,6 +296,9 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 			return;
 		}
 
+		if(element.parentNode !== null && element.parentNode.hasAttribute('sf-lang'))
+			return;
+
 		template = self.extractPreprocess(element, null, modelScope, void 0, modelKeysRegex);
 		templateParser(template, modelScope, true);
 		delete template.addresses;

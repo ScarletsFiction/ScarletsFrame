@@ -248,7 +248,7 @@ var pending = false;
 var pendingElement = [];
 var activeRequest = false;
 
-self.onError = false;
+self.onError = console.error;
 
 self.init = function(el){
 	var list = el.querySelectorAll('[sf-lang]');
@@ -318,7 +318,7 @@ internal.language.refreshLang = function(el){
 
 function refreshLang(list, noPending){
 	var defaultLang = self.list[self.default];
-	var parentElement = new Set(); // This technique cause slow down because memory allocation
+	var parentElement = new Set();
 
 	if(defaultLang === void 0)
 		defaultLang = self.list[self.default] = {};
@@ -506,7 +506,9 @@ function assignSquareBracket(value, elem, template, eRef){
 
 	var found = template && true;
 	elem.textContent = value[0];
-	found = found && elementRebinding(template, eRef, elem.firstChild, elem);
+
+	if(elem.firstChild !== null)
+		found = found && elementRebinding(template, eRef, elem.firstChild, elem);
 
 	for (var a = 1; a < value.length; a++) {
 		var square = squares[a-1];
