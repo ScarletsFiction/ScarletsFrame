@@ -325,14 +325,10 @@ var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, mode
 
 		element.sfBounded = propertyName;
 		element.sfModel = model;
-		if(oneWay === false){
-			// element.setAttribute('sf-bound', '');
+		if(oneWay === false)
 			element.removeAttribute('sf-bind');
-		}
-		else{
-			// element.setAttribute('sf-bound', '');
+		else
 			element.removeAttribute('sf-into');
-		}
 
 		elementBoundChanges(model, propertyName, element, oneWay, currentModel, propertyNameLocal);
 	}
