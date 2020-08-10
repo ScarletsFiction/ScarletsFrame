@@ -312,6 +312,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		}
 
 		element = template.html;
+		delete template.html;
 	}
 
 	// modelRefRoot_path index is not related with modelRefRoot property/key position

@@ -443,9 +443,9 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	internal.component.skip = tempSkip;
 
 	// Restore element repeated list
-	var restore = copy.querySelectorAll('sfrepeat-this');
+	var restore = copy.getElementsByTagName('sfrepeat-this');
 	for (var i = 0; i < backup.length; i++) {
-		var current = restore[i];
+		var current = restore[0];
 		current.parentNode.replaceChild(backup[i], current);
 	}
 
@@ -568,15 +568,25 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	revalidateTemplateRef(template, modelScope);
 
 	// Get the indexes for input bind
-	var specialInput = template.specialElement.input;
-	for (var i = 0; i < specialInput.length; i++) {
-		specialInput[i] = $.getSelector(specialInput[i], true);
+	if(template.specialElement.input.length !== 0){
+		var specialInput = template.specialElement.input;
+		for (var i = 0; i < specialInput.length; i++) {
+			specialInput[i] = $.getSelector(specialInput[i], true);
+		}
 	}
+	else delete template.specialElement.input;
 
 	// Get the indexes for sf-repeat-this
-	var specialRepeat = template.specialElement.repeat;
-	for (var i = 0; i < specialRepeat.length; i++) {
-		specialRepeat[i] = $.getSelector(specialRepeat[i], true);
+	if(template.specialElement.repeat.length !== 0){
+		var specialRepeat = template.specialElement.repeat;
+		for (var i = 0; i < specialRepeat.length; i++) {
+			specialRepeat[i] = $.getSelector(specialRepeat[i], true);
+		}
+	}
+	else{
+		if(!template.specialElement.input)
+			delete template.specialElement;
+		else delete template.specialElement.input;
 	}
 
 	// internal.language.refreshLang(copy);
