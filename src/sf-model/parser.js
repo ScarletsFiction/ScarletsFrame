@@ -154,8 +154,9 @@ function addressAttributes(currentNode, template){
 	var keys = [];
 	var indexes = 0;
 	for (var a = attrs.length - 1; a >= 0; a--) {
-		var found = attrs[a].value.includes('{{%=');
-		if(attrs[a].name[0] === '@'){
+		var attr = attrs[a];
+		var found = attr.value.includes('{{%=');
+		if(attr.name[0] === '@'){
 			// No template processing for this
 			if(found){
 				console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
@@ -163,33 +164,36 @@ function addressAttributes(currentNode, template){
 			}
 
 			if(template.modelRef_regex)
-				attrs[a].value = attrs[a].value.replace(template.modelRef_regex, function(full, left, right){
+				attr.value = attr.value.replace(template.modelRef_regex, function(full, left, right){
 					return left+'_model_'+right;
 				});
 
 			keys.push({
-				name:attrs[a].name,
-				value:attrs[a].value.trim(),
+				name:attr.name,
+				value:attr.value.trim(),
 				event:true
 			});
 
-			currentNode.removeAttribute(attrs[a].name);
+			currentNode.removeAttribute(attr.name);
 		}
 
 		if(found){
-			if(attrs[a].name[0] === ':'){
+			if(attr.name[0] === ':'){
 				var key = {
-					name:attrs[a].name.slice(1),
-					value:attrs[a].value.trim()
+					name:attr.name.slice(1),
+					value:attr.value.trim()
 				};
 
-				currentNode.removeAttribute(attrs[a].name);
+				currentNode.removeAttribute(attr.name);
 				currentNode.setAttribute(key.name, '');
 			}
-			else var key = {
-				name:attrs[a].name,
-				value:attrs[a].value.trim()
-			};
+			else{
+				var key = {
+					name:attr.name,
+					value:attr.value.trim()
+				};
+				attr.value = '';
+			}
 
 			indexes = [];
 			found = key.value.replace(templateParser_regex, function(full, match){
@@ -549,6 +553,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			}
 
 			temp.address = $.getSelector(ref, true);
+			ref.textContent = 'a';
 		}
 
 		addressed.push(temp);
