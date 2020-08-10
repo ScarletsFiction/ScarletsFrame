@@ -115,8 +115,6 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 	var template;
 	if(!isComponent){
-		element.setAttribute('sf-bind-list', prop);
-
 		// Get reference for debugging
 		processingElement = element;
 
@@ -346,6 +344,8 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
 			else
 				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
+
+			elem.sf$bindList = that;
 		}
 
 		if(typeof that[i] === "object"){
@@ -796,8 +796,8 @@ class RepeatedList extends Array{
 
 	indexOf(item){
 		if(item.children !== void 0 && item.children.constructor === HTMLCollection){
-			if(item.hasAttribute('sf-bind-list') === false)
-				item = item.closest('[sf-bind-list]');
+			if(item.sf$bindList === void 0)
+				item = findBindListElement(item);
 
 			if(item === null)
 				return -1;
@@ -880,6 +880,8 @@ class ElementManipulator{
 						if(this.elementRef !== void 0)
 							this.elementRef.set(item, temp);
 					}
+
+					temp.sf$bindList = this.list;
 				}
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
@@ -902,6 +904,7 @@ class ElementManipulator{
 				this.elementRef.set(item, temp);
 		}
 
+		temp.sf$bindList = this.list;
 		return temp;
 	}
 
@@ -975,6 +978,8 @@ class ElementManipulator{
 					if(this.elements !== void 0)
 						exist[i] = temp;
 				}
+
+				temp.sf$bindList = list;
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -990,6 +995,8 @@ class ElementManipulator{
 						if(this.elements !== void 0)
 							exist[i] = temp;
 					}
+
+					temp.sf$bindList = list;
 				}
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
@@ -1052,6 +1059,8 @@ class ElementManipulator{
 					if(this.elements != void 0)
 						exist[i] = temp;
 				}
+
+				temp.sf$bindList = list;
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -1067,6 +1076,8 @@ class ElementManipulator{
 						if(this.elements != void 0)
 							exist[i] = temp;
 					}
+
+					temp.sf$bindList = list;
 				}
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
