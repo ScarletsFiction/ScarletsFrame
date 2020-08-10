@@ -716,6 +716,13 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 		processingElement = current;
 
 		if(current.nodeType === 3 && binded.has(current.parentNode) === false){
+			if(current.parentNode.tagName === 'SF-M'){
+				// Auto wrap element if parent is 'SF-M'
+				var replace = document.createElement('span');
+				current.parentNode.insertBefore(replace, current);
+				replace.appendChild(current);
+			}
+
 			self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
 			binded.add(current.parentNode);
 			continue;
