@@ -120,11 +120,16 @@ function request(method, url, data, options, callback){
 	xhr.onload = function(){
 		if((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0){
 			if(options.receiveType === 'JSON'){
+				var parsed = void 0;
 				try{
-					callback.done && callback.done(JSON.parse(xhr.responseText), xhr.status);
-					sf.request.onsuccess && sf.request.onsuccess(xhr);
+					parsed = JSON.parse(xhr.responseText);
 				}catch(e){
 					callback.fail && callback.fail('parseerror', xhr.responseText);
+				}
+
+				if(parsed !== void 0){
+					callback.done && callback.done(JSON.parse(xhr.responseText), xhr.status);
+					sf.request.onsuccess && sf.request.onsuccess(xhr);
 				}
 			}
 			else{
