@@ -709,15 +709,15 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 }
 
 self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
-	var binded = [];
+	var binded = new WeakSet();
 
 	for(var current of nodes){
 		// Get reference for debugging
 		processingElement = current;
 
-		if(current.nodeType === 3 && binded.includes(current.parentNode) === false){
+		if(current.nodeType === 3 && binded.has(current.parentNode) === false){
 			self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
-			binded.push(current.parentNode);
+			binded.add(current.parentNode);
 			continue;
 		}
 
@@ -773,14 +773,6 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 			self.bindElement(current, modelRef, template);
 
 			delete current.sf$onlyAttribute;
-			continue;
-		}
-
-		// Double check if the child element already bound to prevent vulnerability
-		if(current.innerHTML.includes('sf-bind-list') && current.tagName !== 'SF-M'){
-			console.error("Can't parse element that already parsed with other component", current);
-			console.log("To fix this, the sf-m element need to be initialized before the component-element");
-			console.log(nodes);
 			continue;
 		}
 
