@@ -322,9 +322,9 @@ var createModelKeysRegex = internal.model.createModelKeysRegex = function(target
 	var obj = {};
 
 	// Don't match text inside quote, or object keys
-	obj.modelRefRoot_regex = new RegExp(sfRegex.scopeVar+'('+modelKeys+')', 'g');
+	obj.modelRefRoot_regex = RegExp(sfRegex.scopeVar+'('+modelKeys+')', 'g');
 	if(mask !== null)
-		obj.modelRef_regex = new RegExp(sfRegex.getSingleMask.join(mask), 'gm');
+		obj.modelRef_regex = RegExp(sfRegex.getSingleMask.join(mask), 'gm');
 
 	obj.modelRef_regex_mask = mask;
 	return obj;

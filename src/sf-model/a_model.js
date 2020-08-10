@@ -62,7 +62,7 @@ function trimIndentation(text){
 	if(indent === void 0) return text;
 	indent = indent.length - indent.trim().length;
 	if(indent === 0) return text;
-	return text.replace(new RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
+	return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
 }
 
 // ToDo: Perf
