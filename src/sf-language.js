@@ -584,9 +584,9 @@ function elementRebinding(template, eRef, elem, parentNode){
 	return true;
 }
 
-function refreshTemplate(template){
-	var collections = template[2];
-	template = template[3];
+function refreshTemplate(elemRef){
+	var collections = elemRef[2];
+	var template = elemRef[3];
 
 	var addresses = template.addresses;
 	if(addresses === void 0)
@@ -606,7 +606,14 @@ function refreshTemplate(template){
 		var value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
 		if(value === void 0){
 			console.error(`Can't found '${elem.getAttribute('sf-lang')}' for ${self.default}, in`, self.list[self.default], ", maybe the language wasn't fully loaded");
-			continue;
+
+			var callback_ = function(){
+				refreshTemplate(elemRef);
+			};
+
+			callback_.callbackOnly = true;
+			pendingCallback.push(callback_);
+			return;
 		}
 
 		addresses.splice(i, 1);
