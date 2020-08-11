@@ -401,12 +401,12 @@ function touchGesture(that, callback){
 	var pointers = [];
 
 	function findAnd(action, ev){
-		for (var i = 0; i < pointers.length; i++) {
+		for (var i = pointers.length - 1; i >= 0; i--) {
 			if(pointers[i].pointerId === ev.pointerId){
 				if(action === 2) // delete
 					pointers.splice(i, 1);
 				else if(action === 1) // replace
-					pointers.splice(i, 1, ev);
+					pointers[i] = ev;
 				return;
 			}
 		}
