@@ -231,7 +231,7 @@
 
          <input type="text" sf-into="inputBinding1" onkeyup="sf(this).onKeyUp(event)" value="One way binding"><br>
          <input type="text" sf-bind="inputBinding1"><br>
-         <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }} <b>hay</b> nyam {{inputBinding2}} <u>ahoy</u></span><br><br>
+         <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }} <b>hay</b> nyam {{inputBinding2.text}} <u>ahoy</u></span><br><br>
 
          <span class="bold" style="
             font-weight: {{ bold ? 'bold' : 'unset' }};
@@ -322,7 +322,7 @@
             <span sf-repeat-this="num in tries">{{num}},</span>
             <comp-test id="deepTest">
               Deep repeat yeah
-              <comp-test id="deepRepeat" sf-repeat-this="item in items"></comp-test>
+              <comp-test id="deepRepeat" style="display:inline-block" sf-repeat-this="item in tries"></comp-test>
             </comp-test>
          </comp-test>
          <comp-test id="async"></comp-test>
@@ -355,27 +355,30 @@
       <sf-space test-space="asd">
         Inner namespace 1 testing
         <sf-m name="obj" id="obj1">
-          <span>{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span></span>
-          <input sf-bind="test"></input>
+          {{ test }} - <span id="ningen" sf-repeat-this="num in list" @click="inc">{{num}}.</span>
+          <input id="iyi" sf-bind="test"></input>
         </sf-m>
-        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span></my-obj>
+        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span>
+          <input sf-bind="test"></input></my-obj>
       </sf-space><br>
       <sf-space test-space="zxc">
         Inner namespace 2 testing
         <sf-m name="obj" id="obj1">
-          <span>{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span></span>
+          {{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span>
           <input sf-bind="test"></input>
         </sf-m>
-        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span></my-obj>
+        <my-obj id="1">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span>
+          <input sf-bind="test"></input></my-obj>
       </sf-space>
 
       <div>
         Outer namespace testing
         <sf-m name="obj" id="obj2">
-          <span>{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span></span>
+          {{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}}.</span>
           <input sf-bind="test"></input>
         </sf-m>
-        <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span></my-obj>
+        <my-obj id="2">{{ test }} - <span sf-repeat-this="num in list" @click="inc">{{num}},</span>
+          <input sf-bind="test"></input></my-obj>
       </div>
 
       <sf-m name="deep-property" class="container">
@@ -405,6 +408,23 @@
             </li>
           </ul>
         </div>
+      </sf-m>
+
+      <br>Must have 5 item:
+      <sf-m name="fultest">
+        <div style="display:inline-block">m{{ ful }}</div>,
+        <ful-test>
+          <div style="display:inline-block">c{{ ful }}</div>,
+          <sf-m name="fultest">
+            <div style="display:inline-block">m{{ ful }}</div>,
+            <ful-test>
+              <div style="display:inline-block">c{{ ful }}</div>,
+              <sf-m name="fultest">
+                <div style="display:inline-block">m{{ ful }}</div>
+              </sf-m>
+            </ful-test>
+          </sf-m>
+        </ful-test>
       </sf-m>
 
       <script type="text/javascript" src="/tests/script.js"></script>

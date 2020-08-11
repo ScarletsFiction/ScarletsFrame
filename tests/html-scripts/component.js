@@ -154,3 +154,11 @@ sf.component('dynamic-reserved', {template:'test/reserved.html'}, function(self,
 sf.component('dynamic-template', {template:'test/template.html'}, function(self, root){
 	self.binds = 'OK working';
 });
+
+sf.model('fultest', function(self){
+	self.ful = '1'+vul;
+});
+
+sf.component('ful-test', function(self){
+	self.ful = '1'+vul;
+});

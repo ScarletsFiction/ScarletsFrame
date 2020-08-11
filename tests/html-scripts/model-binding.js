@@ -13,7 +13,7 @@ sf.model.for('model-binding', function(self, root){
 	self.bold = true;
 	self.pink = false;
 	self.inputBinding1 = ''+vul;
-	self.inputBinding2 = {text:''+vul};
+	self.inputBinding2 = {text:'heia'+vul};
 	self.inputBinding3 = vul;
 	self.inputBinding4 = ''+vul;
 	self.m2v$inputBinding4 = function(old, news){
@@ -88,7 +88,7 @@ sf.model.for('model-binding', function(self, root){
 			console.error('This one not refreshed', chk1);
 			console.error('should reflect with ->', self.testObj);
 		}
-	}, 1000);
+	}, 2000);
 
 	self.init = function(){
 		setTimeout(function(){
