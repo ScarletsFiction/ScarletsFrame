@@ -540,127 +540,170 @@ class RepeatedList extends Array{
 	}
 
 	constructor(arr){return new Array(arr)}
-	assign(whichIndex, withArray, rules){
-		if(whichIndex.constructor !== Number){
-			if(withArray !== void 0 && withArray.constructor === Object)
-				rules = withArray;
+	assign(fromIndex, withArray, removes, putLast){
+		if(fromIndex.constructor !== Number){
+			if(removes === void 0 || removes.constructor === Boolean)
+				putLast = removes; // true=last index, false=first, undefined=depends
 
-			withArray = whichIndex;
-			whichIndex = 0;
+			if(withArray !== void 0 && withArray.constructor === Object)
+				removes = withArray;
+
+			withArray = fromIndex;
+			fromIndex = 0;
 		}
 
 		if(withArray.constructor !== Array)
 			withArray = [withArray];
 
-		if(rules !== void 0 && rules.constructor === String){
-			var temp = {};
+		if(removes !== void 0){
+			if(removes.constructor === Object){
+				var temp = {};
 
-			for(var key in rules){
-				if(key.slice(-1) === ']'){
-					var k = key.split('[');
-					switch(k[1]){
-						case "!]":
-						if(temp.b === void 0) temp.b = [];
-						temp.b.push({key:key[0], val:rules[key]});
-						break;
-						case "<]":
-						if(temp.c === void 0) temp.c = [];
-						temp.c.push({key:key[0], val:rules[key]});
-						break;
-						case "<=]":
-						if(temp.d === void 0) temp.d = [];
-						temp.d.push({key:key[0], val:rules[key]});
-						break;
-						case ">]":
-						if(temp.e === void 0) temp.e = [];
-						temp.e.push({key:key[0], val:rules[key]});
-						break;
-						case ">=]":
-						if(temp.f === void 0) temp.f = [];
-						temp.f.push({key:key[0], val:rules[key]});
-						break;
-						default:
+				for(var key in removes){
+					if(key.slice(-1) === ']'){
+						var k = key.split('[');
+						switch(k[1]){
+							case "!]":
+							if(temp.b === void 0) temp.b = [];
+							temp.b.push({key:key[0], val:removes[key]});
+							break;
+							case "<]":
+							if(temp.c === void 0) temp.c = [];
+							temp.c.push({key:key[0], val:removes[key]});
+							break;
+							case "<=]":
+							if(temp.d === void 0) temp.d = [];
+							temp.d.push({key:key[0], val:removes[key]});
+							break;
+							case ">]":
+							if(temp.e === void 0) temp.e = [];
+							temp.e.push({key:key[0], val:removes[key]});
+							break;
+							case ">=]":
+							if(temp.f === void 0) temp.f = [];
+							temp.f.push({key:key[0], val:removes[key]});
+							break;
+							default:
+							if(temp.a === void 0) temp.a = [];
+							temp.a.push({key:key[0], val:removes[key]});
+							break;
+						}
+					}
+					else{
 						if(temp.a === void 0) temp.a = [];
-						temp.a.push({key:key[0], val:rules[key]});
-						break;
+						temp.a.push({key:key[0], val:removes[key]});
 					}
 				}
+
+				removes = temp;
 			}
 
-			rules = temp;
-		}
+			var processed;
+			if(putLast === true)
+				processed = new WeakSet();
 
-		that:for(var i = 0; i < withArray.length; i++){
-			if(i === this.length)
-				break;
+			that:for(var i = fromIndex; i < this.length; i++){
+				if(putLast === true && processed.has(this[i]))
+					break;
 
-			if(rules !== void 0){
-				if(rules.constructor === Array){
-					var temp1 = withArray[i];
-					if(rules.a !== void 0){
-						for(var z=0, n=rules.a.length; z < n; z++){
-							var temp2 = rules.a[z];
+				if(removes.constructor === Object){
+					var temp1 = this[i];
+					if(removes.a !== void 0){ // ===
+						for(var z=0, n=removes.a.length; z < n; z++){
+							var temp2 = removes.a[z];
 							if(temp1[temp2.key] !== temp2.val)
 								continue that;
 						}
 					}
-					if(rules.b !== void 0){
-						for(var z=0, n=rules.b.length; z < n; z++){
-							var temp2 = rules.b[z];
+					if(removes.b !== void 0){ // !==
+						for(var z=0, n=removes.b.length; z < n; z++){
+							var temp2 = removes.b[z];
 							if(temp1[temp2.key] === temp2.val)
 								continue that;
 						}
 					}
-					if(rules.c !== void 0){
-						for(var z=0, n=rules.c.length; z < n; z++){
-							var temp2 = rules.c[z];
+					if(removes.c !== void 0){ // <
+						for(var z=0, n=removes.c.length; z < n; z++){
+							var temp2 = removes.c[z];
 							if(temp1[temp2.key] >= temp2.val)
 								continue that;
 						}
 					}
-					if(rules.d !== void 0){
-						for(var z=0, n=rules.d.length; z < n; z++){
-							var temp2 = rules.d[z];
+					if(removes.d !== void 0){ // <=
+						for(var z=0, n=removes.d.length; z < n; z++){
+							var temp2 = removes.d[z];
 							if(temp1[temp2.key] > temp2.val)
 								continue that;
 						}
 					}
-					if(rules.e !== void 0){
-						for(var z=0, n=rules.e.length; z < n; z++){
-							var temp2 = rules.e[z];
+					if(removes.e !== void 0){ // >
+						for(var z=0, n=removes.e.length; z < n; z++){
+							var temp2 = removes.e[z];
 							if(temp1[temp2.key] <= temp2.val)
 								continue that;
 						}
 					}
-					if(rules.f !== void 0){
-						for(var z=0, n=rules.f.length; z < n; z++){
-							var temp2 = rules.f[z];
+					if(removes.f !== void 0){ // >=
+						for(var z=0, n=removes.f.length; z < n; z++){
+							var temp2 = removes.f[z];
 							if(temp1[temp2.key] < temp2.val)
 								continue that;
 						}
 					}
 				}
-				else rules(withArray[i]);
+				else if(!removes(this[i]))
+					continue;
+
+				if(withArray.length === 0){
+					this.splice(i--, 1);
+					continue;
+				}
+
+				var current = withArray.shift();
+				if(this[i] !== current)
+					Object.assign(this[i], current);
+
+				if(putLast === true){
+					processed.add(this[i]);
+					this.push(this.splice(i--, 1)[0]);
+				}
+				else if(putLast === false)
+					this.unshift(this.splice(i, 1)[0]);
 			}
 
-			if(this[i + whichIndex] !== withArray[i])
-				Object.assign(this[i + whichIndex], withArray[i]);
+			if(withArray.length !== 0){
+				if(putLast === false)
+					this.unshift.apply(this, withArray);
+				else
+					this.push.apply(this, withArray);
+			}
+
+			return this;
+		}
+		else{
+			for(var i = 0; i < withArray.length; i++){
+				if(i === this.length)
+					break;
+
+				if(this[i + fromIndex] !== withArray[i])
+					Object.assign(this[i + fromIndex], withArray[i]);
+			}
 		}
 
-		if(withArray.length === this.length || whichIndex !== 0)
-			return withArray;
+		if(withArray.length === this.length || fromIndex !== 0)
+			return this;
 
 		var lastLength = this.length;
 		if(withArray.length > this.length){
 			Array.prototype.push.apply(this, withArray.slice(this.length));
 			this.$EM.hardRefresh(lastLength);
-			return withArray;
+			return this;
 		}
 
 		if(withArray.length < this.length){
 			Array.prototype.splice.call(this, withArray.length);
 			this.$EM.removeRange(withArray.length, lastLength);
-			return withArray;
+			return this;
 		}
 	}
 
