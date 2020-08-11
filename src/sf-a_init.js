@@ -30,7 +30,7 @@ var TemplatePending = [];
 Object.defineProperty(window, 'templates', {
 	set: function(val){
 		HTMLTemplates = val;
-		internal.hotTemplate && internal.hotTemplate(val);
+		hotReload && internal.hotTemplate(val);
 
 		if(TemplatePending.length !== 0){
 			var temp = TemplatePending;
