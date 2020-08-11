@@ -658,11 +658,8 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				continue;
 
 			// Skip nested sf-model or sf-space
-			if(currentNode.tagName === 'SF-M' || currentNode.sf$controlled !== void 0)
-				continue;
-
 			// Skip element and it's childs that already bound to prevent vulnerability
-			if(currentNode.model !== void 0)
+			if(currentNode.tagName === 'SF-M' || currentNode.model !== void 0)
 				continue;
 
 			var attrs = currentNode.attributes;
@@ -727,9 +724,9 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 						delete theParent.sf$onlyAttribute;
 
 					// Remove because the parent will be removed
-					for (var i = collectOther.input.length-1; i >= 0; i--)
-						if(theParent.contains(collectOther.input[i]))
-							collectOther.input.splice(i, 1);
+					// for (var i = collectOther.input.length-1; i >= 0; i--)
+					// 	if(theParent.contains(collectOther.input[i]))
+					// 		collectOther.input.splice(i, 1);
 
 					break;
 				}

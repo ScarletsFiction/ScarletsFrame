@@ -2,7 +2,7 @@
 var self = sf.model;
 
 self.init = function(el, modelName, namespace){
-	if(el.sf$controlled !== void 0)
+	if(el.model !== void 0)
 		return;
 
 	el.sf$controlled = modelName;
