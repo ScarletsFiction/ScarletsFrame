@@ -320,7 +320,7 @@ var createModelKeysRegex = internal.model.createModelKeysRegex = function(target
 	var modelKeys = self.modelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
-		throw new Error("Template model was not found");
+		throw new Error("Template model was not found, maybe some script haven't been loaded");
 	}
 
 	var obj = {};

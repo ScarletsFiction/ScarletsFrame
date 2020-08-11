@@ -113,7 +113,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			return registrar[2];
 	}
 
-	self.html = function(name, outerHTML, namespace, retry){
+	self.html = function(name, outerHTML, namespace){
 		var scope = namespace || self;
 		var templatePath = false;
 
@@ -132,7 +132,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 						if(!outerHTML.keepTemplate && hotReload === false)
 							delete window.templates[outerHTML.template];
 					}
-					else throw new Error("Template was not found for path: "+outerHTML.template);
+					else{
+						TemplatePending.push(function(){
+							self.html(name, outerHTML, namespace, true);
+						});
+						return console.warn("Waiting template for '"+name+"' to be loaded");
+					}
 				}
 			}
 			else if(outerHTML.html)
@@ -140,12 +145,10 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			else return;
 
 			if(template === void 0){
-				if(retry === true)
-					return console.error(outerHTML, "template was not found");
-
-				return $(function(){
+				TemplatePending.push(function(){
 					self.html(name, outerHTML, namespace, true);
 				});
+				return console.warn("Waiting template for '"+name+"' to be loaded");
 			}
 
 			outerHTML = template;

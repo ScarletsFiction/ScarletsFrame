@@ -30,17 +30,6 @@ sf.hotReload = function(mode){
 		internalProp[val] = true;
 	});
 
-	var templates = window.templates || {};
-	Object.defineProperty(window, 'templates', {
-		set: function(val){
-			templates = val;
-			hotTemplate(val);
-		},
-		get: function(){
-			return templates;
-		}
-	});
-
 	$(function(){
 		backupTemplate = Object.assign({}, templates);
 
@@ -66,7 +55,7 @@ function reapplyScope(proxy, space, scope, func){
 				proxier = proxy[prop] = scope[prop];
 			else{
 				proxier = proxy[prop] = function(){
-					proxier.ref.apply(this, arguments);
+					return proxier.ref.apply(this, arguments);
 				}
 			}
 		}
@@ -231,6 +220,8 @@ function hotTemplate(templates){
 
 	backupTemplate = Object.assign({}, templates);
 }
+
+internal.hotTemplate = hotTemplate;
 
 // Refresh component html
 function hotComponentTemplate(scope, name){
