@@ -6,14 +6,24 @@
 
 // var warnUnsupport = true;
 var repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
+	var element, script;
+
 	for (var i = 0; i < elements.length; i++) {
-		var element = elements[i];
+		if(elements[i].getAttribute === void 0){
+			element = elements[i].el;
+			script = elements[i].rule;
+		}
+		else{
+			element = elements[i];
 
-		if(!element.hasAttribute('sf-repeat-this'))
-			continue;
+			// ToDo: find the culprit why we need to check this
+			if(!element.hasAttribute('sf-repeat-this'))
+				continue;
 
-		var script = element.getAttribute('sf-repeat-this');
-		element.removeAttribute('sf-repeat-this');
+			script = element.getAttribute('sf-repeat-this');
+			element.removeAttribute('sf-repeat-this');
+		}
+
 		element.sf$componentIgnore = true;
 
 		var pattern = script.match(sfRegex.repeatedList);

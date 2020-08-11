@@ -19,11 +19,13 @@ sf.model = function(name, options, func, namespace){
 };
 
 function findBindListElement(el){
-	do{
-		el = el.parentNode;
+	el = el.parentNode;
+	while(el !== null){
 		if(el.sf$elementReferences && el.sf$elementReferences.template.bindList)
 			return el;
-	} while(el !== null);
+
+		el = el.parentNode;
+	}
 	return null;
 }
 

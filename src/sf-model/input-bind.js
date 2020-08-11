@@ -275,14 +275,23 @@ var elementBoundChanges = function(model, property, element, oneWay, modelLocal,
 }
 
 var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, modelScope){
-	for (var i = 0; i < temp.length; i++) {
-		var element = temp[i];
+	var element, oneWay, propertyName;
 
-		var oneWay = false;
-		var propertyName = element.getAttribute('sf-bind');
-		if(propertyName === null){
-			propertyName = element.getAttribute('sf-into');
-			oneWay = true;
+	for (var i = 0; i < temp.length; i++) {
+		if(temp[i].getAttribute === void 0){
+			element = temp[i].el;
+			oneWay = temp[i].id === 1;
+			propertyName = temp[i].rule;
+		}
+		else{
+			element = temp[i];
+			oneWay = element.hasAttribute('sf-into');
+			propertyName = oneWay ? element.getAttribute('sf-into') : element.getAttribute('sf-bind');
+
+			if(oneWay === false)
+				element.removeAttribute('sf-bind');
+			else
+				element.removeAttribute('sf-into');
 		}
 
 		if(propertyName === "")
@@ -325,10 +334,6 @@ var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, mode
 
 		element.sfBounded = propertyName;
 		element.sfModel = model;
-		if(oneWay === false)
-			element.removeAttribute('sf-bind');
-		else
-			element.removeAttribute('sf-into');
 
 		elementBoundChanges(model, propertyName, element, oneWay, currentModel, propertyNameLocal);
 	}

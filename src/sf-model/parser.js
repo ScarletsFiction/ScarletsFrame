@@ -571,7 +571,25 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	if(template.specialElement.input.length !== 0){
 		var specialInput = template.specialElement.input;
 		for (var i = 0; i < specialInput.length; i++) {
-			specialInput[i] = $.getSelector(specialInput[i], true);
+			var el = specialInput[i];
+			var id, rule;
+
+			if(el.hasAttribute('sf-into')){ // One way
+				id = 1;
+				rule = el.getAttribute('sf-into');
+				el.removeAttribute('sf-into');
+			}
+			else{
+				id = 2;
+				rule = el.getAttribute('sf-bind');
+				el.removeAttribute('sf-bind');
+			}
+
+			specialInput[i] = {
+				addr:$.getSelector(el, true),
+				rule:rule,
+				id:id
+			};
 		}
 	}
 	else delete template.specialElement.input;
@@ -580,13 +598,19 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	if(template.specialElement.repeat.length !== 0){
 		var specialRepeat = template.specialElement.repeat;
 		for (var i = 0; i < specialRepeat.length; i++) {
-			specialRepeat[i] = $.getSelector(specialRepeat[i], true);
+			var el = specialRepeat[i];
+			specialRepeat[i] = {
+				addr:$.getSelector(el, true),
+				rule:el.getAttribute('sf-repeat-this')
+			};
+
+			el.removeAttribute('sf-repeat-this');
 		}
 	}
 	else{
 		if(!template.specialElement.input)
 			delete template.specialElement;
-		else delete template.specialElement.input;
+		else delete template.specialElement.repeat;
 	}
 
 	// internal.language.refreshLang(copy);

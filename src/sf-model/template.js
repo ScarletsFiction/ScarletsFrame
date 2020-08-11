@@ -249,7 +249,12 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			var specialInput = template.specialElement.input;
 			var specialInput_ = new Array(specialInput.length);
 			for (var i = 0; i < specialInput.length; i++) {
-				specialInput_[i] = $.childIndexes(specialInput[i], html);
+				var ref = specialInput[i];
+				specialInput_[i] = {
+					el:$.childIndexes(ref.addr, html),
+					rule:ref.rule,
+					id:ref.id,
+				};
 			}
 
 			bindInput(specialInput_, item, template.mask, modelRef);
@@ -260,7 +265,11 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			var specialRepeat = template.specialElement.repeat;
 			var specialRepeat_ = new Array(specialRepeat.length);
 			for (var i = 0; i < specialRepeat.length; i++) {
-				specialRepeat_[i] = $.childIndexes(specialRepeat[i], html);
+				var ref = specialRepeat[i];
+				specialRepeat_[i] = {
+					el:$.childIndexes(ref.addr, html),
+					rule:ref.rule
+				};
 			}
 
 			repeatedListBinding(specialRepeat_, item, void 0, template);
