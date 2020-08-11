@@ -353,7 +353,11 @@ function refreshLang(list, noPending){
 					parentElement.add(modelElement);
 					continue;
 				}
-				continue;
+
+				if(elem.tagName === 'INPUT' || elem.tagName === 'TEXTAREA'){
+					if(!elem.hasAttribute('placeholder'))
+						continue;
+				}
 			}
 		}
 
@@ -377,7 +381,7 @@ function refreshLang(list, noPending){
 
 		if(elem.hasAttribute('placeholder'))
 			elem.setAttribute('placeholder', value);
-		else
+		else if(elem.tagName !== 'INPUT' && elem.tagName !== 'TEXTAREA')
 			assignSquareBracket(value, elem);
 	}
 

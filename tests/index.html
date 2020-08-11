@@ -230,7 +230,7 @@
          <span :class="transit {{ bold ? 'bold' : '' }} {{ pink ? 'pink' : '' }}">Change variable on keyboard input</span><br>
 
          <input type="text" sf-into="inputBinding1" onkeyup="sf(this).onKeyUp(event)" value="One way binding"><br>
-         <input type="text" sf-bind="inputBinding1"><br>
+         <input sf-lang="i'm.here" type="text" sf-bind="inputBinding1" placeholder="test"><br>
          <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }} <b>hay</b> nyam {{inputBinding2.text}} <u>ahoy</u></span><br><br>
 
          <span class="bold" style="
