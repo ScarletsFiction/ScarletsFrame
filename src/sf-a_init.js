@@ -25,6 +25,26 @@
 if(typeof document === void 0)
 	document = window.document;
 
+var HTMLTemplates = window.templates || {};
+var TemplatePending = [];
+Object.defineProperty(window, 'templates', {
+	set: function(val){
+		HTMLTemplates = val;
+		internal.hotTemplate && internal.hotTemplate(val);
+
+		if(TemplatePending.length !== 0){
+			var temp = TemplatePending;
+			TemplatePending = [];
+
+			for (var i = 0; i < temp.length; i++)
+				temp[i]();
+		}
+	},
+	get: function(){
+		return HTMLTemplates;
+	}
+});
+
 // ===== Module Init =====
 var internal = {};
 var privateRoot = {};
