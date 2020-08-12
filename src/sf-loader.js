@@ -96,7 +96,7 @@ sf.loader = new function(){
 		}
 	}, true);
 
-	document.addEventListener('readystatechange', function domStateEvent(){
+	function domStateEvent(){
 		if(document.readyState === 'interactive' || document.readyState === 'complete'){
 			if(self.DOMReady === false){
 				self.DOMReady = true;
@@ -115,8 +115,13 @@ sf.loader = new function(){
 			else waitResources();
 
 			document.removeEventListener('readystatechange', domStateEvent, true);
+			return true;
 		}
-	}, true);
+		else return false;
+	}
+
+	if(!domStateEvent())
+		document.addEventListener('readystatechange', domStateEvent, true);
 
 	var resourceWaitTimer = -1;
 	function waitResources(){
