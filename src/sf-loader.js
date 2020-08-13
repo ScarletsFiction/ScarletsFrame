@@ -30,8 +30,8 @@ sf.loader = new function(){
 	self.f = function(ev){
 		self.loadedContent++;
 
-	    s.removeEventListener('load', sf.loader.f, {once:true});
-	    s.removeEventListener('error', sf.loader.f, {once:true});
+	    ev.target.removeEventListener('load', sf.loader.f, {once:true});
+	    ev.target.removeEventListener('error', sf.loader.f, {once:true});
 
 		for (var i = 0; i < whenProgress.length; i++)
 			whenProgress[i](self.loadedContent, self.totalContent);
