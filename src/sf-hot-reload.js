@@ -47,7 +47,8 @@ sf.hotReload = function(mode){
 
 })();
 
-function reapplyScope(proxy, space, scope, func){
+var haveLoaded = new WeakSet();
+function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	function refunction(prop, replacement){
 		var proxier = proxy[prop];
 		if(proxier === void 0){
@@ -102,7 +103,10 @@ function reapplyScope(proxy, space, scope, func){
 	}}), space, (scope.$el && scope.$el.$item) || {});
 	enabled = false;
 
-	scope.hotReloaded && scope.hotReloaded(scope);
+	if(haveLoaded.has(scope) || forceHaveLoaded)
+		scope.hotReloaded && scope.hotReloaded(scope);
+	else
+		haveLoaded.add(scope);
 }
 
 // On model scope reregistered
@@ -165,7 +169,7 @@ function hotComponentRefresh(space, name, func){
 			proxyComponent.set(list[i], proxy);
 		}
 
-		reapplyScope(proxy, space, list[i], func);
+		reapplyScope(proxy, space, list[i], func, true);
 	}
 }
 

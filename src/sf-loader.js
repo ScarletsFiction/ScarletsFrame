@@ -30,8 +30,8 @@ sf.loader = new function(){
 	self.f = function(ev){
 		self.loadedContent++;
 
-	    ev.target.removeEventListener('load', sf.loader.f, {once:true});
-	    ev.target.removeEventListener('error', sf.loader.f, {once:true});
+	    ev.target.removeEventListener('load', self.f, {once:true});
+	    ev.target.removeEventListener('error', self.f, {once:true});
 
 		for (var i = 0; i < whenProgress.length; i++)
 			whenProgress[i](self.loadedContent, self.totalContent);
@@ -53,8 +53,8 @@ sf.loader = new function(){
 			var s = document.createElement('link');
 	        s.rel = 'stylesheet';
 	        s.href = list[i];
-	        s.addEventListener('load', sf.loader.f, {once:true});
-	        s.addEventListener('error', sf.loader.f, {once:true});
+	        s.addEventListener('load', self.f, {once:true});
+	        s.addEventListener('error', self.f, {once:true});
 	        document.head.appendChild(s);
 		}
 	}
@@ -76,8 +76,8 @@ sf.loader = new function(){
 	        s.type = "text/javascript";
 	        if(async) s.async = true;
 	        s.src = list[i];
-	        s.addEventListener('load', sf.loader.f, {once:true});
-	        s.addEventListener('error', sf.loader.f, {once:true});
+	        s.addEventListener('load', self.f, {once:true});
+	        s.addEventListener('error', self.f, {once:true});
 	        document.head.appendChild(s);
 		}
 	}
@@ -95,9 +95,9 @@ sf.loader = new function(){
 			if(lastState === 'loading'){ // Find images
 				var temp = $('img:not(onload)[src]');
 				for (var i = 0; i < temp.length; i++) {
-					sf.loader.totalContent++;
-					temp[i].addEventListener('load', sf.loader.f, {once:true});
-					temp[i].addEventListener('error', sf.loader.f, {once:true});
+					self.totalContent++;
+					temp[i].addEventListener('load', self.f, {once:true});
+					temp[i].addEventListener('error', self.f, {once:true});
 				}
 			}
 		}
@@ -140,8 +140,8 @@ sf.loader = new function(){
 
 		var listener = sf.dom('script, link, img');
 		for (var i = 0; i < listener.length; i++) {
-			listener[i].removeEventListener('error', sf.loader.f);
-			listener[i].removeEventListener('load', sf.loader.f);
+			listener[i].removeEventListener('error', self.f);
+			listener[i].removeEventListener('load', self.f);
 		}
 
 		self.DOMWasLoaded = true;
