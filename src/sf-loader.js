@@ -27,11 +27,14 @@ sf.loader = new function(){
 		whenProgress.push(func);
 	}
 
-	self.f = function(element){
+	self.f = function(ev){
 		self.loadedContent++;
-		for (var i = 0; i < whenProgress.length; i++) {
+
+	    s.removeEventListener('load', sf.loader.f, {once:true});
+	    s.removeEventListener('error', sf.loader.f, {once:true});
+
+		for (var i = 0; i < whenProgress.length; i++)
 			whenProgress[i](self.loadedContent, self.totalContent);
-		}
 	}
 
 	self.css = function(list){
@@ -80,6 +83,10 @@ sf.loader = new function(){
 	}
 
 	var lastState = '';
+	self.waitImages = function(){
+		lastState = 'loading';
+	}
+
 	document.addEventListener("load", function domLoadEvent(event){
 		// Add processing class to queued element
 		if(document.body){
@@ -122,6 +129,7 @@ sf.loader = new function(){
 
 	if(!domStateEvent())
 		document.addEventListener('readystatechange', domStateEvent, true);
+	else document.removeEventListener('load', domLoadEvent, true);
 
 	var resourceWaitTimer = -1;
 	function waitResources(){
