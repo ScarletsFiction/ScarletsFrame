@@ -41,7 +41,7 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if($('link[href*="'+list[i]+'"]').length !== 0)
+				if(document.querySelectorAll('link[href*="'+list[i]+'"]').length !== 0)
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
@@ -63,7 +63,7 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if($('script[src*="'+list[i]+'"]').length !== 0)
+				if(document.querySelectorAll('script[src*="'+list[i]+'"]').length !== 0)
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
@@ -87,13 +87,13 @@ sf.loader = new function(){
 		lastState = 'loading';
 	}
 
-	document.addEventListener("load", function domLoadEvent(event){
+	function domLoadEvent(event){
 		// Add processing class to queued element
 		if(document.body){
 			document.removeEventListener('load', domLoadEvent, true);
 
 			if(lastState === 'loading'){ // Find images
-				var temp = $('img:not(onload)[src]');
+				var temp = document.body.querySelectorAll('img:not(onload)[src]');
 				for (var i = 0; i < temp.length; i++) {
 					self.totalContent++;
 					temp[i].addEventListener('load', self.f, {once:true});
@@ -101,7 +101,9 @@ sf.loader = new function(){
 				}
 			}
 		}
-	}, true);
+	}
+
+	document.addEventListener("load", domLoadEvent, true);
 
 	function domStateEvent(){
 		if(document.readyState === 'interactive' || document.readyState === 'complete'){
@@ -122,14 +124,16 @@ sf.loader = new function(){
 			else waitResources();
 
 			document.removeEventListener('readystatechange', domStateEvent, true);
-			return true;
 		}
-		else return false;
 	}
 
-	if(!domStateEvent())
-		document.addEventListener('readystatechange', domStateEvent, true);
-	else document.removeEventListener('load', domLoadEvent, true);
+	if(document.readyState === 'interactive' || document.readyState === 'complete'){
+		document.removeEventListener('load', domLoadEvent, true);
+
+		// Wait until all module has been loaded
+		setTimeout(domStateEvent, 1);
+	}
+	else document.addEventListener('readystatechange', domStateEvent, true);
 
 	var resourceWaitTimer = -1;
 	function waitResources(){
@@ -138,7 +142,7 @@ sf.loader = new function(){
 
 		clearInterval(resourceWaitTimer);
 
-		var listener = sf.dom('script, link, img');
+		var listener = document.querySelectorAll('script, link, img');
 		for (var i = 0; i < listener.length; i++) {
 			listener[i].removeEventListener('error', self.f);
 			listener[i].removeEventListener('load', self.f);

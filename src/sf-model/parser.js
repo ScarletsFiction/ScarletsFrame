@@ -553,9 +553,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			}
 
 			temp.address = $.getSelector(ref, true);
-
-			// This may possible to break on future browser and must be filled with one character
-			ref.textContent = '';
+			ref.textContent = '-';
 		}
 
 		addressed.push(temp);

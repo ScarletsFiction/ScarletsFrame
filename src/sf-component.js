@@ -123,7 +123,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if(outerHTML.template){
 				templatePath = outerHTML.template;
 				if(window.templates){
-					if(window.templates[outerHTML.template]){
+					if(window.templates[outerHTML.template] !== void 0){
 						template = window.templates[outerHTML.template];
 
 						if(hotReload && proxyTemplate[outerHTML.template] === void 0)
@@ -136,7 +136,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 						TemplatePending.push(function(){
 							self.html(name, outerHTML, namespace, true);
 						});
-						return console.warn("Waiting template for '"+name+"' to be loaded");
+						return console.warn("Waiting template path '"+outerHTML.template+"' to be loaded");
 					}
 				}
 			}

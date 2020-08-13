@@ -39,40 +39,6 @@ window.addEventListener('popstate', function(ev){
 	disableHistoryPush = false;
 }, false);
 
-// Listen to every link click, capture mode
-$(function(){
-	if(sf.views.onCrossing === void 0)
-		sf.views.onCrossing = function(url, target){
-			console.error("Unhandled crossing URL origin", url, target);
-			console.warn("Handle it by make your custom function like `sf.views.onCrossing = func(){}`");
-		};
-
-	$.on(document.body, 'click', 'a[href]', function(ev){
-		ev.preventDefault();
-
-		var attr = this.getAttribute('href');
-		if(attr[0] === '@'){ // ignore
-			var target = this.getAttribute('target');
-			if(target)
-				window.open(attr.slice(1), target);
-			else window.location = attr.slice(1);
-			return;
-		}
-
-		// Make sure it's from current origin
-		var path = this.href.replace(window.location.origin, '');
-
-		// If it's different domain
-		if(path.includes('//')){
-			sf.views.onCrossing(this.href, this.getAttribute('target'));
-			return;
-		}
-
-		// Let ScarletsFrame handle this link
-		self.goto(attr);
-	}, true);
-});
-
 var cachedURL = {};
 
 internal.router = {};
@@ -925,5 +891,39 @@ self.goto = function(url){
 			views[list].goto(parsed.hashes[list] || '/');
 	}
 }
+
+// Listen to every link click, capture mode
+$(function(){
+	if(sf.views.onCrossing === void 0)
+		sf.views.onCrossing = function(url, target){
+			console.error("Unhandled crossing URL origin", url, target);
+			console.warn("Handle it by make your custom function like `sf.views.onCrossing = func(){}`");
+		};
+
+	$.on(document.body, 'click', 'a[href]', function(ev){
+		ev.preventDefault();
+
+		var attr = this.getAttribute('href');
+		if(attr[0] === '@'){ // ignore
+			var target = this.getAttribute('target');
+			if(target)
+				window.open(attr.slice(1), target);
+			else window.location = attr.slice(1);
+			return;
+		}
+
+		// Make sure it's from current origin
+		var path = this.href.replace(window.location.origin, '');
+
+		// If it's different domain
+		if(path.includes('//')){
+			sf.views.onCrossing(this.href, this.getAttribute('target'));
+			return;
+		}
+
+		// Let ScarletsFrame handle this link
+		self.goto(attr);
+	}, true);
+});
 
 })();

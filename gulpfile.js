@@ -29,8 +29,8 @@ var theHeader = `/*
 var theOrderES5 = [
   'src/sf-polyfill.js',
   'src/sf-a_init.js',
-  'src/sf-dom.js',
   'src/sf-loader.js',
+  'src/sf-dom.js',
   'src/sf-space.js',
   'src/sf-model.js',
   'src/sf-component.js',
@@ -42,7 +42,7 @@ var theOrderES5 = [
 
 var theOrderES6 = theOrderES5.slice(1);
 var devTest = theOrderES6.slice(0);
-devTest.splice(-2, 1);
+devTest.splice(-2, 1); // Remove '!src/sf-hot-reload.js'
 
 gulp.task('watch-js', function(){
   removeOldMap('dist/');

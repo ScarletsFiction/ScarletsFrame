@@ -786,10 +786,8 @@ function recreateDOMList($el, length){
 	}
 
 	var documentElement = null;
-	setTimeout(function(){
-		sf.loader.domReady(function(){
-			documentElement = document.body.parentNode;
-		});
+	sf.loader.domReady(function(){
+		documentElement = document.body.parentNode;
 	});
 
 	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
