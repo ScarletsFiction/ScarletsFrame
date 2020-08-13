@@ -553,7 +553,9 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			}
 
 			temp.address = $.getSelector(ref, true);
-			ref.textContent = 'a';
+
+			// This may possible to break on future browser and must be filled with one character
+			ref.textContent = '';
 		}
 
 		addressed.push(temp);
@@ -690,8 +692,11 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 		}
 
 		else if(currentNode.nodeType === 3){ // Text
-			if(currentNode.textContent.length === 0){
-				currentNode.remove();
+			if(currentNode.textContent.trim().length === 0){
+				if(currentNode.textContent.length === 0)
+					currentNode.remove();
+				else
+					currentNode.textContent = currentNode.textContent.slice(0, 2);
 				continue;
 			}
 
@@ -723,12 +728,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 					if(theParent.sf$onlyAttribute !== void 0)
 						delete theParent.sf$onlyAttribute;
 
-					// Remove because the parent will be removed
-					// for (var i = collectOther.input.length-1; i >= 0; i--)
-					// 	if(theParent.contains(collectOther.input[i]))
-					// 		collectOther.input.splice(i, 1);
-
-					break;
+					continue;
 				}
 
 				if(!temp.has(currentNode)){
@@ -819,7 +819,8 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 			continue;
 		}
 
-		self.bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
+		if(current.nodeType !== 3)
+			self.bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
 	}
 }
 
