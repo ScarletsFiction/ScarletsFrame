@@ -10,7 +10,7 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 
 ## Try with online default template
 Example with file and folder structure
- - Simple with languages in [StackBlitz](https://stackblitz.com/edit/scarletsframe-simple?file=index.html)
+ - Simple in [StackBlitz](https://stackblitz.com/edit/scarletsframe-simple?file=index.js) or with languages in [StackBlitz](https://stackblitz.com/edit/scarletsframe-simple-language?file=index.html)
  - With page routes in [Glitch](https://glitch.com/edit/#!/scarletsframe-default?path=src%2Fvw-myview%2Fexample.html%3A4%3A7) and hot reload in [CodeSandbox](https://codesandbox.io/s/scarletsframe-default-5wxo7?file=/src/vw-myview/example.js)
 
 ### Advanced Example
