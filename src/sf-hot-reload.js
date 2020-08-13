@@ -100,9 +100,9 @@ function reapplyScope(proxy, space, scope, func){
 
 		return true;
 	}}), space, (scope.$el && scope.$el.$item) || {});
+	enabled = false;
 
 	scope.hotReloaded && scope.hotReloaded(scope);
-	enabled = false;
 }
 
 // On model scope reregistered
@@ -171,7 +171,7 @@ function hotComponentRefresh(space, name, func){
 
 // For views and component template
 // The element will be destroyed and created a new one
-// The scope will remain same, but init will be recalled
+// The scope will remain same, and hotReloaded will be called
 
 // Refresh views html and component
 function hotTemplate(templates){
