@@ -246,8 +246,17 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	var _on = model['on$'+propertyName]; // Everytime value's going changed, callback value will assigned as new value
 	var _m2v = model['m2v$'+propertyName]; // Everytime value changed from script (not from View), callback value will only affect View
 
-	if(model['out$'+propertyName])
-		console.warn(`'out$${propertyName}' is removed, please use 'on$${propertyName} = (old, now, isOut)=>{...};'`);
+	if(_on)
+		Object.defineProperty(model, 'on$'+propertyName, {
+			set:function(val){_on = val},
+			get:function(){return _on}
+		});
+
+	if(_m2v)
+		Object.defineProperty(model, 'm2v$'+propertyName, {
+			set:function(val){_m2v = val},
+			get:function(){return _on}
+		});
 
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
@@ -258,15 +267,17 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		set:function(val){
 			if(objValue !== val){
 				var newValue, noFeedback, temp;
-				if(inputBoundRunning === false && _m2v !== void 0){
-					newValue = _m2v.call(model, objValue, val);
+				if(inputBoundRunning === false){
+					if(_m2v !== void 0){
+						newValue = _m2v.call(model, objValue, val);
 
-					if(newValue !== void 0)
-						noFeedback = true;
+						if(newValue !== void 0)
+							noFeedback = true;
+					}
+
+					if(_on !== void 0)
+						newValue = _on.call(model, objValue, val, true);
 				}
-
-				if(_on !== void 0)
-					newValue = _on.call(model, objValue, val, true);
 
 				objValue = newValue !== void 0 ? newValue : val;
 
