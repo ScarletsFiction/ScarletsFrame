@@ -8,7 +8,7 @@ A frontend framework that can help you write a simple web structure with complex
 
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
-## Try with online default template
+## Try it online like a project
 Example with file and folder structure
  - Simple in [StackBlitz](https://stackblitz.com/edit/scarletsframe-simple?file=index.js) or with languages in [StackBlitz](https://stackblitz.com/edit/scarletsframe-simple-language?file=index.html)
  - With page routes in [Glitch](https://glitch.com/edit/#!/scarletsframe-default?path=src%2Fvw-myview%2Fexample.html%3A4%3A7) and hot reload in [CodeSandbox](https://codesandbox.io/s/scarletsframe-default-5wxo7?file=/src/vw-myview/example.js)
@@ -100,8 +100,9 @@ $ npm i scarletsframe
 And include it on your project with webpack ([example](https://github.com/krausest/js-framework-benchmark/tree/master/frameworks/keyed/scarletsframe)) or browserify.
 ```js
 const sf = require('scarletsframe');
+// import sf from "scarletsframe";
 
-sf.model.for('things', (self, root) => {
+sf.model('things', (self, root) => {
   ...
 });
 ```
