@@ -336,17 +336,18 @@ var createModelKeysRegex = internal.model.createModelKeysRegex = function(target
 
 // ToDo: need performance optimization
 self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex, preserveRegex, repeatedListKey){
+	if(targetNode.model !== void 0)
+		return console.error('[Violation] element already has a model, template extraction aborted', targetNode, targetNode.model, mask, modelScope);
+
 	// Remove repeated list from further process
 	// To avoid data parser
 	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
 	for (var i = 0; i < backup.length; i++) {
 		var current = backup[i];
-		current.insertAdjacentHTML('afterEnd', '<sfrepeat-this></sfrepeat-this>');
-		current.remove();
+		var flag = document.createElement('template');
+		flag.classList.add('sf-repeat-this-prepare');
+		current.parentNode.replaceChild(flag, current);
 	}
-
-	if(targetNode.model !== void 0)
-		return console.error('[Violation] element already has a model, template extraction aborted', targetNode, targetNode.model, mask, modelScope);
 
 	var template;
 
@@ -443,7 +444,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	internal.component.skip = tempSkip;
 
 	// Restore element repeated list
-	var restore = copy.getElementsByTagName('sfrepeat-this');
+	var restore = copy.getElementsByClassName('sf-repeat-this-prepare');
 	for (var i = 0; i < backup.length; i++) {
 		var current = restore[0];
 		current.parentNode.replaceChild(backup[i], current);
