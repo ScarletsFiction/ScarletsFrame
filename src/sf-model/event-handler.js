@@ -82,6 +82,9 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		// We need to get element with 'sf-bind-list' and check current element before processing
 		script = function(event){
 			var elem = event.target;
+			if(elem === rootHandler)
+				return;
+
 			if(!elem.sf$elementReferences || !elem.sf$elementReferences.template.bindList){
 				var realThat = findBindListElement(elem);
 				if(realThat === null)
