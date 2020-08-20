@@ -97,7 +97,6 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	if(this.$EM === void 0){
 		hiddenProperty(this, '$EM', EM, true);
 		Object.defineProperty(targetDeep, 'on$'+prop, {
-			enumerable: true,
 			configurable: true,
 			get:function(){
 				return callback;
@@ -179,6 +178,12 @@ class RepeatedProperty{ // extends Object
 
 		// Initialize property once
 		if(that.constructor !== RepeatedProperty){
+			// Hide property that have $
+			for(var k in that){
+				if(k.includes('$'))
+					hiddenProperty(that, k, that[k], true);
+			}
+
 			hiddenProperty(that, '_list', Object.keys(that));
 
 			var target;
@@ -237,6 +242,10 @@ class RepeatedProperty{ // extends Object
 			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
 		}
 		else alone();
+	}
+
+	$el(i){
+		return $(this.getElements(i));
 	}
 
 	getElement(prop){
@@ -460,6 +469,10 @@ class RepeatedList extends Array{
 			scroller.classList.add('sf-scroll-element');
 			internal.addScrollerStyle();
 		}, 1000);
+	}
+
+	$el(i){
+		return $(this.getElements(i));
 	}
 
 	pop(){
