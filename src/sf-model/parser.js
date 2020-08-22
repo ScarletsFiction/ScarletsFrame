@@ -273,7 +273,8 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 				continue;
 			}
 
-			serve = $.parseElement(serve);
+			// Need a copy with Array.from
+			serve = toArray($.parseElement(serve));
 			$(serve).insertBefore(ref.nextSibling || ref);
 			ref.remove();
 		}
@@ -830,7 +831,6 @@ function initBindingInformation(modelRef){
 	// Element binding data
 	Object.defineProperty(modelRef, 'sf$bindedKey', {
 		configurable: true,
-		enumerable:false,
 		writable:true,
 		value:{}
 	});

@@ -348,16 +348,43 @@ class DOMList{
 	}
 	insertAfter(el){
 		var parent = el.parentNode;
-		parent.insertBefore(this[0], el.nextSibling);
+		var next = el.nextSibling;
+		parent.insertBefore(this[0], next);
 
-		for (var i = 1; i < this.length; i++)
-			parent.insertBefore(this[i], this[i-1]);
+		// Sometime it could gone
+		if(this[0] === void 0){
+			var temp = toArray(this);
+			temp[0] = el.previousSibling;
+
+			for (var i = 1; i < temp.length; i++)
+				parent.insertBefore(temp[i], next);
+
+			return $(temp);
+		}
+
+		if(this.length > 1)
+			for (var i = 1; i < this.length; i++)
+				parent.insertBefore(this[i], this[i-1]);
 		return this;
 	}
 	insertBefore(el){
 		var parent = el.parentNode;
-		for (var i = 0; i < this.length; i++)
-			parent.insertBefore(this[i], el);
+		parent.insertBefore(this[0], el);
+
+		// Sometime it could gone
+		if(this[0] === void 0){
+			var temp = toArray(this);
+			temp[0] = el.nextSibling;
+
+			for (var i = 1; i < temp.length; i++)
+				parent.insertBefore(temp[i], el);
+
+			return $(temp);
+		}
+
+		if(this.length > 1)
+			for (var i = 1; i < this.length; i++)
+				parent.insertBefore(this[i], el);
 		return this;
 	}
 

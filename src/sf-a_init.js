@@ -311,3 +311,12 @@ function proxyClass(scope){
 		}
 	}
 }
+
+// Faster than Array.from on some condition
+function toArray(b){
+	var c = new Array(b.length);
+	for(var i=0; i<c.length; i++)
+		c[i] = b[i];
+
+	return c;
+}
