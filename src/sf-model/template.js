@@ -86,8 +86,10 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 				console.log("%cError in template's script:\n", 'color:orange', temp);
 			}
 			else{
-				console.log("%cError message:", 'color:orange', e.message);
-				console.log("%cError in template's script:\n", 'color:orange', temp);
+				console.groupCollapsed("%cError message:", 'color:orange', e.message, "\nClick here to open more information..");
+				console.log(e.stack);
+				console.log("%cWhen processing template's script:\n", 'color:orange', temp);
+				console.groupEnd();
 			}
 
 			throw new Error("Can't continue processing the template");
