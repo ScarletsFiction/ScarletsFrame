@@ -261,7 +261,7 @@ var specialEvent = internal.model.specialEvent = {
 			that.removeEventListener('pointerup', callbackEnd, {once:true});
 			that.removeEventListener('pointercancel', callbackEnd, {once:true});
 
-			document.removeEventListener('pointermove', callbackMove);
+			view.removeEventListener('pointermove', callbackMove);
 			set.delete(evStart.pointerId);
 
 			script.call(that, evStart);
@@ -273,16 +273,19 @@ var specialEvent = internal.model.specialEvent = {
 				set.delete(ev.pointerId);
 				that.removeEventListener('pointerup', callbackEnd, {once:true});
 				that.removeEventListener('pointercancel', callbackEnd, {once:true});
-				document.removeEventListener('pointermove', callbackMove);
+				view.removeEventListener('pointermove', callbackMove);
 
 				evStart = null;
 			}
 		}
 
 		var timer = 0;
+		var view = document;
 
 		function callbackStart(ev){
 			clearTimeout(timer);
+
+			view = ev.view.document;
 
 			set.add(ev.pointerId);
 			if(set.size > 1){
@@ -291,7 +294,7 @@ var specialEvent = internal.model.specialEvent = {
 
 				that.removeEventListener('pointerup', callbackEnd, {once:true});
 				that.removeEventListener('pointercancel', callbackEnd, {once:true});
-				document.removeEventListener('pointermove', callbackMove);
+				view.removeEventListener('pointermove', callbackMove);
 				return;
 			}
 
@@ -300,11 +303,11 @@ var specialEvent = internal.model.specialEvent = {
 
 			that.addEventListener('pointerup', callbackEnd, {once:true});
 			that.addEventListener('pointercancel', callbackEnd, {once:true});
-			document.addEventListener('pointermove', callbackMove);
+			view.addEventListener('pointermove', callbackMove);
 		}
 
 		function callbackEnd(ev){
-			document.removeEventListener('pointermove', callbackMove);
+			view.removeEventListener('pointermove', callbackMove);
 			evStart = null;
 
 			set.delete(ev.pointerId);
@@ -333,16 +336,18 @@ var specialEvent = internal.model.specialEvent = {
 
 		function prevent(ev){ev.preventDefault()}
 
+		var view = document;
 		var callbackStart = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
 
 			script.call(that, ev);
+			view = ev.view.document;
 
-			document.addEventListener('pointermove', callbackMove);
-			document.addEventListener('touchmove', prevent, {passive: false});
-			document.addEventListener('pointerup', callbackEnd, {once:true});
-			document.addEventListener('pointercancel', callbackEnd, {once:true});
+			view.addEventListener('pointermove', callbackMove);
+			view.addEventListener('touchmove', prevent, {passive: false});
+			view.addEventListener('pointerup', callbackEnd, {once:true});
+			view.addEventListener('pointercancel', callbackEnd, {once:true});
 		}
 
 		var callbackEnd = function(ev){
@@ -350,10 +355,11 @@ var specialEvent = internal.model.specialEvent = {
 			ev.stopPropagation();
 
 			script.call(that, ev);
+			view = ev.view.document;
 
-			document.removeEventListener('pointermove', callbackMove);
-			document.removeEventListener('touchmove', prevent, {passive: false});
-			document.removeEventListener('pointercancel', callbackEnd, {once:true});
+			view.removeEventListener('pointermove', callbackMove);
+			view.removeEventListener('touchmove', prevent, {passive: false});
+			view.removeEventListener('pointercancel', callbackEnd, {once:true});
 			that.addEventListener('pointerdown', callbackStart, {once:true});
 		}
 
@@ -418,9 +424,12 @@ function touchGesture(that, callback){
 			pointers.push(ev);
 	}
 
+	var view = document;
 	var callbackStart = function(ev){
 		ev.preventDefault();
 		findAnd(0, ev);
+
+		view = ev.view.document;
 
 		if(pointers.length === 1){
 			if(force)
@@ -433,8 +442,8 @@ function touchGesture(that, callback){
 			actionBackup = that.style.touchAction;
 			that.style.touchAction = 'none';
 
-			document.addEventListener('pointerup', callbackEnd);
-			document.addEventListener('pointercancel', callbackEnd);
+			view.addEventListener('pointerup', callbackEnd);
+			view.addEventListener('pointercancel', callbackEnd);
 		}
 
 		if(pointers.length === 2){
@@ -452,9 +461,9 @@ function touchGesture(that, callback){
 			ev.totalAngle = 0;
 
 			callback(ev);
-			document.addEventListener('pointermove', callbackMove);
+			view.addEventListener('pointermove', callbackMove);
 		}
-		else document.removeEventListener('pointermove', callbackMove);
+		else view.removeEventListener('pointermove', callbackMove);
 	}
 
 	var callbackMove = function(ev){
@@ -488,13 +497,13 @@ function touchGesture(that, callback){
 
 		if(pointers.length <= 1){
 			if(pointers.length === 0){
-				document.removeEventListener('pointerup', callbackEnd);
-				document.removeEventListener('pointercancel', callbackEnd);
+				view.removeEventListener('pointerup', callbackEnd);
+				view.removeEventListener('pointercancel', callbackEnd);
 			}
 
 			that.style.touchAction = actionBackup;
 
-			document.removeEventListener('pointermove', callbackMove);
+			view.removeEventListener('pointermove', callbackMove);
 
 			ev.scale = ev.angle = 0;
 			ev.totalScale = lastScale - startScale;
@@ -502,11 +511,11 @@ function touchGesture(that, callback){
 			callback(ev);
 		}
 		else{
-			document.addEventListener('pointerup', callbackEnd);
-			document.addEventListener('pointercancel', callbackEnd);
+			view.addEventListener('pointerup', callbackEnd);
+			view.addEventListener('pointercancel', callbackEnd);
 
 			if(pointers.length === 2){
-				document.removeEventListener('pointermove', callbackMove);
+				view.removeEventListener('pointermove', callbackMove);
 
 				ev.scale = ev.angle = 0;
 				callback(ev);
@@ -528,16 +537,18 @@ function touchGesture(that, callback){
 		force = false;
 		pointers.length = 0;
 
-		document.removeEventListener('pointermove', callbackMove);
-		document.removeEventListener('keyup', keyEnd);
+		view.removeEventListener('pointermove', callbackMove);
+		view.removeEventListener('keyup', keyEnd);
 	}
 
 	var keyStart = function(ev){
 		if(!ev.ctrlKey)
 			return;
 
+		view = ev.view.document;
+
 		force = true;
-		document.addEventListener('keyup', keyEnd);
+		view.addEventListener('keyup', keyEnd);
 	}
 
 	document.addEventListener('keydown', keyStart);
