@@ -41,38 +41,48 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 		var arg = ref.data;
 		arg[0] = item; //7ms
 
-		// Direct evaluation type
-		if(ref.type === REF_DIRECT){
-			temp = ref.get(arg[0], arg[1], _escapeParse, repeatListIndex);
-			if(temp === void 0)
-				temp = '';
-			else{
-				if(temp.constructor === Object)
-					temp = JSON.stringify(temp);
-				else if(temp.constructor !== String)
-					temp = String(temp);
-			}
+		try{
+			// Direct evaluation type
+			if(ref.type === REF_DIRECT){
+				temp = ref.get(arg[0], arg[1], _escapeParse, repeatListIndex);
+				if(temp === void 0)
+					temp = '';
+				else{
+					if(temp.constructor === Object)
+						temp = JSON.stringify(temp);
+					else if(temp.constructor !== String)
+						temp = String(temp);
+				}
 
-			parsed[i] = {type:REF_DIRECT, data:temp};
-			continue;
-		}
-
-		if(ref.type === REF_EXEC){
-			parsed[i] = {type:REF_EXEC, data:ref.get(arg[0], arg[1], _escapeParse, repeatListIndex)};
-			continue;
-		}
-
-		// Conditional type
-		if(ref.type === REF_IF){
-			parsed[i] = {type:REF_IF, data:''};
-
-			// If condition was not meet
-			if(!ref.if[0](arg[0], arg[1], _escapeParse, repeatListIndex)){
-				parsed[i].data = elseIfHandle(ref, arg, repeatListIndex);
+				parsed[i] = {type:REF_DIRECT, data:temp};
 				continue;
 			}
 
-			parsed[i].data = ref.if[1](arg[0], arg[1], _escapeParse, repeatListIndex);
+			if(ref.type === REF_EXEC){
+				parsed[i] = {type:REF_EXEC, data:ref.get(arg[0], arg[1], _escapeParse, repeatListIndex)};
+				continue;
+			}
+
+			// Conditional type
+			if(ref.type === REF_IF){
+				parsed[i] = {type:REF_IF, data:''};
+
+				// If condition was not meet
+				if(!ref.if[0](arg[0], arg[1], _escapeParse, repeatListIndex)){
+					parsed[i].data = elseIfHandle(ref, arg, repeatListIndex);
+					continue;
+				}
+
+				parsed[i].data = ref.if[1](arg[0], arg[1], _escapeParse, repeatListIndex);
+			}
+		} catch(e) {
+			var temp = (ref.get || ref.if).toString();
+			temp = temp.split(') {', 2)[1].slice(1, -2);
+			temp = temp.replace(/(_model_|_modelScope)\./g, '');
+			temp = temp.replace(/var _model_=.*?;/, '');
+
+			console.log("%cError in template's script:\n", 'color:orange', temp);
+			throw e;
 		}
 	}
 	return parsed;
