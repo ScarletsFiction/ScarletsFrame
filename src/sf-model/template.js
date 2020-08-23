@@ -81,8 +81,10 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			temp = temp.replace(/(_model_|_modelScope)\./g, '');
 			temp = temp.replace(/var _model_=.*?;/, '');
 
+			console.log("%cError message:", 'color:orange', e.message);
 			console.log("%cError in template's script:\n", 'color:orange', temp);
-			throw e;
+
+			throw new Error("Can't continue processing the template");
 		}
 	}
 	return parsed;
