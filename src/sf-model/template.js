@@ -81,8 +81,14 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			temp = temp.replace(/(_model_|_modelScope)\./g, '');
 			temp = temp.replace(/var _model_=.*?;/, '');
 
-			console.log("%cError message:", 'color:orange', e.message);
-			console.log("%cError in template's script:\n", 'color:orange', temp);
+			if(e.message === "Can't continue processing the template"){
+				console.groupCollapsed("Click here to open more information..");
+				console.log("%cError in template's script:\n", 'color:orange', temp);
+			}
+			else{
+				console.log("%cError message:", 'color:orange', e.message);
+				console.log("%cError in template's script:\n", 'color:orange', temp);
+			}
 
 			throw new Error("Can't continue processing the template");
 		}
@@ -152,8 +158,12 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	try{
 		var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);  //18ms
 	}catch(e){
-		console.error("Error when processing:", template.html, item, modelRef);
-		sf.onerror && sf.onerror(e);
+		if(e.message === "Can't continue processing the template"){
+			console.error("Error when processing:", template.html, item, modelRef);
+			console.groupEnd();
+		}
+		else sf.onerror && sf.onerror(e);
+
 		throw e;
 	}
 
