@@ -85,6 +85,8 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		return;
 	}
 
+	scope.hotReloading && scope.hotReloading(scope);
+
 	var enabled = true;
 	func(new Proxy(scope, {set:function(obj, prop, val){
 		// Skip function that related with framework
