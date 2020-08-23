@@ -269,14 +269,14 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 				var newValue, noFeedback, temp;
 				if(inputBoundRunning === false){
 					if(_m2v !== void 0){
-						newValue = _m2v.call(model, objValue, val);
+						newValue = _m2v.call(model, val);
 
 						if(newValue !== void 0)
 							noFeedback = true;
 					}
 
 					if(_on !== void 0)
-						newValue = _on.call(model, objValue, val, true);
+						newValue = _on.call(model, val, true);
 				}
 
 				objValue = newValue !== void 0 ? newValue : val;

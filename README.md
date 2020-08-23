@@ -8,6 +8,17 @@ A frontend framework that can help you write a simple web structure with complex
 
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
+### Breaking changes for 0.30.0
+```js
+sf.model('stuff', function(self){
+  // Parameter changes for 'm2v', 'v2m', and 'on'
+  self.m2v$binded = function(newValue){
+    self.binded == 'still old value from here';
+    return "replace the new value";
+  }
+})
+```
+
 ## Try it online like a project
 Example with file and folder structure
  - Simple in [StackBlitz](https://stackblitz.com/edit/scarletsframe-simple?file=index.js) or with languages in [StackBlitz](https://stackblitz.com/edit/scarletsframe-simple-language?file=index.html)

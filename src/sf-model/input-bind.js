@@ -1,3 +1,4 @@
+var inputBoundRunning = false;
 var callInputListener = function(ref, value){
 	var v2m = ref.sfModel['v2m$'+ref.sfBounded];
 	var on = ref.sfModel['on$'+ref.sfBounded];
@@ -11,10 +12,10 @@ var callInputListener = function(ref, value){
 
 		try{
 			if(v2m !== void 0)
-				newValue = v2m.call(ref.sfModel, old, value);
+				newValue = v2m.call(ref.sfModel, value);
 
 			if(on !== void 0){
-				newValue = on.call(ref.sfModel, old, value, false);
+				newValue = on.call(ref.sfModel, value, false);
 				if(newValue !== void 0)
 					ref.sfFeedback = true;
 			}
@@ -27,7 +28,6 @@ var callInputListener = function(ref, value){
 	}
 }
 
-var inputBoundRunning = false;
 var inputTextBound = function(e){
 	if(e.fromSFFramework === true) return;
 
