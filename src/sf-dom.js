@@ -14,10 +14,14 @@ sf.dom = function(selector, context){
 	else if(selector.constructor === Function)
 		return sf.loader.onFinish(selector);
 	else if(selector[0] === '<' || selector[selector.length-1] === '>')
-		return _DOMList(sf.dom.parseElement(selector, true));
+		return _DOMList($.parseElement(selector, true));
 	else if(context){
-		if(context.classList === void 0)
-			return context.find(selector);
+		if(context.classList === void 0){
+			if(context.animateKey === $.fn.animateKey)
+				return context.find(selector);
+			else
+				return $(queryElements(context, selector));
+		}
 		return _DOMList(context.querySelectorAll(selector));
 	}
 	else if(selector.constructor === String)
@@ -54,7 +58,7 @@ class DOMList{
 
 			if(IE11 === false)
 				Object.defineProperty(this, 'length', {writable:true, enumerable:false, value:1});
-			return;
+			return this;
 		}
 
 		if(this._){
@@ -65,6 +69,7 @@ class DOMList{
 		}
 
 		this[this.length++] = el;
+		return this;
 	}
 	splice(i, count){
 		if(i < 0)
@@ -82,6 +87,7 @@ class DOMList{
 		this.length -= count;
 		for (var i = this.length, n = this.length + count; i < n; i++)
 			delete this[i];
+		return this;
 	}
 	find(selector){
 		if(this.length === 1) // Optimize perf ~66%
@@ -445,6 +451,13 @@ function _DOMList(list){
 	var length = list.length;
 	Object.setPrototypeOf(list, DOMList.prototype);
 	list.length = length;
+	return list;
+}
+
+function queryElements(arr, selector){
+	var list = [];
+	for (var i = 0; i < arr.length; i++)
+		list.push.apply(list, arr[i].querySelectorAll(selector));
 	return list;
 }
 

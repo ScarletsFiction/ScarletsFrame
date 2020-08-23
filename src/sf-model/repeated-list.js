@@ -194,7 +194,7 @@ class RepeatedProperty{ // extends Object
 				prop = prop[prop.length-1];
 			}
 
-			Object.setPrototypeOf(that, RepeatedProperty.prototype);
+			Object.setPrototypeOf(that, RP.prototype);
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
@@ -244,8 +244,11 @@ class RepeatedProperty{ // extends Object
 		else alone();
 	}
 
-	$el(i){
-		return $(this.getElements(i));
+	$el(selector){
+		var $EM = this.$EM;
+		if($EM.constructor === ElementManipulatorProxy)
+			return $EM.$el(selector)
+		return $(queryElements(($EM.parentChilds || $EM.elements), selector));
 	}
 
 	getElement(prop){
@@ -403,7 +406,7 @@ class RepeatedList extends Array{
 				prop = prop[prop.length-1];
 			}
 
-			Object.setPrototypeOf(that, RepeatedList.prototype);
+			Object.setPrototypeOf(that, RL.prototype);
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
@@ -471,8 +474,11 @@ class RepeatedList extends Array{
 		}, 1000);
 	}
 
-	$el(i){
-		return $(this.getElements(i));
+	$el(selector){
+		var $EM = this.$EM;
+		if($EM.constructor === ElementManipulatorProxy)
+			return $EM.$el(selector)
+		return $(queryElements(($EM.parentChilds || $EM.elements), selector));
 	}
 
 	pop(){
@@ -1514,6 +1520,16 @@ class ElementManipulatorProxy{
 		}
 
 		return got;
+	}
+
+	$el(selector){
+		var list = [];
+		var $EMs = this.list;
+		for (var i = 0; i < $EMs.length; i++) {
+			var em = $EMs[i];
+			list.push.apply(list, queryElements((em.parentChilds || em.elements), selector));
+		}
+		return $(list);
 	}
 
 	hardRefresh(){
