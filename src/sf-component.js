@@ -239,21 +239,28 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			inherit !== void 0 ? new inherit() : {}
 		));
 
-		newObj.$el = $();
-		if(inherit !== void 0 && asScope)
-			Object.setPrototypeOf(newObj, inherit.prototype);
+		var index = 0;
+		if(newObj.$el !== void 0)
+			index = newObj.$el + 1;
+		else
+			newObj.$el = $();
 
-		// Call function that handle scope
-		registrar[0](newObj, (namespace || sf.model), $item);
-		if(newObj.constructor !== Object){
-			proxyClass(newObj);
-			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
-		}
+		if(index === 0){
+			if(inherit !== void 0 && asScope)
+				Object.setPrototypeOf(newObj, inherit.prototype);
 
-		// Save the item for hot reloading
-		if(hotReload){
-			newObj.$el.$item = $item;
-			hotComponentAdd(scope, name, newObj);
+			// Call function that handle scope
+			registrar[0](newObj, (namespace || sf.model), $item);
+			if(newObj.constructor !== Object){
+				proxyClass(newObj);
+				newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
+			}
+
+			// Save the item for hot reloading
+			if(hotReload){
+				newObj.$el.$item = $item;
+				hotComponentAdd(scope, name, newObj);
+			}
 		}
 
 		if(registrar[4] === void 0)
@@ -313,8 +320,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			}
 		}
 
-		// Component always will always have one element
-		newObj.$el[0] = element;
+		newObj.$el = newObj.$el.push(element);
 
 		if(registrar[2] !== void 0){
 			registrar[2].push(newObj);
