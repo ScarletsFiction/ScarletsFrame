@@ -271,7 +271,7 @@ class DOMList{
 			var event = events[i];
 			for (var j = 0; j < this.length; j++) {
 				if(direct === true){
-					this[j][event]();
+					this[j][event](data);
 					continue;
 				}
 
