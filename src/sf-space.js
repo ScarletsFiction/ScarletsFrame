@@ -208,11 +208,16 @@ class SFSpace extends HTMLElement {
 	}
 	disconnectedCallback(){
 		var that = this;
-		this.sf$destroying = setTimeout(function(){
+		var destroy = function(){
 			var i = that.sf$space.domList.indexOf(that);
 			if(i !== -1)
 				that.sf$space.domList.splice(i, 1);
-		}, 1000);
+		}
+
+		if(window.destroying)
+			return destroy();
+
+		this.sf$destroying = setTimeout(destroy, 1000);
 	}
 }
 

@@ -5,20 +5,45 @@
 var headerTags = '';
 var windowDestroyListener = false;
 
+function winDestroy(win){
+	var opt = win.winOptions;
+	if(opt.onclose && opt.onclose() === false){
+		ev.preventDefault();
+		return false;
+	}
+
+	win.destroying = true;
+
+	delete sf.window.list[opt.id];
+	win.document.body.remove();
+	win.close();
+	console.log(`%c[${opt.title}]`, "color: #9bff82", "Closed!");
+}
+
 sf.window = {
-	list:[],
-	destroy:function(){
-		var list = sf.window.list;
-		for (var i = 0; i < list.length; i++)
-			list[i].close();
+	list:{},
+	destroy:function(id){
+		if(id !== void 0)
+			winDestroy(this.list[id]);
+		else{
+			var list = this.list;
+			for(var k in list)
+				winDestroy(list[k]);
+		}
 	},
 	create:function(options, onLoaded){
 		if(options === void 0)
 			options = {};
 
+		if(options.id === void 0)
+			options.id = Math.round(Math.random()*1000) + String(Date.now()).slice(3);
+
+		var winID = options.id;
 		if(windowDestroyListener === false){
 			windowDestroyListener = true;
-			window.addEventListener('beforeunload', this.destroy);
+			window.addEventListener('beforeunload', function(){
+				sf.window.destroy();
+			});
 		}
 
 		var template;
@@ -47,20 +72,11 @@ sf.window = {
 				headerTags += styles[i].outerHTML;
 		}
 
+		linker.winOptions = options;
+
 		var windows = this.list;
-		linker.addEventListener('beforeunload', function(){
-			linker.document.body.remove(); // Trigger ScarletsFrame element destructor
-			windows.splice(windows.indexOf(linker), 1);
-
-			setTimeout(function(){
-				// We must do memory management here about the detached element
-				// from detached window
-				console.log(`%c[${options.title}]`, "color: #9bff82", "Closed!");
-			}, 1000);
-		});
-
 		linker.loaded = function(){
-			windows.push(linker);
+			windows[winID] = linker;
 
 			linker.sf.lang.list = sf.lang.list;
 			linker.sf.lang.default = sf.lang.default;
@@ -130,6 +146,10 @@ sf.window = {
 		linker.document.write(`<html><head><title>${
 			options.title}</title>${headerTags
 		}</head><body><script>setTimeout(loaded,1000)</script></body></html>`);
+
+		linker.addEventListener('beforeunload', function(ev){
+			sf.window.destroy(winID);
+		});
 
 		return true;
 	}

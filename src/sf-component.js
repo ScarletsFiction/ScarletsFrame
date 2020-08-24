@@ -424,9 +424,18 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				return;
 
 			var that = this;
-			this.sf$detaching = setTimeout(function(){
+			var destroy = function(){
 				if(that.model === void 0)
 					return;
+
+				if(that.model.$el.length !== 1){
+					var i = that.model.$el.indexOf(that);
+					if(i !== -1)
+						that.model.$el = that.model.$el.splice(i, 1);
+
+					internal.model.removeModelBinding(that.model);
+					return;
+				}
 
 				if(that.model.destroy)
 					that.model.destroy();
@@ -436,7 +445,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 				if(hotReload)
 					hotComponentRemove(that);
-			}, 500);
+			}
+
+			if(window.destroying)
+				return destroy();
+
+			this.sf$detaching = setTimeout(destroy, 500);
 		};
 
 		try{

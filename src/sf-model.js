@@ -189,7 +189,7 @@ class SFModel extends HTMLElement {
 	}
 	disconnectedCallback(){
 		var that = this;
-		this.sf$destroying = setTimeout(function(){
+		var destroy = function(){
 			if(that.model === void 0)
 				return;
 
@@ -207,7 +207,12 @@ class SFModel extends HTMLElement {
 			}
 
 			internal.model.removeModelBinding(that.model);
-		}, 1000);
+		}
+
+		if(window.destroying)
+			return destroy();
+
+		this.sf$destroying = setTimeout(destroy, 1000);
 	}
 }
 

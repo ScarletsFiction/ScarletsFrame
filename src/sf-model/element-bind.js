@@ -1,7 +1,9 @@
-// Component feature doesn't need this
 internal.model.removeModelBinding = function(ref, isDeep){
 	if(ref === void 0)
 		return;
+
+	if(window.sf$proxy !== void 0)
+		return window.sf$proxy.removeModelBinding(ref, isDeep);
 
 	var bindedKey = ref.sf$bindedKey;
 	for(var key in bindedKey){
@@ -119,6 +121,8 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			internal.model.removeModelBinding(model, true);
 	}
 }
+
+forProxying.removeModelBinding = internal.model.removeModelBinding;
 
 function repeatedRemoveDeepBinding(obj, refPaths){
 	if(refPaths.length === 0)
