@@ -11,9 +11,11 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 ### Breaking changes for 0.30.0
 ```js
 sf.model('stuff', function(self){
+  self.binded = 'still old value';
+
   // Parameter changes for 'm2v', 'v2m', and 'on'
   self.m2v$binded = function(newValue){
-    self.binded == 'still old value from here';
+    self.binded === 'still old value';
     return "replace the new value";
   }
 })
