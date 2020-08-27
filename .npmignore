@@ -1,6 +1,7 @@
 tests
 example
 .git
+.github
 src
 pnpm-lock.yaml
 _config.yml
