@@ -195,8 +195,15 @@ function hotTemplate(templates){
 			var registrar = _space.registered[_name];
 
 			if(registrar !== void 0 && registrar[3] !== void 0){
+				var old = registrar[3].outerHTML;
 				sf.component.html(_name, {template:path}, _space);
-				hotComponentTemplate(_space, _name);
+				var now = registrar[3].outerHTML;
+
+				if(now !== old
+				   || (backupCompTempl.has(registrar)
+				       && now !== backupCompTempl.get(registrar).outerHTML)
+				   )
+					hotComponentTemplate(_space, _name);
 			}
 
 			continue;
@@ -237,74 +244,68 @@ internal.hotTemplate = hotTemplate;
 // Refresh component html
 function hotComponentTemplate(scope, name){
 	var registrar = scope.registered[name];
-	var newEl = registrar[3];
+	var freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
 
-	if(backupCompTempl.has(registrar)){
-		if(newEl.outerHTML === backupCompTempl.get(registrar).outerHTML)
-			return;
+	for (var z = 0; z < freezed.length; z++) {
+		var model = freezed[z];
+		var els = model.$el;
 
-		var freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
-		for (var z = 0; z < freezed.length; z++) {
-			var model = freezed[z];
-			var els = model.$el;
+		for (var k = 0; k < els.length; k++) {
+			var element = els[k];
 
-			for (var k = 0; k < els.length; k++) {
-				var element = els[k];
+			// Don't refresh component that not declared with sf.component.html
+			if(element.sf$elementReferences === void 0)
+				continue;
 
-				// Don't refresh component that not declared with sf.component.html
-				if(element.sf$elementReferences === void 0)
-					continue;
+			var parentNode = element.parentNode;
+			var nextNode = element.nextSibling;
 
-				var parentNode = element.parentNode;
-				var nextNode = element.nextSibling;
+			// Detach from DOM tree first
+			if(parentNode !== null)
+				element.remove();
+			element.textContent = '';
 
-				// Detach from DOM tree first
-				if(parentNode !== null)
-					element.remove();
-				element.textContent = '';
+			// Clear old DOM linker
+			internal.model.removeModelBinding(model);
 
-				// Clear old DOM linker
-				internal.model.removeModelBinding(model);
+			if(registrar[3].constructor !== Object){
+				var temp = registrar[3];
+				var tempDOM = temp.tempDOM;
 
-				if(registrar[3].constructor !== Object){
-					var temp = registrar[3];
-					var tempDOM = temp.tempDOM;
-
-					temp = prepareComponentTemplate(temp, tempDOM, name, model, registrar);
-					tempDOM = temp.tempDOM;
-				}
-
-				// Create new object, but using registrar[3] as prototype
-				var copy = Object.create(temp);
-
-				if(copy.parse.length !== 0){
-					copy.parse = copy.parse.slice(0);
-
-					// Deep copy the original properties to new object
-					for (var i = 0; i < copy.parse.length; i++) {
-						copy.parse[i] = Object.create(copy.parse[i]);
-						copy.parse[i].data = [null, model];
-					}
-				}
-
-				if(tempDOM === true)
-					var parsed = internal.model.templateParser(copy, model, void 0, void 0, void 0, element);
-				else{
-					var parsed = internal.model.templateParser(copy, model);
-					element.appendChild(parsed);
-				}
-
-				element.sf$elementReferences = parsed.sf$elementReferences;
-				sf.model.bindElement(element, model, copy);
-
-				// Put it back after children was ready
-				if(parentNode !== null)
-					parentNode.insertBefore(element, nextNode);
+				temp = prepareComponentTemplate(temp, tempDOM, name, model, registrar);
+				tempDOM = temp.tempDOM;
 			}
 
-			model.hotReloadedHTML && model.hotReloadedHTML();
+			// Create new object, but using registrar[3] as prototype
+			var copy = Object.create(temp);
+
+			if(copy.parse.length !== 0){
+				copy.parse = copy.parse.slice(0);
+
+				// Deep copy the original properties to new object
+				for (var i = 0; i < copy.parse.length; i++) {
+					copy.parse[i] = Object.create(copy.parse[i]);
+					copy.parse[i].data = [null, model];
+				}
+			}
+
+			if(tempDOM === true)
+				var parsed = internal.model.templateParser(copy, model, void 0, void 0, void 0, element);
+			else{
+				var parsed = internal.model.templateParser(copy, model);
+				element.appendChild(parsed);
+			}
+
+			element.sf$elementReferences = parsed.sf$elementReferences;
+			sf.model.bindElement(element, model, copy);
+
+			// Put it back after children was ready
+			if(parentNode !== null)
+				parentNode.insertBefore(element, nextNode);
 		}
+
+		model.hotReloadedHTML && model.hotReloadedHTML();
 	}
 
-	backupCompTempl.set(registrar, newEl);
+	backupCompTempl.set(registrar, registrar[3]);
 }
