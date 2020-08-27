@@ -190,9 +190,14 @@ function hotTemplate(templates){
 
 		var forComp = proxyTemplate[path]; // [space, name]
 		if(forComp !== void 0){
-			var registrar = forComp[0].registered[forComp[1]];
-			if(registrar !== void 0 && registrar[3] !== void 0)
-				sf.component.html(forComp[1], {template:path}, forComp[0]);
+			var _space = forComp[0];
+			var _name = forComp[1];
+			var registrar = _space.registered[_name];
+
+			if(registrar !== void 0 && registrar[3] !== void 0){
+				sf.component.html(_name, {template:path}, _space);
+				hotComponentTemplate(_space, _name);
+			}
 
 			continue;
 		}
@@ -232,10 +237,10 @@ internal.hotTemplate = hotTemplate;
 // Refresh component html
 function hotComponentTemplate(scope, name){
 	var registrar = scope.registered[name];
-	var newEl = scope.registered[name][3];
+	var newEl = registrar[3];
 
 	if(backupCompTempl.has(registrar)){
-		if(backupCompTempl.get(registrar).innerHTML === newEl.innerHTML)
+		if(newEl.outerHTML === backupCompTempl.get(registrar).outerHTML)
 			return;
 
 		var freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest

@@ -174,8 +174,13 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
-		if(hotReload)
-			hotComponentTemplate(scope, name);
+
+		if(hotReload){
+			if(templatePath === false)
+				hotComponentTemplate(scope, name);
+			else if(backupCompTempl.has(registrar) === false)
+				backupCompTempl.set(registrar, registrar[3]);
+		}
 	}
 
 	var tempDOM = document.createElement('div');
@@ -309,10 +314,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		newObj.$el = newObj.$el.push(element);
 
-		if(registrar[2] !== void 0){
-			registrar[2].push(newObj);
-			element.sf$collection = registrar[2];
-		}
+		registrar[2].push(newObj);
+		element.sf$collection = registrar[2];
 
 		element.model = newObj;
 		element.sf$controlled = name;
