@@ -178,7 +178,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(hotReload){
 			if(templatePath === false)
 				hotComponentTemplate(scope, name);
-			else if(backupCompTempl.has(registrar) === false)
+			else if(window.sf$proxy === void 0 && backupCompTempl.has(registrar) === false)
 				backupCompTempl.set(registrar, registrar[3]);
 		}
 	}

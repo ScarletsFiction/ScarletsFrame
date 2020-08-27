@@ -246,57 +246,63 @@ function hotComponentTemplate(scope, name){
 		var freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
 		for (var z = 0; z < freezed.length; z++) {
 			var model = freezed[z];
-			var element = model.$el[0];
+			var els = model.$el;
 
-			// Don't refresh component that not declared with sf.component.html
-			if(element.sf$elementReferences === void 0)
-				continue;
+			for (var k = 0; k < els.length; k++) {
+				var element = els[k];
 
-			var parentNode = element.parentNode;
-			var nextNode = element.nextSibling;
+				// Don't refresh component that not declared with sf.component.html
+				if(element.sf$elementReferences === void 0)
+					continue;
 
-			// Detach from DOM tree first
-			if(parentNode !== null)
-				element.remove();
-			element.textContent = '';
+				var parentNode = element.parentNode;
+				var nextNode = element.nextSibling;
 
-			// Clear old DOM linker
-			internal.model.removeModelBinding(model);
+				// Detach from DOM tree first
+				if(parentNode !== null)
+					element.remove();
+				element.textContent = '';
 
-			if(registrar[3].constructor !== Object){
-				var temp = registrar[3];
-				var tempDOM = temp.tempDOM;
+				// Clear old DOM linker
+				internal.model.removeModelBinding(model);
 
-				temp = prepareComponentTemplate(temp, tempDOM, name, model, registrar);
-				tempDOM = temp.tempDOM;
-			}
+				if(registrar[3].constructor !== Object){
+					var temp = registrar[3];
+					var tempDOM = temp.tempDOM;
 
-			// Create new object, but using registrar[3] as prototype
-			var copy = Object.create(temp);
-
-			if(copy.parse.length !== 0){
-				copy.parse = copy.parse.slice(0);
-
-				// Deep copy the original properties to new object
-				for (var i = 0; i < copy.parse.length; i++) {
-					copy.parse[i] = Object.create(copy.parse[i]);
-					copy.parse[i].data = [null, model];
+					temp = prepareComponentTemplate(temp, tempDOM, name, model, registrar);
+					tempDOM = temp.tempDOM;
 				}
+
+				// Create new object, but using registrar[3] as prototype
+				var copy = Object.create(temp);
+
+				if(copy.parse.length !== 0){
+					copy.parse = copy.parse.slice(0);
+
+					// Deep copy the original properties to new object
+					for (var i = 0; i < copy.parse.length; i++) {
+						copy.parse[i] = Object.create(copy.parse[i]);
+						copy.parse[i].data = [null, model];
+					}
+				}
+
+				if(tempDOM === true)
+					var parsed = internal.model.templateParser(copy, model, void 0, void 0, void 0, element);
+				else{
+					var parsed = internal.model.templateParser(copy, model);
+					element.appendChild(parsed);
+				}
+
+				element.sf$elementReferences = parsed.sf$elementReferences;
+				sf.model.bindElement(element, model, copy);
+
+				// Put it back after children was ready
+				if(parentNode !== null)
+					parentNode.insertBefore(element, nextNode);
 			}
 
-			if(tempDOM === true)
-				var parsed = internal.model.templateParser(copy, model, void 0, void 0, void 0, element);
-			else{
-				var parsed = internal.model.templateParser(copy, model);
-				element.appendChild(parsed);
-			}
-
-			element.sf$elementReferences = parsed.sf$elementReferences;
-			sf.model.bindElement(element, model, copy);
-
-			// Put it back after children was ready
-			if(parentNode !== null)
-				parentNode.insertBefore(element, nextNode);
+			model.hotReloadedHTML && model.hotReloadedHTML();
 		}
 	}
 
