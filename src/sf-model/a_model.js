@@ -12,10 +12,13 @@ self.init = function(el, modelName, namespace){
 	}
 	else var model = el.model = sf.model.root[modelName] || sf.model(modelName);
 
-	if(model.$el === void 0)
+	var firstInit = false;
+	if(model.$el === void 0){
 		model.$el = $();
+		firstInit = true;
+	}
 
-	model.$el = model.$el.push(el) || model.$el;
+	model.$el = model.$el.push(el);
 	if(model.sf$internal === void 0){
 		Object.defineProperty(model, 'sf$internal', {enumerabe:false, configurable:true, value:{
 			modelKeysRegex:createModelKeysRegex(el, model, null),
@@ -42,8 +45,7 @@ self.init = function(el, modelName, namespace){
 	bindInput(specialElement.input, model);
 	repeatedListBinding(specialElement.repeat, model, namespace, model.sf$internal.modelKeysRegex);
 
-	if(model.init !== void 0)
-		model.init(el);
+	model.init && model.init(el, firstInit);
 
 	if(model.constructor !== Obj)
 		model.constructor.init && model.constructor.init.call(model, (namespace || sf.model), el);

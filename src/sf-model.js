@@ -199,10 +199,8 @@ class SFModel extends HTMLElement {
 					var model = that.model;
 					var temp = model.$el[i];
 
-					model.$el = model.$el.splice(i, 1) || model.$el;
-
-					if(model.destroy)
-						model.destroy(temp, model.$el.length === 0);
+					model.$el = model.$el.splice(i, 1);
+					model.destroy && model.destroy(temp, model.$el.length === 0);
 				}
 			}
 

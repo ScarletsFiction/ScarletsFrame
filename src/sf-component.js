@@ -403,6 +403,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				delete this.sf$initTriggered;
 
 				if(this.model.init){
+					if(this.model.$el.length !== 1){
+						this.model.initClone && this.model.initClone(this.model.$el[this.model.$el.length-1]);
+						return;
+					}
+
 					if(this.model.constructor !== Object)
 						this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || sf.model));
 
@@ -412,7 +417,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			}
 
 			if(which !== 'init' && this.model.reinit)
-				this.model.reinit();
+				this.model.reinit(this);
 		};
 
 		func.prototype.disconnectedCallback = function(){
@@ -430,15 +435,17 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 				if(that.model.$el.length !== 1){
 					var i = that.model.$el.indexOf(that);
-					if(i !== -1)
+					if(i !== -1){
+						var temp = that.model.$el[i];
 						that.model.$el = that.model.$el.splice(i, 1);
+						that.model.destroyClone && that.model.destroyClone(temp);
+					}
 
 					internal.model.removeModelBinding(that.model);
 					return;
 				}
 
-				if(that.model.destroy)
-					that.model.destroy();
+				that.model.destroy && that.model.destroy();
 
 				if(that.sf$collection !== void 0)
 					that.sf$collection.splice(that.sf$collection.indexOf(that.model), 1);
