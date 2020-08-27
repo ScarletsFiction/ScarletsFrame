@@ -28,30 +28,19 @@ function getNamespace(name, id){
 
 function createRoot_(modelFunc, registered){
 	var root_ = function(scope){
-		if(root_.registered[scope]){
-			var available = [];
+		var temp = root_.registered[scope];
+		if(temp) return temp[2];
 
-			for (var i = 0; i < domList.length; i++) {
-				var component = domList[i].getElementsByTagName(scope);
-				if(component.length === 0)
-					continue;
-
-				for (var a = 0, n = component.length; a < n; a++)
-					available.push(component[a].model);
-			}
-
-			return available;
-		}
-
-		if(root_.root[scope] === void 0){
-			root_.root[scope] = {};
+		temp = root_.root;
+		if(temp[scope] === void 0){
+			temp[scope] = {};
 
 			if(modelFunc[scope].constructor !== Function)
 				console.warn(scope, "haven't been registered. Please check your compiler settings or the compiled file");
-			else modelFunc[scope](root_.root[scope], root_);
+			else modelFunc[scope](temp[scope], root_);
 		}
 
-		return root_.root[scope];
+		return temp[scope];
 	}
 
 	root_.root = {};

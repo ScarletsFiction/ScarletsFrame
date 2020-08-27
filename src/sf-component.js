@@ -1,5 +1,3 @@
-// ToDo: Global component getter shouldn't also get component from sf-space
-
 sf.component = function(name, options, func, namespace){
 	if(options !== void 0){
 		if(options.constructor === Function)
@@ -12,19 +10,8 @@ sf.component = function(name, options, func, namespace){
 			return sf.component.for(name, options, func, namespace);
 	}
 
-	if(sf.component.registered[name]){
-		var component = document.body.getElementsByTagName(name);
-		if(component.length === 0)
-			return [];
-
-		var ret = new Array(component.length);
-		for (var i = 0, n = component.length; i < n; i++)
-			ret[i] = component[i].model;
-
-		return ret;
-	}
-
-	return [];
+	var temp = sf.component.registered[name];
+	return temp ? temp[2] : [];
 }
 
 function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
@@ -90,12 +77,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template
 		var registrar = scope.registered[name];
-		if(registrar === void 0)
+		if(registrar === void 0){
 			registrar = scope.registered[name] = new Array(5);
-			// index 1 is $ComponentConstructor
-
-		if((options.exports || hotReload) && registrar[2] === void 0)
 			registrar[2] = [];
+			// index 1 is $ComponentConstructor
+		}
 
 		registrar[0] = func;
 		var construct = defineComponent(name);
@@ -109,8 +95,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			hotComponentRefresh(scope, name, func);
 
 		// Return list of created component
-		if(options.exports)
-			return registrar[2];
+		return registrar[2];
 	}
 
 	self.html = function(name, outerHTML, namespace){
@@ -156,8 +141,10 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template, 4=ModelRegex
 		var registrar = scope.registered[name];
-		if(registrar === void 0)
+		if(registrar === void 0){
 			registrar = scope.registered[name] = new Array(5);
+			registrar[2] = [];
+		}
 
 		var temp;
 		if(outerHTML.constructor === String)
