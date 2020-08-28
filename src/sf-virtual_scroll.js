@@ -785,7 +785,7 @@ internal.virtual_scroll = new function(){
 
 	var isScroller = /auto|scroll|overlay|hidden/;
 	internal.findScrollerElement = function(el){
-		var doc = el.getRootNode();
+		var doc = el.ownerDocument;
 		var win = doc.defaultView;
 		if(!win)
 			return null;

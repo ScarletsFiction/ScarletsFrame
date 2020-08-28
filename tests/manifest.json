@@ -1,3 +1,0 @@
-{
-    "fileSystem": ["write", "retainEntries", "directory", "requestFileSystem", "unlimitedStorage"]
-}

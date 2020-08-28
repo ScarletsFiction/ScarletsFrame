@@ -51,10 +51,12 @@ function createRoot_(modelFunc, registered){
 	return root_;
 }
 
+var Func = window.sf$proxy ? window.sf$proxy.Function : Function;
+
 internal.space = {
-	empty:true,
+	empty:window.sf$proxy ? window.sf$proxy.internalSpaceEmpty : true,
 	initComponent:function(root, tagName, elem, $item, asScope){
-		sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
+		sf.component.new(tagName, elem, $item, root.constructor === Func ? root : root.sf$space, asScope);
 	},
 	initModel:function(root, elem){
 		var name = elem.getAttribute('name');
@@ -176,7 +178,7 @@ class SFSpace extends HTMLElement {
 			return;
 
 		delete this.sf$firstInit;
-		internal.space.empty = false;
+		forProxying.internalSpaceEmpty = internal.space.empty = false;
 
 		// Extract namespace name
 		for(var i=0, n=this.attributes.length; i < n; i++){

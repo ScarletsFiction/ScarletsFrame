@@ -78,7 +78,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 function prepareRepeated(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
 	var callback, prop = pattern[1], targetDeep;
 
-	if(prop.constructor !== Array)
+	if(prop.constructor !== Arr)
 		targetDeep = modelRef;
 	else{
 		targetDeep = deepProperty(modelRef, prop.slice(0, -1));
@@ -115,7 +115,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	}
 
 	var mask = pattern[0], uniqPattern;
-	if(mask.constructor === Array){
+	if(mask.constructor === Arr){
 		uniqPattern = mask[0];
 		mask = mask.pop();
 	}
@@ -187,7 +187,7 @@ class RepeatedProperty{ // extends Object
 			hiddenProperty(that, '_list', Object.keys(that));
 
 			var target;
-			if(prop.constructor !== Array)
+			if(prop.constructor !== Arr)
 				target = modelRef;
 			else{
 				target = deepProperty(modelRef, prop.slice(0, -1));
@@ -391,7 +391,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	}
 }
 
-class RepeatedList extends Array{
+class RepeatedList extends Arr{
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
 		var prop = pattern[1];
 		var that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
@@ -399,7 +399,7 @@ class RepeatedList extends Array{
 		// Initialize property once
 		if(that.constructor !== RepeatedList){
 			var target;
-			if(prop.constructor !== Array)
+			if(prop.constructor !== Arr)
 				target = modelRef;
 			else{
 				target = deepProperty(modelRef, prop.slice(0, -1));
@@ -568,24 +568,24 @@ class RepeatedList extends Array{
 		return this.slice(0, arguments.length);
 	}
 
-	constructor(arr){return new Array(arr)}
+	constructor(arr){return new Arr(arr)}
 	assign(fromIndex, withArray, removes, putLast){
 		if(fromIndex.constructor !== Number){
 			if(removes === void 0 || removes.constructor === Boolean)
 				putLast = removes; // true=last index, false=first, undefined=depends
 
-			if(withArray !== void 0 && withArray.constructor === Object)
+			if(withArray !== void 0 && withArray.constructor === Obj)
 				removes = withArray;
 
 			withArray = fromIndex;
 			fromIndex = 0;
 		}
 
-		if(withArray.constructor !== Array)
+		if(withArray.constructor !== Arr)
 			withArray = [withArray];
 
 		if(removes !== void 0){
-			if(removes.constructor === Object){
+			if(removes.constructor === Obj){
 				var temp = {};
 
 				for(var key in removes){
@@ -1406,7 +1406,7 @@ class ElementManipulator{
 		var modelRoot = this.modelRef;
 		var binded = this.template.modelRefRoot_path;
 
-		if(elemList.constructor !== Array){
+		if(elemList.constructor !== Arr){
 			// Loop for every element between range first (important)
 			for (var i = from; i < to; i++) {
 				var elem = elemList.item(i);
@@ -1602,6 +1602,7 @@ else{
 	forProxying.EMP = ElementManipulatorProxy;
 	forProxying.Array = Array;
 	forProxying.Object = Object;
+	forProxying.Function = Function;
 }
 
 function RE_restoreBindedList(modelRoot, lists){

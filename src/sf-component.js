@@ -243,7 +243,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 			// Call function that handle scope
 			registrar[0](newObj, (namespace || sf.model), $item);
-			if(newObj.constructor !== Object){
+			if(newObj.constructor !== Obj){
 				proxyClass(newObj);
 				newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
 			}
@@ -263,7 +263,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			var tempDOM = temp.tempDOM;
 
 			// Create template here because we have the sample model
-			if(temp.constructor !== Object){
+			if(temp.constructor !== Obj){
 				temp = prepareComponentTemplate(temp, tempDOM, name, newObj, registrar);
 				tempDOM = temp.tempDOM;
 			}
@@ -398,7 +398,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 						return;
 					}
 
-					if(this.model.constructor !== Object)
+					if(this.model.constructor !== Obj)
 						this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || sf.model));
 
 					this.model.init();

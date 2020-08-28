@@ -83,10 +83,10 @@ function interpolate(text, obj){
 		}
 
 		if(obj[match] !== void 0)
-			return obj[match].constructor === Function ? obj[match]() : obj[match];
+			return obj[match].constructor === Func ? obj[match]() : obj[match];
 
 		if(self.interpolate[match] !== void 0)
-			return self.interpolate[match].constructor === Function ? self.interpolate[match]() : self.interpolate[match];
+			return self.interpolate[match].constructor === Func ? self.interpolate[match]() : self.interpolate[match];
 
 		return full;
 	});
@@ -101,7 +101,7 @@ else
 	pendingCallback = window.sf$proxy.langPendingCallback;
 
 self.get = function(path, obj, callback){
-	if(obj !== void 0 && obj.constructor === Function){
+	if(obj !== void 0 && obj.constructor === Func){
 		callback = obj;
 		obj = void 0;
 	}
@@ -216,7 +216,7 @@ self.assign = function(model, keyPath, obj, callback){
 	if(self.list[self.default] === void 0)
 		self.list[self.default] = {};
 
-	if(obj !== void 0 && obj.constructor === Function){
+	if(obj !== void 0 && obj.constructor === Func){
 		callback = obj;
 		obj = void 0;
 	}

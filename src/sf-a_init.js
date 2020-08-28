@@ -122,7 +122,7 @@ var sfRegex = {
 				val = temp.value;
 		}
 
-		if(obj.constructor === Array)
+		if(obj.constructor === Arr)
 			for (var i = 0; i < obj.length; i++)
 				check(Object.getOwnPropertyDescriptor(obj[i], key));
 		else
@@ -132,7 +132,7 @@ var sfRegex = {
 		if(candidate === false)
 			candidate = createScope(val);
 
-		if(obj.constructor === Array)
+		if(obj.constructor === Arr)
 			for (var i = 0; i < obj.length; i++)
 				Object.defineProperty(obj[i], key, candidate);
 		else
