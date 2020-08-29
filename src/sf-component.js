@@ -84,10 +84,10 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		}
 
 		registrar[0] = func;
-		var construct = defineComponent(name);
 
+		var construct = defineComponent(name);
 		registrar[1] = construct;
-		window['$'+construct.name] = construct;
+		window['$'+capitalizeLetters(name.split('-'))] = construct;
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
@@ -234,8 +234,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		var index = 0;
 		if(newObj.$el !== void 0)
 			index = newObj.$el + 1;
-		else
-			newObj.$el = $();
+		else{
+			if(window.sf$proxy)
+				newObj.$el = opener.sf.dom();
+			else newObj.$el = $();
+		}
 
 		if(index === 0){
 			if(inherit !== void 0 && asScope)
@@ -324,61 +327,27 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		return element;
 	}
 
-	var HTMLElement = window.HTMLElement;
-	var customElements = window.customElements;
+	class SFComponent extends HTMLElement{
+		constructor($item, namespace, asScope){
+			super();
 
-	var HTMLElement_wrap = (function(Class){
-		function Wrapper(){
-			return Reflect.construct(Class, arguments, Object.getPrototypeOf(this).constructor);
-		}
-		Wrapper.prototype = Object.create(Class.prototype, {constructor:{value: Wrapper, enumerable: false, writable: true, configurable: true}});
-		return Object.setPrototypeOf(Wrapper, Class);
-	})(HTMLElement);
-
-	if(window.sf$proxy)
-		window.sf$defineComponent = defineComponent;
-
-	// name = 'tag-name'
-	function defineComponent(name){
-		var have = customElements.get(name);
-		if(have)
-			return have;
-
-		if(name.toLowerCase() !== name)
-			return console.error("Please use lower case when defining component name");
-
-		name = name.replace(/[^\w-]+/g, '');
-		var tagName = name;
-		name = name.split('-');
-		if(name.length === 1)
-			return console.error("Please use '-' when defining component tags");
-
-		name = capitalizeLetters(name);
-		function componentCreate(raw, $item, namespace, asScope){
-			var elem = HTMLElement_wrap.call(raw);
+			var tagName = this.tagName.toLowerCase();
 
 			if(internal.space.empty === false){
-				var haveSpace = namespace || elem.closest('sf-space');
+				var haveSpace = namespace || this.closest('sf-space');
 				if(haveSpace !== null){
 					if(haveSpace.constructor === Space)
 						haveSpace = haveSpace.default;
 
-					internal.space.initComponent(haveSpace, tagName, elem, $item, asScope);
-					return elem;
+					internal.space.initComponent(haveSpace, tagName, this, $item, asScope);
+					return;
 				}
 			}
 
-			self.new(tagName, elem, $item, void 0, asScope);
-			return elem;
+			self.new(tagName, this, $item, void 0, asScope);
 		}
 
-		// Create function at current scope
-		var func = eval("function "+name+"($item, namespace, asScope){return componentCreate(this, $item, namespace, asScope)}"+name);
-		func.prototype = Object.create(HTMLElement.prototype);
-		func.prototype.constructor = func;
-		func.__proto__ = HTMLElement;
-
-		func.prototype.connectedCallback = function(which){
+		connectedCallback(which){
 			// Maybe it's not the time
 			if(this.model === void 0 || this.sf$componentIgnore === true)
 				return;
@@ -408,9 +377,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 			if(which !== 'init' && this.model.reinit)
 				this.model.reinit(this);
-		};
+		}
 
-		func.prototype.disconnectedCallback = function(){
+		disconnectedCallback(){
 			if(this.sf$componentIgnore)
 				return;
 
@@ -448,15 +417,31 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				return destroy();
 
 			this.sf$detaching = setTimeout(destroy, 500);
-		};
+		}
+	}
 
-		try{
-		  customElements.define(tagName, func);
-		}catch(err){
-			console.error(err);
-			sf.onerror && sf.onerror(e);
+	if(window.sf$proxy)
+		window.sf$defineComponent = defineComponent;
+
+	// name = 'tag-name'
+	function defineComponent(name){
+		var have = customElements.get(name);
+		if(have) return have;
+
+		if(name.toLowerCase() !== name)
+			return console.error("Please use lower case when defining component name");
+
+		var len = name.length;
+		if(name.replace(/[^\w-]+/g, '').length !== len)
+			return console.error("Please use '-' and latin character when defining component tags");
+
+		class Copy extends SFComponent{
+			constructor($item, namespace, asScope){
+				super($item, namespace, asScope);
+			}
 		}
 
-		return func;
+		customElements.define(name, Copy);
+		return Copy;
 	}
 })();
