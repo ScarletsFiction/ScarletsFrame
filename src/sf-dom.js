@@ -53,19 +53,21 @@ class DOMList{
 		return this;
 	}
 	push(el){
-		if(this[0] === void 0){
-			this[0] = el;
-
-			if(IE11 === false)
-				Object.defineProperty(this, 'length', {writable:true, enumerable:false, value:1});
-			return this;
-		}
-
 		if(this._){
 			var news = recreateDOMList(this, this.length+1);
 			news[this.length] = el;
 
 			return news;
+		}
+
+		if(this._s === void 0){
+			Object.defineProperties(this, {
+				length:{writable:true, enumerable:false, value:1},
+				_s:{writable:true, enumerable:false, value:true},
+			});
+
+			this[0] = el;
+			return this;
 		}
 
 		this[this.length++] = el;
@@ -84,9 +86,17 @@ class DOMList{
 		if(this._ === true)
 			return recreateDOMList(this, this.length - count);
 
+		if(this._s === void 0){
+			Object.defineProperties(this, {
+				length:{writable:true, enumerable:false, value:this.length},
+				_s:{writable:true, enumerable:false, value:true},
+			});
+		}
+
 		this.length -= count;
 		for (var i = this.length, n = this.length + count; i < n; i++)
 			delete this[i];
+
 		return this;
 	}
 	find(selector){
@@ -477,6 +487,7 @@ function recreateDOMList($el, length){
 	Object.defineProperty(temp, '_', {value:true});
 	return Object.setPrototypeOf(temp, DOMList.prototype);
 }
+
 ;(function(){
 	var self = sf.dom;
 
