@@ -268,8 +268,8 @@ function hotComponentTemplate(scope, name){
 			// Clear old DOM linker
 			internal.model.removeModelBinding(model);
 
+			var temp = registrar[3];
 			if(registrar[3].constructor !== Object){
-				var temp = registrar[3];
 				var tempDOM = temp.tempDOM;
 
 				temp = prepareComponentTemplate(temp, tempDOM, name, model, registrar);
