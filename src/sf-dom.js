@@ -46,7 +46,7 @@ class DOMList{
 			return this;
 		}
 
-	    for (var i = 0; i < elements.length; i += 1)
+	    for (var i = 0; i < elements.length; i++)
 	    	this[i] = elements[i];
 
 		this.length = elements.length;
@@ -63,7 +63,7 @@ class DOMList{
 		if(this._s === void 0){
 			Object.defineProperties(this, {
 				length:{writable:true, enumerable:false, value:1},
-				_s:{writable:true, enumerable:false, value:true},
+				_s:{enumerable:false, value:true},
 			});
 
 			this[0] = el;
@@ -89,7 +89,7 @@ class DOMList{
 		if(this._s === void 0){
 			Object.defineProperties(this, {
 				length:{writable:true, enumerable:false, value:this.length},
-				_s:{writable:true, enumerable:false, value:true},
+				_s:{enumerable:false, value:true},
 			});
 		}
 
