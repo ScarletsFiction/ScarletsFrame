@@ -94,7 +94,7 @@ function findBindListElement(el){
 	// Get property of the model
 	self.modelKeys = function(modelRef, toString){
 		// it maybe custom class
-		if(modelRef.constructor !== Obj && modelRef.constructor !== Arr){
+		if(modelRef.constructor !== Object && modelRef.constructor !== Array){
 			var keys = new Set();
 			for(var key in modelRef){
 				if(key.includes('$'))

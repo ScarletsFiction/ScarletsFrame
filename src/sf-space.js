@@ -51,12 +51,10 @@ function createRoot_(modelFunc, registered){
 	return root_;
 }
 
-var Func = window.sf$proxy ? window.sf$proxy.Function : Function;
-
 internal.space = {
 	empty:window.sf$proxy ? window.sf$proxy.internalSpaceEmpty : true,
 	initComponent:function(root, tagName, elem, $item, asScope){
-		sf.component.new(tagName, elem, $item, root.constructor === Func ? root : root.sf$space, asScope);
+		sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
 	},
 	initModel:function(root, elem){
 		var name = elem.getAttribute('name');
@@ -65,7 +63,7 @@ internal.space = {
 		if(root.sf$space.modelFunc[name] === void 0)
 			return root.sf$space.modelFunc[name] = [[elem, name, root.sf$space]];
 
-		if(root.sf$space.modelFunc[name].constructor === Arr)
+		if(root.sf$space.modelFunc[name].constructor === Array)
 			return root.sf$space.modelFunc[name].push([elem, name, root.sf$space]);
 
 		sf.model.init(elem, name, root.sf$space);
@@ -126,7 +124,7 @@ class Space{
 			var old = this.default.modelFunc[name];
 			this.default.modelFunc[name] = func;
 
-			if(old !== void 0 && old.constructor === Arr)
+			if(old !== void 0 && old.constructor === Array)
 				for (var i = 0; i < old.length; i++){
 					var arg = old[i];
 					sf.model.init(arg[0], arg[1], arg[2]);

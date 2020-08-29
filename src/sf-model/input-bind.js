@@ -7,7 +7,7 @@ var callInputListener = function(ref, value){
 		var newValue;
 		var old = ref.sfModel[ref.sfBounded];
 
-		if(old !== null && old !== void 0 && old.constructor === Arr)
+		if(old !== null && old !== void 0 && old.constructor === Array)
 			old = old.slice(0);
 
 		try{
@@ -94,7 +94,7 @@ var inputCheckBoxBound = function(e){
 		}
 	}
 
-	if(constructor === Arr){
+	if(constructor === Array){
 		var i = model[ref.sfBounded].indexOf(value);
 
 		if(i === -1 && ref.checked === true)
@@ -137,7 +137,7 @@ var assignElementData = {
 		var list = element.options;
 		var typeData = element.typeData;
 
-		if(val.constructor !== Arr){
+		if(val.constructor !== Array){
 			for (var i = 0, n = list.length; i < n; i++) {
 				if(typeData === String)
 					list[i].selected = list[i].value === val;
@@ -148,7 +148,7 @@ var assignElementData = {
 			list[i].selected = val.includes(typeData === Number ? Number(list[i].value) : list[i].value);
 	},
 	checkbox:function(val, element){
-		if(val.constructor === Arr)
+		if(val.constructor === Array)
 			element.checked = val.includes(element.typeData === Number ? Number(element.value) : element.value);
 		else if(val.constructor === Boolean)
 			element.checked = Boolean(val);

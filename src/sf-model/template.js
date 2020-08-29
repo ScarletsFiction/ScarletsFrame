@@ -48,7 +48,7 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 				if(temp === void 0)
 					temp = '';
 				else{
-					if(temp.constructor === Obj)
+					if(temp.constructor === Object)
 						temp = JSON.stringify(temp);
 					else if(temp.constructor !== String)
 						temp = String(temp);

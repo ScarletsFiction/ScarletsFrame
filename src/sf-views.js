@@ -133,7 +133,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 		}
 	}
 
-	if(obj_.constructor !== Arr)
+	if(obj_.constructor !== Array)
 		obj_ = [obj_];
 
     addRoutes(obj_, '', '');

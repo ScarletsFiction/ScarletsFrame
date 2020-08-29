@@ -178,7 +178,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(hotReload){
 			if(templatePath === false)
 				hotComponentTemplate(scope, name);
-			else if(window.sf$proxy === void 0 && backupCompTempl.has(registrar) === false)
+			else if(backupCompTempl.has(registrar) === false)
 				backupCompTempl.set(registrar, registrar[3]);
 		}
 	}
@@ -232,13 +232,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		));
 
 		var index = 0;
-		if(newObj.$el !== void 0)
-			index = newObj.$el + 1;
-		else{
-			if(window.sf$proxy)
-				newObj.$el = opener.sf.dom();
-			else newObj.$el = $();
-		}
+		if(newObj.$el === void 0)
+			newObj.$el = $();
+		else index = newObj.$el.length;
 
 		if(index === 0){
 			if(inherit !== void 0 && asScope)
@@ -246,7 +242,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 			// Call function that handle scope
 			registrar[0](newObj, (namespace || sf.model), $item);
-			if(newObj.constructor !== Obj){
+			if(newObj.constructor !== Object){
 				proxyClass(newObj);
 				newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
 			}
@@ -266,7 +262,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			var tempDOM = temp.tempDOM;
 
 			// Create template here because we have the sample model
-			if(temp.constructor !== Obj){
+			if(temp.constructor !== Object){
 				temp = prepareComponentTemplate(temp, tempDOM, name, newObj, registrar);
 				tempDOM = temp.tempDOM;
 			}
@@ -367,7 +363,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 						return;
 					}
 
-					if(this.model.constructor !== Obj)
+					if(this.model.constructor !== Object)
 						this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || sf.model));
 
 					this.model.init();
@@ -435,11 +431,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(name.replace(/[^\w-]+/g, '').length !== len)
 			return console.error("Please use '-' and latin character when defining component tags");
 
-		class Copy extends SFComponent{
-			constructor($item, namespace, asScope){
-				super($item, namespace, asScope);
-			}
-		}
+		class Copy extends SFComponent{}
+		Copy.prototype.constructor = SFComponent.prototype.constructor;
+
+		if(window.sf$proxy)
+			Copy.constructor = window.opener.Function;
 
 		customElements.define(name, Copy);
 		return Copy;

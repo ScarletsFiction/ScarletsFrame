@@ -61,12 +61,12 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 
 		var constructor = target.constructor;
 
-		if(constructor === Arr || constructor === RL){
+		if(constructor === Array || constructor === RepeatedList){
 			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 			continue;
 		}
 
-		if(constructor === Obj || constructor === RP){
+		if(constructor === Object || constructor === RepeatedProperty){
 			RepeatedProperty.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 			continue;
 		}
@@ -78,7 +78,7 @@ var repeatedListBinding = internal.model.repeatedListBinding = function(elements
 function prepareRepeated(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
 	var callback, prop = pattern[1], targetDeep;
 
-	if(prop.constructor !== Arr)
+	if(prop.constructor !== Array)
 		targetDeep = modelRef;
 	else{
 		targetDeep = deepProperty(modelRef, prop.slice(0, -1));
@@ -115,7 +115,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	}
 
 	var mask = pattern[0], uniqPattern;
-	if(mask.constructor === Arr){
+	if(mask.constructor === Array){
 		uniqPattern = mask[0];
 		mask = mask.pop();
 	}
@@ -187,14 +187,14 @@ class RepeatedProperty{ // extends Object
 			hiddenProperty(that, '_list', Object.keys(that));
 
 			var target;
-			if(prop.constructor !== Arr)
+			if(prop.constructor !== Array)
 				target = modelRef;
 			else{
 				target = deepProperty(modelRef, prop.slice(0, -1));
 				prop = prop[prop.length-1];
 			}
 
-			Object.setPrototypeOf(that, RP.prototype);
+			Object.setPrototypeOf(that, RepeatedProperty.prototype);
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
@@ -391,7 +391,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	}
 }
 
-class RepeatedList extends Arr{
+class RepeatedList extends Array{
 	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
 		var prop = pattern[1];
 		var that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
@@ -399,14 +399,14 @@ class RepeatedList extends Arr{
 		// Initialize property once
 		if(that.constructor !== RepeatedList){
 			var target;
-			if(prop.constructor !== Arr)
+			if(prop.constructor !== Array)
 				target = modelRef;
 			else{
 				target = deepProperty(modelRef, prop.slice(0, -1));
 				prop = prop[prop.length-1];
 			}
 
-			Object.setPrototypeOf(that, RL.prototype);
+			Object.setPrototypeOf(that, RepeatedList.prototype);
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
@@ -568,24 +568,24 @@ class RepeatedList extends Arr{
 		return this.slice(0, arguments.length);
 	}
 
-	constructor(arr){return new Arr(arr)}
+	constructor(arr){return new Array(arr)}
 	assign(fromIndex, withArray, removes, putLast){
 		if(fromIndex.constructor !== Number){
 			if(removes === void 0 || removes.constructor === Boolean)
 				putLast = removes; // true=last index, false=first, undefined=depends
 
-			if(withArray !== void 0 && withArray.constructor === Obj)
+			if(withArray !== void 0 && withArray.constructor === Object)
 				removes = withArray;
 
 			withArray = fromIndex;
 			fromIndex = 0;
 		}
 
-		if(withArray.constructor !== Arr)
+		if(withArray.constructor !== Array)
 			withArray = [withArray];
 
 		if(removes !== void 0){
-			if(removes.constructor === Obj){
+			if(removes.constructor === Object){
 				var temp = {};
 
 				for(var key in removes){
@@ -1406,7 +1406,7 @@ class ElementManipulator{
 		var modelRoot = this.modelRef;
 		var binded = this.template.modelRefRoot_path;
 
-		if(elemList.constructor !== Arr){
+		if(elemList.constructor !== Array){
 			// Loop for every element between range first (important)
 			for (var i = from; i < to; i++) {
 				var elem = elemList.item(i);
@@ -1587,22 +1587,6 @@ class ElementManipulatorProxy{
 		for (var i = 0; i < list.length; i++)
 			list[i].reverse.apply(list[i], arguments);
 	}
-}
-
-
-var RL = RepeatedList, RP = RepeatedProperty;
-if(window.sf$proxy){
-	ElementManipulatorProxy = window.sf$proxy.EMP;
-	RL = window.sf$proxy.RL;
-	RP = window.sf$proxy.RP;
-}
-else{
-	forProxying.RL = RepeatedList;
-	forProxying.RP = RepeatedProperty;
-	forProxying.EMP = ElementManipulatorProxy;
-	forProxying.Array = Array;
-	forProxying.Object = Object;
-	forProxying.Function = Function;
 }
 
 function RE_restoreBindedList(modelRoot, lists){

@@ -88,6 +88,8 @@ sf.window = {
 
 			// Model
 			linker.sf.model.root = sf.model.root;
+			linker.sf.model.init = sf.model.init;
+			linker.sf.component.new = sf.component.new;
 
 			// Component
 			portComponentDefinition(linker, sf.component.registered, linker.sf.component.registered);
@@ -105,11 +107,6 @@ sf.window = {
 
 				// Component
 				portComponentDefinition(linker, space.default.registered, ref.default.registered);
-			}
-
-			for(var prop in window){
-				if(linker[prop] === void 0)
-					linker[prop] = window[prop];
 			}
 
 			linker.document.body.textContent = '';
@@ -152,6 +149,24 @@ sf.window = {
 		});
 
 		return true;
+	},
+	source:function(lists, ev){
+		if(ev === void 0)
+			ev = window.event;
+
+		if(ev === void 0)
+			throw new Error("Can't capture event, please add event data on parameter 2 of sf.window.source");
+
+		if(lists === void 0)
+			return lists.view;
+
+		var doc = ev.view.document;
+		for (var i = 0; i < lists.length; i++) {
+			if(lists[i].ownerDocument === doc)
+				return lists[i];
+		}
+
+		throw new Error("Can't find element origin of the captured event");
 	}
 };
 
