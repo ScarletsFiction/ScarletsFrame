@@ -71,6 +71,10 @@ self.changeDefault = function(defaultLang){
 	else forComponents();
 
 	self.init(document.body);
+
+	var wList = sf.window.list;
+	for(var key in wList)
+		self.init(wList[key].document.body);
 }
 
 var interpolate_ = /{(.*?)}/;
@@ -95,11 +99,6 @@ function interpolate(text, obj){
 var waiting = false;
 var pendingCallback = [];
 
-if(window.sf$proxy === void 0)
-	forProxying.langPendingCallback = pendingCallback;
-else
-	pendingCallback = window.sf$proxy.langPendingCallback;
-
 self.get = function(path, obj, callback){
 	if(obj !== void 0 && obj.constructor === Function){
 		callback = obj;
@@ -116,7 +115,7 @@ self.get = function(path, obj, callback){
 }
 
 function startRequest(){
-	if(pending === false || self.serverURL === false || window.sf$proxy !== void 0)
+	if(pending === false || self.serverURL === false)
 		return;
 
 	// Request to server after 500ms

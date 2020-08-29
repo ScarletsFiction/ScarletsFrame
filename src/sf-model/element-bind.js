@@ -122,7 +122,9 @@ internal.model.removeModelBinding = function(ref, isDeep){
 	}
 }
 
-forProxying.removeModelBinding = internal.model.removeModelBinding;
+
+if(window.sf$proxy === void 0)
+	forProxying.removeModelBinding = internal.model.removeModelBinding;
 
 function repeatedRemoveDeepBinding(obj, refPaths){
 	if(refPaths.length === 0)

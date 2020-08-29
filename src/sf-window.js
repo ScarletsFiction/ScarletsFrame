@@ -78,18 +78,14 @@ sf.window = {
 		linker.loaded = function(){
 			windows[winID] = linker;
 
-			linker.sf.lang.list = sf.lang.list;
-			linker.sf.lang.default = sf.lang.default;
-			linker.sf.lang.serverURL = true;
-			linker.sf.lang.interpolate = sf.lang.interpolate;
-
-			linker.templates = window.templates;
 			linker.sf.space.list = sf.space.list;
 
-			// Model
+			// Proxying
 			linker.sf.model.root = sf.model.root;
 			linker.sf.model.init = sf.model.init;
 			linker.sf.component.new = sf.component.new;
+			linker.sf.lang.init = sf.lang.init;
+			linker.sf.lang.changeDefault = sf.lang.changeDefault;
 
 			// Component
 			portComponentDefinition(linker, sf.component.registered, linker.sf.component.registered);
@@ -115,11 +111,10 @@ sf.window = {
 
 			onLoaded && onLoaded({
 				views: linker.sf.views,
-				language: linker.sf.lang,
 				url: linker.sf.url
 			});
 
-			linker.sf.lang.init(linker.document.body);
+			sf.lang.init(linker.document.body);
 		}
 
 		if(options.title === void 0)
