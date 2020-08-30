@@ -115,6 +115,14 @@ sf.window = {
 			});
 
 			sf.lang.init(linker.document.body);
+
+			for(var ev in windowEv){
+				var callbackList = windowEv[ev];
+				for (var i = 0; i < callbackList.length; i++) {
+					var evCallback = callbackList[i];
+					linker.addEventListener(ev, evCallback, evCallback.options);
+				}
+			}
 		}
 
 		if(options.title === void 0)
@@ -164,6 +172,8 @@ sf.window = {
 		throw new Error("Can't find element origin of the captured event");
 	}
 };
+
+var windowEv = {};
 
 function portComponentDefinition(linker, from, into){
 	for(var name in from){

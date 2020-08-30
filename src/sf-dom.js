@@ -619,10 +619,28 @@ function recreateDOMList($el, length){
 		callback.selector = selector;
 		callback.options = options;
 
+		if(element === sf.window){
+			if(windowEv[event] === void 0)
+				windowEv[event] = [];
+
+			windowEv[event].push(callback);
+			var winList = sf.window.list;
+			for(var key in winList){
+				winList[key].addEventListener(event, callback, callback.options);
+				saveEvent(winList[key], event, callback);
+			}
+
+			return;
+		}
+
 		element.addEventListener(event, callback, callback.options);
 		if(typeof options === 'object' && options.once)
 			return;
 
+		saveEvent(element, event, callback);
+	}
+
+	function saveEvent(element, event, callback){
 		// Save event listener
 		if(element.sf$eventListener === void 0)
 			element.sf$eventListener = {};
@@ -671,6 +689,29 @@ function recreateDOMList($el, length){
 			selector = void 0;
 		}
 
+		if(element === sf.window){
+			if(windowEv[event] === void 0 || windowEv[event].length === 0)
+				return;
+
+			var list = windowEv[event];
+			if(callback){
+				var i = list.indexOf(callback);
+				if(i !== -1)
+					list.splice(i, 1);
+			}
+			else list.length = 0;
+
+			var winList = sf.window.list;
+			for(var key in winList)
+				removeEvent(winList[key], event, selector, callback, options);
+
+			return;
+		}
+
+		removeEvent(element, event, selector, callback, options);
+	}
+
+	function removeEvent(element, event, selector, callback, options){
 		// Remove listener
 		if(element.sf$eventListener === void 0){
 			if(callback !== void 0)
