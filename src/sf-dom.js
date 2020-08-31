@@ -623,6 +623,11 @@ function recreateDOMList($el, length){
 			if(windowEv[event] === void 0)
 				windowEv[event] = [];
 
+			// Listen on current window
+			window.addEventListener(event, callback, callback.options);
+			saveEvent(window, event, callback);
+
+			// Also listen for other window
 			windowEv[event].push(callback);
 			var winList = sf.window.list;
 			for(var key in winList){
@@ -701,6 +706,10 @@ function recreateDOMList($el, length){
 			}
 			else list.length = 0;
 
+			// Remove from current window
+			removeEvent(window, event, selector, callback, options);
+
+			// Remove from other window
 			var winList = sf.window.list;
 			for(var key in winList)
 				removeEvent(winList[key], event, selector, callback, options);
