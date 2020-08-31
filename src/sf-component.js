@@ -268,6 +268,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(registrar[4] === void 0)
 			registrar[4] = internal.model.createModelKeysRegex(element, newObj, null);
 
+		var forceConnectCall = false;
 		if(element.childNodes.length === 0){
 			var temp = registrar[3];
 			var tempDOM = temp.tempDOM;
@@ -319,6 +320,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 				if(namespace !== void 0)
 					element.sf$space = namespace;
+
+				// May cause bug?
+				delete element.sf$componentIgnore;
+				if(element.isConnected)
+					forceConnectCall = true;
 			}
 		}
 
@@ -331,6 +337,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		element.sf$controlled = name;
 
 		element.sf$initTriggered = true;
+		if(forceConnectCall)
+			element.connectedCallback();
+
 		return element;
 	}
 
