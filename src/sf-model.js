@@ -62,11 +62,16 @@ function findBindListElement(el){
 
 	// Declare model for the name with a function
 	self.for = function(name, options, func, namespace){
-		if(options.constructor === Function)
+		if(options.constructor === Function){
 			func = options;
-		else{
-			internal.modelInherit[name] = options.extend;
+
+			// It's a class
+			if(func.prototype.init !== void 0){
+				internal.modelInherit[name] = func;
+				func = {class:func};
+			}
 		}
+		else internal.modelInherit[name] = options.extend;
 
 		var scope = namespace || self;
 
@@ -75,7 +80,10 @@ function findBindListElement(el){
 			hotModel(scope, name, func);
 		else{
 			scopeTemp = scope(name);
-			func(scopeTemp, scope);
+
+			// Call it it's a function
+			if(func.constructor === Function)
+				func(scopeTemp, scope);
 		}
 
 		if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){

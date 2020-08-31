@@ -65,8 +65,15 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	}
 
 	self.for = function(name, options, func, namespace){
-		if(options.constructor === Function)
+		if(options.constructor === Function){
 			func = options;
+
+			// It's a class
+			if(func.prototype.init !== void 0){
+				internal.componentInherit[name] = func;
+				func = {class:func};
+			}
+		}
 		else{
 			if(options.extend !== void 0)
 				internal.componentInherit[name] = options.extend;
@@ -237,11 +244,15 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		else index = newObj.$el.length;
 
 		if(index === 0){
-			if(inherit !== void 0 && asScope)
-				Object.setPrototypeOf(newObj, inherit.prototype);
+			var func = registrar[0];
+			if(func.constructor === Function){
+				if(inherit !== void 0 && asScope)
+					Object.setPrototypeOf(newObj, inherit.prototype);
 
-			// Call function that handle scope
-			registrar[0](newObj, (namespace || sf.model), $item);
+				// Call function that handle scope
+				func(newObj, (namespace || sf.model), $item);
+			}
+
 			if(newObj.constructor !== Object){
 				proxyClass(newObj);
 				newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);

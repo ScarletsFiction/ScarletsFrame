@@ -87,23 +87,26 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 	scope.hotReloading && scope.hotReloading(scope);
 
-	var enabled = true;
-	func(new Proxy(scope, {set:function(obj, prop, val){
-		// Skip function that related with framework
-		// And skip if proxy is not enabled
-		if(enabled === false || internalProp[prop] === true){
-			obj[prop] = val;
+	if(func.constructor === Function){
+		var enabled = true;
+		func(new Proxy(scope, {set:function(obj, prop, val){
+			// Skip function that related with framework
+			// And skip if proxy is not enabled
+			if(enabled === false || internalProp[prop] === true){
+				obj[prop] = val;
+				return true;
+			}
+
+			if(val && val.constructor === Function)
+				refunction(prop, val);
+			else if(obj[prop] === void 0 || hotReloadAll === true)
+				obj[prop] = val; // Reassign non-function value
+
 			return true;
-		}
-
-		if(val && val.constructor === Function)
-			refunction(prop, val);
-		else if(obj[prop] === void 0 || hotReloadAll === true)
-			obj[prop] = val; // Reassign non-function value
-
-		return true;
-	}}), space, (scope.$el && scope.$el.$item) || {});
-	enabled = false;
+		}}), space, (scope.$el && scope.$el.$item) || {});
+		enabled = false;
+	}
+	else Object.setPrototypeOf(scope, func.class.prototype);
 
 	if(haveLoaded.has(scope) || forceHaveLoaded)
 		scope.hotReloaded && scope.hotReloaded(scope);
