@@ -301,7 +301,6 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			}
 
 			inputBoundRunning = false;
-			return objValue;
 		}
 	});
 }

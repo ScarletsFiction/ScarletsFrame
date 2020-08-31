@@ -23,6 +23,8 @@ var templateParser_regex = /{{%=([0-9]+)%/g;
 var templateParser_regex_split = /{{%=[0-9]+%/g;
 var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
+	if(parse.length === 0) return parse;
+
 	parsed = parsed || (new Array(parse.length));
 	var temp = null;
 
@@ -95,6 +97,7 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			throw new Error("Can't continue processing the template");
 		}
 	}
+
 	return parsed;
 }
 
@@ -362,13 +365,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.textContent !== void 0){ // Text only
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				var index = cRef.ref.parse_index;
-				for (var j = 0, n = index.length; j < n; j++) {
-					if(parsed[index[j]] === void 0)
-						continue changes;
-				}
-
-				temp = applyParseIndex(cRef.ref.value, index, parsed);
+				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
 				if(cRef.textContent.textContent === temp) continue;
 				cRef.textContent.textContent = temp;
 
