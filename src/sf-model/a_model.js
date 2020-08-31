@@ -112,10 +112,18 @@ function modelScript(mask, script, repeatedListKey){
 
 var applyParseIndex = internal.model.applyParseIndex = function(templateValue, indexes, parsed, templateParse, item){
 	for (var i = 0; i < indexes.length; i++){
-		var temp = parsed[indexes[i]];
+		var a = indexes[i];
+		var temp = parsed[a];
 
 		if(temp !== void 0)
 			templateValue[2*i+1] = temp.data;
+		else{
+			var ref = templateParse[a];
+			temp = ref.data;
+			temp = ref.get(temp[0], temp[1], _escapeParse);
+
+			templateValue[2*i+1] = temp.constructor === Object ? JSON.stringify(temp) : temp;
+		}
 	}
 
 	return templateValue.join('');
