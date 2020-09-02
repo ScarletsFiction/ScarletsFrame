@@ -127,16 +127,9 @@ var applyParseIndex = internal.model.applyParseIndex = function(templateValue, i
 
 			if(item !== temp[1]){
 				temp[0] = item;
-				temp = ref.get(item, temp[1], _escapeParse, repeatListIndex) || 'undefined';
+				temp = ref.get(item, temp[1], _escapeParse, repeatListIndex);
 			}
-			else{
-				// console.error(parsed, templateParse, item, temp);
-				try{
-					temp = ref.get(void 0, temp[1], _escapeParse, repeatListIndex) || 'undefined';
-				}catch(e){
-					temp = 'error';
-				}
-			}
+			else temp = ref.get(void 0, temp[1], _escapeParse, repeatListIndex);
 
 			templateValue[2*i+1] = temp.constructor === Object ? JSON.stringify(temp) : temp;
 		}
