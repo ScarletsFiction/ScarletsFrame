@@ -30,14 +30,8 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 
 	// Get or evaluate static or dynamic data
 	for (var i = 0, n = parse.length; i < n; i++) {
-		if(atIndex !== void 0){
-			if(atIndex.constructor === Number){
-				i = atIndex;
-				n = i+1;
-			}
-			else if(atIndex.includes(i) === false)
-				continue;
-		}
+		if(atIndex !== void 0 && atIndex.includes(i) === false)
+			continue;
 
 		var ref = parse[i];
 		var arg = ref.data;
@@ -56,26 +50,24 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 						temp = String(temp);
 				}
 
-				parsed[i] = {type:REF_DIRECT, data:temp};
+				parsed[i] = temp;
 				continue;
 			}
 
 			if(ref.type === REF_EXEC){
-				parsed[i] = {type:REF_EXEC, data:ref.get(arg[0], arg[1], _escapeParse, repeatListIndex)};
+				parsed[i] = ref.get(arg[0], arg[1], _escapeParse, repeatListIndex);
 				continue;
 			}
 
 			// Conditional type
 			if(ref.type === REF_IF){
-				parsed[i] = {type:REF_IF, data:''};
-
 				// If condition was not meet
 				if(!ref.if[0](arg[0], arg[1], _escapeParse, repeatListIndex)){
-					parsed[i].data = elseIfHandle(ref, arg, repeatListIndex);
+					parsed[i] = elseIfHandle(ref, arg, repeatListIndex);
 					continue;
 				}
 
-				parsed[i].data = ref.if[1](arg[0], arg[1], _escapeParse, repeatListIndex);
+				parsed[i] = ref.if[1](arg[0], arg[1], _escapeParse, repeatListIndex);
 			}
 		} catch(e) {
 			var temp = (ref.get || ref.if).toString();
@@ -100,7 +92,6 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 
 	return parsed;
 }
-
 function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template){
 	for(var a = 0; a < ref.length; a++){
 		var refB = ref[a];
@@ -136,13 +127,15 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 
 		if(refB.direct !== void 0){
 			if(refB.name === 'value' && isValueInput === true){
-				current.value = parsed[refB.direct].data;
+				current.value = parsed[refB.direct];
 				current.removeAttribute('value');
 				continue;
 			}
-			current.setAttribute(refB.name, parsed[refB.direct].data);
+			current.setAttribute(refB.name, parsed[refB.direct]);
 			continue;
 		}
+
+		current.parsed = parsed;
 
 		// Below is used for multiple data
 		if(refB.name === 'value' && isValueInput === true){
@@ -214,9 +207,11 @@ var templateParser = internal.model.templateParser = function(template, item, or
 			});
 
 			if(ref.direct !== void 0){
-				refA.textContent = parsed[ref.direct].data; //40ms
+				refA.textContent = parsed[ref.direct]; //40ms
 				continue;
 			}
+
+			current.parsed = parsed;
 
 			// Below is used for multiple/dynamic data
 			current.textContent = applyParseIndex(ref.value, ref.parse_index, parsed);
@@ -255,7 +250,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	// Run the pending element
 	for (var i = 0; i < pendingInsert.length; i++) {
 		var ref = pendingInsert[i];
-		var tDOM = parsed[ref.direct].data;
+		var tDOM = parsed[ref.direct];
 
 		// Check if it's an HTMLElement
 		if(tDOM.nodeType === 1){
@@ -264,7 +259,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 		}
 
 		// Parse if it's not HTMLElement
-		tDOM = $.parseElement(parsed[ref.direct].data);
+		tDOM = $.parseElement(parsed[ref.direct]);
 		for (var a = 0, n = tDOM.length; a < n; a++) {
 			ref.parentNode.insertBefore(tDOM[0], ref.dynamicFlag);
 		}
@@ -322,7 +317,11 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 		var changes = void 0;
 	}
 
-	var parsed = templateExec(template.parse, item, changes, void 0, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
+	if(element.parsed === void 0)
+		element.parsed = new Array(template.parse.length);
+
+	var parsed = element.parsed;
+	templateExec(template.parse, item, changes, parsed, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
 
 	var changesReference = element.sf$elementReferences;
 	var haveChanges = false, temp;
@@ -331,7 +330,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.dynamicFlag !== void 0){ // Dynamic data
 			if(parsed[cRef.direct] !== void 0){
-				var tDOM = Array.from($.parseElement(parsed[cRef.direct].data));
+				var tDOM = Array.from($.parseElement(parsed[cRef.direct]));
 				var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 				var notExist = false;
 
@@ -375,7 +374,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 			// Direct value
 			if(parsed[cRef.ref.direct]){
-				temp = parsed[cRef.ref.direct].data;
+				temp = parsed[cRef.ref.direct];
 				if(cRef.textContent.textContent === temp) continue;
 
 				var ref_ = cRef.textContent;
@@ -399,7 +398,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 			// Direct value
 			else if(parsed[cRef.ref.direct]){
-				temp = parsed[cRef.ref.direct].data;
+				temp = parsed[cRef.ref.direct];
 				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}
 			else continue;
@@ -415,7 +414,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 			// Direct value
 			else if(parsed[cRef.ref.direct])
-				temp = parsed[cRef.ref.direct].data;
+				temp = parsed[cRef.ref.direct];
 			else continue;
 
 			if(cRef.style.cssText === temp) continue;
