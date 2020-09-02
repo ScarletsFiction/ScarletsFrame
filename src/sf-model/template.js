@@ -135,8 +135,6 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 			continue;
 		}
 
-		current.parsed = parsed;
-
 		// Below is used for multiple data
 		if(refB.name === 'value' && isValueInput === true){
 			var temp = current.value;
@@ -186,6 +184,8 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	var changesReference = [];
 	var pendingInsert = [];
 
+	changesReference.parsed = parsed;
+
 	// Find element where the data belongs to
 	for (var i = 0; i < addresses.length; i++) {
 		var ref = addresses[i];
@@ -210,8 +210,6 @@ var templateParser = internal.model.templateParser = function(template, item, or
 				refA.textContent = parsed[ref.direct]; //40ms
 				continue;
 			}
-
-			current.parsed = parsed;
 
 			// Below is used for multiple/dynamic data
 			current.textContent = applyParseIndex(ref.value, ref.parse_index, parsed);
@@ -317,13 +315,15 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 		var changes = void 0;
 	}
 
-	if(element.parsed === void 0)
-		element.parsed = new Array(template.parse.length);
-
-	var parsed = element.parsed;
-	templateExec(template.parse, item, changes, parsed, template.uniqPattern !== void 0 && element.sf$repeatListIndex);
-
 	var changesReference = element.sf$elementReferences;
+
+	if(changesReference.parsed === void 0)
+		changesReference.parsed = new Array(template.parse.length);
+
+	var parsed = changesReference.parsed;
+	var repeatListIndex = element.sf$repeatListIndex;
+	templateExec(template.parse, item, changes, parsed, repeatListIndex);
+
 	var haveChanges = false, temp;
 	changes:for (var i = 0; i < changesReference.length; i++) {
 		var cRef = changesReference[i];
@@ -364,7 +364,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.textContent !== void 0){ // Text only
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
+				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
 				if(cRef.textContent.textContent === temp) continue;
 				cRef.textContent.textContent = temp;
 
@@ -392,7 +392,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.attribute !== void 0){ // Attributes
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
+				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
 				if(cRef.attribute.value === temp) continue;
 			}
 
@@ -410,7 +410,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 		if(cRef.style !== void 0){ // Styles
 			if(cRef.ref.parse_index !== void 0) // Multiple
-				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item);
+				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
 
 			// Direct value
 			else if(parsed[cRef.ref.direct])

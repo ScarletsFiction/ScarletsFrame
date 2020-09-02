@@ -419,6 +419,9 @@ function elementReferencesRefresh(elem){
 	var processed = false;
 	var template = eRef.template;
 
+	if(eRef.parsed === void 0)
+		eRef.parsed = new Array(template.parse);
+
 	for (var i = eRef.length-1; i >= 0; i--) {
 		var elemRef = eRef[i];
 		if(elemRef.textContent !== void 0){
@@ -453,7 +456,7 @@ function elementReferencesRefresh(elem){
 			// ToDo: fix value that fail/undefined if it's from RepeatedList/Property
 			if(elemRef.ref.name === 'value'){
 				var refB = elemRef.ref;
-				elemRef.attribute.value = internal.model.applyParseIndex(refB.value, refB.parse_index, elem.parsed, template.parse);
+				elemRef.attribute.value = internal.model.applyParseIndex(refB.value, refB.parse_index, eRef.parsed, template.parse);
 			}
 			continue;
 		}

@@ -114,7 +114,7 @@ function modelScript(mask, script, repeatedListKey){
 	}
 }
 
-var applyParseIndex = internal.model.applyParseIndex = function(templateValue, indexes, parsed, templateParse, item){
+var applyParseIndex = internal.model.applyParseIndex = function(templateValue, indexes, parsed, templateParse, item, repeatListIndex){
 	for (var i = 0; i < indexes.length; i++){
 		var a = indexes[i];
 		var temp = parsed[a];
@@ -125,14 +125,18 @@ var applyParseIndex = internal.model.applyParseIndex = function(templateValue, i
 			var ref = templateParse[a];
 			temp = ref.data;
 
-			if(item !== temp[1])
+			if(item !== temp[1]){
 				temp[0] = item;
-			else{
-				console.error(parsed, templateParse, item, temp);
-				temp[0] = void 0;
+				temp = ref.get(item, temp[1], _escapeParse, repeatListIndex) || 'undefined';
 			}
-
-			temp = ref.get(temp[0], temp[1], _escapeParse) || 'undefined';
+			else{
+				// console.error(parsed, templateParse, item, temp);
+				try{
+					temp = ref.get(void 0, temp[1], _escapeParse, repeatListIndex) || 'undefined';
+				}catch(e){
+					temp = 'error';
+				}
+			}
 
 			templateValue[2*i+1] = temp.constructor === Object ? JSON.stringify(temp) : temp;
 		}
