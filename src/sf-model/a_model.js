@@ -96,13 +96,17 @@ function modelScript(mask, script, repeatedListKey){
 		script = script.split('@return').join('return');
 
 	if(mask && script.includes('_model_'))
-		script = 'var _model_='+mask+';'+script;
+		script = script.split('_model_').join(mask);
+
+	var args = mask ? mask : '_model_';
+	if(script.includes('_escapeParse') === false)
+		args += ',_modelScope,_eP';
+	else args += ',_modelScope,_escapeParse';
 
 	try{
 		if(repeatedListKey === void 0)
-			return new Function(mask || '_model_', '_modelScope', '_escapeParse', script);
-		else
-			return new Function(mask || '_model_', '_modelScope', '_escapeParse', repeatedListKey, script);
+			return new Function(args, script);
+		return new Function(args, repeatedListKey, script);
 	} catch(e){
 		console.log(script);
 		console.error(e);
@@ -116,11 +120,19 @@ var applyParseIndex = internal.model.applyParseIndex = function(templateValue, i
 		var temp = parsed[a];
 
 		if(temp !== void 0)
-			templateValue[2*i+1] = temp.data;
+			templateValue[2*i+1] = temp;
 		else{
 			var ref = templateParse[a];
 			temp = ref.data;
-			temp = ref.get(temp[0], temp[1], _escapeParse);
+
+			if(item !== temp[1])
+				temp[0] = item;
+			else{
+				console.error(parsed, templateParse, item, temp);
+				temp[0] = void 0;
+			}
+
+			temp = ref.get(temp[0], temp[1], _escapeParse) || 'undefined';
 
 			templateValue[2*i+1] = temp.constructor === Object ? JSON.stringify(temp) : temp;
 		}
