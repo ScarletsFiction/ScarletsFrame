@@ -401,17 +401,15 @@ function refreshLang(list, noPending){
 		if(model.sf$bindedKey === void 0)
 			continue;
 
-		var ref = elem.sf$elementReferences;
-		for (var i = 0; i < ref.length; i++) {
-			if(appliedElement.has(elem))
-				continue;
+		if(appliedElement.has(elem))
+			continue;
 
-			appliedElement.add(elem);
-			if(internal.model.syntheticTemplate(elem, ref.template, void 0, model) !== false)
-				continue; // updated
+		appliedElement.add(elem);
 
-			elem.sf_lang = void 0;
-		}
+		if(internal.model.syntheticTemplate(elem, elem.sf$elementReferences.template, void 0, model) !== false)
+			continue; // updated
+
+		elem.sf_lang = void 0;
 	}
 }
 
@@ -455,7 +453,7 @@ function elementReferencesRefresh(elem){
 			// ToDo: fix value that fail/undefined if it's from RepeatedList/Property
 			if(elemRef.ref.name === 'value'){
 				var refB = elemRef.ref;
-				elemRef.attribute.value = internal.model.applyParseIndex(refB.value, refB.parse_index, [], template.parse);
+				elemRef.attribute.value = internal.model.applyParseIndex(refB.value, refB.parse_index, elem.parsed, template.parse);
 			}
 			continue;
 		}
