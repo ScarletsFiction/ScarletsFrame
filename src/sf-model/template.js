@@ -24,9 +24,10 @@ var templateParser_regex_split = /{{%=[0-9]+%/g;
 var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 	if(parse.length === 0) return parse;
+	var temp;
 
-	parsed = parsed || (new Array(parse.length));
-	var temp = null;
+	if(parsed === void 0)
+		parsed = new Array(parse.length);
 
 	// Get or evaluate static or dynamic data
 	for (var i = 0, n = parse.length; i < n; i++) {
@@ -299,7 +300,14 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	return html;
 }
 
-var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item){
+sf.async = function(mode){
+	if(mode)
+		animFrameMode = false; // Enable async
+	else animFrameMode = true; // Disable async
+}
+
+var animFrameMode = false;
+var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
 	if(property !== void 0){
 		var changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
 		if(!changes || changes.length === 0){
@@ -322,10 +330,26 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 
 	var parsed = changesReference.parsed;
 	var repeatListIndex = element.sf$repeatListIndex;
-	templateExec(template.parse, item, changes, parsed, repeatListIndex);
+
+	if(!asyncing)
+		templateExec(template.parse, item, changes, parsed, repeatListIndex);
+
+	if(!asyncing && animFrameMode === false){
+		if(changesReference.async === true)
+			return;
+
+		changesReference.async = true;
+		requestAnimationFrame(function(){
+			changesReference.async = false;
+			animFrameMode = true;
+			syntheticTemplate(element, template, property, item, true);
+			animFrameMode = false;
+		});
+		return;
+	}
 
 	var haveChanges = false, temp;
-	changes:for (var i = 0; i < changesReference.length; i++) {
+	for (var i = 0; i < changesReference.length; i++) {
 		var cRef = changesReference[i];
 
 		if(cRef.dynamicFlag !== void 0){ // Dynamic data
