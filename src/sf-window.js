@@ -20,6 +20,13 @@ function winDestroy(win){
 	console.log(`%c[${opt.title}]`, "color: #9bff82", "Closed!");
 }
 
+var reqAnimFrame = window.requestAnimationFrame;
+function firstInitSFWindow(){
+	window.addEventListener('focus', function(){
+		window.requestAnimationFrame = reqAnimFrame;
+	});
+}
+
 sf.window = {
 	list:{},
 	destroy:function(id){
@@ -30,6 +37,8 @@ sf.window = {
 			for(var k in list)
 				winDestroy(list[k]);
 		}
+
+		window.requestAnimationFrame = reqAnimFrame;
 	},
 	create:function(options, onLoaded){
 		if(options === void 0)
@@ -108,6 +117,18 @@ sf.window = {
 			linker.document.body.textContent = '';
 			$(linker.document.body).append(template);
 			linker.sf$proxy.sfLoaderTrigger();
+
+			if(firstInitSFWindow){
+				firstInitSFWindow();
+				firstInitSFWindow = void 0;
+			}
+
+			if(document.hasFocus() === false)
+				window.requestAnimationFrame = linker.requestAnimationFrame;
+
+			linker.addEventListener('focus', function(){
+				window.requestAnimationFrame = linker.requestAnimationFrame;
+			});
 
 			onLoaded && onLoaded({
 				views: linker.sf.views,
