@@ -33,6 +33,12 @@ class VirtualScrollManipulator {
 		root.appendChild(this.iBottom);
 		root.insertBefore(firstEl, this.iBottom);
 
+		var styled = window.getComputedStyle(firstEl);
+		this.elMargin = Number(styled.marginBottom.slice(0, -2)) + Number(styled.marginTop.slice(0, -2));
+
+		this.elMaxHeight = this.elHeight = firstEl.offsetHeight + this.elMargin;
+		firstEl.remove();
+
 		var that = this;
 		requestAnimationFrame(function(){
 			setTimeout(function(){
@@ -45,12 +51,6 @@ class VirtualScrollManipulator {
 				}
 				else scroller.classList.add('sf-scroll-element');
 				that.iScroller = scroller;
-
-				var styled = firstEl.computedStyleMap();
-				that.elMargin = styled.get('margin-bottom').value + styled.get('margin-top').value;
-
-				that.elMaxHeight = that.elHeight = firstEl.offsetHeight + that.elMargin;
-				firstEl.remove();
 
 				that.rootHeight = that.iScroller.offsetHeight;
 
@@ -327,10 +327,14 @@ Object.assign(VirtualScrollManipulator.prototype, {
 		if(el.sf$heightPos === void 0)
 			el.sf$heightPos = this.elHeight + this.elMargin;
 
-		before = this.elList[before];
-		if(before !== void 0)
-			el.sf$scrollPos = before.sf$scrollPos + before.sf$heightPos;
-		else el.sf$scrollPos = 1;
+		if(before === 0)
+			el.sf$scrollPos = 1;
+		else{
+			before = this.elList[before];
+			if(before !== void 0)
+				el.sf$scrollPos = before.sf$scrollPos + before.sf$heightPos;
+			else el.sf$scrollPos = 1;
+		}
 
 		if(this.dynamicSize)
 			this.rObserver.observe(el);
@@ -360,10 +364,18 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	move(from, to, count, vDOM){
+		if(to < from)
+			from = to;
+
+		this.recalculateElementData(from);
 		this.recalculateScrollPosition();
 	},
 
 	swap(index, other){
+		if(other < index)
+			index = other;
+
+		this.recalculateElementData(index);
 		this.recalculateScrollPosition();
 	},
 
@@ -393,10 +405,12 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	hardRefresh(index){
+		this.recalculateElementData(index);
 		this.recalculateScrollPosition();
 	},
 
 	reverse(){
+		this.recalculateElementData(0);
 		this.recalculateScrollPosition();
 	},
 
