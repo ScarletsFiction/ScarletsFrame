@@ -5,6 +5,9 @@ self.init = function(el, modelName, namespace){
 	if(el.model !== void 0)
 		return;
 
+	if(modelName === void 0)
+		return console.error("Parameter 2 should be model name");
+
 	el.sf$controlled = modelName;
 	if(namespace !== void 0){
 		el.sf$namespace = namespace;
