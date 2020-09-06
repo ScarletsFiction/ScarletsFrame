@@ -50,14 +50,16 @@ function findBindListElement(el){
 		while(element !== null) {
 			if(element.tagName === tagName)
 				i++;
+			else if(element.nodeType !== 8) break;
 
-			element = element.previousElementSibling;
+			element = element.previousSibling;
 		}
 
 		var ref = currentElement.sf$elementReferences && currentElement.sf$elementReferences.template.bindList;
-		if(!ref || ref.$virtual === void 0) return i;
 
-		return i + ref.$virtual.DOMCursor - 1;
+		var VSM = currentElement.parentNode.$VSM;
+		if(VSM !== void 0) return i + VSM.firstCursor;
+		return i;
 	}
 
 	// Declare model for the name with a function
