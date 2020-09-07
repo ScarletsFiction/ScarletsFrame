@@ -190,7 +190,7 @@ sf.window = {
 				return lists[i];
 		}
 
-		throw new Error("Can't find element origin of the captured event");
+		return null;
 	}
 };
 
