@@ -51,24 +51,30 @@ function createRoot_(modelFunc, registered){
 	return root_;
 }
 
-internal.space = {
-	empty:window.sf$proxy ? window.sf$proxy.internalSpaceEmpty : true,
-	initComponent:function(root, tagName, elem, $item, asScope){
-		sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
-	},
-	initModel:function(root, elem){
-		var name = elem.getAttribute('name');
+if(window.sf$proxy)
+	internal.space = window.sf$proxy.internalSpace;
+else
+	internal.space = {
+		empty:true,
+		initComponent:function(root, tagName, elem, $item, asScope){
+			sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
+		},
+		initModel:function(root, elem){
+			var name = elem.getAttribute('name');
 
-		// Pending if model handler was not loaded
-		if(root.sf$space.modelFunc[name] === void 0)
-			return root.sf$space.modelFunc[name] = [[elem, name, root.sf$space]];
+			// Pending if model handler was not loaded
+			if(root.sf$space.modelFunc[name] === void 0)
+				return root.sf$space.modelFunc[name] = [[elem, name, root.sf$space]];
 
-		if(root.sf$space.modelFunc[name].constructor === Array)
-			return root.sf$space.modelFunc[name].push([elem, name, root.sf$space]);
+			if(root.sf$space.modelFunc[name].constructor === Array)
+				return root.sf$space.modelFunc[name].push([elem, name, root.sf$space]);
 
-		sf.model.init(elem, name, root.sf$space);
-	},
-};
+			sf.model.init(elem, name, root.sf$space);
+		},
+	};
+
+if(window.sf$proxy === void 0)
+	forProxying.internalSpace = internal.space;
 
 class Space{
 	constructor(namespace, options){
