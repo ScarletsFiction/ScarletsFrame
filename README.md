@@ -101,6 +101,8 @@ Some feature not work on IE11.
       z('https://unpkg.com/core-js-bundle@latest/minified.js');
     if(window.customElements === void 0)
       z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+    if(window.ResizeObserver === void 0)
+      z('https://polyfill.io/v3/polyfill.min.js?features=ResizeObserver%2CIntersectionObserver%2CIntersectionObserverEntry');
   })();
 </script>
 ```
