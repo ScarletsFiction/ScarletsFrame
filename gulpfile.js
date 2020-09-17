@@ -129,10 +129,12 @@ function swallowError(error){
 
 function removeOldMap(path){
   fs.readdir(path, function(err, files){
-     for (let i = 0, len = files.length; i < len; i++) {
-        if(files[i].match(/.*\.(js|css)\.map/) !== null){
-          try{fs.unlinkSync(path+files[i]);}catch(e){}
-        }
+     if (files) {
+       for (let i = 0, len = files.length; i < len; i++) {
+          if(files[i].match(/.*\.(js|css)\.map/) !== null){
+            try{fs.unlinkSync(path+files[i]);}catch(e){}
+          }
+       }
      }
   });
 }
