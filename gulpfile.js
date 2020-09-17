@@ -75,7 +75,8 @@ gulp.task('js-es5', ()=>
               ie: "11"
             },
             modules: false,
-            loose: false
+            loose: false,
+            shippedProposals: true
           }
         ]
       ]
