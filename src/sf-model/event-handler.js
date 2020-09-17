@@ -348,7 +348,7 @@ var specialEvent = internal.model.specialEvent = {
 			view.addEventListener('pointercancel', callbackEnd, {once:true});
 		}
 
-		var callbackEnd = function(ev){
+		const callbackEnd = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
 
@@ -359,7 +359,7 @@ var specialEvent = internal.model.specialEvent = {
 			view.removeEventListener('touchmove', prevent, {passive: false});
 			view.removeEventListener('pointercancel', callbackEnd, {once:true});
 			that.addEventListener('pointerdown', callbackStart, {once:true});
-		}
+		};
 
 		that.addEventListener('pointerdown', callbackStart);
 
@@ -464,7 +464,7 @@ function touchGesture(that, callback){
 		else view.removeEventListener('pointermove', callbackMove);
 	}
 
-	var callbackMove = function(ev){
+	const callbackMove = function(ev){
 		ev.preventDefault();
 		ev.stopPropagation();
 		ev.stopImmediatePropagation();
@@ -487,9 +487,9 @@ function touchGesture(that, callback){
 
 		lastScale = currentScale;
 		lastAngle = currentAngle;
-	}
+	};
 
-	var callbackEnd = function(ev){
+	const callbackEnd = function(ev){
 		ev.preventDefault();
 		findAnd(2, ev);
 
@@ -519,7 +519,7 @@ function touchGesture(that, callback){
 				callback(ev);
 			}
 		}
-	}
+	};
 
 	that.addEventListener('pointerdown', callbackStart);
 
@@ -528,7 +528,7 @@ function touchGesture(that, callback){
 		$(sf.window).off('keydown', keyStart);
 	}
 
-	var keyEnd = function(ev){
+	const keyEnd = function(ev){
 		if(!force || ev.ctrlKey)
 			return;
 
@@ -537,9 +537,9 @@ function touchGesture(that, callback){
 
 		view.removeEventListener('pointermove', callbackMove);
 		view.removeEventListener('keyup', keyEnd);
-	}
+	};
 
-	var keyStart = function(ev){
+	const keyStart = function(ev){
 		if(!ev.ctrlKey)
 			return;
 
@@ -547,7 +547,7 @@ function touchGesture(that, callback){
 
 		force = true;
 		view.addEventListener('keyup', keyEnd);
-	}
+	};
 
 	$(sf.window).on('keydown', keyStart);
 }

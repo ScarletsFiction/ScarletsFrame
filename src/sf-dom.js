@@ -3,7 +3,7 @@ const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').confi
 sf.dom = function(selector, context){
 	if(!selector){
 		if(selector === void 0){
-			var temp = sel=> temp.find(sel);
+			const temp = sel=> temp.find(sel);
 
 			if(IE11)
 				Object.defineProperty(temp, '_', {value:true});
@@ -285,7 +285,7 @@ class DOMList{
 					continue;
 				}
 
-				var evt;
+				let evt;
 				try {
 					evt = new window.CustomEvent(event, {detail: data, bubbles: true, cancelable: true});
 				} catch (e) {

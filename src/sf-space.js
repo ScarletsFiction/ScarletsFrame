@@ -25,7 +25,7 @@ function getNamespace(name, id){
 }
 
 function createRoot_(modelFunc, registered){
-	var root_ = function(scope){
+	const root_ = function(scope){
 		let temp = root_.registered[scope];
 		if(temp) return temp[2];
 
@@ -39,7 +39,7 @@ function createRoot_(modelFunc, registered){
 		}
 
 		return temp[scope];
-	}
+	};
 
 	root_.root = {};
 	root_.modelFunc = modelFunc;

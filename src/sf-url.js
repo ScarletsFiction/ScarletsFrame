@@ -1,5 +1,5 @@
 ;(function(){
-var self = sf.url = function(){
+const self = sf.url = function(){
 	// Hashes
 	let hashes_ = '';
 	for(let keys in hashes){
@@ -10,9 +10,9 @@ var self = sf.url = function(){
 	const data_ = `|${self.data.join('|')}`;
 
 	return self.paths + hashes_ + (data_.length !== 1 ? data_ : '');
-}
+};
 
-var hashes = self.hashes = {};
+let hashes = self.hashes = {};
 self.data = [];
 self.paths = '/';
 

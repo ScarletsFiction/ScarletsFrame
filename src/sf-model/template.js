@@ -307,7 +307,7 @@ sf.async = function(mode){
 }
 
 var animFrameMode = false;
-var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
+const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
 	if(property !== void 0){
 		var changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
 		if(!changes || changes.length === 0){
@@ -448,4 +448,4 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 	}
 
 	return haveChanges;
-}
+};

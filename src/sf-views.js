@@ -161,7 +161,7 @@ internal.router.findRoute = function(url){
 	return false;
 }
 
-var self = sf.views = function View(selector, name){
+const self = sf.views = function View(selector, name){
 	if(name === void 0)
 		name = slash;
 
@@ -868,7 +868,7 @@ var self = sf.views = function View(selector, name){
 	}
 
 	return self;
-}
+};
 
 self.list = {};
 self.goto = function(url){

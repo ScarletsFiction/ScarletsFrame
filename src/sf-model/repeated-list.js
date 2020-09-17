@@ -1390,7 +1390,7 @@ class ElementManipulatorProxy{
 
 		const got = [];
 		for (let i = 0; i < list.length; i++) {
-			var val;
+			let val;
 			if(typeof this[prop] === 'object')
 				val = list[i].elementRef.get(instance[prop]);
 			else
@@ -1407,7 +1407,7 @@ class ElementManipulatorProxy{
 
 		for (let i = 0; i < list.length; i++) {
 			const EM = list[i];
-			var val;
+			let val;
 
 			if(index.constructor === Number){
 				if(typeof instance[index] !== 'object')

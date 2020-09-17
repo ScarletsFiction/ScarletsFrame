@@ -70,7 +70,7 @@ sf.events = (function(){
 			if(self._listener[name] === void 0)
 				self._listener[name] = [];
 
-			var callback = self._listener[name];
+			const callback = self._listener[name];
 		}
 
 		defaultVal = null;
