@@ -1,14 +1,14 @@
 sf.loader = new function(){
-	var self = this;
+	const self = this;
 	self.loadedContent = 0;
 	self.totalContent = 0;
 	self.DOMWasLoaded = false;
 	self.DOMReady = false;
 	self.turnedOff = true;
 
-	var whenDOMReady = [];
-	var whenDOMLoaded = [];
-	var whenProgress = [];
+	let whenDOMReady = [];
+	let whenDOMLoaded = [];
+	let whenProgress = [];
 
 	// Make event listener
 	self.onFinish = function(func){
@@ -33,7 +33,7 @@ sf.loader = new function(){
 	    ev.target.removeEventListener('load', self.f, {once:true});
 	    ev.target.removeEventListener('error', self.f, {once:true});
 
-		for (var i = 0; i < whenProgress.length; i++)
+		for (let i = 0; i < whenProgress.length; i++)
 			whenProgress[i](self.loadedContent, self.totalContent);
 	}
 
@@ -41,7 +41,7 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if(document.querySelectorAll('link[href*="'+list[i]+'"]').length !== 0)
+				if(document.querySelectorAll(`link[href*="${list[i]}"]`).length !== 0)
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
@@ -50,7 +50,7 @@ sf.loader = new function(){
 
 		self.totalContent = self.totalContent + list.length;
 		for(var i = 0; i < list.length; i++){
-			var s = document.createElement('link');
+			const s = document.createElement('link');
 	        s.rel = 'stylesheet';
 	        s.href = list[i];
 	        s.addEventListener('load', self.f, {once:true});
@@ -63,7 +63,7 @@ sf.loader = new function(){
 		if(self.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if(document.querySelectorAll('script[src*="'+list[i]+'"]').length !== 0)
+				if(document.querySelectorAll(`script[src*="${list[i]}"]`).length !== 0)
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
@@ -72,7 +72,7 @@ sf.loader = new function(){
 
 		self.totalContent = self.totalContent + list.length;
 		for(var i = 0; i < list.length; i++){
-			var s = document.createElement('script');
+			const s = document.createElement('script');
 	        s.type = "text/javascript";
 	        if(async) s.async = true;
 	        s.src = list[i];
@@ -82,7 +82,7 @@ sf.loader = new function(){
 		}
 	}
 
-	var lastState = '';
+	let lastState = '';
 	self.waitImages = function(){
 		lastState = 'loading';
 	}
@@ -93,8 +93,8 @@ sf.loader = new function(){
 			document.removeEventListener('load', domLoadEvent, true);
 
 			if(lastState === 'loading'){ // Find images
-				var temp = document.body.querySelectorAll('img:not(onload)[src]');
-				for (var i = 0; i < temp.length; i++) {
+				const temp = document.body.querySelectorAll('img:not(onload)[src]');
+				for (let i = 0; i < temp.length; i++) {
 					self.totalContent++;
 					temp[i].addEventListener('load', self.f, {once:true});
 					temp[i].addEventListener('error', self.f, {once:true});
@@ -109,7 +109,7 @@ sf.loader = new function(){
 		if(document.readyState === 'interactive' || document.readyState === 'complete'){
 			if(self.DOMReady === false){
 				self.DOMReady = true;
-				for (var i = 0; i < whenDOMReady.length; i++) {
+				for (let i = 0; i < whenDOMReady.length; i++) {
 					try{
 						whenDOMReady[i]();
 					} catch(e) {
@@ -142,7 +142,7 @@ sf.loader = new function(){
 
 		clearInterval(resourceWaitTimer);
 
-		var listener = document.querySelectorAll('script, link, img');
+		const listener = document.querySelectorAll('script, link, img');
 		for (var i = 0; i < listener.length; i++) {
 			listener[i].removeEventListener('error', self.f);
 			listener[i].removeEventListener('load', self.f);

@@ -1,12 +1,12 @@
 // Allow direct function replacement to accelerate development
 // Note: this feature will allocate more small memory and small slow down
-var hotReloadAll = false; // All model property
+let hotReloadAll = false; // All model property
 
-var proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
-var backupTemplate, backupCompTempl;
+let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
+let backupTemplate, backupCompTempl;
 
 ;(function(){
-var gEval = routerEval;
+const gEval = routerEval;
 
 sf.hotReload = function(mode){
 	if(mode === 1)
@@ -36,7 +36,7 @@ sf.hotReload = function(mode){
 		// Register event
 		setTimeout(function(){
 			if(window.___browserSync___ !== void 0){
-				var socket = window.___browserSync___.socket;
+				const { socket } = window.___browserSync___;
 				socket.on('sf-hot-js', gEval);
 				socket.on('sf-hot-html', gEval);
 			}
@@ -47,10 +47,10 @@ sf.hotReload = function(mode){
 
 })();
 
-var haveLoaded = new WeakSet();
+const haveLoaded = new WeakSet();
 function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	function refunction(prop, replacement){
-		var proxier = proxy[prop];
+		let proxier = proxy[prop];
 		if(proxier === void 0){
 			if(scope[prop] && scope[prop].ref !== void 0)
 				proxier = proxy[prop] = scope[prop];
@@ -64,7 +64,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		if(proxier.protoFunc !== void 0)
 			proxier.ref = replacement || proxier.ref;
 		else{
-			var ref = (replacement || scope[prop]);
+			const ref = (replacement || scope[prop]);
 
 			if(proxier !== ref)
 				proxier.ref = ref;
@@ -75,7 +75,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 	// Keep component's original scope for first time only
 	if(func === void 0){
-		for(var prop in scope){
+		for(let prop in scope){
 			if(internalProp[prop] === true) // Skip function that related with framework
 				continue;
 
@@ -88,8 +88,8 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	scope.hotReloading && scope.hotReloading(scope);
 
 	if(func.constructor === Function){
-		var enabled = true;
-		func(new Proxy(scope, {set:function(obj, prop, val){
+		let enabled = true;
+		func(new Proxy(scope, {set(obj, prop, val){
 			// Skip function that related with framework
 			// And skip if proxy is not enabled
 			if(enabled === false || internalProp[prop] === true){
@@ -116,8 +116,8 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 // On model scope reregistered
 function hotModel(space, name, func){
-	var scope = space(name);
-	var proxy = proxyModel.get(scope);
+	const scope = space(name);
+	let proxy = proxyModel.get(scope);
 
 	// If new model
 	if(proxy === void 0 || !scope){
@@ -130,7 +130,7 @@ function hotModel(space, name, func){
 
 // On new component created
 function hotComponentAdd(space, name, scope){
-	var proxy = proxySpace.get(space);
+	let proxy = proxySpace.get(space);
 
 	// If new space
 	if(proxy === void 0){
@@ -138,7 +138,7 @@ function hotComponentAdd(space, name, scope){
 		proxySpace.set(space, proxy);
 	}
 
-	var list = proxy[name];
+	let list = proxy[name];
 	if(list === void 0)
 		list = proxy[name] = [];
 
@@ -151,24 +151,24 @@ function hotComponentAdd(space, name, scope){
 }
 
 function hotComponentRemove(el){
-	var proxy = proxySpace.get(el.sf$space);
+	const proxy = proxySpace.get(el.sf$space);
 	if(proxy === void 0)
 		return;
 
-	var list = proxy[el.sf$controlled];
+	const list = proxy[el.sf$controlled];
 	list.splice(list.indexOf(el.model), 1);
 }
 
 // On component scope reregistered
 function hotComponentRefresh(space, name, func){
-	var list = proxySpace.get(space);
+	let list = proxySpace.get(space);
 	if(list === void 0 || list[name] === void 0)
 		return;
 
 	list = list[name];
 
-	for (var i = 0; i < list.length; i++){
-		var proxy = proxyComponent.get(list[i]);
+	for (let i = 0; i < list.length; i++){
+		let proxy = proxyComponent.get(list[i]);
 		if(proxy === void 0){
 			proxy = {};
 			proxyComponent.set(list[i], proxy);
@@ -184,23 +184,23 @@ function hotComponentRefresh(space, name, func){
 
 // Refresh views html and component
 function hotTemplate(templates){
-	var vList = sf.views.list;
-	var changes = {};
+	const vList = sf.views.list;
+	const changes = {};
 
-	for(var path in templates){
+	for(let path in templates){
 		if(backupTemplate[path] === void 0 || backupTemplate[path] === templates[path])
 			continue;
 
-		var forComp = proxyTemplate[path]; // [space, name]
+		const forComp = proxyTemplate[path]; // [space, name]
 		if(forComp !== void 0){
-			var _space = forComp[0];
-			var _name = forComp[1];
-			var registrar = _space.registered[_name];
+			const _space = forComp[0];
+			const _name = forComp[1];
+			const registrar = _space.registered[_name];
 
 			if(registrar !== void 0 && registrar[3] !== void 0){
-				var old = registrar[3].outerHTML;
+				const old = registrar[3].outerHTML;
 				sf.component.html(_name, {template:path}, _space);
-				var now = registrar[3].outerHTML;
+				const now = registrar[3].outerHTML;
 
 				if(now !== old
 				   || (backupCompTempl.has(registrar)
@@ -216,24 +216,24 @@ function hotTemplate(templates){
 		changes[path] = true;
 	}
 
-	for(var name in vList){
-		var routes = vList[name].routes;
-		var sfPageViews = $('sf-page-view', vList[name].rootDOM);
+	for(let name in vList){
+		const { routes } = vList[name];
+		const sfPageViews = $('sf-page-view', vList[name].rootDOM);
 
-		for (var i = 0; i < sfPageViews.length; i++) {
-			var page = sfPageViews[i];
-			var pageTemplate = page.sf$templatePath;
+		for (let i = 0; i < sfPageViews.length; i++) {
+			const page = sfPageViews[i];
+			const pageTemplate = page.sf$templatePath;
 			if(pageTemplate === void 0 || changes[pageTemplate] === void 0)
 				continue;
 
 			page.innerHTML = templates[pageTemplate];
 
-			page.routeCached.html = sf.dom.parseElement('<template>'+templates[pageTemplate]+'</template>', true)[0];
+			page.routeCached.html = sf.dom.parseElement(`<template>${templates[pageTemplate]}</template>`, true)[0];
 
 			// Replace with the old nested view
-			var nesteds = page.sf$viewSelector;
-			for(var nested in nesteds){
-				var el = page.querySelector(nested);
+			const nesteds = page.sf$viewSelector;
+			for(let nested in nesteds){
+				const el = page.querySelector(nested);
 				el.parentNode.replaceChild(nesteds[nested], el);
 			}
 		}
@@ -246,22 +246,22 @@ internal.hotTemplate = hotTemplate;
 
 // Refresh component html
 function hotComponentTemplate(scope, name){
-	var registrar = scope.registered[name];
-	var freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
+	const registrar = scope.registered[name];
+	const freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
 
-	for (var z = 0; z < freezed.length; z++) {
-		var model = freezed[z];
-		var els = model.$el;
+	for (let z = 0; z < freezed.length; z++) {
+		const model = freezed[z];
+		const els = model.$el;
 
-		for (var k = 0; k < els.length; k++) {
-			var element = els[k];
+		for (let k = 0; k < els.length; k++) {
+			const element = els[k];
 
 			// Don't refresh component that not declared with sf.component.html
 			if(element.sf$elementReferences === void 0)
 				continue;
 
-			var parentNode = element.parentNode;
-			var nextNode = element.nextSibling;
+			const { parentNode } = element;
+			const nextNode = element.nextSibling;
 
 			// Detach from DOM tree first
 			if(parentNode !== null)
@@ -271,22 +271,22 @@ function hotComponentTemplate(scope, name){
 			// Clear old DOM linker
 			internal.model.removeModelBinding(model);
 
-			var temp = registrar[3];
+			let temp = registrar[3];
 			if(registrar[3].constructor !== Object){
-				var tempDOM = temp.tempDOM;
+				var { tempDOM } = temp;
 
 				temp = prepareComponentTemplate(temp, tempDOM, name, model, registrar);
-				tempDOM = temp.tempDOM;
+				({ tempDOM } = temp);
 			}
 
 			// Create new object, but using registrar[3] as prototype
-			var copy = Object.create(temp);
+			const copy = Object.create(temp);
 
 			if(copy.parse.length !== 0){
 				copy.parse = copy.parse.slice(0);
 
 				// Deep copy the original properties to new object
-				for (var i = 0; i < copy.parse.length; i++) {
+				for (let i = 0; i < copy.parse.length; i++) {
 					copy.parse[i] = Object.create(copy.parse[i]);
 					copy.parse[i].data = [null, model];
 				}

@@ -10,14 +10,14 @@ sf.component = function(name, options, func, namespace){
 			return sf.component.for(name, options, func, namespace);
 	}
 
-	var temp = sf.component.registered[name];
+	const temp = sf.component.registered[name];
 	return temp ? temp[2] : [];
 }
 
 function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 
-	var isDynamic = internal.model.templateInjector(temp, newObj, true);
+	const isDynamic = internal.model.templateInjector(temp, newObj, true);
 	temp = sf.model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
 
 	if(isDynamic === false)
@@ -34,24 +34,24 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 }
 
 ;(function(){
-	var self = sf.component;
+	const self = sf.component;
 	internal.component = {};
 	internal.componentInherit = {};
 
-	var waitingHTML = {};
+	const waitingHTML = {};
 
 	self.registered = {};
 	// internal.component.tagName = new Set();
 
 	function checkWaiting(name, namespace){
-		var scope = namespace || self;
+		const scope = namespace || self;
 
-		var upgrade = waitingHTML[name];
-		for (var i = upgrade.length - 1; i >= 0; i--) {
+		const upgrade = waitingHTML[name];
+		for (let i = upgrade.length - 1; i >= 0; i--) {
 			if(upgrade[i].namespace !== namespace)
 				continue;
 
-			var el = upgrade[i].el;
+			let { el } = upgrade[i];
 			el = self.new(name, el, upgrade[i].item, namespace, false, true);
 			if(el === void 0)
 				return;
@@ -80,10 +80,10 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		}
 
 		// internal.component.tagName.add(name.toUpperCase());
-		var scope = namespace || self;
+		const scope = namespace || self;
 
 		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template
-		var registrar = scope.registered[name];
+		let registrar = scope.registered[name];
 		if(registrar === void 0){
 			registrar = scope.registered[name] = new Array(5);
 			registrar[2] = [];
@@ -92,9 +92,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		registrar[0] = func;
 
-		var construct = defineComponent(name);
+		const construct = defineComponent(name);
 		registrar[1] = construct;
-		window['$'+capitalizeLetters(name.split('-'))] = construct;
+		window[`$${capitalizeLetters(name.split('-'))}`] = construct;
 
 		if(waitingHTML[name] !== void 0)
 			checkWaiting(name, namespace);
@@ -106,11 +106,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	}
 
 	self.html = function(name, outerHTML, namespace){
-		var scope = namespace || self;
-		var templatePath = false;
+		const scope = namespace || self;
+		let templatePath = false;
 
 		if(outerHTML.constructor === Object){
-			var template;
+			let template;
 
 			if(outerHTML.template){
 				templatePath = outerHTML.template;
@@ -128,7 +128,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 						TemplatePending.push(function(){
 							self.html(name, outerHTML, namespace, true);
 						});
-						return console.warn("Waiting template path '"+outerHTML.template+"' to be loaded");
+						return console.warn(`Waiting template path '${outerHTML.template}' to be loaded`);
 					}
 				}
 			}
@@ -140,20 +140,20 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				TemplatePending.push(function(){
 					self.html(name, outerHTML, namespace, true);
 				});
-				return console.warn("Waiting template for '"+name+"' to be loaded");
+				return console.warn(`Waiting template for '${name}' to be loaded`);
 			}
 
 			outerHTML = template;
 		}
 
 		// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template, 4=ModelRegex
-		var registrar = scope.registered[name];
+		let registrar = scope.registered[name];
 		if(registrar === void 0){
 			registrar = scope.registered[name] = new Array(5);
 			registrar[2] = [];
 		}
 
-		var temp;
+		let temp;
 		if(outerHTML.constructor === String)
 			temp = $.parseElement(outerHTML);
 		else temp = outerHTML;
@@ -161,9 +161,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(temp.length === 1)
 			registrar[3] = temp[0];
 		else{
-			var tempDOM = document.createElement('div');
+			const tempDOM = document.createElement('div');
 			tempDOM.tempDOM = true;
-			for (var i = temp.length - 1; i >= 0; i--) {
+			for (let i = temp.length - 1; i >= 0; i--) {
 				tempDOM.insertBefore(temp[i], tempDOM.firstChild);
 			}
 			registrar[3] = tempDOM;
@@ -190,7 +190,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		}
 	}
 
-	var tempDOM = document.createElement('div');
+	const tempDOM = document.createElement('div');
 	self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		if(internal.component.skip)
 			return;
@@ -203,12 +203,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			return;
 		}
 
-		var scope = namespace || self;
+		const scope = namespace || self;
 
 		if(namespace !== void 0)
 			element.sf$space = namespace;
 
-		var registrar = scope.registered[name];
+		const registrar = scope.registered[name];
 		if(registrar === void 0 || element.childNodes.length === 0 && registrar[3] === void 0){
 			if(_fromCheck === true)
 				return;
@@ -216,13 +216,13 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if(waitingHTML[name] === void 0)
 				waitingHTML[name] = [];
 
-			waitingHTML[name].push({el:element, item:$item, namespace:namespace});
+			waitingHTML[name].push({el:element, item:$item, namespace});
 			return;
 		}
 
-		var avoid = /(^|:)(sf-|class|style)/;
-		var attr = element.attributes;
-		var inherit = internal.componentInherit[name];
+		const avoid = /(^|:)(sf-|class|style)/;
+		const attr = element.attributes;
+		const inherit = internal.componentInherit[name];
 
 		if(attr.length !== 0 && $item === void 0)
 			$item = {};
@@ -234,17 +234,17 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			$item[attr[i].nodeName] = attr[i].value;
 		}
 
-		var newObj = (asScope ? $item : (
+		const newObj = (asScope ? $item : (
 			inherit !== void 0 ? new inherit() : {}
 		));
 
-		var index = 0;
+		let index = 0;
 		if(newObj.$el === void 0)
 			newObj.$el = $();
 		else index = newObj.$el.length;
 
 		if(index === 0){
-			var func = registrar[0];
+			const func = registrar[0];
 			if(func.constructor === Function){
 				if(inherit !== void 0 && asScope)
 					Object.setPrototypeOf(newObj, inherit.prototype);
@@ -268,19 +268,19 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(registrar[4] === void 0)
 			registrar[4] = internal.model.createModelKeysRegex(element, newObj, null);
 
-		var forceConnectCall = false;
+		let forceConnectCall = false;
 		if(element.childNodes.length === 0){
-			var temp = registrar[3];
-			var tempDOM = temp.tempDOM;
+			let temp = registrar[3];
+			let { tempDOM } = temp;
 
 			// Create template here because we have the sample model
 			if(temp.constructor !== Object){
 				temp = prepareComponentTemplate(temp, tempDOM, name, newObj, registrar);
-				tempDOM = temp.tempDOM;
+				({ tempDOM } = temp);
 			}
 
 			// Create new object, but using registrar[3] as prototype
-			var copy = Object.create(temp);
+			const copy = Object.create(temp);
 
 			if(copy.parse.length !== 0){
 				copy.parse = copy.parse.slice(0);
@@ -305,7 +305,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		// Custom component that written on the DOM
 		else{
-			var specialElement = {
+			const specialElement = {
 				repeat:[],
 				input:[]
 			};
@@ -347,10 +347,10 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		constructor($item, namespace, asScope){
 			super();
 
-			var tagName = this.tagName.toLowerCase();
+			const tagName = this.tagName.toLowerCase();
 
 			if(internal.space.empty === false){
-				var haveSpace = namespace || this.closest('sf-space');
+				let haveSpace = namespace || this.closest('sf-space');
 				if(haveSpace !== null){
 					if(haveSpace.constructor === Space)
 						haveSpace = haveSpace.default;
@@ -403,15 +403,15 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if(this.model === void 0)
 				return;
 
-			var that = this;
-			var destroy = function(){
+			const that = this;
+			const destroy = function(){
 				if(that.model === void 0)
 					return;
 
 				if(that.model.$el.length !== 1){
-					var i = that.model.$el.indexOf(that);
+					const i = that.model.$el.indexOf(that);
 					if(i !== -1){
-						var temp = that.model.$el[i];
+						const temp = that.model.$el[i];
 						that.model.$el = that.model.$el.splice(i, 1);
 						that.model.destroyClone && that.model.destroyClone(temp);
 					}
@@ -441,13 +441,13 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 	// name = 'tag-name'
 	function defineComponent(name){
-		var have = customElements.get(name);
+		const have = customElements.get(name);
 		if(have) return have;
 
 		if(name.toLowerCase() !== name)
 			return console.error("Please use lower case when defining component name");
 
-		var len = name.length;
+		const len = name.length;
 		if(name.replace(/[^\w-]+/g, '').length !== len)
 			return console.error("Please use '-' and latin character when defining component tags");
 

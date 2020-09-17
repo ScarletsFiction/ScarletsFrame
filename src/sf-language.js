@@ -1,6 +1,6 @@
 ;(function(){
 
-var self = sf.lang = function(el){
+const self = sf.lang = function(el){
 	sf.lang.init(el);
 }
 
@@ -21,8 +21,8 @@ self.add = function(lang, obj){
 	if(pendingCallback.length === 0)
 		return;
 
-	var defaultLang = self.list[self.default];
-	for (var i = 0; i < pendingCallback.length; i++) {
+	const defaultLang = self.list[self.default];
+	for (let i = 0; i < pendingCallback.length; i++) {
 		if(pendingCallback[i].callbackOnly === void 0)
 			pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
 		else
@@ -37,27 +37,27 @@ self.changeDefault = function(defaultLang){
 
 	// Maybe have create other window?
 	if(windowDestroyListener !== false && sf.window.list.length !== 0){
-		var windows = sf.window.list;
+		const windows = sf.window.list;
 
-		for (var i = 0; i < windows.length; i++)
+		for (let i = 0; i < windows.length; i++)
 			windows[i].sf.lang.changeDefault(defaultLang);
 	}
 
 	function forComponents(){
-		var registered = sf.component.registered;
-		for(var keys in registered){
+		const { registered } = sf.component;
+		for(let keys in registered){
 			if(registered[keys][3] !== void 0)
 				refreshTemplate(registered[keys]);
 		}
 	}
 
 	function forSpaceComponents(){
-		var list = sf.space.list;
+		const { list } = sf.space;
 
-		for(var name in list){
-			var registered = list[name].default.registered;
+		for(let name in list){
+			const { registered } = list[name].default;
 
-			for(var keys in registered){
+			for(let keys in registered){
 				if(registered[keys][3] !== void 0)
 					refreshTemplate(registered[keys]);
 			}
@@ -72,14 +72,14 @@ self.changeDefault = function(defaultLang){
 
 	self.init(document.body);
 
-	var wList = sf.window.list;
-	for(var key in wList)
+	const wList = sf.window.list;
+	for(let key in wList)
 		self.init(wList[key].document.body);
 }
 
-var interpolate_ = /{(.*?)}/;
+const interpolate_ = /{(.*?)}/;
 function interpolate(text, obj){
-	var once = false;
+	let once = false;
 	return text.replace(interpolate_, function(full, match){
 		if(once === false && (obj.constructor === String || obj.constructor === Number)){
 			once = true;
@@ -96,7 +96,7 @@ function interpolate(text, obj){
 	});
 }
 
-var waiting = false;
+let waiting = false;
 var pendingCallback = [];
 
 self.get = function(path, obj, callback){
@@ -141,7 +141,7 @@ function startRequest(){
 }
 
 function getSingle(path, obj, callback){
-	var value = diveObject(self.list[self.default], path);
+	let value = diveObject(self.list[self.default], path);
 	if(value !== void 0){
 		if(obj)
 			value = interpolate(value, obj);
@@ -166,12 +166,12 @@ function getSingle(path, obj, callback){
 }
 
 function getMany(paths, obj, callback){
-	var default_ = self.list[self.default];
-	var value = {};
-	var missing = [];
+	const default_ = self.list[self.default];
+	let value = {};
+	const missing = [];
 
 	for (var i = 0; i < paths.length; i++) {
-		var temp = diveObject(default_, paths[i]);
+		const temp = diveObject(default_, paths[i]);
 
 		if(temp)
 			value[paths[i]] = temp;
@@ -195,9 +195,9 @@ function getMany(paths, obj, callback){
 		diveObject(pending, missing[i], 1);
 	}
 
-	var callback_ = function(){
-		for (var i = 0; i < missing.length; i++) {
-			var temp = diveObject(default_, missing[i]);
+	const callback_ = function(){
+		for (let i = 0; i < missing.length; i++) {
+			const temp = diveObject(default_, missing[i]);
 
 			diveObject(value, missing[i], temp);
 		}
@@ -220,11 +220,11 @@ self.assign = function(model, keyPath, obj, callback){
 		obj = void 0;
 	}
 
-	var keys = Object.keys(keyPath);
-	var vals = Object.values(keyPath);
+	const keys = Object.keys(keyPath);
+	const vals = Object.values(keyPath);
 
 	getMany(vals, obj, function(values){
-		for (var i = 0; i < keys.length; i++) {
+		for (let i = 0; i < keys.length; i++) {
 			model[keys[i]] = diveObject(values, vals[i]);
 		}
 
@@ -234,7 +234,7 @@ self.assign = function(model, keyPath, obj, callback){
 }
 
 function diveFill(obj1, obj2){
-	for(var key in obj2){
+	for(let key in obj2){
 		if(obj1[key] === void 0)
 			obj1[key] = obj2[key];
 
@@ -244,13 +244,13 @@ function diveFill(obj1, obj2){
 }
 
 var pending = false;
-var pendingElement = [];
+const pendingElement = [];
 var activeRequest = false;
 
 self.onError = console.error;
 
 self.init = function(el){
-	var list = el.querySelectorAll('[sf-lang]');
+	const list = el.querySelectorAll('[sf-lang]');
 	if(list.length === 0)
 		return;
 
@@ -260,7 +260,7 @@ self.init = function(el){
 	refreshLang(list);
 
 	if(pending !== false && self.serverURL !== false){
-		var callback = function(){
+		const callback = function(){
 			pending = false;
 			refreshLang(pendingElement, true);
 		}
@@ -276,9 +276,9 @@ self.init = function(el){
 }
 
 function diveObject(obj, path, setValue){
-	var parts = path.split('.');
-	for (var i = 0, n = parts.length-1; i <= n; i++) {
-		var key = parts[i];
+	const parts = path.split('.');
+	for (let i = 0, n = parts.length-1; i <= n; i++) {
+		const key = parts[i];
 
 		if(setValue === void 0){ // get only
 	    	if(obj[key] === void 0)
@@ -316,14 +316,14 @@ internal.language.refreshLang = function(el){
 };
 
 function refreshLang(list, noPending){
-	var defaultLang = self.list[self.default];
-	var parentElement = new Set();
+	let defaultLang = self.list[self.default];
+	const parentElement = new Set();
 
 	if(defaultLang === void 0)
 		defaultLang = self.list[self.default] = {};
 
-	var checks = new WeakSet();
-	for (var i = list.length-1; i >= 0; i--) {
+	const checks = new WeakSet();
+	for (let i = list.length-1; i >= 0; i--) {
 		if((list[i].sf_lang === self.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
 			list.splice(i, 1);
 			continue;
@@ -342,7 +342,7 @@ function refreshLang(list, noPending){
 			continue;
 		}
 		else{
-			var modelElement = sf(elem, true);
+			const modelElement = sf(elem, true);
 			if(modelElement !== null){
 				if(parentElement.has(modelElement))
 					continue;
@@ -360,8 +360,8 @@ function refreshLang(list, noPending){
 			}
 		}
 
-		var target = elem.getAttribute('sf-lang');
-		var value = diveObject(defaultLang, target);
+		const target = elem.getAttribute('sf-lang');
+		const value = diveObject(defaultLang, target);
 
 		if(value === void 0){
 		    if(noPending !== true){
@@ -387,13 +387,13 @@ function refreshLang(list, noPending){
 	if(parentElement.size === 0)
 		return;
 
-	var appliedElement = new WeakSet();
+	const appliedElement = new WeakSet();
 
 	// Reapply template (component)
 	for(var elem of parentElement){
 		elem.sf_lang = self.default;
 
-		var model = elem.model;
+		let { model } = elem;
 		if(model === void 0)
 			model = sf(elem);
 
@@ -413,17 +413,17 @@ function refreshLang(list, noPending){
 	}
 }
 
-var templateParser_regex_split = /{{%=[0-9]+%/g;
+const templateParser_regex_split = /{{%=[0-9]+%/g;
 function elementReferencesRefresh(elem){
-	var eRef = elem.sf$elementReferences;
-	var processed = false;
-	var template = eRef.template;
+	const eRef = elem.sf$elementReferences;
+	let processed = false;
+	const { template } = eRef;
 
 	if(eRef.parsed === void 0)
 		eRef.parsed = new Array(template.parse);
 
 	for (var i = eRef.length-1; i >= 0; i--) {
-		var elemRef = eRef[i];
+		const elemRef = eRef[i];
 		if(elemRef.textContent !== void 0){
 			var parent = elemRef.textContent.parentElement;
 
@@ -438,7 +438,7 @@ function elementReferencesRefresh(elem){
 		}
 		else continue;
 
-		var value = diveObject(self.list[self.default], key);
+		const value = diveObject(self.list[self.default], key);
 		if(value === void 0){
 			if(pending === false)
 				pending = {};
@@ -455,7 +455,7 @@ function elementReferencesRefresh(elem){
 			// Refresh it now
 			// ToDo: fix value that fail/undefined if it's from RepeatedList/Property
 			if(elemRef.ref.name === 'value'){
-				var refB = elemRef.ref;
+				const refB = elemRef.ref;
 				elemRef.attribute.value = internal.model.applyParseIndex(refB.value, refB.parse_index, eRef.parsed, template.parse);
 			}
 			continue;
@@ -481,16 +481,16 @@ function elementReferencesRefresh(elem){
 
 function assignSquareBracket(value, elem, template, eRef){
 	value = value.replace(/%\*&/g, '-');
-	var tags = {};
+	const tags = {};
 
-	var squares = [];
+	const squares = [];
 	value = value.replace(/\[([a-zA-Z0-9\-]+):(.*?)\]/g, function(full, tag, match){
 		squares.push({tag:tag.toUpperCase(), val:match});
 		return '%*&';
 	}).split('%*&');
 
-	var childNodes = elem.childNodes;
-	var backup = {};
+	const { childNodes } = elem;
+	const backup = {};
 	for(var a=0, n=childNodes.length; a<n; a++){
 		var place, elemBackup = childNodes[a];
 		if(elemBackup.nodeType === 3){
@@ -508,14 +508,14 @@ function assignSquareBracket(value, elem, template, eRef){
 		place.push(elemBackup);
 	}
 
-	var found = template && true;
+	let found = template && true;
 	elem.textContent = value[0];
 
 	if(elem.firstChild !== null)
 		found = found && elementRebinding(template, eRef, elem.firstChild, elem);
 
 	for (var a = 1; a < value.length; a++) {
-		var square = squares[a-1];
+		const square = squares[a-1];
 		var elemBackup = backup[square.tag];
 		if(elemBackup === void 0 || elemBackup.length === 0)
 			elemBackup = document.createElement(square.tag);
@@ -546,8 +546,8 @@ function assignSquareBracket(value, elem, template, eRef){
 }
 
 function createParseIndex(text, remakeRef, template){
-	var parse_index = []
-	var value = text.replace(/{(.*?)}/g, function(full, match){
+	const parse_index = []
+	const value = text.replace(/{(.*?)}/g, function(full, match){
 		if(isNaN(match) !== false){
 			if(template.modelRefRoot[match] !== void 0)
 				match = template.modelRefRoot[match][0];
@@ -555,7 +555,7 @@ function createParseIndex(text, remakeRef, template){
 			else if(template.modelRef !== void 0 && template.modelRef[match] !== void 0)
 				match = template.modelRef[match][0];
 			else{
-				console.error("Language can't find existing model binding for '"+match+"' from", Object.keys(template.modelRefRoot), template);
+				console.error(`Language can't find existing model binding for '${match}' from`, Object.keys(template.modelRefRoot), template);
 				return '';
 			}
 		}
@@ -574,7 +574,7 @@ function createParseIndex(text, remakeRef, template){
 }
 
 function elementRebinding(template, eRef, elem, parentNode){
-	var remake = {
+	const remake = {
 		textContent:elem,
 		ref:{
 			address:$.getSelector(elem, true, parentNode),
@@ -589,29 +589,29 @@ function elementRebinding(template, eRef, elem, parentNode){
 }
 
 function refreshTemplate(elemRef){
-	var collections = elemRef[2];
-	var template = elemRef[3];
+	const collections = elemRef[2];
+	const template = elemRef[3];
 
-	var addresses = template.addresses;
+	const { addresses } = template;
 	if(addresses === void 0)
 		return;
 
-	var found = false;
-	for (var i = addresses.length-1; i >= 0; i--) {
+	let found = false;
+	for (let i = addresses.length-1; i >= 0; i--) {
 		if(addresses[i].skipSFLang || addresses[i].value === void 0)
 			continue;
 
-		var elem = $.childIndexes(addresses[i].address, template.html).parentNode;
+		const elem = $.childIndexes(addresses[i].address, template.html).parentNode;
 		if(elem.hasAttribute('sf-lang') === false)
 			continue;
 
 		found = true;
 
-		var value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
+		const value = diveObject(self.list[self.default], elem.getAttribute('sf-lang'));
 		if(value === void 0){
 			console.error(`Can't found '${elem.getAttribute('sf-lang')}' for ${self.default}, in`, self.list[self.default], ", maybe the language wasn't fully loaded");
 
-			var callback_ = function(){
+			const callback_ = function(){
 				refreshTemplate(elemRef);
 			};
 
@@ -622,11 +622,11 @@ function refreshTemplate(elemRef){
 
 		addresses.splice(i, 1);
 
-		var eRef = [];
+		const eRef = [];
 		assignSquareBracket(value, elem, template, eRef);
 
-		for (var a = 0; a < eRef.length; a++){
-			var ref = eRef[a].ref;
+		for (let a = 0; a < eRef.length; a++){
+			const { ref } = eRef[a];
 			ref.address = $.getSelector($.childIndexes(ref.address, elem), true, template.html);
 			addresses.push(ref);
 		}

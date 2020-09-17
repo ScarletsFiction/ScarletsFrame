@@ -5,10 +5,10 @@ internal.model.removeModelBinding = function(ref, isDeep){
 	if(window.sf$proxy !== void 0)
 		return window.sf$proxy.removeModelBinding(ref, isDeep);
 
-	var bindedKey = ref.sf$bindedKey;
-	for(var key in bindedKey){
+	const bindedKey = ref.sf$bindedKey;
+	for(let key in bindedKey){
 		if(ref[key] !== void 0 && (ref[key].constructor === RepeatedProperty || ref[key].constructor === RepeatedList)){
-			var obj = ref[key];
+			const obj = ref[key];
 
 			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
 			if(obj.constructor === RepeatedList){
@@ -19,7 +19,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 				}
 			}
 			else{
-				for(var rp in obj){
+				for(let rp in obj){
 					if(typeof obj[rp] === 'object')
 						internal.model.removeModelBinding(obj[rp]);
 					else break;
@@ -28,7 +28,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 
 			// Clean ElementManipulator first
 			if(obj.$EM.constructor === ElementManipulatorProxy){
-				var list = obj.$EM.list;
+				const { list } = obj.$EM;
 				for (var i = list.length-1; i >= 0; i--) {
 					if(list[i].parentNode.isConnected === false){
 						if(!list[i].isComponent)
@@ -66,7 +66,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 
 			// Reset object proxies
 			Object.setPrototypeOf(obj, Object.prototype);
-			for(var objKey in obj){
+			for(let objKey in obj){
 				var temp = obj[objKey];
 				delete obj[objKey];
 				obj[objKey] = temp;
@@ -75,7 +75,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			continue;
 		}
 
-		var bindRef = bindedKey[key];
+		const bindRef = bindedKey[key];
 		for (var i = bindRef.length-1; i >= 0; i--) {
 			if(bindRef[i].constructor === Function)
 				continue;
@@ -114,9 +114,9 @@ internal.model.removeModelBinding = function(ref, isDeep){
 	if(isDeep !== void 0 || ref.sf$internal === void 0)
 		return;
 
-	var deep = ref.sf$internal.deepBinding;
-	for(var path in deep){
-		var model = deepProperty(ref, path.split('%$'));
+	const deep = ref.sf$internal.deepBinding;
+	for(let path in deep){
+		const model = deepProperty(ref, path.split('%$'));
 		if(model !== void 0)
 			internal.model.removeModelBinding(model, true);
 	}
@@ -130,13 +130,13 @@ function repeatedRemoveDeepBinding(obj, refPaths){
 	if(refPaths.length === 0)
 		return;
 
-	that:for (var a = 0; a < refPaths.length; a++) {
+	that:for (let a = 0; a < refPaths.length; a++) {
 		if(refPaths[a].length === 1)
 			continue;
 
-		var ref = refPaths[a].slice(0, -1);
+		const ref = refPaths[a].slice(0, -1);
 		if(obj.constructor === RepeatedList){
-			for (var i = 0; i < obj.length; i++) {
+			for (let i = 0; i < obj.length; i++) {
 				var deep = deepProperty(obj[i], ref);
 				if(deep === void 0)
 					continue;
@@ -146,7 +146,7 @@ function repeatedRemoveDeepBinding(obj, refPaths){
 			continue that;
 		}
 
-		for(var key in obj){
+		for(let key in obj){
 			var deep = deepProperty(obj[key], ref);
 			if(deep === void 0)
 				continue;
@@ -157,20 +157,20 @@ function repeatedRemoveDeepBinding(obj, refPaths){
 }
 
 function modelToViewBinding(model, propertyName, callback, elementBind, type){
-	var originalModel = model;
-	var originalPropertyName = propertyName;
+	const originalModel = model;
+	let originalPropertyName = propertyName;
 
 	// Dive to the last object, create if not exist
 	if(propertyName.constructor === Array){
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];
 		else{
-			var deep = deepProperty(model, propertyName.slice(0, -1));
+			const deep = deepProperty(model, propertyName.slice(0, -1));
 			if(deep === void 0)
 				return;
 
 			// Register every path as fixed object (where any property replacement will being assigned)
-			for (var i = 0, n = propertyName.length-1; i < n; i++) {
+			for (let i = 0, n = propertyName.length-1; i < n; i++) {
 				let value = model[propertyName[i]];
 
 				// Return if this not an object
@@ -181,10 +181,10 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 					Object.defineProperty(model, propertyName[i], {
 						enumerable: true,
 						configurable: true,
-						get:function(){
+						get(){
 							return value;
 						},
-						set:function(val){
+						set(val){
 							Object.assign(value, val);
 							return val;
 						}
@@ -206,7 +206,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);
 
-	var bindedKey = model.sf$bindedKey;
+	let bindedKey = model.sf$bindedKey;
 
 	if(bindedKey[propertyName] !== void 0){
 		var ref = bindedKey[propertyName];
@@ -233,7 +233,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	}
 
 	// Proxy property
-	var desc = Object.getOwnPropertyDescriptor(model, propertyName);
+	const desc = Object.getOwnPropertyDescriptor(model, propertyName);
 	if(desc === void 0 || desc.set !== void 0)
 		return;
 
@@ -245,34 +245,34 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		originalPropertyName = stringifyPropertyPath(originalPropertyName);
 	}
 
-	var objValue = model[propertyName]; // Object value
+	let objValue = model[propertyName]; // Object value
 	if(objValue === void 0 || objValue === null)
 		objValue = '';
 
-	var _on = model['on$'+propertyName]; // Everytime value's going changed, callback value will assigned as new value
-	var _m2v = model['m2v$'+propertyName]; // Everytime value changed from script (not from View), callback value will only affect View
+	let _on = model[`on$${propertyName}`]; // Everytime value's going changed, callback value will assigned as new value
+	let _m2v = model[`m2v$${propertyName}`]; // Everytime value changed from script (not from View), callback value will only affect View
 
 	if(_on)
-		Object.defineProperty(model, 'on$'+propertyName, {
-			set:function(val){_on = val},
-			get:function(){return _on}
+		Object.defineProperty(model, `on$${propertyName}`, {
+			set(val){_on = val},
+			get(){return _on}
 		});
 
 	if(_m2v)
-		Object.defineProperty(model, 'm2v$'+propertyName, {
-			set:function(val){_m2v = val},
-			get:function(){return _on}
+		Object.defineProperty(model, `m2v$${propertyName}`, {
+			set(val){_m2v = val},
+			get(){return _on}
 		});
 
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,
-		get:function(){
+		get(){
 			return objValue;
 		},
-		set:function(val){
+		set(val){
 			if(objValue !== val){
-				var newValue, noFeedback, temp;
+				let newValue, noFeedback, temp;
 				if(inputBoundRunning === false){
 					if(_m2v !== void 0){
 						newValue = _m2v.call(model, val);
@@ -287,7 +287,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 				objValue = newValue !== void 0 ? newValue : val;
 
-				for (var i = 0; i < bindedKey.length; i++) {
+				for (let i = 0; i < bindedKey.length; i++) {
 					temp = bindedKey[i];
 					if(temp.inputBoundRun){
 						temp(objValue, bindedKey.input);
@@ -320,7 +320,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		delete template.addresses;
 
 		if(element.parentNode !== null){
-			var newElem = template.html;
+			const newElem = template.html;
 			if(element.tagName.includes('-')){
 				newElem.sf$componentIgnore = true;
 				element.sf$componentIgnore = true;
@@ -335,11 +335,11 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 	}
 
 	// modelRefRoot_path index is not related with modelRefRoot property/key position
-	var properties = template.modelRefRoot_path;
+	let properties = template.modelRefRoot_path;
 	for (var i = 0; i < properties.length; i++) {
 		modelToViewBinding(modelScope, properties[i], {
-			element:element,
-			template:template
+			element,
+			template
 		});
 	}
 
@@ -353,8 +353,8 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		properties = template.modelRef_path;
 		for (var i = 0; i < properties.length; i++) {
 			modelToViewBinding(localModel, properties[i], {
-				element:element,
-				template:template
+				element,
+				template
 			});
 		}
 	}
