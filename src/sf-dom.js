@@ -1,9 +1,9 @@
-var IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
+const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
 
 sf.dom = function(selector, context){
 	if(!selector){
 		if(selector === void 0){
-			var temp = function(sel){return temp.find(sel)};
+			const temp = sel=> temp.find(sel);
 
 			if(IE11)
 				Object.defineProperty(temp, '_', {value:true});
@@ -31,8 +31,8 @@ sf.dom = function(selector, context){
 
 var $ = sf.dom; // Shortcut
 
-var css_str = /\-([a-z0-9])/;
-var css_strRep = function(f, m){return m.toUpperCase()};
+const css_str = /\-([a-z0-9])/;
+const css_strRep = (f, m)=> m.toUpperCase();
 class DOMList{
 	constructor(elements){
 		if(elements === null){
@@ -46,7 +46,7 @@ class DOMList{
 			return this;
 		}
 
-	    for (var i = 0; i < elements.length; i++)
+	    for (let i = 0; i < elements.length; i++)
 	    	this[i] = elements[i];
 
 		this.length = elements.length;
@@ -54,7 +54,7 @@ class DOMList{
 	}
 	push(el){
 		if(this._){
-			var news = recreateDOMList(this, this.length+1);
+			const news = recreateDOMList(this, this.length+1);
 			news[this.length] = el;
 
 			return news;
@@ -103,8 +103,8 @@ class DOMList{
 		if(this.length === 1) // Optimize perf ~66%
 			return _DOMList(this[0].querySelectorAll(selector));
 
-		var t = [];
-		for (var i = 0; i < this.length; i++)
+		const t = [];
+		for (let i = 0; i < this.length; i++)
 			t.push.apply(t, this[i].querySelectorAll(selector));
 		return _DOMList(t);
 	}
@@ -115,42 +115,42 @@ class DOMList{
 			return _DOMList(this[0].parentNode);
 		}
 
-		var t = [];
-		for (var i = 0; i < this.length; i++)
+		const t = [];
+		for (let i = 0; i < this.length; i++)
 			t.push.apply(t, this[i].closest(selector));
 		return _DOMList(t);
 	}
 	prev(selector){
-		var t;
+		let t;
 		if(this.length !== 0)
 			t = $.prevAll(this[0], selector, false, true);
 		return _DOMList(t || []);
 	}
 	prevAll(selector){
-		var t = [];
-		for (var i = 0; i < this.length; i++)
+		const t = [];
+		for (let i = 0; i < this.length; i++)
 			t.push.apply(t, $.prevAll(this[i], selector));
 		return _DOMList(t);
 	}
 	next(selector){
-		var t;
+		let t;
 		if(this.length !== 0)
 			t = $.prevAll(this[0], selector, true, true);
 		return _DOMList(t || []);
 	}
 	nextAll(selector){
-		var t = [];
-		for (var i = 0; i < this.length; i++)
+		const t = [];
+		for (let i = 0; i < this.length; i++)
 			t.push.apply(t, $.prevAll(this[i], selector, true));
 		return _DOMList(t);
 	}
 	children(selector){
-		var t = [];
+		const t = [];
 
-		for (var a = 0; a < this.length; a++) {
-			var child = this[a].children;
+		for (let a = 0; a < this.length; a++) {
+			const child = this[a].children;
 
-			for (var i = 0; i < child.length; i++){
+			for (let i = 0; i < child.length; i++){
 				if(child[i].matches(selector))
 					t.push(child[i]);
 			}
@@ -160,32 +160,32 @@ class DOMList{
 
 	// Action only
 	remove(){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i].remove();
 		return this;
 	}
 	empty(){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i].textContent = '';
 		return this;
 	}
 	addClass(name){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			DOMTokenList.prototype.add.apply(this[i].classList, name.split(' '));
 		return this;
 	}
 	removeClass(name){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			DOMTokenList.prototype.remove.apply(this[i].classList, name.split(' '));
 		return this;
 	}
 	toggleClass(name){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			DOMTokenList.prototype.toggle.apply(this[i].classList, name.split(' '));
 		return this;
 	}
 	hasClass(name){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			if(this[i].classList.contains(name))
 				return true;
 		return false;
@@ -194,7 +194,7 @@ class DOMList{
 		if(value === void 0)
 			return this.length !== 0 ? this[0][name] : '';
 
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i][name] = value;
 
 		return this;
@@ -203,13 +203,13 @@ class DOMList{
 		if(value === void 0)
 			return this.length !== 0 ? this[0].getAttribute(name) : '';
 
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i].setAttribute(name, value);
 
 		return this;
 	}
 	removeAttr(name){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i].removeAttribute(name);
 
 		return this;
@@ -219,7 +219,7 @@ class DOMList{
 			return this.length !== 0 ? this[0].style[name] : '';
 
 		if(name.constructor === Object){
-			for(var key in name){
+			for(let key in name){
 				if(key.includes('-') === false)
 					continue;
 
@@ -241,7 +241,7 @@ class DOMList{
 		return this;
 	}
 	on(event, selector, callback, options){
-		for (var i = 0; i < this.length; i++){
+		for (let i = 0; i < this.length; i++){
 			if(internal.model.specialEvent[event] !== void 0){
 				internal.model.specialEvent[event](this[i], null, callback);
 				continue;
@@ -253,15 +253,15 @@ class DOMList{
 		return this;
 	}
 	off(event, selector, callback, options){
-		for (var i = 0; i < this.length; i++){
+		for (let i = 0; i < this.length; i++){
 			if(event === void 0){
 				$.off(this[i]);
 				continue;
 			}
 
 			if(internal.model.specialEvent[event] !== void 0){
-				if(this[i]['sf$eventDestroy_'+event] !== void 0)
-					this[i]['sf$eventDestroy_'+event]();
+				if(this[i][`sf$eventDestroy_${event}`] !== void 0)
+					this[i][`sf$eventDestroy_${event}`]();
 
 				continue;
 			}
@@ -271,21 +271,21 @@ class DOMList{
 		return this;
 	}
 	once(event, selector, callback){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			$.once(this[i], event, selector, callback);
 		return this;
 	}
 	trigger(events, data, direct) {
 		events = events.split(' ');
-		for (var i = 0; i < events.length; i++) {
-			var event = events[i];
-			for (var j = 0; j < this.length; j++) {
+		for (let i = 0; i < events.length; i++) {
+			const event = events[i];
+			for (let j = 0; j < this.length; j++) {
 				if(direct === true){
 					this[j][event](data);
 					continue;
 				}
 
-				var evt;
+				let evt;
 				try {
 					evt = new window.CustomEvent(event, {detail: data, bubbles: true, cancelable: true});
 				} catch (e) {
@@ -300,12 +300,12 @@ class DOMList{
 		return this;
 	}
 	animateKey(name, callback, duration){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			$.animateKey(this[i], name, callback, duration);
 		return this;
 	}
 	each(callback){
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			callback.call(this[i], i, this);
 		return this;
 	}
@@ -313,7 +313,7 @@ class DOMList{
 		if(value === void 0)
 			return this.length !== 0 && this[0].$data ? this[0].$data[key] : void 0;
 
-		for (var i = 0; i < this.length; i++){
+		for (let i = 0; i < this.length; i++){
 			if(this[i].$data === void 0)
 				this[i].$data = {};
 			this[i].$data[key] = value;
@@ -321,7 +321,7 @@ class DOMList{
 		return this;
 	}
 	removeData(key){
-		for (var i = 0; i < this.length; i++){
+		for (let i = 0; i < this.length; i++){
 			if(this[i].$data === void 0)
 				continue;
 
@@ -331,7 +331,7 @@ class DOMList{
 	}
 	append(element){
 		if(element.constructor === Array){
-			for (var i = 0; i < element.length; i++)
+			for (let i = 0; i < element.length; i++)
 				this[0].append(element[i]);
 		}
 		else{
@@ -343,7 +343,7 @@ class DOMList{
 	}
 	prepend(element){
 		if(element.constructor === Array){
-			for (var i = 0; i < element.length; i++)
+			for (let i = 0; i < element.length; i++)
 				this[0].prepend(element[i]);
 		}
 		else{
@@ -363,13 +363,13 @@ class DOMList{
 		return _DOMList(this.slice(i, count > 0 ? count : void 0));
 	}
 	insertAfter(el){
-		var parent = el.parentNode;
-		var next = el.nextSibling;
+		const parent = el.parentNode;
+		const next = el.nextSibling;
 		parent.insertBefore(this[0], next);
 
 		// Sometime it could gone
 		if(this[0] === void 0){
-			var temp = toArray(this);
+			const temp = toArray(this);
 			temp[0] = el.previousSibling;
 
 			for (var i = 1; i < temp.length; i++)
@@ -384,12 +384,12 @@ class DOMList{
 		return this;
 	}
 	insertBefore(el){
-		var parent = el.parentNode;
+		const parent = el.parentNode;
 		parent.insertBefore(this[0], el);
 
 		// Sometime it could gone
 		if(this[0] === void 0){
-			var temp = toArray(this);
+			const temp = toArray(this);
 			temp[0] = el.nextSibling;
 
 			for (var i = 1; i < temp.length; i++)
@@ -408,7 +408,7 @@ class DOMList{
 		if(text === void 0)
 			return this.length !== 0 ? this[0].textContent : '';
 
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i].textContent = text;
 		return this;
 	}
@@ -416,7 +416,7 @@ class DOMList{
 		if(text === void 0)
 			return this.length !== 0 ? this[0].innerHTML : '';
 
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i].innerHTML = text;
 		return this;
 	}
@@ -424,7 +424,7 @@ class DOMList{
 		if(text === void 0)
 			return this.length !== 0 ? this[0].value : '';
 
-		for (var i = 0; i < this.length; i++)
+		for (let i = 0; i < this.length; i++)
 			this[i].text = text;
 		return this;
 	}
@@ -458,38 +458,38 @@ function _DOMList(list){
 	if(!list || list.forEach === void 0 || list.constructor !== NodeList)
 		return new DOMList(list);
 
-	var length = list.length;
+	const { length } = list;
 	Object.setPrototypeOf(list, DOMList.prototype);
 	list.length = length;
 	return list;
 }
 
 function queryElements(arr, selector){
-	var list = [];
-	for (var i = 0; i < arr.length; i++)
+	const list = [];
+	for (let i = 0; i < arr.length; i++)
 		list.push.apply(list, arr[i].querySelectorAll(selector));
 	return list;
 }
 
 // Fix for IE11 and Safari, due to lack of writable length
 function recreateDOMList($el, length){
-	var args = ['sel'];
+	const args = ['sel'];
 	for (var i = 1; i < length; i++)
-		args.push('a'+i);
+		args.push(`a${i}`);
 
-	var obj = {};
-	var temp = Function('o', 'return function('+args.join(',')+'){return o.find(sel)}')(obj);
+	const obj = {};
+	const temp = Function('o', `return function(${args.join(',')}){return o.find(sel)}`)(obj);
 	for (var i = 0; i < length; i++)
 		temp[i] = $el[i];
 
-	obj.find = function(sel){return temp.find(sel)};
+	obj.find = sel=> temp.find(sel);
 
 	Object.defineProperty(temp, '_', {value:true});
 	return Object.setPrototypeOf(temp, DOMList.prototype);
 }
 
 ;(function(){
-	var self = sf.dom;
+	const self = sf.dom;
 
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
 	self.fn = DOMList.prototype;
@@ -510,7 +510,7 @@ function recreateDOMList($el, length){
 	}
 
 	self.isChildOf = function(child, parent) {
-	     var node = child.parentNode;
+	     let node = child.parentNode;
 	     while (node !== null) {
 	         if(node === parent)
 	             return true;
@@ -532,8 +532,8 @@ function recreateDOMList($el, length){
 	}
 
 	self.prevAll = function(element, selector, isNext, one){
-		var result = [];
-		var findNodes = (!selector || selector.constructor !== String) ? true : false;
+		const result = [];
+		const findNodes = (!selector || selector.constructor !== String) ? true : false;
 
 		// Skip current element
 		element = isNext ? element.nextSibling : element.previousSibling;
@@ -566,9 +566,7 @@ function recreateDOMList($el, length){
 	}
 
 	// Shorcut
-	self.nextAll = function(element, selector, one){
-		return self.prevAll(element, selector, true, one);
-	}
+	self.nextAll = (element, selector, one)=> self.prevAll(element, selector, true, one)
 
 	/**
 	 * Listen to an event
@@ -582,14 +580,14 @@ function recreateDOMList($el, length){
 	self.on = function(element, event, selector, callback, options){
 		if(event.includes(' ')){
 			event = event.split(' ');
-			for (var i = 0; i < event.length; i++) {
+			for (let i = 0; i < event.length; i++) {
 				self.on(element, event[i], selector, callback, options);
 			}
 			return;
 		}
 
 		if(callback !== void 0 && callback.constructor === Object){
-			var temp = options;
+			const temp = options;
 			options = callback;
 			callback = temp;
 		}
@@ -607,9 +605,9 @@ function recreateDOMList($el, length){
 		if(selector){
 			// Check the related callback from `$0.sf$eventListener[event][index].callback`
 
-			var tempCallback = callback;
+			const tempCallback = callback;
 			callback = function(ev){
-				var target = ev.target.closest(selector);
+				const target = ev.target.closest(selector);
 				if(target !== null)
 					tempCallback.call(target, ev);
 			}
@@ -629,8 +627,8 @@ function recreateDOMList($el, length){
 
 			// Also listen for other window
 			windowEv[event].push(callback);
-			var winList = sf.window.list;
-			for(var key in winList){
+			const winList = sf.window.list;
+			for(let key in winList){
 				winList[key].addEventListener(event, callback, callback.options);
 				saveEvent(winList[key], event, callback);
 			}
@@ -698,7 +696,7 @@ function recreateDOMList($el, length){
 			if(windowEv[event] === void 0 || windowEv[event].length === 0)
 				return;
 
-			var list = windowEv[event];
+			const list = windowEv[event];
 			if(callback){
 				var i = list.indexOf(callback);
 				if(i !== -1)
@@ -710,8 +708,8 @@ function recreateDOMList($el, length){
 			removeEvent(window, event, selector, callback, options);
 
 			// Remove from other window
-			var winList = sf.window.list;
-			for(var key in winList)
+			const winList = sf.window.list;
+			for(let key in winList)
 				removeEvent(winList[key], event, selector, callback, options);
 
 			return;
@@ -746,12 +744,12 @@ function recreateDOMList($el, length){
 		else{
 			var ref = element.sf$eventListener;
 			if(ref !== void 0 && ref[event] !== void 0){
-				var ref2 = ref[event];
+				const ref2 = ref[event];
 				for (var i = ref2.length - 1; i >= 0; i--) {
 					if(selector && ref2[i].selector !== selector)
 						continue;
 
-					var options = ref2[i].options;
+					var { options } = ref2[i];
 					element.removeEventListener(event, ref2.splice(i, 1)[0], options);
 				}
 
@@ -780,7 +778,7 @@ function recreateDOMList($el, length){
 			element.offsetParent === null || window.getComputedStyle(element).visibility === 'hidden'
 		)) return;
 
-		var animationEnd = null;
+		let animationEnd = null;
 
 		if(element.style.animation !== void 0)
 			animationEnd = 'animationend';
@@ -788,16 +786,16 @@ function recreateDOMList($el, length){
 		if(element.style.WebkitAnimation !== void 0)
 			animationEnd = 'webkitAnimationEnd';
 
-	  	var style = element.style;
-		var arrange = animationName;
+	  	const { style } = element;
+		let arrange = animationName;
 
 		if(duration.duration !== void 0)
-			arrange += ' '+duration.duration+'s';
+			arrange += ` ${duration.duration}s`;
 		if(duration.ease !== void 0)
-			arrange += ' '+duration.ease;
+			arrange += ` ${duration.ease}`;
 
 		if(duration.delay !== void 0){
-			arrange += ' '+duration.delay+'s';
+			arrange += ` ${duration.delay}s`;
 
 			if(animationEnd === 'animationend')
 				var animationStart = 'animationstart';
@@ -822,11 +820,11 @@ function recreateDOMList($el, length){
 		else style.visibility = 'visible';
 
 		if(duration.iteration !== void 0)
-			arrange += ' '+duration.iteration;
+			arrange += ` ${duration.iteration}`;
 		if(duration.direction !== void 0)
-			arrange += ' '+duration.direction;
+			arrange += ` ${duration.direction}`;
 		if(duration.fill !== void 0)
-			arrange += ' '+duration.fill;
+			arrange += ` ${duration.fill}`;
 
 		style.webkitAnimation = style.animation = arrange;
 
@@ -839,8 +837,8 @@ function recreateDOMList($el, length){
 			element.classList.add('anim-element');
 
 			if(element.parentNode !== null){
-				var origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
-				var parentStyle = element.parentNode.style;
+				const origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
+				const parentStyle = element.parentNode.style;
 				element.parentNode.classList.add('anim-parent');
 				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
 			}
@@ -852,7 +850,7 @@ function recreateDOMList($el, length){
 						element.classList.remove('anim-element');
 						style.webkitAnimation = style.animation = '';
 
-						var parentStyle = element.parentNode.style;
+						const parentStyle = element.parentNode.style;
 						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
 
 						if(callback !== void 0) callback.call(element);
@@ -862,9 +860,9 @@ function recreateDOMList($el, length){
 		});
 	}
 
-	var emptyDOM = document.createElement('div');
+	const emptyDOM = document.createElement('div');
 	self.parseElement = function(html, elementOnly){
-		emptyDOM.innerHTML = '<template>'+html+'</template>';
+		emptyDOM.innerHTML = `<template>${html}</template>`;
 
 		if(elementOnly)
 			return emptyDOM.firstElementChild.content.children || [];
@@ -872,7 +870,7 @@ function recreateDOMList($el, length){
 	}
 
 	self.escapeText = function(text){
-		var tempDOM = emptyDOM;
+		const tempDOM = emptyDOM;
 		tempDOM.textContent = text;
 		return tempDOM.innerHTML;
 	}
@@ -881,17 +879,17 @@ function recreateDOMList($el, length){
 		if(elements.remove !== void 0)
 			return elements.remove();
 
-		for (var i = 0; i < elements.length; i++) {
+		for (let i = 0; i < elements.length; i++) {
 			elements[i].remove();
 		}
 	}
 
-	var documentElement = null;
+	let documentElement = null;
 	sf.loader.domReady(function(){
 		documentElement = document.body.parentNode;
 	});
 
-	var haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
+	const haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
 	self.getSelector = function(element, childIndexes, untilElement){
 		if(untilElement === void 0) untilElement = documentElement;
 		else if(element === untilElement){
@@ -900,20 +898,20 @@ function recreateDOMList($el, length){
 			return '';
 		}
 
-		var previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
+		const previousSibling = childIndexes ? 'previousSibling' : 'previousElementSibling';
 
-		var names = [];
+		const names = [];
 		while(element.parentElement !== null){
 			if(!childIndexes && element.id && !haveSymbol.test(element.id)){
-				names.unshift('#'+element.id);
+				names.unshift(`#${element.id}`);
 				break;
 			}
 			else{
 				if(element === untilElement)
 					break;
 				else {
-					var e = element;
-					var i = childIndexes ? 0 : 1;
+					let e = element;
+					let i = childIndexes ? 0 : 1;
 
 					while(e[previousSibling]){
 						e = e[previousSibling];
@@ -923,7 +921,7 @@ function recreateDOMList($el, length){
 					if(childIndexes)
 						names.unshift(i);
 					else
-						names.unshift(":nth-child("+i+")");
+						names.unshift(`:nth-child(${i})`);
 				}
 
 				element = element.parentElement;
@@ -941,12 +939,12 @@ function recreateDOMList($el, length){
 		if(array.length === 0) // 2ms
 			return context;
 
-		var element = context || documentElement;
+		let element = context || documentElement;
 
 		if(array[0].constructor === String && element.id !== array[0].substr(1)) // 3.9ms
 			element = element.querySelector(array[0]);
 
-		for (var i = 0; i < array.length; i++) { // 36ms
+		for (let i = 0; i < array.length; i++) { // 36ms
 			element = array[i] === 0
 				? element.firstChild
 				: element.childNodes.item(array[i]); // 37ms

@@ -6,31 +6,27 @@
 // object[0] is slower than array[0]
 
 // ToDo: directly create parse_index from here
-var dataParser = function(html, _model_, template, _modelScope, preParsedReference, justName){
-	var preParsed = [];
-	var lastParsedIndex = preParsedReference.length;
+const dataParser = function(html, _model_, template, _modelScope, preParsedReference, justName){
+	const preParsed = [];
+	const lastParsedIndex = preParsedReference.length;
 
-	var prepared = html.replace(sfRegex.dataParser, function(actual, temp){
+	const prepared = html.replace(sfRegex.dataParser, function(actual, temp){
 		temp = avoidQuotes(temp, function(temp_){
 			// Unescape HTML
 			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 			// Mask item variable
 			if(template.modelRef_regex !== void 0)
-				temp_ = temp_.replace(template.modelRef_regex, function(full, left, right){
-					return left+'_model_'+right;
-				});
+				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> left+'_model_'+right);
 
 			// Mask model for variable
-			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
-				return before+'_modelScope.'+matched;
-			});
+			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> before+'_modelScope.'+matched);
 		});
 
 		temp = temp.trim();
 
 		// Simplicity similar
-		var exist = preParsed.indexOf(temp);
+		const exist = preParsed.indexOf(temp);
 
 		if(exist === -1){
 			preParsed.push(temp);
@@ -38,53 +34,49 @@ var dataParser = function(html, _model_, template, _modelScope, preParsedReferen
 				preParsedReference.push(temp);
 			else
 				preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
-			return '{{%=' + (preParsed.length + lastParsedIndex - 1)+'%';
+			return `{{%=${preParsed.length + lastParsedIndex - 1}%`;
 		}
-		return '{{%=' + (exist + lastParsedIndex)+'%';
+		return `{{%=${exist + lastParsedIndex}%`;
 	});
 
 	return prepared;
 }
 
 // Dynamic data parser
-var uniqueDataParser = function(html, template, _modelScope){
+const uniqueDataParser = function(html, template, _modelScope){
 	// Build script preparation
 	html = html.replace(sfRegex.allTemplateBracket, function(full, matched){ // {[ ... ]}
 		if(sfRegex.anyCurlyBracket.test(matched) === false) // {{ ... }}
-			return "_result_ += '"+matched.split("\\").join("\\\\").split("'").join("\\'").split("\n").join("\\\n")+"'";
+			return `_result_ += '${matched.split("\\").join("\\\\").split("'").join("\\'").split("\n").join("\\\n")}'`;
 
-		var vars = [];
+		const vars = [];
 		matched = dataParser(matched, null, template, _modelScope, vars, true)
 				.split('\\').join('\\\\').split('"').join('\\"').split("\n").join("\\\n");
 
-		return '_result_ += (function(){return _escapeParse("'+matched+'", ['+vars.join(',')+' ])}).apply(null, arguments);';
+		return `_result_ += (function(){return _escapeParse("${matched}", [${vars.join(',')} ])}).apply(null, arguments);`;
 	});
 
-	var preParsedReference = [];
-	var prepared = html.replace(sfRegex.uniqueDataParser, function(actual, temp){
+	const preParsedReference = [];
+	const prepared = html.replace(sfRegex.uniqueDataParser, function(actual, temp){
 		temp = avoidQuotes(temp, function(temp_){
 			// Unescape HTML
 			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 			// Mask item variable
 			if(template.modelRef_regex !== void 0)
-				temp_ = temp_.replace(template.modelRef_regex, function(full, left, right){
-					return left+'_model_'+right;
-				});
+				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> left+'_model_'+right);
 
 			// Mask model for variable
-			return temp_.replace(template.modelRefRoot_regex, function(full, before, matched){
-				return before+'_modelScope.'+matched;
-			});
+			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> before+'_modelScope.'+matched);
 		});
 
-		var check = false;
+		let check = false;
 		check = temp.split('@if ');
 		if(check.length !== 1){
 			check = check[1].split(':');
 
-			var condition = check.shift();
-			var elseIf = findElse(check);
+			const condition = check.shift();
+			const elseIf = findElse(check);
 			elseIf.type = REF_IF;
 			elseIf.data = [null, _modelScope];
 
@@ -93,15 +85,15 @@ var uniqueDataParser = function(html, template, _modelScope){
 			if(elseIf.elseValue !== null)
 				elseIf.elseValue = elseIf.elseValue.trim();
 
-			for (var i = 0; i < elseIf.elseIf.length; i++) {
-				var ref = elseIf.elseIf[i];
+			for (let i = 0; i < elseIf.elseIf.length; i++) {
+				const ref = elseIf.elseIf[i];
 				ref[0] = ref[0].trim();
 				ref[1] = ref[1].trim();
 			}
 
 			// Push data
 			preParsedReference.push(elseIf);
-			return '{{%%=' + (preParsedReference.length - 1);
+			return `{{%%=${preParsedReference.length - 1}`;
 		}
 
 		// Warning! Avoid unencoded user inputted content
@@ -109,7 +101,7 @@ var uniqueDataParser = function(html, template, _modelScope){
 		check = temp.split('@exec');
 		if(check.length !== 1){
 			preParsedReference.push({type:REF_EXEC, data:[check[1], null, _modelScope]});
-			return '{{%%=' + (preParsedReference.length - 1);
+			return `{{%%=${preParsedReference.length - 1}`;
 		}
 		return '';
 	});
@@ -134,15 +126,15 @@ var findElse = function(text){
 	}
 	else else_ = null;
 
-	var obj = {
+	const obj = {
 		if:text.shift(),
 		elseValue:else_
 	};
 
 	// Separate condition script and value
 	obj.elseIf = new Array(text.length);
-	for (var i = 0; i < text.length; i++) {
-		var val = text[i].split(':');
+	for (let i = 0; i < text.length; i++) {
+		const val = text[i].split(':');
 		obj.elseIf[i] = [val.shift(), val.join(':')];
 	}
 
@@ -150,12 +142,12 @@ var findElse = function(text){
 }
 
 function addressAttributes(currentNode, template){
-	var attrs = currentNode.attributes;
-	var keys = [];
-	var indexes = 0;
-	for (var a = attrs.length - 1; a >= 0; a--) {
-		var attr = attrs[a];
-		var found = attr.value.includes('{{%=');
+	const attrs = currentNode.attributes;
+	const keys = [];
+	let indexes = 0;
+	for (let a = attrs.length - 1; a >= 0; a--) {
+		const attr = attrs[a];
+		let found = attr.value.includes('{{%=');
 		if(attr.name[0] === '@'){
 			// No template processing for this
 			if(found){
@@ -164,9 +156,7 @@ function addressAttributes(currentNode, template){
 			}
 
 			if(template.modelRef_regex)
-				attr.value = attr.value.replace(template.modelRef_regex, function(full, left, right){
-					return left+'_model_'+right;
-				});
+				attr.value = attr.value.replace(template.modelRef_regex, (full, left, right)=> left+'_model_'+right);
 
 			keys.push({
 				name:attr.name,
@@ -216,7 +206,7 @@ function addressAttributes(currentNode, template){
 }
 
 function toObserve(full, model, properties){
-	var place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
+	const place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
 
 	// Get property name
 	if(place[properties] === void 0){
@@ -235,8 +225,8 @@ function toObserve(full, model, properties){
 
 // Return element or
 internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic){
-	var reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
-	var injectTemplate = targetNode.getElementsByTagName('sf-template');
+	const reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
+	const injectTemplate = targetNode.getElementsByTagName('sf-template');
 
 	if(injectTemplate.length !== 0){
 		var temp = window.templates;
@@ -245,7 +235,7 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 
 		for (var i = injectTemplate.length - 1; i >= 0; i--) {
 			var ref = injectTemplate[i];
-			var path = ref.getAttribute('path')
+			let path = ref.getAttribute('path')
 			if(path === null){
 				path = ref.getAttribute('get-path');
 
@@ -280,7 +270,7 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 		}
 	}
 
-	var isDynamic = reservedTemplate.length !== 0;
+	let isDynamic = reservedTemplate.length !== 0;
 	if(cloneDynamic === true && isDynamic === true){
 		targetNode.sf$hasReserved = true;
 		targetNode.sf$componentIgnore = true;
@@ -317,14 +307,14 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 	return isDynamic;
 }
 
-var createModelKeysRegex = internal.model.createModelKeysRegex = function(targetNode, modelScope, mask){
-	var modelKeys = self.modelKeys(modelScope, true);
+const createModelKeysRegex = internal.model.createModelKeysRegex = function(targetNode, modelScope, mask){
+	const modelKeys = self.modelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
 		throw new Error("Template model was not found, maybe some script haven't been loaded");
 	}
 
-	var obj = {};
+	const obj = {};
 
 	// Don't match text inside quote, or object keys
 	obj.modelRefRoot_regex = RegExp(sfRegex.scopeVar+'('+modelKeys+')', 'g');
@@ -342,7 +332,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// Remove repeated list from further process
 	// To avoid data parser
-	var backup = targetNode.querySelectorAll('[sf-repeat-this]');
+	const backup = targetNode.querySelectorAll('[sf-repeat-this]');
 	for (var i = 0; i < backup.length; i++) {
 		var current = backup[i];
 		var flag = document.createElement('template');
@@ -350,7 +340,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		current.parentNode.replaceChild(flag, current);
 	}
 
-	var template;
+	let template;
 
 	// modelRefRoot_regex should be placed on template prototype
 	if(modelRegex.parse === void 0)
@@ -378,16 +368,16 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		template.modelRef_path = [];
 	}
 
-	var copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
+	let copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 
 	// Extract data to be parsed
 	copy = uniqueDataParser(copy, template, modelScope);
-	var preParsed = copy[1];
+	const preParsed = copy[1];
 	copy = dataParser(copy[0], null, template, modelScope, preParsed);
 
 	function findModelProperty(){
-		for (var i = 0; i < preParsed.length; i++) {
-			var current = preParsed[i];
+		for (let i = 0; i < preParsed.length; i++) {
+			const current = preParsed[i];
 
 			// Text or attribute
 			if(current.type === REF_DIRECT){
@@ -406,12 +396,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				current.if[1] = modelScript(mask, current.if[1], repeatedListKey);
 
 				if(current.elseValue !== null){
-					checkList += ';' + current.elseValue;
+					checkList += `;${current.elseValue}`;
 					current.elseValue = modelScript(mask, current.elseValue, repeatedListKey);
 				}
 
-				for (var a = 0; a < current.elseIf.length; a++) {
-					var refElif = current.elseIf[a];
+				for (let a = 0; a < current.elseIf.length; a++) {
+					const refElif = current.elseIf[a];
 
 					checkList += refElif.join(';');
 					refElif[0] = modelScript(mask, refElif[0], repeatedListKey);
@@ -431,10 +421,10 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	}
 
 	// Rebuild element
-	var tempSkip = internal.component.skip;
+	const tempSkip = internal.component.skip;
 	internal.component.skip = true;
 	if(container !== void 0)
-		copy = '<'+container+'>'+copy+'</'+container+'>';
+		copy = `<${container}>${copy}</${container}>`;
 
 	copy = $.parseElement(copy, true)[0];
 	if(container !== void 0){
@@ -445,7 +435,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	internal.component.skip = tempSkip;
 
 	// Restore element repeated list
-	var restore = copy.getElementsByClassName('sf-repeat-this-prepare');
+	const restore = copy.getElementsByClassName('sf-repeat-this-prepare');
 	for (var i = 0; i < backup.length; i++) {
 		var current = restore[0];
 		current.parentNode.replaceChild(backup[i], current);
@@ -458,12 +448,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// It seems we can't use for.. of because need to do from backward
 	// Start addressing
-	var nodes = Array.from(self.queuePreprocess(copy, true, template.specialElement));
-	var addressed = [];
+	const nodes = Array.from(self.queuePreprocess(copy, true, template.specialElement));
+	const addressed = [];
 
 	for (var i = nodes.length - 1; i >= 0; i--) {
 		var ref = nodes[i];
-		var temp = {nodeType: ref.nodeType};
+		const temp = {nodeType: ref.nodeType};
 
 		if(temp.nodeType === 1){ // Element
 			temp.attributes = addressAttributes(ref, template);
@@ -471,7 +461,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		}
 
 		else if(temp.nodeType === 3){ // Text node
-			var innerHTML = ref.textContent;
+			let innerHTML = ref.textContent;
 			var indexes = [];
 
 			innerHTML.replace(/{{%%=([0-9]+)/gm, function(full, match){
@@ -486,18 +476,18 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				}
 				ref.textContent = innerHTML.shift();
 
-				var parent = ref.parentNode;
-				var nextSibling = ref.nextSibling;
+				const parent = ref.parentNode;
+				const { nextSibling } = ref;
 
 				// Dynamic boundary start
-				var addressStart = null;
+				let addressStart = null;
 				if(indexes.length !== 0 && ref.textContent.length !== 0)
 					addressStart = $.getSelector(ref, true);
 				else if(ref.previousSibling !== null)
 					addressStart = $.getSelector(ref.previousSibling, true);
 
 				// Find boundary ends
-				var commentFlag = addressed.length;
+				const commentFlag = addressed.length;
 				for(var a = 0; a < indexes.length; a++){
 					var flag = document.createComment('');
 					parent.insertBefore(flag, nextSibling);
@@ -511,7 +501,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 					});
 
 					if(innerHTML[a]){
-						var textNode = document.createTextNode(innerHTML[a]);
+						const textNode = document.createTextNode(innerHTML[a]);
 						parent.insertBefore(textNode, nextSibling);
 
 						// Get new start flag
@@ -571,7 +561,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// Get the indexes for input bind
 	if(template.specialElement.input.length !== 0){
-		var specialInput = template.specialElement.input;
+		const specialInput = template.specialElement.input;
 		for (var i = 0; i < specialInput.length; i++) {
 			var el = specialInput[i];
 			var id, rule;
@@ -589,8 +579,8 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 			specialInput[i] = {
 				addr:$.getSelector(el, true),
-				rule:rule,
-				id:id
+				rule,
+				id
 			};
 		}
 	}
@@ -598,7 +588,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// Get the indexes for sf-repeat-this
 	if(template.specialElement.repeat.length !== 0){
-		var specialRepeat = template.specialElement.repeat;
+		const specialRepeat = template.specialElement.repeat;
 		for (var i = 0; i < specialRepeat.length; i++) {
 			var el = specialRepeat[i];
 			specialRepeat[i] = {
@@ -629,10 +619,10 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	return template;
 }
 
-var enclosedHTMLParse = false;
-var excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
+let enclosedHTMLParse = false;
+const excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
 self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
-	var childNodes = targetNode.childNodes;
+	const { childNodes } = targetNode;
 
 	if(temp === void 0){
 		temp = new Set();
@@ -648,8 +638,8 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 	}
 
 	// Scan from last into first element
-	for (var i = childNodes.length - 1; i >= 0; i--) {
-		var currentNode = childNodes[i];
+	for (let i = childNodes.length - 1; i >= 0; i--) {
+		const currentNode = childNodes[i];
 
 		if(excludes[currentNode.nodeName] !== void 0)
 			continue;
@@ -701,14 +691,14 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			}
 
 			// The scan is from bottom to first index
-			var enclosing = currentNode.textContent.indexOf('{[');
+			const enclosing = currentNode.textContent.indexOf('{[');
 			if(enclosing !== -1)
 				enclosedHTMLParse = false;
 			else if(enclosedHTMLParse === true)
 				continue;
 
 			// Start enclosed if closing pattern was found
-			var enclosed = currentNode.textContent.indexOf(']}');
+			const enclosed = currentNode.textContent.indexOf(']}');
 			if(enclosed !== -1 && (enclosing === -1 || enclosing > enclosed)){ // avoid {[ ... ]}
 				enclosedHTMLParse = true; // when ]} ...
 				continue;
@@ -718,7 +708,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			if(currentNode.textContent.includes('{{')){
 				if(extracting === void 0){
-					var theParent = currentNode.parentNode;
+					const theParent = currentNode.parentNode;
 
 					// If it's not single/regular template
 					if(currentNode.textContent.includes('{{@') || enclosing !== -1)
@@ -745,16 +735,16 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 }
 
 self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
-	var binded = new WeakSet();
+	const binded = new WeakSet();
 
-	for(var current of nodes){
+	for(let current of nodes){
 		// Get reference for debugging
 		processingElement = current;
 
 		if(current.nodeType === 3 && binded.has(current.parentNode) === false){
 			if(current.parentNode.tagName === 'SF-M'){
 				// Auto wrap element if parent is 'SF-M'
-				var replace = document.createElement('span');
+				const replace = document.createElement('span');
 				current.parentNode.insertBefore(replace, current);
 				replace.appendChild(current);
 			}
@@ -766,16 +756,16 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 		// Create attribute template only because we're not going to process HTML content
 		if(current.sf$onlyAttribute !== void 0){
-			var preParsedRef = [];
+			const preParsedRef = [];
 
-			var template = Object.create(modelKeysRegex);
+			const template = Object.create(modelKeysRegex);
 			template.parse = preParsedRef;
 			template.modelRefRoot = {};
 			template.modelRefRoot_path = [];
 
-			var attrs = current.attributes;
+			const attrs = current.attributes;
 			for (var i = 0; i < attrs.length; i++) {
-				var attr = attrs[i];
+				const attr = attrs[i];
 
 				if(attr.value.includes('{{'))
 					attr.value = dataParser(attr.value, null, template, modelRef, preParsedRef);
@@ -786,7 +776,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 			// Create as function
 			for (var i = 0; i < preParsedRef.length; i++) {
-				var ref = preParsedRef[i];
+				const ref = preParsedRef[i];
 
 				if(ref.type === REF_DIRECT){
 					toObserve.template.i = i;
@@ -803,8 +793,8 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 			revalidateTemplateRef(template, modelRef);
 
-			var parsed = templateExec(preParsedRef, modelRef);
-			var currentRef = [];
+			const parsed = templateExec(preParsedRef, modelRef);
+			const currentRef = [];
 			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef, void 0, template);
 
 			// Save reference to element
@@ -848,9 +838,9 @@ function revalidateTemplateRef(template, modelRef){
 
 // This will affect syntheticTemplate validation on property observer
 function revalidateBindingPath(refRoot, paths, modelRef){
-	for (var i = 0; i < paths.length; i++) {
-		var path = paths[i];
-		var deep = deepProperty(modelRef, path.slice(0, -1));
+	for (let i = 0; i < paths.length; i++) {
+		const path = paths[i];
+		const deep = deepProperty(modelRef, path.slice(0, -1));
 
 		// We're not bind the native stuff
 		if(path.includes('constructor')){
@@ -882,8 +872,8 @@ function revalidateBindingPath(refRoot, paths, modelRef){
 
 			// Remove other similar paths
 			that:for (var a = i+1; a < paths.length; a++) {
-				var check = paths[a];
-				for (var z = 0; z < path.length; z++) {
+				const check = paths[a];
+				for (let z = 0; z < path.length; z++) {
 					if(check[z] !== path[z])
 						continue that;
 				}
@@ -893,11 +883,11 @@ function revalidateBindingPath(refRoot, paths, modelRef){
 
 			// Replace the property, we need to search it and collect the index
 			var str = stringifyPropertyPath(path);
-			var collect = [];
+			const collect = [];
 
 			for(var keys in refRoot){
 				if(keys.indexOf(str) === 0){
-					var rootIndex = refRoot[keys];
+					const rootIndex = refRoot[keys];
 					delete refRoot[keys];
 
 					for (var a = 0; a < rootIndex.length; a++) {

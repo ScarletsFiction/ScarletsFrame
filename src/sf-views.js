@@ -1,17 +1,17 @@
 ;(function(){
-var gEval = routerEval;
+const gEval = routerEval;
 routerEval = void 0; // Avoid this function being invoked out of scope
 
-var rejectResponse = /<html/;
+const rejectResponse = /<html/;
 
 // Save reference
-var slash = '/';
+const slash = '/';
 
-var routingError = false;
-var routeDirection = 1;
-var historyIndex = (window.history.state || 1);
+let routingError = false;
+let routeDirection = 1;
+let historyIndex = (window.history.state || 1);
 
-var disableHistoryPush = false;
+let disableHistoryPush = false;
 
 window.addEventListener('popstate', function(ev){
 	// Don't continue if the last routing was error
@@ -39,21 +39,21 @@ window.addEventListener('popstate', function(ev){
 	disableHistoryPush = false;
 }, false);
 
-var cachedURL = {};
+const cachedURL = {};
 
 internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
-	var routes = [];
-	var pattern = /\/:([^/]+)/g;
-    var knownKeys = /^(path|url|template|templateURL|html|on|routes|beforeRoute|defaultData|cache)$/;
+	const routes = [];
+	const pattern = /\/:([^/]+)/g;
+    const knownKeys = /^(path|url|template|templateURL|html|on|routes|beforeRoute|defaultData|cache)$/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
 			selector += ' ';
 
-		for(var i = 0; i < obj.length; i++){
-            var ref = obj[i];
-			var current = addition+ref.path;
+		for(let i = 0; i < obj.length; i++){
+            const ref = obj[i];
+			let current = addition+ref.path;
 
 			if(ref.routes !== void 0)
 				addRoutes(ref.routes, current, selector, parent);
@@ -61,11 +61,11 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			current = current.split('//').join('/');
 
 			var keys = [];
-			var regex = current.replace(pattern, function(full, match){
+			const regex = current.replace(pattern, function(full, match){
 				keys.push(match);
 				return '/([^/]+)';
 			});
-			var route = RegExp('^' + regex + '$');
+			const route = RegExp(`^${regex}$`);
 
 			if(ref.url !== void 0)
 				route.url = ref.url;
@@ -78,11 +78,11 @@ internal.router.parseRoutes = function(obj_, selectorList){
 
 			else if(ref.html !== void 0){
 				// Create new element
-				var dom = route.html = document.createElement('sf-page-view');
+				const dom = route.html = document.createElement('sf-page-view');
 				internal.component.skip = true;
 
 				if(ref.html.constructor === String){
-					route.html = sf.dom.parseElement('<template>'+ref.html+'</template>', true)[0];
+					route.html = sf.dom.parseElement(`<template>${ref.html}</template>`, true)[0];
 					internal.component.skip = false;
 				}
 				else dom.appendChild(ref.html);
@@ -113,7 +113,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 			if(ref.cache)
 				route.cache = true;
 
-			var hasChild = [];
+			const hasChild = [];
 
 			for(var keys in ref) {
                 if(knownKeys.test(keys))
@@ -141,15 +141,15 @@ internal.router.parseRoutes = function(obj_, selectorList){
 }
 
 internal.router.findRoute = function(url){
-	for(var i=0; i<this.length; i++){
-		var found = url.match(this[i]);
+	for(let i=0; i<this.length; i++){
+		const found = url.match(this[i]);
 		if(found !== null){
-			var keys = this[i].keys;
+			const { keys } = this[i];
 			if(keys !== void 0){
-				var data = this[i].data = {};
+				const data = this[i].data = {};
 				found.shift();
 
-				for (var a = 0; a < keys.length; a++) {
+				for (let a = 0; a < keys.length; a++) {
 					data[keys[a]] = found[a];
 				}
 			}
@@ -161,16 +161,16 @@ internal.router.findRoute = function(url){
 	return false;
 }
 
-var self = sf.views = function View(selector, name){
+const self = sf.views = function View(selector, name){
 	if(name === void 0)
 		name = slash;
 
-	var self = this;
+	const self = this;
 
 	if(name)
 		sf.views.list[name] = self;
 
-	var pendingAutoRoute = false;
+	let pendingAutoRoute = false;
 
 	// Init current URL as current View Path
 	if(name === slash)
@@ -182,8 +182,8 @@ var self = sf.views = function View(selector, name){
 		pendingAutoRoute = true;
 	}
 
-	var initialized = false;
-	var firstRouted = false;
+	let initialized = false;
+	let firstRouted = false;
 
 	self.lastPath = '/';
 	self.lastDOM = null;
@@ -193,11 +193,11 @@ var self = sf.views = function View(selector, name){
 
 	self.maxCache = 4;
 	function removeOldCache(current){
-		var parent = current.parentNode;
+		const parent = current.parentNode;
 		if(parent.sf$cachedDOM === void 0)
 			parent.sf$cachedDOM = [];
 
-		var i = parent.sf$cachedDOM.indexOf(current);
+		const i = parent.sf$cachedDOM.indexOf(current);
 		if(i === -1)
 			parent.sf$cachedDOM.push(current);
 		else
@@ -207,9 +207,9 @@ var self = sf.views = function View(selector, name){
 			parent.sf$cachedDOM.shift().remove();
 	}
 
-	var rootDOM = self.rootDOM = {};
+	let rootDOM = self.rootDOM = {};
 	function getSelector(selector_, isChild, currentPath){
-		var DOM = (isChild || (rootDOM.isConnected ? rootDOM : document.body)).getElementsByTagName(selector_ || selector);
+		let DOM = (isChild || (rootDOM.isConnected ? rootDOM : document.body)).getElementsByTagName(selector_ || selector);
 		if(DOM.length === 0) return false;
 
 		DOM = DOM[0];
@@ -224,7 +224,7 @@ var self = sf.views = function View(selector, name){
 		// 	selector = selector_;
 
 		// Create listener for link click
-		var temp = null;
+		let temp = null;
 
 		// Bring the content to an sf-page-view element
 		if(DOM.childNodes.length !== 0){
@@ -234,7 +234,7 @@ var self = sf.views = function View(selector, name){
 				temp = document.createElement('sf-page-view');
 				DOM.insertBefore(temp, DOM.firstChild);
 
-				for (var i = 1, n = DOM.childNodes.length; i < n; i++) {
+				for (let i = 1, n = DOM.childNodes.length; i < n; i++) {
 					temp.appendChild(DOM.childNodes[1]);
 				}
 
@@ -256,13 +256,13 @@ var self = sf.views = function View(selector, name){
 		return DOM;
 	}
 
-    var selectorList = [selector];
+    const selectorList = [selector];
 	var routes = self.routes = [];
 	routes.findRoute = internal.router.findRoute;
 
 	internal.router.enabled = true;
 
-	var onEvent = {
+	const onEvent = {
 		'start':[],
 		'finish':[],
 		'loading':[],
@@ -273,7 +273,7 @@ var self = sf.views = function View(selector, name){
 	self.on = function(event, func){
 		if(event.includes(' ')){
 			event = event.split(' ');
-			for (var i = 0; i < event.length; i++) {
+			for (let i = 0; i < event.length; i++) {
 				self.on(event[i], func);
 			}
 
@@ -281,7 +281,7 @@ var self = sf.views = function View(selector, name){
 		}
 
 		if(onEvent[event] === void 0)
-			return console.error("Event '"+event+"' was not exist");
+			return console.error(`Event '${event}' was not exist`);
 
 		if(onEvent[event].includes(func) === false)
 			onEvent[event].push(func);
@@ -300,7 +300,7 @@ var self = sf.views = function View(selector, name){
 		}
 
 		if(onEvent[event] === void 0)
-			return console.error("Event '"+event+"' was not exist");
+			return console.error(`Event '${event}' was not exist`);
 
 		if(func === void 0){
 			onEvent[event].length = 0;
@@ -346,12 +346,12 @@ var self = sf.views = function View(selector, name){
 		return self;
 	}
 
-	var RouterLoading = false; // xhr reference if the router still loading
+	let RouterLoading = false; // xhr reference if the router still loading
 
 	var collection = null;
 	function findRelatedElement(currentURL){
-		var found = [];
-		for (var i = 0; i < collection.length; i++) {
+		const found = [];
+		for (let i = 0; i < collection.length; i++) {
 			if(currentURL.indexOf(collection[i].routePath) === 0)
 				found.push(collection[i]);
 		}
@@ -360,7 +360,7 @@ var self = sf.views = function View(selector, name){
 	}
 
 	function findCachedURL(currentURL){
-		for (var i = collection.length-1; i >= 0; i--) { // Search from deep view first
+		for (let i = collection.length-1; i >= 0; i--) { // Search from deep view first
 			if(currentURL === collection[i].routePath)
 				return collection[i];
 		}
@@ -369,14 +369,14 @@ var self = sf.views = function View(selector, name){
 	}
 
 	function routeErrorPassEvent(statusCode, data){
-		var ref = onEvent.error;
+		const ref = onEvent.error;
 
 		if(ref.length === 0){
 			console.error('Unhandled router error:', statusCode, data);
 			return;
 		}
 
-		for (var i = 0; i < ref.length; i++) {
+		for (let i = 0; i < ref.length; i++) {
 			ref[i](statusCode, data);
 		}
 	}
@@ -391,11 +391,11 @@ var self = sf.views = function View(selector, name){
 		window.history.go(routeDirection * -1);
 	}
 
-	var pageViewNodeName = 'SF-PAGE-VIEW';
+	const pageViewNodeName = 'SF-PAGE-VIEW';
 	function toBeShowed(element, event, path, data){
-		var relatedPage = [element];
+		const relatedPage = [element];
 
-		var parent = element.parentNode;
+		let parent = element.parentNode;
 		while(parent !== rootDOM && parent !== null){
 			if(parent.nodeName === pageViewNodeName)
 				relatedPage.unshift(parent);
@@ -403,8 +403,8 @@ var self = sf.views = function View(selector, name){
 			parent = parent.parentNode;
 		}
 
-		var lastSibling = null;
-		var parentSimilarity = null;
+		let lastSibling = null;
+		let parentSimilarity = null;
 
 		for (var i = 0; i < self.relatedDOM.length; i++) {
 			if(relatedPage.includes(self.relatedDOM[i]) === false){
@@ -417,7 +417,7 @@ var self = sf.views = function View(selector, name){
 			}
 		}
 
-		var showedSibling = null;
+		let showedSibling = null;
 		for (var i = 0; i < relatedPage.length; i++) {
 			if(showedSibling === null && relatedPage[i].parentNode === parentSimilarity)
 				showedSibling = relatedPage[i];
@@ -434,7 +434,7 @@ var self = sf.views = function View(selector, name){
 	}
 
 	self.removeRoute = function(path){
-		var found = routes.findRoute(path);
+		const found = routes.findRoute(path);
 		if(found === false)
 			return;
 
@@ -450,7 +450,7 @@ var self = sf.views = function View(selector, name){
 		routes.splice(i, 1);
 	}
 
-	var routeTotal = 0;
+	let routeTotal = 0;
 	self.goto = function(path, data, method, callback, _routeCount){
 		if(self.currentPath === path)
 			return;
@@ -479,7 +479,7 @@ var self = sf.views = function View(selector, name){
 			method = void 0;
 		}
 
-		var dynamicHTML = false;
+		let dynamicHTML = false;
 		if(data instanceof HTMLElement){
 			dynamicHTML = data;
 			data = void 0;
@@ -492,10 +492,10 @@ var self = sf.views = function View(selector, name){
 		pendingAutoRoute = false;
 
 		// Get template URL
-		var url = routes.findRoute(path);
+		const url = routes.findRoute(path);
 		if(!url){
 			return routeErrorPassEvent(404, {
-				path:path,
+				path,
 				message:"Path was not found"
 			});
 		}
@@ -519,7 +519,7 @@ var self = sf.views = function View(selector, name){
 				rootDOM = {};
 
 			if(getSelector() === false)
-				return console.error(name, "can't route to", path, "because element with selector '"+selector+"' was not found");
+				return console.error(name, "can't route to", path, `because element with selector '${selector}' was not found`);
 		}
 
 		// Abort other router loading if exist
@@ -531,14 +531,14 @@ var self = sf.views = function View(selector, name){
 		// Count all parent route
 		if(_routeCount === void 0){
 			routeTotal = 1;
-			var routeParent = url.parent;
+			let routeParent = url.parent;
 			while(routeParent !== void 0){
 				routeTotal++;
 				routeParent = routeParent.parent;
 			}
 		}
 
-		var currentData = self.data = url.data;
+		const currentData = self.data = url.data;
 
 		function insertLoadedElement(DOMReference, dom, pendingShowed){
 			dom.routerData = {};
@@ -550,7 +550,7 @@ var self = sf.views = function View(selector, name){
 			}
 
 			// Trigger loaded event
-			var rC = routeTotal + 1 - (_routeCount || 1);
+			const rC = routeTotal + 1 - (_routeCount || 1);
 			for (var i = 0; i < onEvent.loaded.length; i++) {
 				if(onEvent.loaded[i](rC, routeTotal, dom)) return;
 			}
@@ -559,7 +559,7 @@ var self = sf.views = function View(selector, name){
 			DOMReference.insertAdjacentElement('beforeend', dom);
 
 			if(self.dynamicScript !== false){
-				var scripts = dom.getElementsByTagName('script');
+				const scripts = dom.getElementsByTagName('script');
 				for (var i = 0; i < scripts.length; i++) {
 				    gEval(scripts[i].text);
 				}
@@ -567,7 +567,7 @@ var self = sf.views = function View(selector, name){
 
 			// Wait if there are some component that being initialized
 			// setTimeout(function(){
-				var tempDOM = self.currentDOM;
+				const tempDOM = self.currentDOM;
 				self.lastDOM = tempDOM;
 				self.currentDOM = dom;
 				self.currentPath = path;
@@ -610,7 +610,7 @@ var self = sf.views = function View(selector, name){
 			// });
 		}
 
-		var afterDOMLoaded = function(dom){
+		const afterDOMLoaded = function(dom){
 			if(url.selector || url.hasChild){
 				var selectorElement = dom.sf$viewSelector;
 
@@ -625,7 +625,7 @@ var self = sf.views = function View(selector, name){
 				var pendingShowed = [];
 				for (var i = 0; i < url.hasChild.length; i++) {
 					selectorElement[url.hasChild[i]] = getSelector(url.hasChild[i], dom, path);
-					var tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
+					const tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
 
 					if(tempPageView)
 						pendingShowed.unshift(tempPageView);
@@ -639,14 +639,14 @@ var self = sf.views = function View(selector, name){
 			if(url.selector === void 0)
 				var DOMReference = rootDOM;
 			else{ // Get element from selector
-				var selectorName = selectorList[url.selector];
+				const selectorName = selectorList[url.selector];
 				var DOMReference = null;
 
-				var last = findRelatedElement(path);
+				const last = findRelatedElement(path);
 
 				// Find current parent
 				for (var i = 0; i < last.length; i++) {
-					var found = last[i].sf$viewSelector;
+					const found = last[i].sf$viewSelector;
 					if(found === void 0 || found[selectorName] === void 0)
 						continue;
 
@@ -657,14 +657,14 @@ var self = sf.views = function View(selector, name){
 					if(url.parent === void 0){
 						dom.remove();
 						return routeError_({status:0}, {
-							path:path,
+							path,
 							target:dom,
 							message:"Parent element was not found while adding this element. Maybe it was disconnected from the DOM."
 						});
 					}
 					else{
 						// Try to load parent router first
-						var newPath = path.match(url.parent.forChild)[0];
+						const newPath = path.match(url.parent.forChild)[0];
 						return self.goto(newPath, false, method, function(parentNode){
 							DOMReference = parentNode.sf$viewSelector[selectorName];
 
@@ -677,15 +677,15 @@ var self = sf.views = function View(selector, name){
 							if(dom.routerData)
 								self.data = dom.routerData;
 							else if(dom.parentElement !== null){
-								var parent = dom.parentElement.closest('sf-page-view');
+								const parent = dom.parentElement.closest('sf-page-view');
 								if(parent !== null)
 									self.data = parent.routerData;
 							}
 
-							for (var i = 0; i < onEvent.finish.length; i++)
+							for (let i = 0; i < onEvent.finish.length; i++)
 								onEvent.finish[i](self.lastPath, path);
 
-							var defaultViewContent = dom.parentNode.defaultViewContent;
+							const { defaultViewContent } = dom.parentNode;
 							if(defaultViewContent !== void 0 && defaultViewContent.routePath !== path)
 								defaultViewContent.classList.remove('page-current');
 						}, _routeCount + 1 || 2);
@@ -699,7 +699,7 @@ var self = sf.views = function View(selector, name){
 			if(dom.routerData)
 				self.data = dom.routerData;
 			else if(dom.parentElement !== null){
-				var parent = dom.parentElement.closest('sf-page-view');
+				const parent = dom.parentElement.closest('sf-page-view');
 				if(parent !== null)
 					self.data = parent.routerData;
 			}
@@ -724,7 +724,7 @@ var self = sf.views = function View(selector, name){
 				return console.error("`window.templates` was not found");
 
 			// Create new element
-			url.html = sf.dom.parseElement('<template>'+window.templates[url.template+'.html']+'</template>', true)[0];
+			url.html = sf.dom.parseElement(`<template>${window.templates[url.template+'.html']}</template>`, true)[0];
 
 			if(hotReload)
 				url.template = url.template+'.html';
@@ -732,11 +732,11 @@ var self = sf.views = function View(selector, name){
 
 		if(url.html){
 			if(url.html.nodeName === 'TEMPLATE'){
-				var node = document.createElement('sf-page-view');
+				const node = document.createElement('sf-page-view');
 				node.classList.add('page-prepare');
 
-				var clone = url.html.cloneNode(true).content.childNodes;
-				for(var p=0, n=clone.length; p < n; p++){
+				const clone = url.html.cloneNode(true).content.childNodes;
+				for(let p=0, n=clone.length; p < n; p++){
 					node.insertBefore(clone[0], null);
 				}
 
@@ -748,9 +748,9 @@ var self = sf.views = function View(selector, name){
 			return true;
 		}
 
-		var thePath = (url.templateURL || url.url || path);
+		let thePath = (url.templateURL || url.url || path);
 		if(thePath[0] !== '/')
-			thePath = '/'+thePath;
+			thePath = `/${thePath}`;
 
 		for (var i = 0; i < onEvent.loading.length; i++)
 			if(onEvent.loading[i](_routeCount || 1, routeTotal)) return;
@@ -765,14 +765,14 @@ var self = sf.views = function View(selector, name){
 		.done(function(html_content){
 			if(rejectResponse.test(html_content)){
 				return routeError_({status:403}, {
-					path:path,
+					path,
 					requestURL:window.location.origin + thePath,
 					message:"Views request was received <html> while it was disallowed. Please check http response from Network Tab."
 				});
 			}
 
 			// Create new element
-			var dom = document.createElement('sf-page-view');
+			const dom = document.createElement('sf-page-view');
 			dom.classList.add('page-prepare');
 
 			var elements = sf.dom.parseElement(html_content);
@@ -783,7 +783,7 @@ var self = sf.views = function View(selector, name){
 			// Same as above but without the component initialization
 			if(url.templateURL !== void 0){
 				internal.component.skip = true;
-				var temp = document.createElement('sf-page-view');
+				const temp = document.createElement('sf-page-view');
 				temp.classList.add('page-prepare');
 
 				var elements = sf.dom.parseElement(html_content);
@@ -803,7 +803,7 @@ var self = sf.views = function View(selector, name){
 
 	// Use cache if exist
 	function tryCache(path){
-		var cachedDOM = false;
+		let cachedDOM = false;
 
 		function findDOM(dom){
 			if(dom === null)
@@ -813,8 +813,8 @@ var self = sf.views = function View(selector, name){
 			if(cachedDOM)
 				return true;
 
-			var childs = dom.children;
-			for (var i = 0; i < childs.length; i++) {
+			const childs = dom.children;
+			for (let i = 0; i < childs.length; i++) {
 				if(childs[i].routePath === path){
 					cachedDOM = childs[i];
 					// console.warn('cache found for', path, childs[i]);
@@ -843,7 +843,7 @@ var self = sf.views = function View(selector, name){
 		if(cachedDOM.routerData)
 			self.data = cachedDOM.routerData;
 		else if(cachedDOM.parentElement !== null){
-			var parent = cachedDOM.parentElement.closest('sf-page-view');
+			const parent = cachedDOM.parentElement.closest('sf-page-view');
 			if(parent !== null)
 				self.data = parent.routerData;
 		}
@@ -868,16 +868,16 @@ var self = sf.views = function View(selector, name){
 	}
 
 	return self;
-}
+};
 
 self.list = {};
 self.goto = function(url){
-	var parsed = sf.url.parse(url);
+	const parsed = sf.url.parse(url);
 	sf.url.data = parsed.data;
 
-	var views = self.list;
+	const views = self.list;
 
-	for(var list in self.list){
+	for(let list in self.list){
 		// For root path
 		if(list === slash){
 			if(views[slash].currentPath !== parsed.paths)
@@ -903,9 +903,9 @@ $(function(){
 	$.on(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
-		var attr = this.getAttribute('href');
+		const attr = this.getAttribute('href');
 		if(attr[0] === '@'){ // ignore
-			var target = this.getAttribute('target');
+			const target = this.getAttribute('target');
 			if(target)
 				window.open(attr.slice(1), target);
 			else window.location = attr.slice(1);
@@ -913,7 +913,7 @@ $(function(){
 		}
 
 		// Make sure it's from current origin
-		var path = this.href.replace(window.location.origin, '');
+		const path = this.href.replace(window.location.origin, '');
 
 		// If it's different domain
 		if(path.includes('//')){

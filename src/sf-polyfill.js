@@ -1,7 +1,7 @@
 if(Element.prototype.remove === void 0 || CharacterData.prototype.remove === void 0 || DocumentType.prototype.remove === void 0){
 	(function(){
-		var arr = [Element.prototype, CharacterData.prototype, DocumentType.prototype];
-		for (var i = 0; i < arr.length; i++) {
+		const arr = [Element.prototype, CharacterData.prototype, DocumentType.prototype];
+		for (let i = 0; i < arr.length; i++) {
 			if(arr[i].hasOwnProperty('remove'))
 				return;
 
@@ -18,7 +18,7 @@ if(Element.prototype.matches === void 0)
 
 if(Element.prototype.closest === void 0){
 	Element.prototype.closest = function(selector){
-		var elem = this;
+		let elem = this;
 		do {
 			if(elem === document)
 				return null;

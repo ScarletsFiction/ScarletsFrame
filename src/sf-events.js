@@ -4,7 +4,7 @@ sf.events = (function(){
 
 	function Events(name, defaultVal){
 		if(name.constructor === Array){
-			for (var i = 0; i < name.length; i++)
+			for (let i = 0; i < name.length; i++)
 				Events(name[i], defaultVal);
 
 			return;
@@ -17,10 +17,10 @@ sf.events = (function(){
 			if(Events[name] !== void 0 && Events[name] !== defaultVal)
 				console.warn("Events", name, "already has value:", Events[name]);
 
-			var trigger = function(){
-				var ref = self._statusTrigger[name];
+			const trigger = function(){
+				const ref = self._statusTrigger[name];
 				if(ref !== void 0){
-					for (var i = 0; i < ref.length; i++) {
+					for (let i = 0; i < ref.length; i++) {
 						try{
 							ref[i]();
 						} catch(e) {
@@ -34,12 +34,12 @@ sf.events = (function(){
 				}
 			}
 
-			var active = Events[name] || defaultVal;
+			let active = Events[name] || defaultVal;
 			Object.defineProperty(Events, name, {
 				enumerable:true,
 				configurable:true,
-				get:function(){return active},
-				set:function(val){
+				get(){return active},
+				set(val){
 					if(active === val)
 						return;
 
@@ -54,7 +54,7 @@ sf.events = (function(){
 		// Events.on (Listener)
 		else if(Events[name] === void 0){
 			Events[name] = function(){
-				for (var i = 0; i < callback.length; i++) {
+				for (let i = 0; i < callback.length; i++) {
 					try{
 						// .apply() is performant here
 						callback[i].apply(null, arguments);
@@ -70,7 +70,7 @@ sf.events = (function(){
 			if(self._listener[name] === void 0)
 				self._listener[name] = [];
 
-			var callback = self._listener[name];
+			const callback = self._listener[name];
 		}
 
 		defaultVal = null;
@@ -102,7 +102,7 @@ sf.events = (function(){
 		if(self._listener[name] === void 0)
 			return self._listener[name].length = 0;
 
-		var i = self._listener[name].indexOf(callback);
+		const i = self._listener[name].indexOf(callback);
 		if(i === -1) return;
 		self._listener[name].splice(i, 1);
 	}

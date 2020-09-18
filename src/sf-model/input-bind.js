@@ -1,11 +1,11 @@
-var inputBoundRunning = false;
-var callInputListener = function(ref, value){
-	var v2m = ref.sfModel['v2m$'+ref.sfBounded];
-	var on = ref.sfModel['on$'+ref.sfBounded];
+let inputBoundRunning = false;
+const callInputListener = function(ref, value){
+	const v2m = ref.sfModel[`v2m$${ref.sfBounded}`];
+	const on = ref.sfModel[`on$${ref.sfBounded}`];
 
 	if(v2m !== void 0 || on !== void 0){
-		var newValue;
-		var old = ref.sfModel[ref.sfBounded];
+		let newValue;
+		let old = ref.sfModel[ref.sfBounded];
 
 		if(old !== null && old !== void 0 && old.constructor === Array)
 			old = old.slice(0);
@@ -28,13 +28,13 @@ var callInputListener = function(ref, value){
 	}
 }
 
-var inputTextBound = function(e){
+const inputTextBound = function(e){
 	if(e.fromSFFramework === true) return;
 
-	var ref = inputBoundRunning = e.target;
+	const ref = inputBoundRunning = e.target;
 	ref.viewInputted = true;
-	var value = ref.typeData === Number ? Number(ref.value) : ref.value;
-	var newValue = callInputListener(ref, value);
+	const value = ref.typeData === Number ? Number(ref.value) : ref.value;
+	const newValue = callInputListener(ref, value);
 
 	if(ref.sfFeedback){
 		ref.sfFeedback = false;
@@ -44,17 +44,17 @@ var inputTextBound = function(e){
 	ref.sfModel[ref.sfBounded] = newValue !== void 0 ? newValue : value;
 }
 
-var inputFilesBound = function(e){
+const inputFilesBound = function(e){
 	if(e.fromSFFramework === true) return;
 
-	var ref = e.target;
-	var newValue = callInputListener(ref, ref.files);
+	const ref = e.target;
+	const newValue = callInputListener(ref, ref.files);
 	if(newValue !== void 0){
 		if(!newValue || newValue.length === 0)
 			ref.value = '';
 		else{
-			var temp = new DataTransfer();
-			for (var i = 0; i < newValue.length; i++)
+			const temp = new DataTransfer();
+			for (let i = 0; i < newValue.length; i++)
 				temp.items.add(newValue[i]);
 
 			ref.sfModel[ref.sfBounded] = temp.files;
@@ -67,24 +67,24 @@ var inputFilesBound = function(e){
 	else ref.sfModel[ref.sfBounded] = ref.files;
 }
 
-var inputCheckBoxBound = function(e){
+const inputCheckBoxBound = function(e){
 	if(e.fromSFFramework === true) return;
 
-	var ref = inputBoundRunning = e.target;
+	const ref = inputBoundRunning = e.target;
 	ref.viewInputted = true;
 
-	var model = ref.sfModel;
-	var constructor = model[ref.sfBounded].constructor;
+	const model = ref.sfModel;
+	const { constructor } = model[ref.sfBounded];
 
-	var value;
+	let value;
 	if(constructor === Boolean || ref.typeData === Boolean)
 		value = ref.checked;
 	else if(ref.typeData === Number)
 		value = Number(ref.value);
 	else
-		value = ref.value;
+		({ value } = ref);
 
-	var newValue = callInputListener(ref, value);
+	const newValue = callInputListener(ref, value);
 	if(newValue !== void 0){
 		value = newValue;
 
@@ -95,7 +95,7 @@ var inputCheckBoxBound = function(e){
 	}
 
 	if(constructor === Array){
-		var i = model[ref.sfBounded].indexOf(value);
+		const i = model[ref.sfBounded].indexOf(value);
 
 		if(i === -1 && ref.checked === true)
 			model[ref.sfBounded].push(value);
@@ -105,22 +105,22 @@ var inputCheckBoxBound = function(e){
 	else model[ref.sfBounded] = value;
 }
 
-var inputSelectBound = function(e){
+const inputSelectBound = function(e){
 	if(e.fromSFFramework === true) return;
 
-	var ref = inputBoundRunning = e.target;
+	const ref = inputBoundRunning = e.target;
 	ref.viewInputted = true;
-	var typeData = ref.typeData;
+	const { typeData } = ref;
 
-	var value = [];
+	let value = [];
 	if(ref.multiple === true){
-		var temp = ref.selectedOptions;
-		for (var i = 0; i < temp.length; i++)
+		const temp = ref.selectedOptions;
+		for (let i = 0; i < temp.length; i++)
 			value.push(typeData === Number ? Number(temp[i].value) : temp[i].value);
 	}
 	else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
-	var newValue = callInputListener(ref, value);
+	const newValue = callInputListener(ref, value);
 	if(newValue !== void 0){
 		if(ref.sfFeedback){
 			ref.sfFeedback = false;
@@ -133,9 +133,9 @@ var inputSelectBound = function(e){
 }
 
 var assignElementData = {
-	select:function(val, element){
-		var list = element.options;
-		var typeData = element.typeData;
+	select(val, element){
+		const list = element.options;
+		const { typeData } = element;
 
 		if(val.constructor !== Array){
 			for (var i = 0, n = list.length; i < n; i++) {
@@ -147,7 +147,7 @@ var assignElementData = {
 		else for (var i = 0, n = list.length; i < n; i++)
 			list[i].selected = val.includes(typeData === Number ? Number(list[i].value) : list[i].value);
 	},
-	checkbox:function(val, element){
+	checkbox(val, element){
 		if(val.constructor === Array)
 			element.checked = val.includes(element.typeData === Number ? Number(element.value) : element.value);
 		else if(val.constructor === Boolean)
@@ -158,12 +158,12 @@ var assignElementData = {
 			else element.checked = element.value == val;
 		}
 	},
-	file:function(val, element){
+	file(val, element){
 		if(!val || val.length === 0)
 			element.value = '';
 		else{
-			var temp = new DataTransfer();
-			for (var i = 0; i < val.length; i++)
+			const temp = new DataTransfer();
+			for (let i = 0; i < val.length; i++)
 				temp.items.add(val[i]);
 
 			element.files = temp.files;
@@ -171,11 +171,11 @@ var assignElementData = {
 	}
 }
 
-var inputBoundRun = function(val, elements){
+const inputBoundRun = function(val, elements){
 	if(val === null || val === void 0)
 		return;
 
-	for (var i = 0; i < elements.length; i++) {
+	for (let i = 0; i < elements.length; i++) {
 		if(inputBoundRunning === elements[i])
 			continue; // Avoid multiple assigment
 
@@ -192,7 +192,7 @@ var inputBoundRun = function(val, elements){
 			continue;
 		}
 
-		var ev = new Event('change');
+		const ev = new Event('change');
 		ev.fromSFFramework = true;
 		elements[i].dispatchEvent(ev);
 	}
@@ -201,7 +201,7 @@ var inputBoundRun = function(val, elements){
 // For dynamic reference checking
 inputBoundRun.inputBoundRun = true;
 
-var triggerInputEvent = function(e){
+const triggerInputEvent = function(e){
 	if(e.fromSFFramework === true) return;
 	if(e.target.viewInputted === true){
 		e.target.viewInputted = false;
@@ -210,19 +210,19 @@ var triggerInputEvent = function(e){
 	e.target.dispatchEvent(new Event('input'));
 }
 
-var elementBoundChanges = function(model, property, element, oneWay, modelLocal, propertyNameLocal){
+const elementBoundChanges = function(model, property, element, oneWay, modelLocal, propertyNameLocal){
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);
 
-	var val = model[property];
+	const val = model[property];
 
 	var type = 0;
-	var typeData = null;
+	let typeData = null;
 	if(val !== null && val !== void 0)
 		typeData = val.constructor;
 
-	var assignedType = (element.getAttribute('typedata') || '').toLowerCase();
+	const assignedType = (element.getAttribute('typedata') || '').toLowerCase();
 	if(assignedType === 'number')
 		typeData = Number;
 
@@ -274,10 +274,10 @@ var elementBoundChanges = function(model, property, element, oneWay, modelLocal,
 	modelToViewBinding(modelLocal, propertyNameLocal || property, inputBoundRun, element, type);
 }
 
-var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, modelScope){
-	var element, oneWay, propertyName;
+const bindInput = internal.model.bindInput = function(temp, modelLocal, mask, modelScope){
+	let element, oneWay, propertyName;
 
-	for (var i = 0; i < temp.length; i++) {
+	for (let i = 0; i < temp.length; i++) {
 		if(temp[i].getAttribute === void 0){
 			element = temp[i].el;
 			oneWay = temp[i].id === 1;
@@ -302,8 +302,8 @@ var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, mode
 			continue;
 		}
 
-		var model = modelLocal;
-		var currentModel = modelLocal;
+		let model = modelLocal;
+		let currentModel = modelLocal;
 		if(mask !== void 0){
 			if(propertyName.indexOf(mask+'.') === 0)
 				propertyName = propertyName.replace(/\w+\./, '');
@@ -312,9 +312,9 @@ var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, mode
 		}
 
 		// Get reference
-		var propertyNameLocal = null;
+		let propertyNameLocal = null;
 		if(model[propertyName] === void 0){
-			var deepScope = parsePropertyPath(propertyName);
+			let deepScope = parsePropertyPath(propertyName);
 			propertyNameLocal = deepScope.slice();
 
 			if(deepScope.length !== 1){
@@ -324,7 +324,7 @@ var bindInput = internal.model.bindInput = function(temp, modelLocal, mask, mode
 			else deepScope = void 0;
 
 			if(deepScope === void 0){
-				console.error('Can\'t get property "'+propertyName+'" on model', model);
+				console.error(`Can't get property "${propertyName}" on model`, model);
 				return;
 			}
 

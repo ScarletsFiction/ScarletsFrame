@@ -1,18 +1,16 @@
 // ToDo: component list on registrar[2] still using same reference
 
-sf.space = function(namespace, options){
-	return new Space(namespace, options);
-};
+sf.space = (namespace, options)=> new Space(namespace, options);
 
 // { name:{ default:{}, id:{}, ... } }
 sf.space.list = {};
 function getNamespace(name, id){
-	var scope = sf.space.list[name];
+	let scope = sf.space.list[name];
 	if(scope === void 0)
 		scope = sf.space.list[name] = {};
 
 	if(scope[id] === void 0){
-		var ref = scope.default;
+		let ref = scope.default;
 		if(ref === void 0){
 			ref = scope.default = createRoot_({}, {});
 
@@ -27,8 +25,8 @@ function getNamespace(name, id){
 }
 
 function createRoot_(modelFunc, registered){
-	var root_ = function(scope){
-		var temp = root_.registered[scope];
+	const root_ = function(scope){
+		let temp = root_.registered[scope];
 		if(temp) return temp[2];
 
 		temp = root_.root;
@@ -41,12 +39,12 @@ function createRoot_(modelFunc, registered){
 		}
 
 		return temp[scope];
-	}
+	};
 
 	root_.root = {};
 	root_.modelFunc = modelFunc;
 	root_.registered = registered;
-	var domList = root_.domList = [];
+	const domList = root_.domList = [];
 
 	return root_;
 }
@@ -56,11 +54,11 @@ if(window.sf$proxy)
 else
 	internal.space = {
 		empty:true,
-		initComponent:function(root, tagName, elem, $item, asScope){
+		initComponent(root, tagName, elem, $item, asScope){
 			sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
 		},
-		initModel:function(root, elem){
-			var name = elem.getAttribute('name');
+		initModel(root, elem){
+			const name = elem.getAttribute('name');
 
 			// Pending if model handler was not loaded
 			if(root.sf$space.modelFunc[name] === void 0)
@@ -98,7 +96,7 @@ class Space{
 	}
 
 	createHTML(index){
-		var that = this;
+		const that = this;
 		return $(window.templates[this.templatePath]
 			.replace(/<sf-space(.*?)(?:|="(.*?)")>/, function(full, namespace, index_){
 				if(index_ && isNaN(index_) === false)
@@ -106,9 +104,9 @@ class Space{
 
 				index = index || index_ || false;
 				if(index)
-					index = '="'+index+'"';
+					index = `="${index}"`;
 
-				return '<sf-space '+that.namespace+'>';
+				return `<sf-space ${that.namespace}>`;
 			}))[0];
 	}
 
@@ -118,7 +116,7 @@ class Space{
 }
 
 ;(function(){
-	var self = Space.prototype;
+	const self = Space.prototype;
 	self.model = function(name, options, func){
 		if(options !== void 0){
 			if(options.constructor === Function)
@@ -127,12 +125,12 @@ class Space{
 				internal.modelInherit[name] = options.extend;
 			}
 
-			var old = this.default.modelFunc[name];
+			const old = this.default.modelFunc[name];
 			this.default.modelFunc[name] = func;
 
 			if(old !== void 0 && old.constructor === Array)
-				for (var i = 0; i < old.length; i++){
-					var arg = old[i];
+				for (let i = 0; i < old.length; i++){
+					const arg = old[i];
 					sf.model.init(arg[0], arg[1], arg[2]);
 				}
 
@@ -185,8 +183,8 @@ class SFSpace extends HTMLElement {
 		forProxying.internalSpaceEmpty = internal.space.empty = false;
 
 		// Extract namespace name
-		for(var i=0, n=this.attributes.length; i < n; i++){
-			var name = this.attributes[i].name
+		for(let i=0, n=this.attributes.length; i < n; i++){
+			var { name } = this.attributes[i]
 			if(name === 'class' || name === 'style' || name === 'id')
 				continue;
 
@@ -202,9 +200,9 @@ class SFSpace extends HTMLElement {
 		this.sf$space.domList.push(this);
 	}
 	disconnectedCallback(){
-		var that = this;
-		var destroy = function(){
-			var i = that.sf$space.domList.indexOf(that);
+		const that = this;
+		const destroy = function(){
+			const i = that.sf$space.domList.indexOf(that);
 			if(i !== -1)
 				that.sf$space.domList.splice(i, 1);
 		}

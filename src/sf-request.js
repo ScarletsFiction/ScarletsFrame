@@ -1,18 +1,10 @@
-$.get = function(url, data, options, callback) {
-	return custom('GET', url, data, options, callback);
-}
-$.post = function(url, data, options, callback) {
-	return custom('POST', url, data, options, callback);
-}
-$.getJSON = function(url, data, options, callback) {
-	return custom('getJSON', url, data, options, callback);
-}
-$.postJSON = function(url, data, options, callback) {
-	return custom('postJSON', url, data, options, callback);
-}
+$.get = (url, data, options, callback) => custom('GET', url, data, options, callback)
+$.post = (url, data, options, callback) => custom('POST', url, data, options, callback)
+$.getJSON = (url, data, options, callback) => custom('getJSON', url, data, options, callback)
+$.postJSON = (url, data, options, callback) => custom('postJSON', url, data, options, callback)
 
 sf.request = custom;
-var statusCode = sf.request.statusCode = {};
+const statusCode = sf.request.statusCode = {};
 sf.request.onerror = null;
 sf.request.onsuccess = null;
 
@@ -44,7 +36,7 @@ function custom(method, url, data, options, callback){
 }
 
 function request(method, url, data, options, callback){
-	var xhr = new XMLHttpRequest();
+	const xhr = new XMLHttpRequest();
 	options.beforeOpen && options.beforeOpen(xhr);
 
 	if(method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE'){
@@ -64,20 +56,20 @@ function request(method, url, data, options, callback){
 			data = JSON.stringify(data);
 		}
 		else{
-			var temp = data;
+			const temp = data;
 
 			data = new FormData();
 			for(var name in temp){
-				var val = temp[name];
+				const val = temp[name];
 
 				if(val.constructor === Array){
-					for (var i = 0; i < val.length; i++)
+					for (let i = 0; i < val.length; i++)
 						data.append(name+'[]', val[i]);
 					continue;
 				}
 
 				if(val.constructor === Object){
-					for(var valKey in val)
+					for(let valKey in val)
 						data.append(name+'['+valKey+']', val[valKey]);
 					continue;
 				}
@@ -120,7 +112,7 @@ function request(method, url, data, options, callback){
 	xhr.onload = function(){
 		if((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0){
 			if(options.receiveType === 'JSON'){
-				var parsed = void 0;
+				let parsed = void 0;
 				try{
 					parsed = JSON.parse(xhr.responseText);
 				}catch(e){
@@ -159,17 +151,17 @@ function request(method, url, data, options, callback){
 }
 
 function serializeQuery(params) {
-	var keys = [];
-	for(var key in params){
-		var val = params[key];
+	const keys = [];
+	for(let key in params){
+		const val = params[key];
 		if (val.constructor === Array){
-			for (var i = 0; i < val.length; i++)
+			for (let i = 0; i < val.length; i++)
 				keys.push(key+"[]="+encodeURIComponent(val[i]));
 			continue;
 		}
 
 		if(val.constructor === Object){
-			for(var valKey in val)
+			for(let valKey in val)
 				keys.push(key+"["+valKey+"]="+encodeURIComponent(val[valKey]));
 			continue;
 		}

@@ -7,7 +7,7 @@ sf.model = function(name, options, func, namespace){
 	if((namespace || sf.component).registered[name] !== void 0)
 		return (namespace || root_)(name);
 
-	var scope = namespace || sf.model;
+	const scope = namespace || sf.model;
 	if(scope.root[name] === void 0){
 		if(internal.modelInherit[name] !== void 0)
 			scope.root[name] = new internal.modelInherit[name]();
@@ -30,7 +30,7 @@ function findBindListElement(el){
 }
 
 ;(function(){
-	var self = sf.model;
+	const self = sf.model;
 	self.root = {};
 	internal.modelPending = {};
 	internal.modelInherit = {};
@@ -43,9 +43,9 @@ function findBindListElement(el){
 		if(element === null)
 			return -1;
 
-		var i = -1;
-		var tagName = element.tagName;
-		var currentElement = element;
+		let i = -1;
+		const tagName = element.tagName;
+		const currentElement = element;
 
 		while(element !== null) {
 			if(element.tagName === tagName)
@@ -55,9 +55,9 @@ function findBindListElement(el){
 			element = element.previousSibling;
 		}
 
-		var ref = currentElement.sf$elementReferences && currentElement.sf$elementReferences.template.bindList;
+		const ref = currentElement.sf$elementReferences && currentElement.sf$elementReferences.template.bindList;
 
-		var VSM = currentElement.parentNode.$VSM;
+		const VSM = currentElement.parentNode.$VSM;
 		if(VSM !== void 0) return i + VSM.firstCursor;
 		return i;
 	}
@@ -75,9 +75,9 @@ function findBindListElement(el){
 		}
 		else internal.modelInherit[name] = options.extend;
 
-		var scope = namespace || self;
+		const scope = namespace || self;
 
-		var scopeTemp;
+		let scopeTemp;
 		if(hotReload)
 			hotModel(scope, name, func);
 		else{
@@ -89,8 +89,8 @@ function findBindListElement(el){
 		}
 
 		if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
-			var temp = internal.modelPending[name];
-			for (var i = 0; i < temp.length; i++) {
+			const temp = internal.modelPending[name];
+			for (let i = 0; i < temp.length; i++) {
 				sf.model.init(temp[i], temp[i].getAttribute('name'));
 			}
 
@@ -117,7 +117,7 @@ function findBindListElement(el){
 			getPrototypeMethods(keys, modelRef.constructor);
 
 			if(toString){
-				var temp = '';
+				let temp = '';
 				for(var key of keys){
 					if(temp.length === 0){
 						temp += key;
@@ -166,14 +166,14 @@ class SFModel extends HTMLElement {
 
 		delete this.sf$firstInit;
 		if(internal.space.empty === false){
-			var haveSpace = this.closest('sf-space');
+			const haveSpace = this.closest('sf-space');
 			if(haveSpace !== null){
 				internal.space.initModel(haveSpace, this);
 				return;
 			}
 		}
 
-		var name = this.getAttribute('name');
+		const name = this.getAttribute('name');
 
 		// Instant run when model scope was found or have loaded
 		if(sf.model.root[name] !== void 0 && internal.modelPending[name] === void 0){
@@ -183,7 +183,7 @@ class SFModel extends HTMLElement {
 				return sf.model.init(this, name);
 			}
 
-			var that = this;
+			const that = this;
 			sf.loader.onFinish(function(){
 				internal.language.refreshLang(that);
 				sf.model.init(that, name);
@@ -198,16 +198,16 @@ class SFModel extends HTMLElement {
 		internal.modelPending[name].push(this);
 	}
 	disconnectedCallback(){
-		var that = this;
-		var destroy = function(){
+		const that = this;
+		const destroy = function(){
 			if(that.model === void 0)
 				return;
 
 			if(that.model.$el){
-				var i = that.model.$el.indexOf(that);
+				const i = that.model.$el.indexOf(that);
 				if(i !== -1){
 					var model = that.model;
-					var temp = model.$el[i];
+					const temp = model.$el[i];
 
 					model.$el = model.$el.splice(i, 1);
 					model.destroy && model.destroy(temp, model.$el.length === 0);
@@ -215,7 +215,7 @@ class SFModel extends HTMLElement {
 			}
 
 			internal.model.removeModelBinding(that.model);
-		}
+		};
 
 		if(window.destroying)
 			return destroy();
@@ -230,8 +230,9 @@ var root_ = function(scope){
 	if(sf.component.registered[scope])
 		return sf.component(scope);
 
-	if(sf.model.root[scope] === void 0)
-		var scope_ = sf.model.root[scope] = {};
+	if(sf.model.root[scope] === void 0) {
+		sf.model.root[scope] = {};
+	}
 
 	return sf.model.root[scope];
 }

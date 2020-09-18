@@ -39,9 +39,9 @@ class API{
 		else var options = {};
 
 		if(this.accessToken){
-			var accessToken = this.accessToken;
+			const { accessToken } = this;
 			options.beforeSend = function(xhr){
-			    xhr.setRequestHeader('X-Authorization', 'Bearer '+accessToken);
+			    xhr.setRequestHeader('X-Authorization', `Bearer ${accessToken}`);
 			    beforeSend && beforeSend(xhr);
 			}
 		}

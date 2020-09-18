@@ -1,8 +1,8 @@
 function elseIfHandle(else_, arg){
-	var elseIf = else_.elseIf;
+	const { elseIf } = else_;
 
 	// Else if
-	for (var i = 0; i < elseIf.length; i++) {
+	for (let i = 0; i < elseIf.length; i++) {
 		// Check the condition
 		if(!elseIf[i][0](arg[0], arg[1], _escapeParse))
 			continue;
@@ -19,10 +19,10 @@ function elseIfHandle(else_, arg){
 }
 
 // ==== Template parser ====
-var templateParser_regex = /{{%=([0-9]+)%/g;
-var templateParser_regex_split = /{{%=[0-9]+%/g;
-var REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
-var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
+const templateParser_regex = /{{%=([0-9]+)%/g;
+const templateParser_regex_split = /{{%=[0-9]+%/g;
+const REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
+const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 	if(parse.length === 0) return parse;
 	var temp;
 
@@ -30,12 +30,12 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 		parsed = new Array(parse.length);
 
 	// Get or evaluate static or dynamic data
-	for (var i = 0, n = parse.length; i < n; i++) {
+	for (let i = 0, n = parse.length; i < n; i++) {
 		if(atIndex !== void 0 && atIndex.includes(i) === false)
 			continue;
 
-		var ref = parse[i];
-		var arg = ref.data;
+		const ref = parse[i];
+		const arg = ref.data;
 		arg[0] = item; //7ms
 
 		try{
@@ -94,8 +94,8 @@ var templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 	return parsed;
 }
 function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template){
-	for(var a = 0; a < ref.length; a++){
-		var refB = ref[a];
+	for(let a = 0; a < ref.length; a++){
+		const refB = ref[a];
 
 		// Pass to event handler
 		if(refB.event){
@@ -105,7 +105,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 			continue;
 		}
 
-		var isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
+		const isValueInput = (refB.name === 'value' && (current.tagName === 'TEXTAREA' ||
 			(current.tagName === 'INPUT' && sfRegex.inputAttributeType.test(current.type) === false)
 		));
 
@@ -146,11 +146,11 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 	}
 }
 
-var templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy, repeatListIndex){
+const templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy, repeatListIndex){
 	processingElement = template.html;
 
-	var html = original === true ? template.html : template.html.cloneNode(true);
-	var addresses = template.addresses;
+	let html = original === true ? template.html : template.html.cloneNode(true);
+	const { addresses } = template;
 
 	try{
 		var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);  //18ms
@@ -168,13 +168,13 @@ var templateParser = internal.model.templateParser = function(template, item, or
 		html.sf$repeatListIndex = repeatListIndex;
 
 	if(copy !== void 0){
-		var childs = html.childNodes;
+		const childs = html.childNodes;
 		for (var i = 0, n = childs.length; i < n; i++) {
 			copy.appendChild(childs[0]);
 		}
 
 		// Assign attributes
-		var attr = html.attributes;
+		const attr = html.attributes;
 		for (var i = 0; i < attr.length; i++) {
 			copy.setAttribute(attr[i].name, attr[i].value);
 		}
@@ -182,15 +182,15 @@ var templateParser = internal.model.templateParser = function(template, item, or
 		html = copy;
 	}
 
-	var changesReference = [];
-	var pendingInsert = [];
+	const changesReference = [];
+	const pendingInsert = [];
 
 	changesReference.parsed = parsed;
 
 	// Find element where the data belongs to
 	for (var i = 0; i < addresses.length; i++) {
 		var ref = addresses[i];
-		var current = $.childIndexes(ref.address, html); //26ms
+		const current = $.childIndexes(ref.address, html); //26ms
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
@@ -200,11 +200,11 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 		// Replace text node
 		if(ref.nodeType === 3){
-			var refA = current;
+			const refA = current;
 
 			changesReference.push({
 				textContent:refA,
-				ref:ref
+				ref
 			});
 
 			if(ref.direct !== void 0){
@@ -219,7 +219,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 		// Replace dynamic node
 		if(ref.nodeType === -1){
-			var cRef = {
+			const cRef = {
 				dynamicFlag:current,
 				direct:ref.parse_index,
 				parentNode:current.parentNode,
@@ -249,7 +249,7 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	// Run the pending element
 	for (var i = 0; i < pendingInsert.length; i++) {
 		var ref = pendingInsert[i];
-		var tDOM = parsed[ref.direct];
+		let tDOM = parsed[ref.direct];
 
 		// Check if it's an HTMLElement
 		if(tDOM.nodeType === 1){
@@ -267,8 +267,8 @@ var templateParser = internal.model.templateParser = function(template, item, or
 	if(template.specialElement){
 		if(template.specialElement.input){
 			// Process element for input bind
-			var specialInput = template.specialElement.input;
-			var specialInput_ = new Array(specialInput.length);
+			const specialInput = template.specialElement.input;
+			const specialInput_ = new Array(specialInput.length);
 			for (var i = 0; i < specialInput.length; i++) {
 				var ref = specialInput[i];
 				specialInput_[i] = {
@@ -283,8 +283,8 @@ var templateParser = internal.model.templateParser = function(template, item, or
 
 		if(template.specialElement.repeat){
 			// Process element for sf-repeat-this
-			var specialRepeat = template.specialElement.repeat;
-			var specialRepeat_ = new Array(specialRepeat.length);
+			const specialRepeat = template.specialElement.repeat;
+			const specialRepeat_ = new Array(specialRepeat.length);
 			for (var i = 0; i < specialRepeat.length; i++) {
 				var ref = specialRepeat[i];
 				specialRepeat_[i] = {
@@ -307,12 +307,12 @@ sf.async = function(mode){
 }
 
 var animFrameMode = false;
-var syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
+const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
 	if(property !== void 0){
 		var changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
 		if(!changes || changes.length === 0){
 			console.log(element, template, property, item);
-			console.error("Failed to run syntheticTemplate because property '"+property+"' is not observed");
+			console.error(`Failed to run syntheticTemplate because property '${property}' is not observed`);
 			return false;
 		}
 	}
@@ -323,13 +323,13 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 		var changes = void 0;
 	}
 
-	var changesReference = element.sf$elementReferences;
+	const changesReference = element.sf$elementReferences;
 
 	if(changesReference.parsed === void 0)
 		changesReference.parsed = new Array(template.parse.length);
 
-	var parsed = changesReference.parsed;
-	var repeatListIndex = element.sf$repeatListIndex;
+	const { parsed } = changesReference;
+	const repeatListIndex = element.sf$repeatListIndex;
 
 	if(!asyncing)
 		templateExec(template.parse, item, changes, parsed, repeatListIndex);
@@ -348,15 +348,15 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 		return;
 	}
 
-	var haveChanges = false, temp;
-	for (var i = 0; i < changesReference.length; i++) {
-		var cRef = changesReference[i];
+	let haveChanges = false, temp;
+	for (let i = 0; i < changesReference.length; i++) {
+		const cRef = changesReference[i];
 
 		if(cRef.dynamicFlag !== void 0){ // Dynamic data
 			if(parsed[cRef.direct] !== void 0){
-				var tDOM = Array.from($.parseElement(parsed[cRef.direct]));
-				var currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
-				var notExist = false;
+				const tDOM = Array.from($.parseElement(parsed[cRef.direct]));
+				const currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
+				let notExist = false;
 
 				// Replace if exist, skip if similar
 				for (var a = tDOM.length-1; a >= 0; a--) {
@@ -401,7 +401,7 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 				temp = parsed[cRef.ref.direct];
 				if(cRef.textContent.textContent === temp) continue;
 
-				var ref_ = cRef.textContent;
+				const ref_ = cRef.textContent;
 				// Remove old element if exist
 				if(ref_.sf$haveChilds === true){
 					while(ref_.previousSibling && ref_.previousSibling.sf$childRoot === ref_)
@@ -448,4 +448,4 @@ var syntheticTemplate = internal.model.syntheticTemplate = function(element, tem
 	}
 
 	return haveChanges;
-}
+};

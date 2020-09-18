@@ -1,18 +1,18 @@
 ;(function(){
-var self = sf.url = function(){
+const self = sf.url = function(){
 	// Hashes
-	var hashes_ = '';
-	for(var keys in hashes){
+	let hashes_ = '';
+	for(let keys in hashes){
 		if(hashes[keys] === '/') continue;
-		hashes_ += '#'+keys+hashes[keys];
+		hashes_ += `#${keys}${hashes[keys]}`;
 	}
 
-	var data_ = '|'+self.data.join('|');
+	const data_ = `|${self.data.join('|')}`;
 
 	return self.paths + hashes_ + (data_.length !== 1 ? data_ : '');
-}
+};
 
-var hashes = self.hashes = {};
+let hashes = self.hashes = {};
 self.data = [];
 self.paths = '/';
 
@@ -40,14 +40,14 @@ self.get = function(name, index){
 
 self.parse = function(url){
 	if(url !== void 0){
-		var data = {hashes:{}};
+		const data = {hashes:{}};
 
 		data.data = url.split('|');
 		var hashes_ = data.data.shift().split('#');
 
 		for (var i = 1; i < hashes_.length; i++) {
 			var temp = hashes_[i].split('/');
-			data.hashes[temp.shift()] = '/'+temp.join('/');
+			data.hashes[temp.shift()] = `/${temp.join('/')}`;
 		}
 
 		// Paths
@@ -61,7 +61,7 @@ self.parse = function(url){
 	hashes = self.hashes = {};
 	for (var i = 1; i < hashes_.length; i++) {
 		var temp = hashes_[i].split('/');
-		hashes[temp.shift()] = '/'+temp.join('/');
+		hashes[temp.shift()] = `/${temp.join('/')}`;
 	}
 
 	// Paths

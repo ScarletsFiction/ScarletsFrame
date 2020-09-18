@@ -3,9 +3,9 @@
 // day to make this working since using scroll event :(
 
 // ToDo: add sf$scrollPos and sf$heightPos
-var ElementManipulatorProxy = internal.EMP;
-var ElementManipulator = internal.EM;
-var VSM_Threshold = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+const ElementManipulatorProxy = internal.EMP;
+const ElementManipulator = internal.EM;
+const VSM_Threshold = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
 class VirtualScrollManipulator {
 	waitMap = new Set();
@@ -33,18 +33,18 @@ class VirtualScrollManipulator {
 		root.appendChild(this.iBottom);
 		root.insertBefore(firstEl, this.iBottom);
 
-		var styled = window.getComputedStyle(firstEl);
+		const styled = window.getComputedStyle(firstEl);
 		this.elMargin = Number(styled.marginBottom.slice(0, -2)) + Number(styled.marginTop.slice(0, -2));
 
 		this.elMaxHeight = this.elHeight = firstEl.offsetHeight + this.elMargin;
 		firstEl.remove();
 
-		var that = this;
+		const that = this;
 		requestAnimationFrame(function(){
 			setTimeout(function(){
 				if(!root.isConnected) return; // Somewhat it's detached
 
-				var scroller = internal.findScrollerElement(root);
+				let scroller = internal.findScrollerElement(root);
 				if(scroller === null){
 					scroller = root;
 					console.warn("Virtual List need scrollable container", root);
@@ -65,14 +65,14 @@ class VirtualScrollManipulator {
 	init(){
 		this.listSize = this.prepareSize + Math.round(this.rootHeight / this.elMaxHeight);
 
-		var that = this;
+		const that = this;
 		function intersectionCallback(){
-			var entries = that.lastEntries;
+			const entries = that.lastEntries;
 			that.lastEntries = void 0;
 
-			var refreshed = false;
-			for(var i=entries.length-1; i>=0; i--){
-				var entry = entries[i];
+			let refreshed = false;
+			for(let i=entries.length-1; i>=0; i--){
+				const entry = entries[i];
 				if(entry.intersectionRect.height <= 1)
 					continue;
 
@@ -102,19 +102,19 @@ class VirtualScrollManipulator {
 
 		if(this.dynamicSize){
 			this.rObserver = new ResizeObserver(function(entries){
-				var elList = that.elList;
-				var refresh = elList.length;
+				const { elList } = that;
+				let refresh = elList.length;
 
 				for(var i=0; i<entries.length; i++){
 					var el = entries[i].target;
-					var newHeight = el.offsetHeight + that.elMargin;
+					const newHeight = el.offsetHeight + that.elMargin;
 
 					if(el.sf$heightPos !== newHeight){
 						that.totalHeight -= el.sf$heightPos;
 						that.totalHeight += newHeight;
 						el.sf$heightPos = newHeight;
 
-						var index = elList.indexOf(el);
+						const index = elList.indexOf(el);
 						if(index !== -1 && refresh > index)
 							refresh = index;
 
@@ -129,7 +129,7 @@ class VirtualScrollManipulator {
 					elList[refresh++].sf$scrollPos = 1;
 
 				for(var i=refresh; i<elList.length; i++){
-					var before = elList[i-1];
+					const before = elList[i-1];
 					var el = elList[i];
 					if(before === void 0){
 						el.sf$scrollPos = 1;
@@ -177,10 +177,10 @@ class VirtualScrollManipulator {
 	}
 
 	waitObservedFinish(){
-		var startMark = this.iScroller.scrollTop;
-		var endMark = startMark + this.iScroller.offsetHeight;
+		const startMark = this.iScroller.scrollTop;
+		const endMark = startMark + this.iScroller.offsetHeight;
 
-		for(var val of waitMap){
+		for(let val of waitMap){
 			if(val.sf$scrollPos < startMark || val.sf$scrollPos > endMark)
 				continue;
 
@@ -196,11 +196,11 @@ class VirtualScrollManipulator {
 		if(this.listSize === void 0)
 			return; // Haven't been initialized
 
-		var scrollTop = this.iScroller.scrollTop;
-		var elList = this.elList;
+		const { scrollTop } = this.iScroller;
+		const { elList } = this;
 
 		for(var i = Math.floor(scrollTop/this.elMaxHeight); i < elList.length; i++){
-			var scrollPos = elList[i].sf$scrollPos;
+			const scrollPos = elList[i].sf$scrollPos;
 			if(scrollPos === void 0 || scrollPos >= scrollTop)
 				break;
 		}
@@ -209,7 +209,7 @@ class VirtualScrollManipulator {
 		if(i < 0) i=0;
 		else if(i > elList.length) i = elList.length - this.listSize;
 
-		var until = i + this.listSize + this.prepareSize;
+		let until = i + this.listSize + this.prepareSize;
 		if(until > elList.length) until = elList.length;
 
 		if(i >= until){
@@ -219,9 +219,9 @@ class VirtualScrollManipulator {
 
 		this.firstCursor = i;
 
-		var expect = elList[i] || null;
-		var next = this.iTop.nextElementSibling;
-		var last;
+		const expect = elList[i] || null;
+		let next = this.iTop.nextElementSibling;
+		let last;
 
 		while(next !== expect){
 			last = next;
@@ -288,7 +288,7 @@ class VirtualScrollManipulator {
 	}
 
 	scrollTo(index){
-		var target = this.elList[index];
+		const target = this.elList[index];
 		if(!target) return;
 
 		this.iScroller.scrollTop = target.sf$scrollPos;
@@ -304,12 +304,12 @@ class VirtualScrollManipulator {
 Object.assign(VirtualScrollManipulator.prototype, {
 	startInjection(){
 		// console.log(this.elList);
-		var elList = this.elList;
-		var n = this.listSize;
+		const { elList } = this;
+		let n = this.listSize;
 		if(n > elList.length)
 			n = elList.length;
 
-		for (var i = 0; i < n; i++){
+		for (let i = 0; i < n; i++){
 			this.iRoot.insertBefore(elList[i], this.iBottom);
 			this.newElementInit(elList[i], i-1);
 		}
@@ -386,7 +386,7 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	removeRange(index, other){
-		for (var i = index; i < other; i++) {
+		for (let i = index; i < other; i++) {
 			this.totalHeight -= this.elList[i].sf$heightPos;
 		}
 
@@ -415,10 +415,10 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	recalculateElementData(index){
-		var elList = this.elList;
-		for (var i = index+1; i < elList.length; i++) {
-			var before = elList[i-1];
-			var now = elList[i];
+		const { elList } = this;
+		for (let i = index+1; i < elList.length; i++) {
+			const before = elList[i-1];
+			const now = elList[i];
 			now.sf$scrollPos = before.sf$scrollPos + before.sf$heightPos;
 		}
 	},
@@ -435,9 +435,9 @@ class VirtualScroll{
 
 	_proxying(name, args){
 		if(this.$EM.constructor === ElementManipulatorProxy){
-			var list = this.$EM.list;
-			var val;
-			for (var i = 0; i < list.length; i++)
+			const { list } = this.$EM;
+			let val;
+			for (let i = 0; i < list.length; i++)
 				val = VirtualScrollManipulator.prototype[name].apply(list[i].$VSM, args);
 			return val;
 		}
@@ -466,10 +466,10 @@ class VirtualScroll{
 }
 
 ;(function(){
-	var styleInitialized = false;
+	let styleInitialized = false;
 	internal.addScrollerStyle = function(){
 		if(styleInitialized === false){
-			var style = document.getElementById('sf-styles');
+			let style = document.getElementById('sf-styles');
 
 			if(!style){
 				style = document.createElement('style');
@@ -499,10 +499,10 @@ class VirtualScroll{
 		}
 	}
 
-	var isScroller = /auto|scroll|overlay|hidden/;
+	const isScroller = /auto|scroll|overlay|hidden/;
 	internal.findScrollerElement = function(el){
-		var doc = el.ownerDocument;
-		var win = doc.defaultView;
+		const doc = el.ownerDocument;
+		const win = doc.defaultView;
 		if(!win) return null;
 
 		while(el !== null && isScroller.test(win.getComputedStyle(el).overflow) === false){

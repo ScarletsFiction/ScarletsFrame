@@ -2,11 +2,11 @@
 // For using as remote, developer should build
 // their own auth or communication system
 
-var headerTags = '';
-var windowDestroyListener = false;
+let headerTags = '';
+let windowDestroyListener = false;
 
 function winDestroy(win){
-	var opt = win.winOptions;
+	const opt = win.winOptions;
 	if(opt.onclose && opt.onclose() === false){
 		ev.preventDefault();
 		return false;
@@ -20,7 +20,7 @@ function winDestroy(win){
 	console.log(`%c[${opt.title}]`, "color: #9bff82", "Closed!");
 }
 
-var reqAnimFrame = window.requestAnimationFrame;
+const reqAnimFrame = window.requestAnimationFrame;
 function firstInitSFWindow(){
 	window.addEventListener('focus', function(){
 		window.requestAnimationFrame = reqAnimFrame;
@@ -29,25 +29,25 @@ function firstInitSFWindow(){
 
 sf.window = {
 	list:{},
-	destroy:function(id){
+	destroy(id){
 		if(id !== void 0)
 			winDestroy(this.list[id]);
 		else{
-			var list = this.list;
-			for(var k in list)
+			const { list } = this;
+			for(let k in list)
 				winDestroy(list[k]);
 		}
 
 		window.requestAnimationFrame = reqAnimFrame;
 	},
-	create:function(options, onLoaded){
+	create(options, onLoaded){
 		if(options === void 0)
 			options = {};
 
 		if(options.id === void 0)
 			options.id = Math.round(Math.random()*1000) + String(Date.now()).slice(3);
 
-		var winID = options.id;
+		const winID = options.id;
 		if(windowDestroyListener === false){
 			windowDestroyListener = true;
 			window.addEventListener('beforeunload', function(){
@@ -55,7 +55,7 @@ sf.window = {
 			});
 		}
 
-		var template;
+		let template;
 		if(options.templateHTML)
 			template = options.templateHTML;
 		else if(options.templatePath)
@@ -67,23 +67,23 @@ sf.window = {
 		if(template === void 0)
 			return console.error("Template not found") && false;
 
-		var windowFeatures = `width=${options.width || 500},height=${options.height || 400}`;
-		var linker = window.open(window.location.origin+(options.route || ''), '', windowFeatures);
+		const windowFeatures = `width=${options.width || 500},height=${options.height || 400}`;
+		const linker = window.open(window.location.origin+(options.route || ''), '', windowFeatures);
 
 		if(linker === null)
 			return console.error("It seems the popup was blocked by the browser") && false;
 
 		if(headerTags === ''){
 			headerTags = $('script[src*="scarletsframe"]')[0].outerHTML;
-			var styles = $('link, style');
+			const styles = $('link, style');
 
-			for (var i = 0; i < styles.length; i++)
+			for (let i = 0; i < styles.length; i++)
 				headerTags += styles[i].outerHTML;
 		}
 
 		linker.winOptions = options;
 
-		var windows = this.list;
+		const windows = this.list;
 		linker.loaded = function(){
 			windows[winID] = linker;
 
@@ -99,15 +99,15 @@ sf.window = {
 			// Component
 			portComponentDefinition(linker, sf.component.registered, linker.sf.component.registered);
 
-			var spaces = sf.space.list;
-			for(var name in spaces){
-				var space = spaces[name];
-				var ref = new linker.sf.space(name, {
+			const spaces = sf.space.list;
+			for(let name in spaces){
+				const space = spaces[name];
+				const ref = new linker.sf.space(name, {
 					templatePath: space.templatePath
 				});
 
 				// Model
-				for(var id in space.list)
+				for(let id in space.list)
 					ref.list[id].root = space[id].root;
 
 				// Component
@@ -137,10 +137,10 @@ sf.window = {
 
 			sf.lang.init(linker.document.body);
 
-			for(var ev in windowEv){
-				var callbackList = windowEv[ev];
-				for (var i = 0; i < callbackList.length; i++) {
-					var evCallback = callbackList[i];
+			for(let ev in windowEv){
+				const callbackList = windowEv[ev];
+				for (let i = 0; i < callbackList.length; i++) {
+					const evCallback = callbackList[i];
 					linker.addEventListener(ev, evCallback, evCallback.options);
 				}
 			}
@@ -174,7 +174,7 @@ sf.window = {
 
 		return true;
 	},
-	source:function(lists, ev){
+	source(lists, ev){
 		if(ev === void 0)
 			ev = window.event;
 
@@ -184,8 +184,8 @@ sf.window = {
 		if(lists === void 0)
 			return lists.view;
 
-		var doc = ev.view.document;
-		for (var i = 0; i < lists.length; i++) {
+		const doc = ev.view.document;
+		for (let i = 0; i < lists.length; i++) {
 			if(lists[i].ownerDocument === doc)
 				return lists[i];
 		}
@@ -197,17 +197,17 @@ sf.window = {
 var windowEv = {};
 
 function portComponentDefinition(linker, from, into){
-	for(var name in from){
-		var ref = into[name] = from[name].slice(0);
+	for(let name in from){
+		const ref = into[name] = from[name].slice(0);
 
 		if(ref[3] !== void 0){
 			if(ref[3].constructor === Object){
-				var template = Object.create(ref[3]);
+				const template = Object.create(ref[3]);
 				ref[3] = template;
 				template.html = $.parseElement(template.html.outerHTML)[0];
 			}
 			else{
-				var tempDOM = ref[3].tempDOM;
+				const { tempDOM } = ref[3];
 				ref[3] = $.parseElement(ref[3].outerHTML)[0];
 				ref[3].tempDOM = tempDOM;
 			}

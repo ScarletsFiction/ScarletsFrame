@@ -1,33 +1,31 @@
-var rejectUntrusted = false;
+let rejectUntrusted = false;
 sf.security = function(level){
 	if(level & 1) rejectUntrusted = true;
 }
 
 function eventHandler(that, data, _modelScope, rootHandler, template){
-	var modelKeys = sf.model.modelKeys(_modelScope, true);
+	const modelKeys = sf.model.modelKeys(_modelScope, true);
 
-	var direct = false;
-	var script = data.value;
+	let direct = false;
+	let script = data.value;
 	script = avoidQuotes(script, function(script_){
 		if(sfRegex.anyOperation.test(script_) === false)
 			direct = true;
 
 		// Replace variable to refer to current scope
-		return script_.replace(template.modelRefRoot_regex, function(full, before, matched){
-			return before+'_modelScope.'+matched;
-		});
+		return script_.replace(template.modelRefRoot_regex, (full, before, matched)=> before+'_modelScope.'+matched);
 	});
 
-	var name_ = data.name.slice(1);
+	const name_ = data.name.slice(1);
 
 	// Create custom listener for repeated element
 	if(rootHandler){
-		var elementIndex = $.getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
+		const elementIndex = $.getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
 
 		if(rootHandler.sf$listListener === void 0)
 			rootHandler.sf$listListener = {};
 
-		var withKey = false;
+		let withKey = false;
 		if(template.uniqPattern !== void 0)
 			withKey = true;
 
@@ -40,7 +38,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 				var func = new Function('event', '_model_', '_modelScope', script);
 		}
 
-		var listener = rootHandler.sf$listListener[name_];
+		let listener = rootHandler.sf$listListener[name_];
 		if(listener === void 0){
 			listener = rootHandler.sf$listListener[name_] = [[elementIndex, func]];
 			listener.set = new Set([elementIndex.join('')]);
@@ -53,11 +51,11 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 			return;
 		}
 
-		var found = null;
-		var findEventFromList = function(arr){
+		let found = null;
+		const findEventFromList = function(arr){
 			// Partial array compare ([0,1,2] with [0,1,2,3,4] ==> true)
-			parent:for (var i = 0; i < listener.length; i++) {
-				var ref = listener[i];
+			parent:for (let i = 0; i < listener.length; i++) {
+				const ref = listener[i];
 				if(arr === void 0){
 					if(ref[0].length !== 0)
 						continue;
@@ -66,8 +64,8 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 					return ref[1];
 				}
 
-				var ref2 = ref[0];
-				for (var z = 0; z < ref2.length; z++) {
+				const ref2 = ref[0];
+				for (let z = 0; z < ref2.length; z++) {
 					if(ref2[z] !== arr[z])
 						continue parent;
 				}
@@ -81,12 +79,12 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 
 		// We need to get element with 'sf-bind-list' and check current element before processing
 		script = function(event){
-			var elem = event.target;
+			const elem = event.target;
 			if(elem === rootHandler)
 				return;
 
 			if(!elem.sf$elementReferences || !elem.sf$elementReferences.template.bindList){
-				var realThat = findBindListElement(elem);
+				const realThat = findBindListElement(elem);
 				if(realThat === null)
 					return;
 
@@ -110,14 +108,14 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	// Wrap into a function, var event = firefox compatibility
 	else script = (new Function('_modelScope', 'event', script)).bind(that, _modelScope);
 
-	var containSingleChar = false;
-	var keys = name_.split('.');
-	var eventName = keys.shift();
+	let containSingleChar = false;
+	let keys = name_.split('.');
+	let eventName = keys.shift();
 
 	if(eventName === 'unfocus')
 		eventName = 'blur';
 
-	for (var i = keys.length - 1; i >= 0; i--) {
+	for (let i = keys.length - 1; i >= 0; i--) {
 		if(keys[i].length === 1){
 			containSingleChar = true;
 			break;
@@ -128,7 +126,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	if(rejectUntrusted)
 		keys.add('trusted');
 
-	var options = {};
+	const options = {};
 	if(keys.has('once')){
 		options.once = true;
 		keys.delete('once');
@@ -160,14 +158,14 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		return;
 	}
 
-	var pointerCode = 0;
+	let pointerCode = 0;
 	if(keys.has('left')){ pointerCode |= 1; keys.delete('left'); }
 	if(keys.has('middle')){ pointerCode |= 2; keys.delete('middle'); }
 	if(keys.has('right')){ pointerCode |= 4; keys.delete('right'); }
 	if(keys.has('4th')){ pointerCode |= 8; keys.delete('4th'); }
 	if(keys.has('5th')){ pointerCode |= 16; keys.delete('5th'); }
 
-	var modsCode = 0;
+	let modsCode = 0;
 	if(keys.has('ctrl')){ modsCode |= 1; keys.delete('ctrl'); }
 	if(keys.has('alt')){ modsCode |= 2; keys.delete('alt'); }
 	if(keys.has('shift')){ modsCode |= 4; keys.delete('shift'); }
@@ -241,7 +239,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	// console.error(231, rootHandler, that, eventName, callback, options);
 
 	if(options.once === void 0){
-		(rootHandler || that)['sf$eventDestroy_'+eventName] = function(){
+		(rootHandler || that)[`sf$eventDestroy_${eventName}`] = function(){
 			(rootHandler || that).removeEventListener(eventName, callback, options);
 		}
 	}
@@ -251,11 +249,11 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		that = null;
 }
 
-var toDegree = 180/Math.PI;
+const toDegree = 180/Math.PI;
 var specialEvent = internal.model.specialEvent = {
-	taphold:function(that, keys, script, _modelScope){
-		var set = new Set();
-		var evStart = null;
+	taphold(that, keys, script, _modelScope){
+		const set = new Set();
+		let evStart = null;
 
 		function callback(){
 			that.removeEventListener('pointerup', callbackEnd, {once:true});
@@ -320,12 +318,12 @@ var specialEvent = internal.model.specialEvent = {
 			that.removeEventListener('pointerdown', callbackStart);
 		}
 	},
-	gesture:function(that, keys, script, _modelScope){
+	gesture(that, keys, script, _modelScope){
 		touchGesture(that, function callback(data){
 			script.call(that, data);
 		});
 	},
-	dragmove:function(that, keys, script, _modelScope){
+	dragmove(that, keys, script, _modelScope){
 		that.style.touchAction = 'none';
 		function callbackMove(ev){
 			ev.stopPropagation();
@@ -336,8 +334,8 @@ var specialEvent = internal.model.specialEvent = {
 
 		function prevent(ev){ev.preventDefault()}
 
-		var view = document;
-		var callbackStart = function(ev){
+		let view = document;
+		const callbackStart = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
 
@@ -350,7 +348,7 @@ var specialEvent = internal.model.specialEvent = {
 			view.addEventListener('pointercancel', callbackEnd, {once:true});
 		}
 
-		var callbackEnd = function(ev){
+		const callbackEnd = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
 
@@ -361,7 +359,7 @@ var specialEvent = internal.model.specialEvent = {
 			view.removeEventListener('touchmove', prevent, {passive: false});
 			view.removeEventListener('pointercancel', callbackEnd, {once:true});
 			that.addEventListener('pointerdown', callbackStart, {once:true});
-		}
+		};
 
 		that.addEventListener('pointerdown', callbackStart);
 
@@ -372,7 +370,7 @@ var specialEvent = internal.model.specialEvent = {
 			document.removeEventListener('pointerup', callbackEnd, {once:true});
 		}
 	},
-	filedrop:function(that, keys, script, _modelScope){
+	filedrop(that, keys, script, _modelScope){
 		that.addEventListener('dragover', function dragover(ev){
 			ev.preventDefault();
 		});
@@ -381,8 +379,8 @@ var specialEvent = internal.model.specialEvent = {
 			ev.preventDefault();
 
 			if(ev.dataTransfer.items) {
-				var found = [];
-				for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+				const found = [];
+				for (let i = 0; i < ev.dataTransfer.items.length; i++) {
 					if (ev.dataTransfer.items[i].kind === 'file')
 						found.push(ev.dataTransfer.items[i].getAsFile());
 				}
@@ -400,17 +398,17 @@ var specialEvent = internal.model.specialEvent = {
 };
 
 function touchGesture(that, callback){
-	var startScale = 0;
-	var startAngle = 0;
-	var lastScale = 0;
-	var lastAngle = 0;
-	var actionBackup = '';
+	let startScale = 0;
+	let startAngle = 0;
+	let lastScale = 0;
+	let lastAngle = 0;
+	let actionBackup = '';
 
-	var force = false;
-	var pointers = [];
+	let force = false;
+	const pointers = [];
 
 	function findAnd(action, ev){
-		for (var i = pointers.length - 1; i >= 0; i--) {
+		for (let i = pointers.length - 1; i >= 0; i--) {
 			if(pointers[i].pointerId === ev.pointerId){
 				if(action === 2) // delete
 					pointers.splice(i, 1);
@@ -424,8 +422,8 @@ function touchGesture(that, callback){
 			pointers.push(ev);
 	}
 
-	var view = document;
-	var callbackStart = function(ev){
+	let view = document;
+	const callbackStart = function(ev){
 		ev.preventDefault();
 		findAnd(0, ev);
 
@@ -449,8 +447,8 @@ function touchGesture(that, callback){
 		if(pointers.length === 2){
 			ev.stopPropagation();
 
-			var dx = pointers[1].clientX - pointers[0].clientX;
-			var dy = pointers[1].clientY - pointers[0].clientY;
+			const dx = pointers[1].clientX - pointers[0].clientX;
+			const dy = pointers[1].clientY - pointers[0].clientY;
 
 			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
 			lastAngle = startAngle = Math.atan2(dy, dx) * toDegree;
@@ -466,19 +464,19 @@ function touchGesture(that, callback){
 		else view.removeEventListener('pointermove', callbackMove);
 	}
 
-	var callbackMove = function(ev){
+	const callbackMove = function(ev){
 		ev.preventDefault();
 		ev.stopPropagation();
 		ev.stopImmediatePropagation();
 		findAnd(1, ev);
 
-		var p1 = pointers[0];
-		var p2 = pointers[1];
-		var dx = p2.clientX - p1.clientX;
-		var dy = p2.clientY - p1.clientY;
+		const p1 = pointers[0];
+		const p2 = pointers[1];
+		const dx = p2.clientX - p1.clientX;
+		const dy = p2.clientY - p1.clientY;
 
-		var currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
-		var currentAngle = Math.atan2(dy, dx) * toDegree;
+		const currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
+		const currentAngle = Math.atan2(dy, dx) * toDegree;
 
 		ev.scale = currentScale - lastScale;
 		ev.angle = currentAngle - lastAngle;
@@ -489,9 +487,9 @@ function touchGesture(that, callback){
 
 		lastScale = currentScale;
 		lastAngle = currentAngle;
-	}
+	};
 
-	var callbackEnd = function(ev){
+	const callbackEnd = function(ev){
 		ev.preventDefault();
 		findAnd(2, ev);
 
@@ -521,7 +519,7 @@ function touchGesture(that, callback){
 				callback(ev);
 			}
 		}
-	}
+	};
 
 	that.addEventListener('pointerdown', callbackStart);
 
@@ -530,7 +528,7 @@ function touchGesture(that, callback){
 		$(sf.window).off('keydown', keyStart);
 	}
 
-	var keyEnd = function(ev){
+	const keyEnd = function(ev){
 		if(!force || ev.ctrlKey)
 			return;
 
@@ -539,9 +537,9 @@ function touchGesture(that, callback){
 
 		view.removeEventListener('pointermove', callbackMove);
 		view.removeEventListener('keyup', keyEnd);
-	}
+	};
 
-	var keyStart = function(ev){
+	const keyStart = function(ev){
 		if(!ev.ctrlKey)
 			return;
 
@@ -549,7 +547,7 @@ function touchGesture(that, callback){
 
 		force = true;
 		view.addEventListener('keyup', keyEnd);
-	}
+	};
 
 	$(sf.window).on('keydown', keyStart);
 }
