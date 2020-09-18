@@ -230,8 +230,9 @@ var root_ = function(scope){
 	if(sf.component.registered[scope])
 		return sf.component(scope);
 
-	if(sf.model.root[scope] === void 0)
-		const scope_ = sf.model.root[scope] = {};
+	if(sf.model.root[scope] === void 0) {
+		sf.model.root[scope] = {};
+	}
 
 	return sf.model.root[scope];
 }
