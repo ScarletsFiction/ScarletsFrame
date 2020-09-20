@@ -558,56 +558,62 @@ const self = sf.views = function View(selector, name){
 			// Let page script running first
 			DOMReference.insertAdjacentElement('beforeend', dom);
 
+			// This may dangerous if the server send a dynamic HTML
+			// that have user/server generated content
 			if(self.dynamicScript !== false){
 				const scripts = dom.getElementsByTagName('script');
 				for (var i = 0; i < scripts.length; i++) {
-				    gEval(scripts[i].text);
+					var script = scripts[i];
+
+					if(!!script.src)
+						$.get(script.src, gEval);
+				    else gEval(script.text);
+
+				    script.sfLoaded = true;
 				}
 			}
 
-			// Wait if there are some component that being initialized
-			// setTimeout(function(){
-				const tempDOM = self.currentDOM;
-				self.lastDOM = tempDOM;
-				self.currentDOM = dom;
-				self.currentPath = path;
+			// ToDo: Maybe need to wait if there are some component that being initialized
+			const tempDOM = self.currentDOM;
+			self.lastDOM = tempDOM;
+			self.currentDOM = dom;
+			self.currentPath = path;
 
-				if(url.on !== void 0 && url.on.coming)
-					url.on.coming(self.data);
+			if(url.on !== void 0 && url.on.coming)
+				url.on.coming(self.data);
 
-				if(url.cache)
-					dom.routeNoRemove = true;
+			if(url.cache)
+				dom.routeNoRemove = true;
 
-				toBeShowed(dom);
+			toBeShowed(dom);
 
-				if(pendingShowed !== void 0)
-					self.relatedDOM.push.apply(self.relatedDOM, pendingShowed);
+			if(pendingShowed !== void 0)
+				self.relatedDOM.push.apply(self.relatedDOM, pendingShowed);
 
-				if(tempDOM !== null){
-					// Old route
-					if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
-						tempDOM.routeCached.on.leaving(path, url);
-				}
+			if(tempDOM !== null){
+				// Old route
+				if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.leaving)
+					tempDOM.routeCached.on.leaving(path, url);
+			}
 
-				// Save current URL
-				dom.routeCached = url;
-				dom.routePath = path;
+			// Save current URL
+			dom.routeCached = url;
+			dom.routePath = path;
 
-				dom.classList.remove('page-prepare');
-				routingError = false;
+			dom.classList.remove('page-prepare');
+			routingError = false;
 
-				// Clear old cache
-				removeOldCache(dom);
+			// Clear old cache
+			removeOldCache(dom);
 
-				if(url.on !== void 0 && url.on.showed)
-					url.on.showed(self.data);
+			if(url.on !== void 0 && url.on.showed)
+				url.on.showed(self.data);
 
-				if(tempDOM !== null){
-					// Old route
-					if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.hidden)
-						tempDOM.routeCached.on.hidden(path, url);
-				}
-			// });
+			if(tempDOM !== null){
+				// Old route
+				if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.hidden)
+					tempDOM.routeCached.on.hidden(path, url);
+			}
 		}
 
 		const afterDOMLoaded = function(dom){
