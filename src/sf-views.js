@@ -565,6 +565,9 @@ const self = sf.views = function View(selector, name){
 				for (var i = 0; i < scripts.length; i++) {
 					var script = scripts[i];
 
+					if(script.sfLoaded)
+						continue;
+
 					if(!!script.src)
 						$.get(script.src, gEval);
 				    else gEval(script.text);
