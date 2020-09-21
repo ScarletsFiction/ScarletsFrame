@@ -161,6 +161,9 @@ internal.router.findRoute = function(url){
 }
 
 const self = sf.views = function View(selector, name){
+	if(this === sf)
+		return console.error('sf.views need to be constructed using "new sf.views"');
+
 	if(name === void 0)
 		name = slash;
 
