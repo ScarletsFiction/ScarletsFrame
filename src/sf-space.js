@@ -1,9 +1,4 @@
 // ToDo: component list on registrar[2] still using same reference
-
-sf.space = (namespace, options)=> new Space(namespace, options);
-
-// { name:{ default:{}, id:{}, ... } }
-sf.space.list = {};
 function getNamespace(name, id){
 	let scope = sf.space.list[name];
 	if(scope === void 0)
@@ -114,6 +109,11 @@ class Space{
 
 	}
 }
+
+sf.space = Space;
+
+// { name:{ default:{}, id:{}, ... } }
+sf.space.list = {};
 
 ;(function(){
 	const self = Space.prototype;
