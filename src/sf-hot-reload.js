@@ -6,7 +6,7 @@ let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 let backupTemplate, backupCompTempl;
 
 ;(function(){
-const gEval = routerEval;
+const gEval = hotReloadEval;
 
 sf.hotReload = function(mode){
 	if(mode === 1)

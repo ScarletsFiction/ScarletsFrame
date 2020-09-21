@@ -12,13 +12,13 @@
 	alert("This browser was not supported");
   }
 
-  // Dynamic script when using router to load template
-  // Feature is disabled by default
-  function routerEval(code){eval(code)}
+  // Dynamic script when using hot reload feature
+  // Feature is disabled if not using hot reload
+  function hotReloadEval(code){eval(code)}
 
-  if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global, routerEval);
-  else global.sf = factory(global, routerEval);
-}(typeof window !== "undefined" ? window : this, (function(window, routerEval){
+  if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global, hotReloadEval);
+  else global.sf = factory(global, hotReloadEval);
+}(typeof window !== "undefined" ? window : this, (function(window, hotReloadEval){
 
 'use strict';
 

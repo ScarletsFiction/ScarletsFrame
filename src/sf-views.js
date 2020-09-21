@@ -1,6 +1,5 @@
 ;(function(){
-const gEval = routerEval;
-routerEval = void 0; // Avoid this function being invoked out of scope
+hotReloadEval = void 0; // Avoid this function being invoked out of scope
 
 const rejectResponse = /<html/;
 
@@ -568,11 +567,17 @@ const self = sf.views = function View(selector, name){
 					if(script.sfLoaded)
 						continue;
 
-					if(!!script.src)
-						$.get(script.src, gEval);
-				    else gEval(script.text);
+					var newTag = document.createElement('script');
+					if(script.src)
+						newTag.src = script.src;
+					else newTag.text = script.text;
 
-				    script.sfLoaded = true;
+					var next = script.nextSibling;
+					var parent = script.parentNode;
+					script.remove();
+					parent.insertBefore(newTag, next);
+
+				    newTag.sfLoaded = true;
 				}
 			}
 
