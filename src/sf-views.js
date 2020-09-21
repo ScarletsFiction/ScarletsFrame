@@ -190,6 +190,7 @@ const self = sf.views = function View(selector, name){
 	self.lastPath = '/';
 	self.lastDOM = null;
 	self.currentDOM = null;
+	self.dynamicScript = false;
 	self.relatedDOM = [];
 	self.data = {};
 
