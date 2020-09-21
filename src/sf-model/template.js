@@ -397,7 +397,7 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 			}
 
 			// Direct value
-			if(parsed[cRef.ref.direct]){
+			if(parsed[cRef.ref.direct] !== void 0){
 				temp = parsed[cRef.ref.direct];
 				if(cRef.textContent.textContent === temp) continue;
 
@@ -421,7 +421,7 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 			}
 
 			// Direct value
-			else if(parsed[cRef.ref.direct]){
+			else if(parsed[cRef.ref.direct] !== void 0){
 				temp = parsed[cRef.ref.direct];
 				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}
@@ -437,7 +437,7 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
 
 			// Direct value
-			else if(parsed[cRef.ref.direct])
+			else if(parsed[cRef.ref.direct] !== void 0)
 				temp = parsed[cRef.ref.direct];
 			else continue;
 

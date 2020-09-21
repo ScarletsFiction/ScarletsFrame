@@ -191,8 +191,10 @@ function addressAttributes(currentNode, template){
 				return '';
 			});
 
-			if(found === '' && indexes.length === 1)
+			if(found === '' && indexes.length === 1){
 				key.direct = indexes[0];
+				delete key.value;
+			}
 			else{
 				key.parse_index = indexes;
 				key.value = key.value.replace(/[\t\r\n]/g, '').replace(/ {2,}/g, ' ').split(templateParser_regex_split);
