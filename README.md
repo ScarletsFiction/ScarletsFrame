@@ -8,7 +8,7 @@ A frontend framework that can help you write a simple web structure with complex
 
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
-### Breaking changes for 0.30.0
+### Breaking changes since 0.30.0
 ```js
 sf.model('stuff', function(self){
   self.binded = 'still old value';
@@ -19,6 +19,9 @@ sf.model('stuff', function(self){
     return "replace the new value";
   }
 })
+
+var space = sf.space(name, options); // Old
+var space = new sf.space(name, options); // Now
 ```
 
 ## Try it online like a project
