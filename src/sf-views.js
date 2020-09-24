@@ -693,7 +693,7 @@ const self = sf.views = function View(selector, name){
 							if(callback) return callback(dom);
 
 							if(dom.routerData)
-								self.data = dom.routerData;
+								self.data = Object.assign(dom.routerData, self.data);
 							else if(dom.parentElement !== null){
 								const parent = dom.parentElement.closest('sf-page-view');
 								if(parent !== null)
@@ -715,7 +715,7 @@ const self = sf.views = function View(selector, name){
 			if(callback) return callback(dom);
 
 			if(dom.routerData)
-				self.data = dom.routerData;
+				self.data = Object.assign(dom.routerData, self.data);
 			else if(dom.parentElement !== null){
 				const parent = dom.parentElement.closest('sf-page-view');
 				if(parent !== null)
