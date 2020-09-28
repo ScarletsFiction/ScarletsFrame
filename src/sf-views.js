@@ -1,3 +1,6 @@
+class SFPageView extends HTMLElement{}
+customElements.define('sf-page-view', SFPageView);
+
 ;(function(){
 hotReloadEval = void 0; // Avoid this function being invoked out of scope
 
@@ -231,7 +234,7 @@ const self = sf.views = function View(selector, name){
 
 		// Bring the content to an sf-page-view element
 		if(DOM.childNodes.length !== 0){
-			if(DOM.childNodes.length === 1 && DOM.firstChild.nodeName === '#text' && DOM.firstChild.textContent.trim() === '')
+			if(DOM.childNodes.length === 1 && DOM.firstChild.constructor === Text && DOM.firstChild.textContent.trim() === '')
 				DOM.firstChild.remove();
 			else{
 				temp = document.createElement('sf-page-view');
@@ -394,13 +397,12 @@ const self = sf.views = function View(selector, name){
 		window.history.go(routeDirection * -1);
 	}
 
-	const pageViewNodeName = 'SF-PAGE-VIEW';
 	function toBeShowed(element, event, path, data){
 		const relatedPage = [element];
 
 		let parent = element.parentNode;
 		while(parent !== rootDOM && parent !== null){
-			if(parent.nodeName === pageViewNodeName)
+			if(parent.constructor === SFPageView)
 				relatedPage.unshift(parent);
 
 			parent = parent.parentNode;
@@ -545,7 +547,7 @@ const self = sf.views = function View(selector, name){
 
 		function insertLoadedElement(DOMReference, dom, pendingShowed){
 			dom.routerData = {};
-			if(dom.firstChild.nodeName === '#comment' && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
+			if(dom.firstChild.constructor === Comment && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
 				dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
 				dom.firstChild.remove();
 
@@ -749,7 +751,7 @@ const self = sf.views = function View(selector, name){
 		}
 
 		if(url.html){
-			if(url.html.nodeName === 'TEMPLATE'){
+			if(url.html.constructor === HTMLTemplateElement){
 				const node = document.createElement('sf-page-view');
 				node.classList.add('page-prepare');
 

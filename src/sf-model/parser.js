@@ -653,7 +653,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			// Skip nested sf-model or sf-space
 			// Skip element and it's childs that already bound to prevent vulnerability
-			if(currentNode.tagName === 'SF-M' || currentNode.model !== void 0)
+			if(currentNode.constructor === SFModel || currentNode.model !== void 0)
 				continue;
 
 			var attrs = currentNode.attributes;
@@ -667,7 +667,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			// Skip any custom element
 			if(currentNode.hasAttribute('sf-parse') === false && currentNode.tagName.includes('-')){
-				if(currentNode.tagName !== 'SF-PAGE-VIEW' || currentNode.parentNode.hasAttribute('sf-parse') === false)
+				if(currentNode.constructor !== SFPageView || currentNode.parentNode.hasAttribute('sf-parse') === false)
 					continue;
 			}
 
@@ -683,7 +683,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				self.queuePreprocess(currentNode, extracting, collectOther, temp);
 		}
 
-		else if(currentNode.nodeType === 3){ // Text
+		else if(currentNode.constructor === Text){ // Text
 			if(currentNode.textContent.trim().length === 0){
 				if(currentNode.textContent.length === 0)
 					currentNode.remove();
@@ -744,7 +744,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 		processingElement = current;
 
 		if(current.nodeType === 3 && binded.has(current.parentNode) === false){
-			if(current.parentNode.tagName === 'SF-M'){
+			if(current.parentNode.constructor === SFModel){
 				// Auto wrap element if parent is 'SF-M'
 				const replace = document.createElement('span');
 				current.parentNode.insertBefore(replace, current);

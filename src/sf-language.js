@@ -353,7 +353,7 @@ function refreshLang(list, noPending){
 					continue;
 				}
 
-				if(elem.tagName === 'INPUT' || elem.tagName === 'TEXTAREA'){
+				if(elem.constructor === HTMLInputElement || elem.constructor === HTMLTextAreaElement){
 					if(!elem.hasAttribute('placeholder'))
 						continue;
 				}
@@ -380,7 +380,7 @@ function refreshLang(list, noPending){
 
 		if(elem.hasAttribute('placeholder'))
 			elem.setAttribute('placeholder', value);
-		else if(elem.tagName !== 'INPUT' && elem.tagName !== 'TEXTAREA')
+		else if(elem.constructor !== HTMLInputElement && elem.constructor !== HTMLTextAreaElement)
 			assignSquareBracket(value, elem);
 	}
 
