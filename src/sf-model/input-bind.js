@@ -4,15 +4,11 @@ const callInputListener = function(ref, value){
 	const on = ref.sfModel[`on$${ref.sfBounded}`];
 
 	if(v2m !== void 0 || on !== void 0){
-		let newValue;
-		let old = ref.sfModel[ref.sfBounded];
-
-		if(old !== null && old !== void 0 && old.constructor === Array)
-			old = old.slice(0);
+		let newValue, v2mValue;
 
 		try{
 			if(v2m !== void 0)
-				newValue = v2m.call(ref.sfModel, value);
+				v2mValue = v2m.call(ref.sfModel, value);
 
 			if(on !== void 0){
 				newValue = on.call(ref.sfModel, value, false);
@@ -24,7 +20,7 @@ const callInputListener = function(ref, value){
 			sf.onerror && sf.onerror(e);
 		}
 
-		return newValue;
+		return newValue || v2mValue;
 	}
 }
 
@@ -230,7 +226,7 @@ const elementBoundChanges = function(model, property, element, oneWay, modelLoca
 	$.on(element, 'change', triggerInputEvent);
 
 	// Bound value change
-	if(element.tagName === 'TEXTAREA'){
+	if(element.constructor === HTMLTextAreaElement){
 		$.on(element, 'input', inputTextBound);
 		type = 1;
 
