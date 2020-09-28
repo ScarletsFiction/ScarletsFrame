@@ -105,8 +105,8 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 			continue;
 		}
 
-		const isValueInput = (refB.name === 'value' && (current.constructor === HTMLTextAreaElement ||
-			(current.constructor === HTMLInputElement && sfRegex.inputAttributeType.test(current.type) === false)
+		const isValueInput = (refB.name === 'value' && ((current.constructor._ref || current.constructor) === HTMLTextAreaElement ||
+			((current.constructor._ref || current.constructor) === HTMLInputElement && sfRegex.inputAttributeType.test(current.type) === false)
 		));
 
 		var temp = {ref:refB};

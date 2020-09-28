@@ -128,7 +128,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		processingElement = element;
 
 		let container;
-		if(element.namespaceURI === 'http://www.w3.org/2000/svg' && element.constructor !== SVGSVGElement)
+		if(element.namespaceURI === 'http://www.w3.org/2000/svg' && (element.constructor._ref || element.constructor) !== SVGSVGElement)
 			container = 'svg';
 
 		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);

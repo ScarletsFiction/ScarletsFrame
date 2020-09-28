@@ -1,4 +1,8 @@
 class SFPageView extends HTMLElement{}
+if(window.sf$proxy)
+	SFPageView._ref = window.sf$proxy.SFPageView;
+else forProxying.SFPageView = SFPageView._ref = SFPageView;
+
 customElements.define('sf-page-view', SFPageView);
 
 ;(function(){
@@ -234,11 +238,12 @@ const self = sf.views = function View(selector, name){
 
 		// Bring the content to an sf-page-view element
 		if(DOM.childNodes.length !== 0){
-			if(DOM.childNodes.length === 1 && DOM.firstChild.constructor === Text && DOM.firstChild.textContent.trim() === '')
-				DOM.firstChild.remove();
+			const { firstChild } = DOM;
+			if(DOM.childNodes.length === 1 && (firstChild.constructor._ref || firstChild.constructor) === Text && firstChild.textContent.trim() === '')
+				firstChild.remove();
 			else{
 				temp = document.createElement('sf-page-view');
-				DOM.insertBefore(temp, DOM.firstChild);
+				DOM.insertBefore(temp, firstChild);
 
 				for (let i = 1, n = DOM.childNodes.length; i < n; i++) {
 					temp.appendChild(DOM.childNodes[1]);
@@ -402,7 +407,7 @@ const self = sf.views = function View(selector, name){
 
 		let parent = element.parentNode;
 		while(parent !== rootDOM && parent !== null){
-			if(parent.constructor === SFPageView)
+			if(parent.constructor._ref === SFPageView._ref)
 				relatedPage.unshift(parent);
 
 			parent = parent.parentNode;
@@ -547,9 +552,10 @@ const self = sf.views = function View(selector, name){
 
 		function insertLoadedElement(DOMReference, dom, pendingShowed){
 			dom.routerData = {};
-			if(dom.firstChild.constructor === Comment && dom.firstChild.textContent.indexOf(' SF-View-Data') === 0){
-				dom.routerData = JSON.parse(dom.firstChild.textContent.slice(14));
-				dom.firstChild.remove();
+			const { firstChild } = dom;
+			if((firstChild.constructor._ref || firstChild.constructor) === Comment && firstChild.textContent.indexOf(' SF-View-Data') === 0){
+				dom.routerData = JSON.parse(firstChild.textContent.slice(14));
+				firstChild.remove();
 
 				Object.assign(self.data, dom.routerData);
 			}
@@ -751,7 +757,7 @@ const self = sf.views = function View(selector, name){
 		}
 
 		if(url.html){
-			if(url.html.constructor === HTMLTemplateElement){
+			if((url.html.constructor._ref || url.html.constructor) === HTMLTemplateElement){
 				const node = document.createElement('sf-page-view');
 				node.classList.add('page-prepare');
 

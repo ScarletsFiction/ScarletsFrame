@@ -353,7 +353,8 @@ function refreshLang(list, noPending){
 					continue;
 				}
 
-				if(elem.constructor === HTMLInputElement || elem.constructor === HTMLTextAreaElement){
+				const construct = (elem.constructor._ref || elem.constructor);
+				if(construct === HTMLInputElement || construct === HTMLTextAreaElement){
 					if(!elem.hasAttribute('placeholder'))
 						continue;
 				}
@@ -380,8 +381,11 @@ function refreshLang(list, noPending){
 
 		if(elem.hasAttribute('placeholder'))
 			elem.setAttribute('placeholder', value);
-		else if(elem.constructor !== HTMLInputElement && elem.constructor !== HTMLTextAreaElement)
-			assignSquareBracket(value, elem);
+		else{
+			const construct = (elem.constructor._ref || elem.constructor);
+			if(construct !== HTMLInputElement && construct !== HTMLTextAreaElement)
+				assignSquareBracket(value, elem);
+		}
 	}
 
 	if(parentElement.size === 0)

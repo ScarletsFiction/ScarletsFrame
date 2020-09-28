@@ -96,6 +96,14 @@ sf.window = {
 			linker.sf.lang.init = sf.lang.init;
 			linker.sf.lang.changeDefault = sf.lang.changeDefault;
 
+			// Put original reference for different constructor
+			linker.Text._ref = Text;
+			linker.Comment._ref = Comment;
+			linker.SVGSVGElement._ref = SVGSVGElement;
+			linker.HTMLInputElement._ref = HTMLInputElement;
+			linker.HTMLTextAreaElement._ref = HTMLTextAreaElement;
+			linker.HTMLTemplateElement._ref = HTMLTemplateElement;
+
 			// Component
 			portComponentDefinition(linker, sf.component.registered, linker.sf.component.registered);
 
