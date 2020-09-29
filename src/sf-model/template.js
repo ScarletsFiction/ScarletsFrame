@@ -246,24 +246,6 @@ const templateParser = internal.model.templateParser = function(template, item, 
 
 	// html.sf$modelParsed = parsed;
 
-	// Run the pending element
-	for (var i = 0; i < pendingInsert.length; i++) {
-		var ref = pendingInsert[i];
-		let tDOM = parsed[ref.direct];
-
-		// Check if it's an HTMLElement
-		if(tDOM.nodeType === 1){
-			ref.parentNode.insertBefore(tDOM, ref.dynamicFlag);
-			continue;
-		}
-
-		// Parse if it's not HTMLElement
-		tDOM = $.parseElement(parsed[ref.direct]);
-		for (var a = 0, n = tDOM.length; a < n; a++) {
-			ref.parentNode.insertBefore(tDOM[0], ref.dynamicFlag);
-		}
-	}
-
 	if(template.specialElement){
 		if(template.specialElement.input){
 			// Process element for input bind
@@ -294,6 +276,24 @@ const templateParser = internal.model.templateParser = function(template, item, 
 			}
 
 			repeatedListBinding(specialRepeat_, item, void 0, template);
+		}
+	}
+
+	// Run the pending element
+	for (var i = 0; i < pendingInsert.length; i++) {
+		var ref = pendingInsert[i];
+		let tDOM = parsed[ref.direct];
+
+		// Check if it's an HTMLElement
+		if(tDOM.nodeType === 1){
+			ref.parentNode.insertBefore(tDOM, ref.dynamicFlag);
+			continue;
+		}
+
+		// Parse if it's not HTMLElement
+		tDOM = $.parseElement(parsed[ref.direct]);
+		for (var a = 0, n = tDOM.length; a < n; a++) {
+			ref.parentNode.insertBefore(tDOM[0], ref.dynamicFlag);
 		}
 	}
 
