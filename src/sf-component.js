@@ -15,6 +15,9 @@ sf.component = function(name, options, func, namespace){
 }
 
 function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
+	if(temp.nodeType !== 1)
+		return console.error(name, "component with content", temp, "should be wrapped inside of element");
+
 	tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 
 	const isDynamic = internal.model.templateInjector(temp, newObj, true);
@@ -336,7 +339,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		element.model = newObj;
 		element.sf$controlled = name;
 
-		element.sf$initTriggered = true;
+		element.sf$firstInit = true;
 		if(forceConnectCall)
 			element.connectedCallback();
 
@@ -347,7 +350,22 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		constructor($item, namespace, asScope){
 			super();
 
+			// Return if the component has sf-scope
+			// Because it will be recreated after the parent
+			// found it and finish the scope initialization
+			if($item === void 0 && this.hasAttribute('sf-scope'))
+				return;
+
+			this.sf$constructor($item, namespace, asScope);
+		}
+
+		sf$constructor($item, namespace, asScope){
 			const tagName = this.tagName.toLowerCase();
+
+			if(namespace && namespace.constructor === Boolean){
+				asScope = namespace;
+				namespace = null;
+			}
 
 			if(internal.space.empty === false){
 				let haveSpace = namespace || this.closest('sf-space');
@@ -374,8 +392,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				return;
 			}
 
-			if(this.sf$initTriggered){
-				delete this.sf$initTriggered;
+			if(this.sf$firstInit){
+				delete this.sf$firstInit;
 
 				if(this.model.init){
 					if(this.model.$el.length !== 1){

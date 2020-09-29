@@ -18,10 +18,10 @@ sf.model = function(name, options, func, namespace){
 	return scope.root[name];
 };
 
-function findBindListElement(el){
+function findBindListElement(el, includeComponent){
 	el = el.parentNode;
 	while(el !== null){
-		if(el.sf$elementReferences && el.sf$elementReferences.template.bindList)
+		if((el.sf$elementReferences && el.sf$elementReferences.template.bindList) || (includeComponent && el.sf$controlled !== void 0))
 			return el;
 
 		el = el.parentNode;
@@ -152,7 +152,6 @@ function findBindListElement(el){
 class SFModel extends HTMLElement {
 	constructor(){
 		super();
-
 		this.sf$firstInit = true;
 	}
 	connectedCallback(){
@@ -223,6 +222,10 @@ class SFModel extends HTMLElement {
 		this.sf$destroying = setTimeout(destroy, 1000);
 	}
 }
+
+if(window.sf$proxy)
+	SFModel._ref = window.sf$proxy.SFModel;
+else forProxying.SFModel = SFModel._ref = SFModel;
 
 customElements.define('sf-m', SFModel);
 

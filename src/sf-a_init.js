@@ -54,7 +54,7 @@ var sf = function(stuff, returnNode){
 	// If it's Node type
 	if(stuff.tagName !== void 0){
 		if(stuff.nodeType !== 1 || stuff.sf$controlled === void 0)
-			stuff = $.parentHasProperty(stuff, 'sf$controlled');
+			stuff = findBindListElement(stuff, true);
 
 		if(stuff === null)
 			return stuff;

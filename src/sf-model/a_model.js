@@ -38,15 +38,18 @@ self.init = function(el, modelName, namespace){
 		model.constructor.construct && model.constructor.construct.call(model, (namespace || sf.model), el);
 	}
 
-	var specialElement = {
-		repeat:[],
-		input:[]
-	};
+	var specialElement = {};
 
 	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model, model.sf$internal.modelKeysRegex);
 
-	bindInput(specialElement.input, model);
-	repeatedListBinding(specialElement.repeat, model, namespace, model.sf$internal.modelKeysRegex);
+	if(specialElement.input !== void 0)
+		bindInput(specialElement.input, model);
+
+	if(specialElement.repeat !== void 0)
+		repeatedListBinding(specialElement.repeat, model, namespace, model.sf$internal.modelKeysRegex);
+
+	if(specialElement.scope !== void 0)
+		initPendingComponentScope(specialElement.scope, el);
 
 	model.init && model.init(el, firstInit);
 
@@ -56,6 +59,23 @@ self.init = function(el, modelName, namespace){
 
 var processingElement = null;
 var scope = internal.model = {};
+
+function initPendingComponentScope(list, html){
+	for (var i = 0; i < list.length; i++) {
+		var ref = list[i];
+
+		var el;
+		if(ref.constructor !== Object){
+			ref.rule = parsePropertyPath(ref.getAttribute('sf-scope'));
+			ref.removeAttribute('sf-scope');
+			el = ref;
+		}
+		else el = $.childIndexes(ref.addr, html);
+
+		el.sf$constructor(deepProperty(html.model, ref.rule), null, true);
+		el.connectedCallback();
+	}
+}
 
 // For debugging, normalize indentation
 function trimIndentation(text){

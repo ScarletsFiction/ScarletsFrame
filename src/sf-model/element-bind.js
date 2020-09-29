@@ -209,32 +209,35 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	let bindedKey = model.sf$bindedKey;
 
 	if(bindedKey[propertyName] !== void 0){
-		var ref = bindedKey[propertyName];
-		if(ref.includes(callback) === false)
-			ref.push(callback);
+		bindedKey = bindedKey[propertyName];
+		if(bindedKey.includes(callback) === false)
+			bindedKey.push(callback);
 
 		if(elementBind !== void 0){
-			if(ref.input === void 0){
-				ref.input = [elementBind];
-				ref.input.type = type;
+			if(bindedKey.input === void 0){
+				bindedKey.input = [elementBind];
+				bindedKey.input.type = type;
 			}
-			else ref.input.push(elementBind);
+			else bindedKey.input.push(elementBind);
 		}
-		return;
+
+		if(!callback.template || bindedKey._template === callback.template)
+			return;
 	}
+	else{
+		// For contributor: don't delete sf$bindedKey from model because can cause memory leak
+		bindedKey = bindedKey[propertyName] = [callback];
 
-	// For contributor: don't delete sf$bindedKey from model because can cause memory leak
-	bindedKey = bindedKey[propertyName] = [callback];
-
-	if(elementBind !== void 0){
-		var ref = bindedKey;
-		ref.input = [elementBind];
-		ref.input.type = type;
+		if(elementBind !== void 0){
+			var ref = bindedKey;
+			ref.input = [elementBind];
+			ref.input.type = type;
+		}
 	}
 
 	// Proxy property
 	const desc = Object.getOwnPropertyDescriptor(model, propertyName);
-	if(desc !== void 0 && desc.set !== void 0)
+	if(desc !== void 0 && desc.set !== void 0 && (!callback.template || bindedKey._template === callback.template))
 		return;
 
 	if(originalPropertyName.constructor === Array){
@@ -244,6 +247,21 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 		originalPropertyName = stringifyPropertyPath(originalPropertyName);
 	}
+
+	// Add custom original because the creation was from different template
+	if(desc !== void 0 && desc.set !== void 0){
+		// ToDo: Use other workaround when this was undefined for fixing unobserved stuff
+		if(bindedKey._template === void 0){
+			bindedKey._template = callback.template;
+			return;
+		}
+
+		callback.model = originalModel;
+		callback.prop = originalPropertyName;
+		return;
+	}
+
+	bindedKey._template = callback.template;
 
 	let objValue = model[propertyName]; // Object value
 	if(objValue === void 0 || objValue === null)
@@ -294,7 +312,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 						continue;
 					}
 
-					syntheticTemplate(temp.element, temp.template, originalPropertyName, originalModel); // false === no update
+					syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel); // false === no update
 				}
 
 				if(noFeedback) objValue = val;
@@ -336,12 +354,8 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 
 	// modelRefRoot_path index is not related with modelRefRoot property/key position
 	let properties = template.modelRefRoot_path;
-	for (var i = 0; i < properties.length; i++) {
-		modelToViewBinding(modelScope, properties[i], {
-			element,
-			template
-		});
-	}
+	for (var i = 0; i < properties.length; i++)
+		modelToViewBinding(modelScope, properties[i], {element, template});
 
 	if(template.modelRef_path !== void 0){
 		// Check if there are pending revalidation
@@ -351,11 +365,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		}
 
 		properties = template.modelRef_path;
-		for (var i = 0; i < properties.length; i++) {
-			modelToViewBinding(localModel, properties[i], {
-				element,
-				template
-			});
-		}
+		for (var i = 0; i < properties.length; i++)
+			modelToViewBinding(localModel, properties[i], {element, template});
 	}
 }
