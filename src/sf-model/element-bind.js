@@ -221,7 +221,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			else bindedKey.input.push(elementBind);
 		}
 
-		if(!callback.template || bindedKey._template === callback.template)
+		if(!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex)
 			return;
 	}
 	else{
@@ -237,7 +237,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 	// Proxy property
 	const desc = Object.getOwnPropertyDescriptor(model, propertyName);
-	if(desc !== void 0 && desc.set !== void 0 && (!callback.template || bindedKey._template === callback.template))
+	if(desc !== void 0 && desc.set !== void 0 && (!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex))
 		return;
 
 	if(originalPropertyName.constructor === Array){
@@ -251,8 +251,8 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	// Add custom original because the creation was from different template
 	if(desc !== void 0 && desc.set !== void 0){
 		// ToDo: Use other workaround when this was undefined for fixing unobserved stuff
-		if(bindedKey._template === void 0){
-			bindedKey._template = callback.template;
+		if(bindedKey._regex === void 0){
+			bindedKey._regex = callback.template.modelRefRoot_regex;
 			return;
 		}
 
@@ -261,7 +261,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		return;
 	}
 
-	bindedKey._template = callback.template;
+	bindedKey._regex = callback.template && callback.template.modelRefRoot_regex;
 
 	let objValue = model[propertyName]; // Object value
 	if(objValue === void 0 || objValue === null)
