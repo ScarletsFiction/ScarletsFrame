@@ -443,10 +443,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		current.parentNode.replaceChild(backup[i], current);
 	}
 
-	template.specialElement = {
-		repeat:[],
-		input:[],
-	};
+	template.specialElement = {};
 
 	// It seems we can't use for.. of because need to do from backward
 	// Start addressing
@@ -562,7 +559,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	revalidateTemplateRef(template, modelScope);
 
 	// Get the indexes for input bind
-	if(template.specialElement.input.length !== 0){
+	if(template.specialElement.input !== void 0){
 		const specialInput = template.specialElement.input;
 		for (var i = 0; i < specialInput.length; i++) {
 			var el = specialInput[i];
@@ -586,10 +583,9 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			};
 		}
 	}
-	else delete template.specialElement.input;
 
 	// Get the indexes for sf-repeat-this
-	if(template.specialElement.repeat.length !== 0){
+	if(template.specialElement.repeat !== void 0){
 		const specialRepeat = template.specialElement.repeat;
 		for (var i = 0; i < specialRepeat.length; i++) {
 			var el = specialRepeat[i];
@@ -601,10 +597,22 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			el.removeAttribute('sf-repeat-this');
 		}
 	}
+
+	if(template.specialElement.scope !== void 0){
+		const specialScope = template.specialElement.scope;
+		for (var i = 0; i < specialScope.length; i++) {
+			var el = specialScope[i];
+			specialScope[i] = {
+				addr:$.getSelector(el, true),
+				rule:parsePropertyPath(el.getAttribute('sf-scope'))
+			};
+
+			el.removeAttribute('sf-scope');
+		}
+	}
 	else{
-		if(!template.specialElement.input)
+		if(!template.specialElement.input && !template.specialElement.repeat)
 			delete template.specialElement;
-		else delete template.specialElement.repeat;
 	}
 
 	// internal.language.refreshLang(copy);
@@ -658,12 +666,27 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 			var attrs = currentNode.attributes;
 			if(attrs['sf-repeat-this'] !== void 0){
+				if(collectOther.repeat === void 0)
+					collectOther.repeat = [];
+
 				collectOther.repeat.push(currentNode);
 				continue;
 			}
 
-			if(attrs['sf-into'] !== void 0 || attrs['sf-bind'] !== void 0)
+			if(attrs['sf-into'] !== void 0 || attrs['sf-bind'] !== void 0){
+				if(collectOther.input === void 0)
+					collectOther.input = [];
+
 				collectOther.input.push(currentNode);
+			}
+
+			if(attrs['sf-scope'] !== void 0){
+				if(collectOther.scope === void 0)
+					collectOther.scope = [];
+
+				collectOther.scope.push(currentNode);
+				continue;
+			}
 
 			// Skip any custom element
 			if(currentNode.hasAttribute('sf-parse') === false && currentNode.tagName.includes('-')){

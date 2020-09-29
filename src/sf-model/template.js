@@ -277,6 +277,18 @@ const templateParser = internal.model.templateParser = function(template, item, 
 
 			repeatedListBinding(specialRepeat_, item, void 0, template);
 		}
+
+		if(template.specialElement.scope){
+			// Process element for sf-scope
+			const specialScope = template.specialElement.scope;
+			const specialScope_ = new Array(specialScope.length);
+			for (var i = 0; i < specialScope.length; i++) {
+				var ref = specialScope[i];
+				const el = $.childIndexes(ref.addr, html);
+				el.sf$constructor(deepProperty(html.model, ref.rule));
+				el.connectedCallback();
+			}
+		}
 	}
 
 	// Run the pending element
