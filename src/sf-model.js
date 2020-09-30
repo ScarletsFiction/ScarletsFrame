@@ -13,6 +13,8 @@ sf.model = function(name, options, func, namespace){
 			scope.root[name] = new internal.modelInherit[name]();
 		else
 			scope.root[name] = {};
+
+		scope.root[name].$el = $();
 	}
 
 	return scope.root[name];

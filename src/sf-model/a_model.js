@@ -16,8 +16,8 @@ self.init = function(el, modelName, namespace){
 	else var model = el.model = sf.model.root[modelName] || sf.model(modelName);
 
 	var firstInit = false;
-	if(model.$el === void 0){
-		model.$el = $();
+	if(model._firstInit === true){
+		delete model._firstInit;
 		firstInit = true;
 	}
 
