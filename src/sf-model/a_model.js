@@ -72,6 +72,12 @@ function initPendingComponentScope(list, html){
 		}
 		else el = $.childIndexes(ref.addr, html);
 
+		// Put a flag that it was ready to be initialized when component was loaded
+		if(el.sf$constructor === void 0){
+			el.model = deepProperty(html.model, ref.rule);
+			continue;
+		}
+
 		el.sf$constructor(deepProperty(html.model, ref.rule), null, true);
 		el.connectedCallback();
 	}
