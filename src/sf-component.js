@@ -44,6 +44,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	const waitingHTML = {};
 
 	self.registered = {};
+	self.create = {};
 	// internal.component.tagName = new Set();
 
 	function checkWaiting(name, namespace){
@@ -97,6 +98,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		const construct = defineComponent(name);
 		registrar[1] = construct;
+
+		registrar[2].element = construct;
 		window[`$${capitalizeLetters(name.split('-'))}`] = construct;
 
 		if(waitingHTML[name] !== void 0)
@@ -356,6 +359,13 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if($item === void 0 && this.hasAttribute('sf-scope'))
 				return;
 
+			// Looks like the parent was ready to initalize this component
+			// Usually when used with sf-scope
+			if(this.model !== void 0){
+				$item = this.model;
+				asScope = true;
+			}
+
 			this.sf$constructor($item, namespace, asScope);
 		}
 
@@ -475,6 +485,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(window.sf$proxy)
 			Copy.constructor = window.opener.Function;
 
+		self.create[name] = Copy;
 		customElements.define(name, Copy);
 		return Copy;
 	}

@@ -402,7 +402,7 @@ const self = sf.views = function View(selector, name){
 		window.history.go(routeDirection * -1);
 	}
 
-	function toBeShowed(element, event, path, data){
+	function toBeShowed(element){
 		const relatedPage = [element];
 
 		let parent = element.parentNode;
