@@ -1,4 +1,3 @@
-// ToDo: component list on registrar[2] still using same reference
 // ToDo: Tidy up, the implementation seems dirty
 function getNamespace(name, id, space){
 	let scope = sf.space.list[name];

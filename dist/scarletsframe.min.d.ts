@@ -175,7 +175,7 @@ declare class SFComponent {
      * @param namespace If this was boolean this will be asScope parameter
      * @param asScope Use $item as component scope
      */
-    constructor($item?: object, namespace?: object | boolean, asScope?: boolean);
+    constructor($item?: object, namespace?: SpaceScope | boolean, asScope?: boolean);
 }
 /** Component scope collection */
 declare class ComponentList extends Array<SFModel> {
@@ -192,9 +192,26 @@ declare enum HTTPMethod {
     GET = 0,
     POST = 1
 }
+interface SpaceScopes {
+    /** Collection of SpaceScope */
+    [key: string]: any;
+}
+interface SpaceModels {
+    [key: string]: SpaceModel;
+}
+interface SpaceComponents {
+    [key: string]: SpaceComponent;
+}
 interface SFSpaceOptions {
     /** Template path in window.templates */
     templatePath: string;
+}
+declare function SpaceScope(name: string): SpaceModels | SpaceComponents;
+interface SpaceModel {
+    [key: string]: SFModel;
+}
+interface SpaceComponent {
+    [key: string]: SFModel[];
 }
 declare class SFSpace {
     /** Similar like sf.model */
@@ -250,8 +267,24 @@ declare class Space {
      * @param options optional if the element was empty on the DOM
      */
     constructor(namespace: string, options?: SFSpaceOptions);
-    getScope(index: number): void;
+    /** Get space's model or components */
+    getScope(index: number): any;
+    /** Create new space HTML from template */
     createHTML(index: number): HTMLElement;
+    /** List of SpaceScope */
+    list: SpaceScopes;
+    /**
+     * Define new <sf-m name=""> element handler in the element space
+     * @param options Model configuration, this can be the 3rd parameter
+     * @param scope Your extendable class or callable function
+     */ model(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SpaceModels;
+    /**
+     * Define new <component-name> element handler in the element space
+     * @param options Model configuration, this can be the 3rd parameter
+     * @param scope Your extendable class or callable function
+     */ component(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SpaceComponents;
+    /** Destroy sf-space */
+    destroy(): void;
 }
 declare class View {
     /**
