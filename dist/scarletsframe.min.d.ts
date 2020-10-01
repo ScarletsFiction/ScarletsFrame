@@ -2,6 +2,11 @@
 // Project: https://github.com/ScarletsFiction/ScarletsFrame
 // Definitions by: StefansArya <https://github.com/stefansarya>
 
+/**
+ * If got a function then the function will be called when all resource was ready.
+ * If got element then the model object will be returned.
+ * @param obj HTMLElement or function callback
+ */
 export declare function sf(obj: Function | HTMLElement): HTMLElement | object | null | void;
 export declare namespace sf {
     /**
@@ -11,7 +16,7 @@ export declare namespace sf {
      */ export function model(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SFModel;
     export namespace model {
         /**
-         * Get the index of RepeatedElement on DOM
+         * Find the index of RepeatedElement on DOM
          * @param element single RepeatedElement
          */ function index(element: HTMLElement): number;
     }
@@ -31,36 +36,64 @@ export declare namespace sf {
     }
     export { API };
     export namespace loader {
+        /** Called when page is loading some resource */
         function onProgress(callback: (loaded?: number, total?: number) => void): void;
+        /** Add some css to resource loading list */
         function css(list: string[]): void;
+        /** Add some js to resource loading list */
         function js(list: string[]): void;
     }
     export { Space as space };
+
+    /**
+     * Get full URL with sf-views hash
+     */
     export function url(): string;
     export namespace url {
+        /** URL Data */
         const data: string[];
+        /** Hashes route path from URL */
         const hashes: {};
+        /** URL Pathname */
         const paths: string;
+        /**
+         * Parse URL data from a string
+         */
         function parse(url: string): URLData;
     }
     export function lang(): void;
     export namespace lang {
+        /** List of loaded language */
         export const list: {};
+        /** Default interpolation data */
         export const interpolate: {};
+        /** Current language for initialization */
         const _default: string;
         export { _default as default };
+        /** Language server */
         export const serverURL: string;
+        /** Add language data */
         export function add(lang: string, obj: object): void;
+        /** Get language from path */
         export function get(path: string, obj?: object | Function, callback: Function): void;
+        /** Init SF Language for selected element */
         export function init(el: HTMLElement): void;
     }
     export namespace window {
+        /** window collection */
         const list_1: {};
         export { list_1 as list };
+        /** Destroy a window */
         export function destroy(id: string): void;
+        /** Create new window with options */
         export function create(options: WindowOptions, onLoaded?: Function): void;
+        /** Find element that from a window where the event triggered from */
         export function source(lists: HTMLElement[], ev: EventTarget): HTMLElement;
     }
+    /**
+     * Enable Hot Reload
+     * @param mode 1=Reload scope function only, 2=Reload all
+     */
     export function hotReload(mode: number): void;
     export { View as views };
     export function dom(selector: string | Function | HTMLElement | HTMLElement[], context: HTMLElement | DOMList): void | DOMList;
@@ -164,10 +197,12 @@ interface SFSpaceOptions {
     templatePath: string;
 }
 declare class SFSpace {
+    /** Similar like sf.model */
     model: {
         (name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SFModel;
         index(element: HTMLElement): number;
     };
+    /** Similar like sf.component */
     component: {
         (name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): ComponentList;
         html(name: String, template: HTMLElement | String | TemplateOptions): void;
@@ -198,6 +233,7 @@ declare class API {
     /** Set any request method into _method with inside of data and send via POST method */
     mask: boolean;
     /**
+     * Send HTTP request to an URL with GET Method
      * @param url API Path url, ex: /create/post
      * @param data Data to be send
      */
