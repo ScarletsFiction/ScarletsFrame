@@ -233,6 +233,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(attr.length !== 0 && $item === void 0)
 			$item = {};
 
+		if(attr.length !== 0 && ($item.constructor === String || $item.constructor === Number))
+			$item = {item:$item};
+
 		for (var i = 0; i < attr.length; i++) {
 			if(avoid.test(attr[i].nodeName))
 				continue;

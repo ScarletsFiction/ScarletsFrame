@@ -26,14 +26,14 @@ function createRoot_(modelFunc, registered){
 
 		temp = root_.root;
 		if(temp[scope] === void 0){
-			temp[scope] = {};
+			temp = temp[scope] = {$el:$()};
 
 			if(modelFunc[scope].constructor !== Function)
 				console.warn(scope, "haven't been registered. Please check your compiler settings or the compiled file");
-			else modelFunc[scope](temp[scope], root_);
+			else modelFunc[scope](temp, root_);
 		}
 
-		return temp[scope];
+		return temp;
 	};
 
 	root_.root = {};
@@ -121,9 +121,8 @@ sf.space.list = {};
 		if(options !== void 0){
 			if(options.constructor === Function)
 				func = options;
-			else{
+			else
 				internal.modelInherit[name] = options.extend;
-			}
 
 			const old = this.default.modelFunc[name];
 			this.default.modelFunc[name] = func;
@@ -137,7 +136,7 @@ sf.space.list = {};
 			return;
 		}
 
-		sf.model(name, options, func, this.default);
+		return sf.model(name, options, func, this.default);
 	}
 
 	self.component = function(name, options, func){
