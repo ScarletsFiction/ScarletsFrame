@@ -75,7 +75,7 @@ export declare namespace sf {
         /** Add language data */
         export function add(lang: string, obj: object): void;
         /** Get language from path */
-        export function get(path: string, obj?: object | Function, callback: Function): void;
+        export function get(path: string, obj?: object | Function, callback?: Function): void;
         /** Init SF Language for selected element */
         export function init(el: HTMLElement): void;
     }
@@ -175,7 +175,7 @@ declare class SFComponent {
      * @param namespace If this was boolean this will be asScope parameter
      * @param asScope Use $item as component scope
      */
-    constructor($item?: object, namespace?: SpaceScope | boolean, asScope?: boolean);
+    constructor($item?: object, namespace?: typeof SpaceScope | boolean, asScope?: boolean);
 }
 /** Component scope collection */
 declare class ComponentList extends Array<SFModel> {
@@ -194,7 +194,7 @@ declare enum HTTPMethod {
 }
 interface SpaceScopes {
     /** Collection of SpaceScope */
-    [key: string]: any;
+    [key: string]: typeof SpaceScope;
 }
 interface SpaceModels {
     [key: string]: SpaceModel;
@@ -267,10 +267,16 @@ declare class Space {
      * @param options optional if the element was empty on the DOM
      */
     constructor(namespace: string, options?: SFSpaceOptions);
-    /** Get space's model or components */
-    getScope(index: number): any;
-    /** Create new space HTML from template */
-    createHTML(index: number): HTMLElement;
+    /**
+     * Get space's model or components
+     * @param index if not specified then it will return default index
+     */
+    getScope(index?: string): typeof SpaceScope;
+    /**
+     * Create new space HTML from template
+     * @param index if not specified then it will return default index
+     */
+    createHTML(index?: string): HTMLElement;
     /** List of SpaceScope */
     list: SpaceScopes;
     /**
