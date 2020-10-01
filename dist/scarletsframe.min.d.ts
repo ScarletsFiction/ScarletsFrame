@@ -164,7 +164,12 @@ declare class DOMList extends Array<HTMLElement> {
 }
 declare class SFModel {
 	/** Component or Model's container element list */
-	$el: DOMList[];
+    $el: any;
+
+    // TypeScript issues: https://github.com/microsoft/TypeScript/issues/37663
+    // $el: DOMList[]|((selector:string)=>DOMList[]);
+
+	[key: string]: any;
 }
 interface ModelOptions {
 	/** Your extendable class */
@@ -401,7 +406,7 @@ export class RepeatedList extends RepeatedProperty {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
 	/** ToDo */
-	assign(fromIndex: number, withArray: Array | object, removes?: object | Boolean, putLast: Boolean): RepeatedList;
+	assign(fromIndex: number, withArray: object[] | object, removes?: object | Boolean, putLast?: Boolean): RepeatedList;
 	/**
 	 * Swap an item with another item with index
 	 * @param from index
