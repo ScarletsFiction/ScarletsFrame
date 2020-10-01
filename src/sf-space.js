@@ -1,5 +1,5 @@
 // ToDo: Tidy up, the implementation seems dirty
-function getNamespace(name, id, space){
+function getNamespace(name, id){
 	let scope = sf.space.list[name];
 	if(scope === void 0)
 		scope = sf.space.list[name] = {_waiting:[]};
@@ -31,9 +31,11 @@ function createRoot_(registered, id, space){
 			if(modelFunc[scope].constructor !== Function)
 				console.warn(scope, "haven't been registered. Please check your compiler settings or the compiled file");
 			else modelFunc[scope](temp, SpaceScope);
+
+			return temp;
 		}
 
-		return temp;
+		return temp[scope];
 	};
 
 	if(space.Space === void 0){
@@ -43,14 +45,15 @@ function createRoot_(registered, id, space){
 
 		space._scope.push(SpaceScope);
 	}
+	else space = space.Space;
 
 	var modelFunc = space.modelFunc;
 	SpaceScope.Space = space;
 	SpaceScope.id = id;
-	space.modelList[id] = SpaceScope.root = {};
-	space.componentList[id] = SpaceScope.components = {};
 	SpaceScope.registered = registered;
 	SpaceScope.domList = [];
+	space.modelList[id] = SpaceScope.root = {};
+	space.componentList[id] = SpaceScope.components = {};
 
 	return SpaceScope;
 }
@@ -134,7 +137,7 @@ class Space{
 	}
 
 	getScope(index){
-		return getNamespace(this.namespace, index || 'default', this);
+		return getNamespace(this.namespace, index || 'default');
 	}
 
 	createHTML(index){

@@ -11,6 +11,7 @@ export declare function sf(obj: Function | HTMLElement): HTMLElement | object | 
 export declare namespace sf {
     /**
      * Define new <sf-m name=""> element handler
+     * @param name <sf-m name="name.here"></sf-m>
      * @param options Model configuration, this can be the 3rd parameter
      * @param scope Your extendable class or callable function
      */ export function model(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SFModel;
@@ -21,7 +22,8 @@ export declare namespace sf {
          */ function index(element: HTMLElement): number;
     }
     /**
-     * Define new <sf-m name=""> element handler
+     * Define new <component-name> element handler
+     * @param name <name-here></name-here>
      * @param options Model configuration, this can be the 3rd parameter
      * @param scope Your extendable class or callable function
      */ export function component(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): ComponentList;
@@ -281,11 +283,13 @@ declare class Space {
     list: SpaceScopes;
     /**
      * Define new <sf-m name=""> element handler in the element space
+     * @param name <sf-m name="name-here"></sf-m>
      * @param options Model configuration, this can be the 3rd parameter
      * @param scope Your extendable class or callable function
      */ model(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SpaceModels;
     /**
      * Define new <component-name> element handler in the element space
+     * @param name <name-here></name-here>
      * @param options Model configuration, this can be the 3rd parameter
      * @param scope Your extendable class or callable function
      */ component(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SpaceComponents;
