@@ -493,7 +493,6 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			return console.error("Please use '-' and latin character when defining component tags");
 
 		class Copy extends SFComponent{}
-		Copy.prototype.constructor = SFComponent.prototype.constructor;
 
 		if(window.sf$proxy)
 			Copy.constructor = window.opener.Function;
