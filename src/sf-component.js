@@ -339,8 +339,18 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		newObj.$el = newObj.$el.push(element);
 
-		registrar[2].push(newObj);
-		element.sf$collection = registrar[2];
+		if(namespace === void 0){
+			registrar[2].push(newObj);
+			element.sf$collection = registrar[2];
+		}
+		else{
+			let temp = namespace.components[name];
+			if(temp === void 0)
+				temp = namespace.components[name] = [];
+
+			temp.push(newObj);
+			element.sf$collection = temp;
+		}
 
 		element.model = newObj;
 		element.sf$controlled = name;

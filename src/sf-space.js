@@ -1,47 +1,59 @@
 // ToDo: component list on registrar[2] still using same reference
-function getNamespace(name, id){
+// ToDo: Tidy up, the implementation seems dirty
+function getNamespace(name, id, space){
 	let scope = sf.space.list[name];
 	if(scope === void 0)
-		scope = sf.space.list[name] = {};
+		scope = sf.space.list[name] = {_waiting:[]};
 
 	if(scope[id] === void 0){
 		let ref = scope.default;
 		if(ref === void 0){
-			ref = scope.default = createRoot_({}, {});
+			ref = scope.default = createRoot_({}, 'default', scope);
 
 			if(id === 'default')
 				return ref;
 		}
 
-		scope[id] = createRoot_(ref.modelFunc, ref.registered);
+		scope[id] = createRoot_(ref.registered, id, scope);
 	}
 
 	return scope[id];
 }
 
-function createRoot_(modelFunc, registered){
-	const root_ = function(scope){
-		let temp = root_.registered[scope];
+function createRoot_(registered, id, space){
+	function SpaceScope(scope){
+		let temp = SpaceScope.components[scope];
 		if(temp) return temp[2];
 
-		temp = root_.root;
+		temp = SpaceScope.root;
 		if(temp[scope] === void 0){
 			temp = temp[scope] = {$el:$()};
 
 			if(modelFunc[scope].constructor !== Function)
 				console.warn(scope, "haven't been registered. Please check your compiler settings or the compiled file");
-			else modelFunc[scope](temp, root_);
+			else modelFunc[scope](temp, SpaceScope);
 		}
 
 		return temp;
 	};
 
-	root_.root = {};
-	root_.modelFunc = modelFunc;
-	root_.registered = registered;
-	const domList = root_.domList = [];
+	if(space.Space === void 0){
+		if(space._pendingInit === void 0)
+			space = space._pendingInit = {modelFunc:{}, modelList:{}, componentList:{}, _scope:[]};
+		else space = space._pendingInit;
 
-	return root_;
+		space._scope.push(SpaceScope);
+	}
+
+	var modelFunc = space.modelFunc;
+	SpaceScope.Space = space;
+	SpaceScope.id = id;
+	space.modelList[id] = SpaceScope.root = {};
+	space.componentList[id] = SpaceScope.components = {};
+	SpaceScope.registered = registered;
+	SpaceScope.domList = [];
+
+	return SpaceScope;
 }
 
 if(window.sf$proxy)
@@ -54,13 +66,14 @@ else
 		},
 		initModel(root, elem){
 			const name = elem.getAttribute('name');
+			const space = root.sf$space.Space;
 
 			// Pending if model handler was not loaded
-			if(root.sf$space.modelFunc[name] === void 0)
-				return root.sf$space.modelFunc[name] = [[elem, name, root.sf$space]];
+			if(space.modelFunc[name] === void 0)
+				return space.modelFunc[name] = [[elem, name, root.sf$space]];
 
-			if(root.sf$space.modelFunc[name].constructor === Array)
-				return root.sf$space.modelFunc[name].push([elem, name, root.sf$space]);
+			if(space.modelFunc[name].constructor === Array)
+				return space.modelFunc[name].push([elem, name, root.sf$space]);
 
 			sf.model.init(elem, name, root.sf$space);
 		},
@@ -70,6 +83,10 @@ if(window.sf$proxy === void 0)
 	forProxying.internalSpace = internal.space;
 
 class Space{
+	// modelList = {};
+	// modelFunc = {};
+	// componentList = {};
+
 	constructor(namespace, options){
 		if(namespace === void 0)
 			throw new Error('`namespace` parameter need to be specified');
@@ -78,8 +95,39 @@ class Space{
 			throw new Error('`namespace` must be lowercase');
 
 		this.namespace = namespace;
-		this.default = getNamespace(namespace, 'default');
 
+		let scope = sf.space.list[namespace];
+		if(scope === void 0)
+			scope = sf.space.list[namespace] = {};
+
+		if(scope._pendingInit){
+			let temp = scope._pendingInit;
+			this.modelList = temp.modelList;
+			this.modelFunc = temp.modelFunc;
+			this.componentList = temp.componentList;
+			for (var i = 0; i < temp._scope.length; i++) {
+				temp._scope[i].Space = this;
+			}
+			delete scope._pendingInit;
+		}
+		else{
+			this.modelList = {};
+			this.modelFunc = {};
+			this.componentList = {};
+		}
+
+		scope.Space = this;
+		if(scope._waiting !== void 0){
+			let waiting = scope._waiting;
+			delete scope._waiting;
+			for (var i = 0; i < waiting.length; i++) {
+				let temp = waiting[i];
+				temp.sf$space = getNamespace(namespace, temp.sf$spaceID);
+				temp.sf$space.domList.push(temp);
+			}
+		}
+
+		this.default = getNamespace(namespace, 'default');
 		this.list = sf.space.list[namespace];
 
 		if(options)
@@ -87,7 +135,7 @@ class Space{
 	}
 
 	getScope(index){
-		return getNamespace(this.namespace, index || 'default');
+		return getNamespace(this.namespace, index || 'default', this);
 	}
 
 	createHTML(index){
@@ -105,45 +153,38 @@ class Space{
 			}))[0];
 	}
 
-	destroy(){
-
-	}
-}
-
-sf.space = Space;
-
-// { name:{ default:{}, id:{}, ... } }
-sf.space.list = {};
-
-;(function(){
-	const self = Space.prototype;
-	self.model = function(name, options, func){
+	model(name, options, func){
 		if(options !== void 0){
 			if(options.constructor === Function)
 				func = options;
 			else
 				internal.modelInherit[name] = options.extend;
 
-			const old = this.default.modelFunc[name];
-			this.default.modelFunc[name] = func;
+			const old = this.modelFunc[name];
+			this.modelFunc[name] = func;
+
+			if(this.modelList[name] === void 0)
+				this.modelList[name] = {};
 
 			if(old !== void 0 && old.constructor === Array)
 				for (let i = 0; i < old.length; i++){
 					const arg = old[i];
-					sf.model.init(arg[0], arg[1], arg[2]);
+					sf.model.init(arg[0], arg[1], arg[2], this.modelList);
 				}
 
-			return;
+			return this.modelList;
 		}
 
-		return sf.model(name, options, func, this.default);
+		sf.model(name, options, func, this.default);
+		return this.modelList;
 	}
 
-	self.component = function(name, options, func){
-		return sf.component(name, options, func, this.default);
+	component(name, options, func){
+		sf.component(name, options, func, this.default);
+		return this.componentList;
 	}
 
-	self.destroy = function(){
+	destroy(){
 		for(var keys in this.root){
 			if(keys.indexOf(namespace) === 0){
 				this.root[keys].$el.remove();
@@ -161,7 +202,12 @@ sf.space.list = {};
 				delete internal.component[keys];
 		}
 	}
-})();
+}
+
+sf.space = Space;
+
+// { name:{ default:{}, id:{}, ... } }
+sf.space.list = {};
 
 // Define sf-model element
 class SFSpace extends HTMLElement {
@@ -196,7 +242,10 @@ class SFSpace extends HTMLElement {
 			throw new Error("<sf-space>: space name was undefined");
 
 		this.sf$space = getNamespace(name, this.sf$spaceID);
-		this.sf$space.domList.push(this);
+		if(this.sf$space._waiting !== void 0)
+			this.sf$space._waiting.push(this);
+		else
+			this.sf$space.domList.push(this);
 	}
 	disconnectedCallback(){
 		const that = this;
