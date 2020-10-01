@@ -6,7 +6,7 @@ const rename = require('gulp-rename');
 const fs = require('fs');
 const notifier = require('node-notifier');
 
-let compile, uglify, babel, fast;
+let uglify, babel;
 gulp.task('enableCompile', function(done){
   uglify = require('gulp-uglify-es').default;
   babel = require("gulp-babel");
@@ -18,11 +18,7 @@ gulp.task('enableCompile', function(done){
 const dateMinify = {};
 // var dateMinify = {mapFile:function(path){return path.replace('js.map', Date.now()+'.js.map')}};
 const theHeader = `/*
-  ScarletsFrame
-  A frontend library for Scarlets Framework that support
-  lazy page load and element binding that can help
-  simplify your code
-
+  ScarletsFrame (MIT Licensed)
   https://github.com/ScarletsFiction/ScarletsFrame
 */\n`;
 
@@ -130,12 +126,12 @@ function swallowError(error){
 
 function removeOldMap(path){
   fs.readdir(path, function(err, files){
-     if (files) {
-       for (let i = 0, len = files.length; i < len; i++) {
-          if(files[i].match(/.*\.(js|css)\.map/) !== null){
-            try{fs.unlinkSync(path+files[i]);}catch(e){}
-          }
+    if(err) return;
+
+    for (let i = 0, len = files.length; i < len; i++) {
+       if(files[i].match(/.*\.(js|css)\.map/) !== null){
+         try{fs.unlinkSync(path+files[i]);}catch(e){}
        }
-     }
+    }
   });
 }
