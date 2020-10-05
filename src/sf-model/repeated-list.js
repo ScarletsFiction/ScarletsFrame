@@ -253,6 +253,9 @@ class RepeatedProperty{ // extends Object
 	}
 
 	getElement(prop){
+		if(prop === void 0 || prop === null)
+			return; // undefined
+
 		let { $EM } = this;
 		if($EM.constructor === ElementManipulatorProxy)
 			$EM = $EM.list[0];
@@ -800,6 +803,9 @@ class RepeatedList extends Array{
 
 	// Return single element from first $EM
 	getElement(index){
+		if(index === void 0 || index === null)
+			return; // undefined
+
 		let { $EM } = this;
 		if($EM.constructor === ElementManipulatorProxy)
 			$EM = $EM.list[0];
@@ -824,7 +830,7 @@ class RepeatedList extends Array{
 	}
 
 	indexOf(item){
-		if(item.children !== void 0 && item.children.constructor === HTMLCollection){
+		if(item !== void 0 && item !== null && item.children !== void 0 && item.children.constructor === HTMLCollection){
 			if(!item.sf$elementReferences || !item.sf$elementReferences.template.bindList)
 				item = findBindListElement(item);
 
@@ -1385,6 +1391,9 @@ class ElementManipulatorProxy{
 		}
 	}
 	getElement_RP(instance, prop){
+		if(prop === void 0 || prop === null)
+			return [];
+
 		const { list } = this;
 		const keys = instance._list;
 
@@ -1402,6 +1411,9 @@ class ElementManipulatorProxy{
 		return got;
 	}
 	getElement_RL(instance, index){
+		if(index === void 0 || index === null)
+			return [];
+
 		const { list } = this;
 		const got = [];
 
