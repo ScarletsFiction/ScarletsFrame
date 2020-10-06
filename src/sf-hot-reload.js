@@ -1,5 +1,6 @@
 // Allow direct function replacement to accelerate development
-// Note: this feature will allocate more small memory and small slow down
+// Note: This feature will allocate more small memory and small slow down
+// ToDo: Fix memory leak on RepeatedElement when using this feature
 let hotReloadAll = false; // All model property
 
 let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;

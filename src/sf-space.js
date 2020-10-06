@@ -85,9 +85,10 @@ if(window.sf$proxy === void 0)
 	forProxying.internalSpace = internal.space;
 
 class Space{
-	// modelList = {};
+	inherit = {};
+	// modelList = {default:{}};
 	// modelFunc = {};
-	// componentList = {};
+	// componentList = {default:{}};
 
 	constructor(namespace, options){
 		if(namespace === void 0)
@@ -165,13 +166,13 @@ class Space{
 			const old = this.modelFunc[name];
 			this.modelFunc[name] = func;
 
-			if(this.modelList[name] === void 0)
-				this.modelList[name] = {};
+			if(this.modelList.default[name] === void 0)
+				this.modelList.default[name] = {};
 
 			if(old !== void 0 && old.constructor === Array)
 				for (let i = 0; i < old.length; i++){
 					const arg = old[i];
-					sf.model.init(arg[0], arg[1], arg[2], this.modelList);
+					sf.model.init(arg[0], arg[1], arg[2], this.default);
 				}
 
 			return this.modelList;
