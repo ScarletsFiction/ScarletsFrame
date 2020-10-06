@@ -6,7 +6,7 @@ sf.component = function(name, options, func, namespace){
 		if(func !== options)
 			sf.component.html(name, options, namespace);
 
-		if(func !== void 0 && func.constructor === Function)
+		if(func === void 0 || func.constructor === Function)
 			return sf.component.for(name, options, func, namespace);
 	}
 
@@ -41,10 +41,15 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	internal.component = {};
 	internal.componentInherit = {};
 
+	$(function(){
+		if(TemplatePending.length !== 0)
+			window.templates = window.templates;
+	});
+
 	const waitingHTML = {};
 
 	self.registered = {};
-	self.create = {};
+	self.roots = {};
 	// internal.component.tagName = new Set();
 
 	function checkWaiting(name, namespace){
@@ -83,6 +88,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				internal.componentInherit[name] = options.extend;
 		}
 
+		if(func === void 0)
+			func = NOOP;
+
 		// internal.component.tagName.add(name.toUpperCase());
 		const scope = namespace || self;
 
@@ -99,7 +107,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		const construct = defineComponent(name);
 		registrar[1] = construct;
 
-		registrar[2].element = construct;
+		registrar[2].root = construct;
 		window[`$${capitalizeLetters(name.split('-'))}`] = construct;
 
 		if(waitingHTML[name] !== void 0)
@@ -243,7 +251,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			$item[attr[i].nodeName] = attr[i].value;
 		}
 
-		const newObj = (asScope ? $item : (
+		const newObj = element.model || (asScope ? $item : (
 			inherit !== void 0 ? new inherit() : {}
 		));
 
@@ -497,7 +505,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(window.sf$proxy)
 			Copy.constructor = window.opener.Function;
 
-		self.create[name] = Copy;
+		self.roots[name] = Copy;
 		customElements.define(name, Copy);
 		return Copy;
 	}

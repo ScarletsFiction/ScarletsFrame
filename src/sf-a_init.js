@@ -49,6 +49,7 @@ Object.defineProperty(window, 'templates', {
 var internal = {};
 var privateRoot = {};
 var forProxying = {};
+function NOOP(){}
 
 var sf = function(stuff, returnNode){
 	// If it's Node type
