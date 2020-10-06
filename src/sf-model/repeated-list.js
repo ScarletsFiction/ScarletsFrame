@@ -185,7 +185,7 @@ class RepeatedProperty{ // extends Object
 					hiddenProperty(that, k, that[k], true);
 			}
 
-			hiddenProperty(that, '_list', Object.keys(that));
+			hiddenProperty(that, '_list', Object.keys(that), true);
 
 			let target;
 			if(prop.constructor !== Array)
@@ -220,10 +220,10 @@ class RepeatedProperty{ // extends Object
 						return;
 
 					for (var i = a; i < olds.length; i++)
-						that.delete(olds[i]);
+						sf.delete(that, olds[i]);
 
 					for (var i = a; i < news.length; i++)
-						that.set(news[i], val[news[i]]);
+						sf.set(that, news[i], val[news[i]]);
 
 					that._list = news;
 				}
