@@ -148,7 +148,7 @@ function addressAttributes(currentNode, template){
 	for (let a = attrs.length - 1; a >= 0; a--) {
 		const attr = attrs[a];
 		let found = attr.value.includes('{{%=');
-		if(attr.name[0] === '@'){
+		if(attr.name.slice(0, 1) === '@'){
 			// No template processing for this
 			if(found){
 				console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
@@ -168,7 +168,7 @@ function addressAttributes(currentNode, template){
 		}
 
 		if(found){
-			if(attr.name[0] === ':'){
+			if(attr.name.slice(0, 1) === ':'){
 				var key = {
 					name:attr.name.slice(1),
 					value:attr.value.trim()
@@ -248,7 +248,7 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 			var serve;
 			if(path !== null){
 				if(path !== void 0) {
-					if(path[0] === '.' && targetNode.templatePath !== void 0)
+					if(path.slice(0, 1) === '.' && targetNode.templatePath !== void 0)
 						path = path.replace('./', targetNode.templatePath);
 
 					serve = temp[path];
@@ -639,7 +639,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 		var attrs = targetNode.attributes;
 		for (var a = 0; a < attrs.length; a++) {
-			if(attrs[a].name[0] === '@' || attrs[a].value.includes('{{')){
+			if(attrs[a].name.slice(0, 1) === '@' || attrs[a].value.includes('{{')){
 				temp.add(targetNode);
 				targetNode.sf$onlyAttribute = true;
 				break;
@@ -695,7 +695,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			}
 
 			for (var a = 0; a < attrs.length; a++) {
-				if(attrs[a].name[0] === '@' || attrs[a].value.includes('{{')){
+				if(attrs[a].name.slice(0, 1) === '@' || attrs[a].value.includes('{{')){
 					temp.add(currentNode);
 					currentNode.sf$onlyAttribute = true;
 					break;

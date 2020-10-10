@@ -141,7 +141,7 @@ function parsePropertyPath(str){
 		if(g1 !== void 0){
 			if(isNaN(g1) === false)
 				g1 = Number(g1);
-			else if(g1[0] === '"' || g1[0] === "'")
+			else if(g1.slice(0, 1) === '"' || g1.slice(0, 1) === "'")
 				g1 = g1.slice(1, -1);
 
 			temp.push(g1);
@@ -253,9 +253,9 @@ function deepProperty(obj, path){
 }
 
 function capitalizeLetters(name){
-	for (var i = 0; i < name.length; i++) {
-		name[i] = name[i][0].toUpperCase() + name[i].slice(1);
-	}
+	for (var i = 0; i < name.length; i++)
+		name[i] = name[i].slice(0, 1).toUpperCase() + name[i].slice(1);
+
 	return name.join('');
 }
 

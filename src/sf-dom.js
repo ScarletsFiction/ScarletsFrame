@@ -13,7 +13,7 @@ sf.dom = function(selector, context){
 	}
 	else if(selector.constructor === Function)
 		return sf.loader.onFinish(selector);
-	else if(selector[0] === '<' || selector[selector.length-1] === '>')
+	else if(selector.slice(0,1) === '<' && selector.slice(-1) === '>')
 		return _DOMList($.parseElement(selector, true));
 	else if(context){
 		if(context.classList === void 0){
@@ -941,7 +941,7 @@ function recreateDOMList($el, length){
 
 		let element = context || documentElement;
 
-		if(array[0].constructor === String && element.id !== array[0].substr(1)) // 3.9ms
+		if(array[0].constructor === String && element.id !== array[0].slice(1)) // 3.9ms
 			element = element.querySelector(array[0]);
 
 		for (let i = 0; i < array.length; i++) { // 36ms

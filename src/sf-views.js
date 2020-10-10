@@ -775,7 +775,7 @@ const self = sf.views = function View(selector, name){
 		}
 
 		let thePath = (url.templateURL || url.url || path);
-		if(thePath[0] !== '/')
+		if(thePath.slice(0, 1) !== '/')
 			thePath = `/${thePath}`;
 
 		for (var i = 0; i < onEvent.loading.length; i++)
@@ -930,7 +930,7 @@ $(function(){
 		ev.preventDefault();
 
 		const attr = this.getAttribute('href');
-		if(attr[0] === '@'){ // ignore
+		if(attr.slice(0, 1) === '@'){ // ignore
 			const target = this.getAttribute('target');
 			if(target)
 				window.open(attr.slice(1), target);
