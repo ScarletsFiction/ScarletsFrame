@@ -38,12 +38,15 @@ function findBindListElement(el, includeComponent){
 	internal.modelInherit = {};
 
 	// Find an index for the element on the list
-	self.index = function(element){
+	self.index = function(element, getProp){
 		if(!element.sf$elementReferences || !element.sf$elementReferences.template.bindList)
 			element = findBindListElement(element);
 
 		if(element === null)
 			return -1;
+
+		if(getProp)
+			return element.sf$repeatListIndex;
 
 		let i = -1;
 		const tagName = element.tagName;
