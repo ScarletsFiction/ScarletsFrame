@@ -33,6 +33,10 @@ var $ = sf.dom; // Shortcut
 
 const css_str = /\-([a-z0-9])/;
 const css_strRep = (f, m)=> m.toUpperCase();
+const DOMTokenListAdd = DOMTokenList.prototype.add;
+const DOMTokenListRemove = DOMTokenList.prototype.remove;
+const DOMTokenListToggle = DOMTokenList.prototype.toggle;
+
 class DOMList{
 	constructor(elements){
 		if(elements === null){
@@ -127,6 +131,9 @@ class DOMList{
 		return _DOMList(t || []);
 	}
 	prevAll(selector){
+		if(this.length === 1)
+			return this.prev(selector);
+
 		const t = [];
 		for (let i = 0; i < this.length; i++)
 			t.push.apply(t, $.prevAll(this[i], selector));
@@ -139,6 +146,9 @@ class DOMList{
 		return _DOMList(t || []);
 	}
 	nextAll(selector){
+		if(this.length === 1)
+			return this.next(selector);
+
 		const t = [];
 		for (let i = 0; i < this.length; i++)
 			t.push.apply(t, $.prevAll(this[i], selector, true));
@@ -160,31 +170,62 @@ class DOMList{
 
 	// Action only
 	remove(){
+		if(this.length === 1){
+			this[0].remove();
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
 			this[i].remove();
 		return this;
 	}
 	empty(){
+		if(this.length === 1){
+			this[0].textContent = '';
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
 			this[i].textContent = '';
 		return this;
 	}
 	addClass(name){
+		name = name.split(' ');
+		if(this.length === 1){
+			DOMTokenListAdd.apply(this[0].classList, name);
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
-			DOMTokenList.prototype.add.apply(this[i].classList, name.split(' '));
+			DOMTokenListAdd.apply(this[i].classList, name);
 		return this;
 	}
 	removeClass(name){
+		name = name.split(' ');
+		if(this.length === 1){
+			DOMTokenListRemove.apply(this[0].classList, name);
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
-			DOMTokenList.prototype.remove.apply(this[i].classList, name.split(' '));
+			DOMTokenListRemove.apply(this[i].classList, name);
 		return this;
 	}
 	toggleClass(name){
+		name = name.split(' ');
+		if(this.length === 1){
+			DOMTokenListToggle.apply(this[0].classList, name);
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
-			DOMTokenList.prototype.toggle.apply(this[i].classList, name.split(' '));
+			DOMTokenListToggle.apply(this[i].classList, name);
 		return this;
 	}
 	hasClass(name){
+		if(this.length === 1)
+			return this[0].classList.contains(name);
+
 		for (let i = 0; i < this.length; i++)
 			if(this[i].classList.contains(name))
 				return true;
@@ -193,6 +234,11 @@ class DOMList{
 	prop(name, value){
 		if(value === void 0)
 			return this.length !== 0 ? this[0][name] : '';
+
+		if(this.length === 1){
+			this[0][name] = value;
+			return this;
+		}
 
 		for (let i = 0; i < this.length; i++)
 			this[i][name] = value;
@@ -203,12 +249,22 @@ class DOMList{
 		if(value === void 0)
 			return this.length !== 0 ? this[0].getAttribute(name) : '';
 
+		if(this.length === 1){
+			this[0].setAttribute(name, value);
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
 			this[i].setAttribute(name, value);
 
 		return this;
 	}
 	removeAttr(name){
+		if(this.length === 1){
+			this[0].removeAttribute(name);
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
 			this[i].removeAttribute(name);
 
@@ -408,6 +464,11 @@ class DOMList{
 		if(text === void 0)
 			return this.length !== 0 ? this[0].textContent : '';
 
+		if(this.length === 1){
+			this[0].textContent = text;
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
 			this[i].textContent = text;
 		return this;
@@ -416,6 +477,11 @@ class DOMList{
 		if(text === void 0)
 			return this.length !== 0 ? this[0].innerHTML : '';
 
+		if(this.length === 1){
+			this[0].innerHTML = text;
+			return this;
+		}
+
 		for (let i = 0; i < this.length; i++)
 			this[i].innerHTML = text;
 		return this;
@@ -423,6 +489,11 @@ class DOMList{
 	val(text){
 		if(text === void 0)
 			return this.length !== 0 ? this[0].value : '';
+
+		if(this.length === 1){
+			this[0].text = text;
+			return this;
+		}
 
 		for (let i = 0; i < this.length; i++)
 			this[i].text = text;
