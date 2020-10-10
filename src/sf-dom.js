@@ -13,7 +13,7 @@ sf.dom = function(selector, context){
 	}
 	else if(selector.constructor === Function)
 		return sf.loader.onFinish(selector);
-	else if(selector.slice(0,1) === '<' && selector.slice(-1) === '>')
+	else if(selector.constructor === String && selector.slice(0,1) === '<' && selector.slice(-1) === '>')
 		return _DOMList($.parseElement(selector, true));
 	else if(context){
 		if(context.classList === void 0){
