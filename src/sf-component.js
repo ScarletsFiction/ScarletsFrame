@@ -251,6 +251,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			$item[attr[i].nodeName] = attr[i].value;
 		}
 
+		if(element.model !== void 0 && !(element.model instanceof Object)){
+			$item = element.model;
+			element.model = void 0;
+		}
+
 		const newObj = element.model || (asScope ? $item : (
 			inherit !== void 0 ? new inherit() : {}
 		));
@@ -318,6 +323,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 			element.sf$elementReferences = parsed.sf$elementReferences;
 			sf.model.bindElement(element, newObj, copy);
+
+			element.model = newObj;
 		}
 
 		// Custom component that written on the DOM
@@ -329,8 +336,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 			internal.model.templateInjector(element, newObj, false);
 			sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj, registrar[4]);
-			internal.model.bindInput(specialElement.input, newObj);
-			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
+
+			if(specialElement.input !== void 0)
+				internal.model.bindInput(specialElement.input, newObj);
+
+			if(specialElement.repeat !== void 0)
+				internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
 
 			if(element.sf$componentIgnore === true){
 				element = newObj.$el[0];
@@ -343,6 +354,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				if(element.isConnected)
 					forceConnectCall = true;
 			}
+
+			element.model = newObj;
+
+			if(specialElement.scope !== void 0)
+				internal.initPendingComponentScope(specialElement.scope, element);
 		}
 
 		newObj.$el = newObj.$el.push(element);
@@ -360,7 +376,6 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			element.sf$collection = temp;
 		}
 
-		element.model = newObj;
 		element.sf$controlled = name;
 
 		element.sf$firstInit = true;

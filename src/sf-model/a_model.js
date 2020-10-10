@@ -60,6 +60,7 @@ self.init = function(el, modelName, namespace){
 var processingElement = null;
 var scope = internal.model = {};
 
+internal.initPendingComponentScope = initPendingComponentScope;
 function initPendingComponentScope(list, html){
 	for (var i = 0; i < list.length; i++) {
 		var ref = list[i];
