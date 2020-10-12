@@ -51,18 +51,18 @@ var privateRoot = {};
 var forProxying = {};
 function NOOP(){}
 
-var sf = function(stuff, returnNode){
+var sf = function(el, returnNode){
 	// If it's Node type
-	if(stuff.tagName !== void 0){
-		if(stuff.nodeType !== 1 || stuff.sf$controlled === void 0)
-			stuff = findBindListElement(stuff, true);
+	if(el.tagName !== void 0){
+		if(el.sf$controlled === void 0 && !(el.sf$elementReferences && el.sf$elementReferences.template.bindList))
+			el = findBindListElement(el, true);
 
-		if(stuff === null)
-			return stuff;
+		if(el === null)
+			return el;
 
 		if(returnNode)
-			return stuff;
-		return stuff.model;
+			return el;
+		return el.model;
 	}
 };
 

@@ -86,6 +86,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		else{
 			if(options.extend !== void 0)
 				internal.componentInherit[name] = options.extend;
+			else if(options.constructor === String)
+				throw new Error("The second parameter of sf.component can't be a string. Maybe you want to use sf.component.html to define component's HTML template instead.");
 		}
 
 		if(func === void 0)
