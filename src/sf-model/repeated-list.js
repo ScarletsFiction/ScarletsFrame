@@ -1140,7 +1140,7 @@ class ElementManipulator{
 		if(this.elements !== void 0){
 			const temp = exist[ii];
 			exist[ii] = exist[oo];
-			exist[oo] = exist[ii];
+			exist[oo] = temp;
 		}
 
 		if(this.$VSM === void 0){
