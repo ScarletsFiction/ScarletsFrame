@@ -33,7 +33,7 @@ const dataParser = function(html, _model_, template, _modelScope, preParsedRefer
 			if(justName === true)
 				preParsedReference.push(temp);
 			else
-				preParsedReference.push({type:REF_DIRECT, data:[temp, _model_, _modelScope]});
+				preParsedReference.push({type:REF_DIRECT, data:{_model_, _modelScope}, check:temp});
 			return `{{%=${preParsed.length + lastParsedIndex - 1}%`;
 		}
 		return `{{%=${exist + lastParsedIndex}%`;
@@ -78,7 +78,7 @@ const uniqueDataParser = function(html, template, _modelScope){
 			const condition = check.shift();
 			const elseIf = findElse(check);
 			elseIf.type = REF_IF;
-			elseIf.data = [null, _modelScope];
+			elseIf.data = {_modelScope};
 
 			// Trim Data
 			elseIf.if = [condition.trim(), elseIf.if.trim()];
@@ -100,7 +100,7 @@ const uniqueDataParser = function(html, template, _modelScope){
 		// And always check/remove closing ']}' in user content
 		check = temp.split('@exec');
 		if(check.length !== 1){
-			preParsedReference.push({type:REF_EXEC, data:[check[1], null, _modelScope]});
+			preParsedReference.push({type:REF_EXEC, data:{_modelScope}, check:check[1]});
 			return `{{%%=${preParsedReference.length - 1}`;
 		}
 		return '';
@@ -384,10 +384,11 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			// Text or attribute
 			if(current.type === REF_DIRECT){
 				toObserve.template.i = i;
-				current.data[0] = current.data[0].replace(sfRegex.itemsObserve, toObserve, template, true);
+				var check = current.check.replace(sfRegex.itemsObserve, toObserve, template, true);
+				delete current.check;
 
 				// Convert to function
-				current.get = modelScript(mask, current.data.shift(), repeatedListKey);
+				current.get = modelScript(mask, check, repeatedListKey);
 				continue;
 			}
 
@@ -411,7 +412,8 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				}
 			}
 			else if(current.type === REF_EXEC){
-				var checkList = current.data.shift();
+				var checkList = current.check;
+				delete current.check;
 
 				// Convert to function
 				current.get = modelScript(mask, checkList, repeatedListKey);
@@ -610,10 +612,8 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			el.removeAttribute('sf-scope');
 		}
 	}
-	else{
-		if(!template.specialElement.input && !template.specialElement.repeat)
-			delete template.specialElement;
-	}
+	else if(!template.specialElement.input && !template.specialElement.repeat)
+		delete template.specialElement;
 
 	// internal.language.refreshLang(copy);
 	template.html = copy;
@@ -805,10 +805,11 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 				if(ref.type === REF_DIRECT){
 					toObserve.template.i = i;
-					ref.data[0] = ref.data[0].replace(sfRegex.itemsObserve, toObserve);
+					var check = ref.check.replace(sfRegex.itemsObserve, toObserve);
+					delete ref.check;
 
 					// Convert to function
-					ref.get = modelScript(void 0, ref.data.shift());
+					ref.get = modelScript(void 0, check);
 					continue;
 				}
 			}
@@ -818,7 +819,13 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 			revalidateTemplateRef(template, modelRef);
 
-			const parsed = templateExec(preParsedRef, modelRef);
+			let parsed;
+			if(preParsedRef.length !== 0){
+				parsed = new Array(preParsedRef.length);
+				templateExec(preParsedRef, modelRef, void 0, parsed);
+			}
+			else parsed = emptyArray;
+
 			const currentRef = [];
 			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef, void 0, template);
 

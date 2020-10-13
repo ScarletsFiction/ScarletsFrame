@@ -50,6 +50,7 @@ var internal = {};
 var privateRoot = {};
 var forProxying = {};
 function NOOP(){}
+var emptyArray = Object.freeze({length:0});
 
 var sf = function(el, returnNode){
 	// If it's Node type

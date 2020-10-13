@@ -80,7 +80,11 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			if(bindRef[i].constructor === Function)
 				continue;
 
-			if(bindRef[i].element.isConnected === false)
+			var temp = bindRef[i];
+			if(temp.bindList) // ToDo
+				continue;
+
+			if(temp.element.isConnected === false)
 				bindRef.splice(i, 1);
 		}
 
@@ -312,6 +316,11 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 						continue;
 					}
 
+					if(temp.bindList){
+						syntheticRepeatedList(temp.template, originalPropertyName, originalModel);
+						continue;
+					}
+
 					syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel); // false === no update
 				}
 
@@ -321,6 +330,13 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			inputBoundRunning = false;
 		}
 	});
+}
+
+self.repeatedListBindRoot = function(template, modelScope){
+	let ref = {bindList:true, template};
+	let properties = template.modelRefRoot_path;
+	for (var i = 0; i < properties.length; i++)
+		modelToViewBinding(modelScope, properties[i], ref);
 }
 
 self.bindElement = function(element, modelScope, template, localModel, modelKeysRegex){
@@ -352,10 +368,14 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		delete template.html;
 	}
 
+	const ref = {element, template};
+
 	// modelRefRoot_path index is not related with modelRefRoot property/key position
 	let properties = template.modelRefRoot_path;
-	for (var i = 0; i < properties.length; i++)
-		modelToViewBinding(modelScope, properties[i], {element, template});
+	if(template.bindList === void 0){
+		for (var i = 0; i < properties.length; i++)
+			modelToViewBinding(modelScope, properties[i], ref);
+	}
 
 	if(template.modelRef_path !== void 0){
 		// Check if there are pending revalidation
@@ -366,6 +386,6 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 
 		properties = template.modelRef_path;
 		for (var i = 0; i < properties.length; i++)
-			modelToViewBinding(localModel, properties[i], {element, template});
+			modelToViewBinding(localModel, properties[i], ref);
 	}
 }

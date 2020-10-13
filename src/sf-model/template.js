@@ -1,21 +1,21 @@
-function elseIfHandle(else_, arg){
+function elseIfHandle(else_, item, modelScope){
 	const { elseIf } = else_;
 
 	// Else if
 	for (let i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		if(!elseIf[i][0](arg[0], arg[1], _escapeParse))
+		if(!elseIf[i][0](item, modelScope, _escapeParse))
 			continue;
 
 		// Get the value
-		return elseIf[i][1](arg[0], arg[1], _escapeParse);
+		return elseIf[i][1](item, modelScope, _escapeParse);
 	}
 
 	// Else
 	if(else_.elseValue === null)
 		return '';
 
-	return else_.elseValue(arg[0], arg[1], _escapeParse);
+	return else_.elseValue(item, modelScope, _escapeParse);
 }
 
 // ==== Template parser ====
@@ -23,25 +23,17 @@ const templateParser_regex = /{{%=([0-9]+)%/g;
 const templateParser_regex_split = /{{%=[0-9]+%/g;
 const REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
-	if(parse.length === 0) return parse;
 	var temp;
-
-	if(parsed === void 0)
-		parsed = new Array(parse.length);
-
 	// Get or evaluate static or dynamic data
 	for (let i = 0, n = parse.length; i < n; i++) {
 		if(atIndex !== void 0 && atIndex.includes(i) === false)
 			continue;
 
 		const ref = parse[i];
-		const arg = ref.data;
-		arg[0] = item; //7ms
-
 		try{
 			// Direct evaluation type
 			if(ref.type === REF_DIRECT){
-				temp = ref.get(arg[0], arg[1], _escapeParse, repeatListIndex);
+				temp = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
 				if(temp === void 0)
 					temp = '';
 				else{
@@ -56,22 +48,22 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			}
 
 			if(ref.type === REF_EXEC){
-				parsed[i] = ref.get(arg[0], arg[1], _escapeParse, repeatListIndex);
+				parsed[i] = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
 				continue;
 			}
 
 			// Conditional type
 			if(ref.type === REF_IF){
 				// If condition was not meet
-				if(!ref.if[0](arg[0], arg[1], _escapeParse, repeatListIndex)){
-					parsed[i] = elseIfHandle(ref, arg, repeatListIndex);
+				if(!ref.if[0](item, ref.data._modelScope, _escapeParse, repeatListIndex)){
+					parsed[i] = elseIfHandle(ref, item, ref.data._modelScope, repeatListIndex);
 					continue;
 				}
 
-				parsed[i] = ref.if[1](arg[0], arg[1], _escapeParse, repeatListIndex);
+				parsed[i] = ref.if[1](item, ref.data._modelScope, _escapeParse, repeatListIndex);
 			}
 		} catch(e) {
-			var temp = (ref.get || ref.if).toString();
+			temp = (ref.get || ref.if).toString();
 			temp = temp.split(') {', 2)[1].slice(1, -2);
 			temp = temp.replace(/(_model_|_modelScope)\./g, '');
 			temp = temp.replace(/var _model_=.*?;/, '');
@@ -90,8 +82,6 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			throw new Error("Can't continue processing the template");
 		}
 	}
-
-	return parsed;
 }
 function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template){
 	for(let a = 0; a < ref.length; a++){
@@ -153,7 +143,12 @@ const templateParser = internal.model.templateParser = function(template, item, 
 	const { addresses } = template;
 
 	try{
-		var parsed = templateExec(template.parse, item, void 0, void 0, repeatListIndex);  //18ms
+		var parsed;
+		if(template.parse.length !== 0){
+			parsed = new Array(template.parse.length);
+			templateExec(template.parse, item, void 0, parsed, repeatListIndex);  //18ms
+		}
+		else parsed = emptyArray;
 	}catch(e){
 		if(e.message === "Can't continue processing the template"){
 			console.error("Error when processing:", template.html, item, modelRef);
@@ -310,6 +305,12 @@ sf.async = function(mode){
 	else animFrameMode = true; // Disable async
 }
 
+const syntheticRepeatedList = function(template, property, modelScope){
+	let list = template.bindList;
+
+	console.log(321, template, property, modelScope);
+}
+
 var animFrameMode = false;
 const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
 	if(property !== void 0){
@@ -329,13 +330,16 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 
 	const changesReference = element.sf$elementReferences;
 
-	if(changesReference.parsed === void 0)
-		changesReference.parsed = new Array(template.parse.length);
+	if(changesReference.parsed === void 0){
+		if(template.parse.length !== 0)
+			changesReference.parsed = new Array(template.parse.length);
+		else changesReference.parsed = emptyArray;
+	}
 
 	const { parsed } = changesReference;
 	const repeatListIndex = element.sf$repeatListIndex;
 
-	if(!asyncing)
+	if(!asyncing && template.parse.length !== 0)
 		templateExec(template.parse, item, changes, parsed, repeatListIndex);
 
 	if(!asyncing && animFrameMode === false){
