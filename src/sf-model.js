@@ -1,7 +1,7 @@
 // Data save and HTML content binding
 sf.model = function(name, options, func, namespace){
 	if(options !== void 0)
-		return sf.model.for(name, options, func);
+		return sf.model.for(name, options, func, namespace);
 
 	// If it's component tag
 	if((namespace || sf.component).registered[name] !== void 0)
@@ -79,7 +79,6 @@ function findBindListElement(el, includeComponent){
 			}
 		}
 		else internal.modelInherit[name] = options.extend;
-
 		const scope = namespace || self;
 
 		let scopeTemp;

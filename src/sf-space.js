@@ -28,9 +28,9 @@ function createRoot_(registered, id, space){
 		if(temp[scope] === void 0){
 			temp = temp[scope] = {$el:$()};
 
-			if(modelFunc[scope].constructor !== Function)
-				console.warn(scope, "haven't been registered. Please check your compiler settings or the compiled file");
-			else modelFunc[scope](temp, SpaceScope);
+			const func = modelFunc[scope];
+			if(func && func.constructor !== Function)
+				modelFunc[scope](temp, SpaceScope);
 
 			return temp;
 		}
@@ -169,16 +169,16 @@ class Space{
 			if(this.modelList.default[name] === void 0)
 				this.modelList.default[name] = {};
 
-			if(old !== void 0 && old.constructor === Array)
+			if(old !== void 0 && old.constructor === Array){
 				for (let i = 0; i < old.length; i++){
 					const arg = old[i];
 					sf.model.init(arg[0], arg[1], arg[2], this.default);
 				}
-
-			return this.modelList;
+				return this.modelList;
+			}
 		}
 
-		sf.model(name, options, func, this.default);
+		sf.model.for(name, options, func, this.default);
 		return this.modelList;
 	}
 

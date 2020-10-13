@@ -21,6 +21,9 @@ self.init = function(el, modelName, namespace){
 		firstInit = true;
 	}
 
+	if(model.$el === void 0)
+		model.$el = $();
+
 	model.$el = model.$el.push(el);
 	if(model.sf$internal === void 0){
 		Object.defineProperty(model, 'sf$internal', {enumerabe:false, configurable:true, value:{
@@ -153,13 +156,7 @@ var applyParseIndex = internal.model.applyParseIndex = function(templateValue, i
 			templateValue[2*i+1] = temp;
 		else{
 			var ref = templateParse[a];
-			temp = ref.data;
-
-			if(item !== temp[1]){
-				temp[0] = item;
-				temp = ref.get(item, temp[1], _escapeParse, repeatListIndex);
-			}
-			else temp = ref.get(void 0, temp[1], _escapeParse, repeatListIndex);
+			temp = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
 
 			templateValue[2*i+1] = temp.constructor === Object ? JSON.stringify(temp) : temp;
 		}
