@@ -23,13 +23,15 @@ const templateParser_regex = /{{%=([0-9]+)%/g;
 const templateParser_regex_split = /{{%=[0-9]+%/g;
 const REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
-	var temp;
-	// Get or evaluate static or dynamic data
-	for (let i = 0, n = parse.length; i < n; i++) {
-		if(atIndex !== void 0 && atIndex.includes(i) === false)
-			continue;
+	var temp, changed = false;
 
-		const ref = parse[i];
+	// Get or evaluate static or dynamic data
+	var n = atIndex !== void 0 ? atIndex.length : parse.length;
+	var a;
+	for (let i = 0; i < n; i++) {
+		a = atIndex !== void 0 ? atIndex[i] : i;
+		const ref = parse[a];
+
 		try{
 			// Direct evaluation type
 			if(ref.type === REF_DIRECT){
@@ -43,12 +45,24 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 						temp = String(temp);
 				}
 
-				parsed[i] = temp;
+				if(changed === false){
+					if(parsed[a] === temp) continue;
+					changed = true;
+				}
+
+				parsed[a] = temp;
 				continue;
 			}
 
 			if(ref.type === REF_EXEC){
-				parsed[i] = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
+				temp = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
+
+				if(changed === false){
+					if(parsed[a] === temp) continue;
+					changed = true;
+				}
+
+				parsed[a] = temp;
 				continue;
 			}
 
@@ -56,11 +70,25 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			if(ref.type === REF_IF){
 				// If condition was not meet
 				if(!ref.if[0](item, ref.data._modelScope, _escapeParse, repeatListIndex)){
-					parsed[i] = elseIfHandle(ref, item, ref.data._modelScope, repeatListIndex);
+					temp = elseIfHandle(ref, item, ref.data._modelScope, repeatListIndex);
+
+					if(changed === false){
+						if(parsed[a] === temp) continue;
+						changed = true;
+					}
+
+					parsed[a] = temp;
 					continue;
 				}
 
-				parsed[i] = ref.if[1](item, ref.data._modelScope, _escapeParse, repeatListIndex);
+				temp = ref.if[1](item, ref.data._modelScope, _escapeParse, repeatListIndex);
+
+				if(changed === false){
+					if(parsed[a] === temp) continue;
+					changed = true;
+				}
+
+				parsed[a] = temp;
 			}
 		} catch(e) {
 			temp = (ref.get || ref.if).toString();
@@ -82,6 +110,8 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			throw new Error("Can't continue processing the template");
 		}
 	}
+
+	return changed;
 }
 function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template){
 	for(let a = 0; a < ref.length; a++){
@@ -306,27 +336,30 @@ sf.async = function(mode){
 }
 
 const syntheticRepeatedList = function(template, property, modelScope){
-	let list = template.bindList;
+	const { bindList } = template;
+	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;
+	const changes = template.modelRefRoot[property];
 
-	console.log(321, template, property, modelScope);
+	for (var i = 0; i < bindList.length; i++) {
+		bindList[i]
+	}
+	console.log(321, template, property, modelScope, changes);
 }
 
 var animFrameMode = false;
 const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
+	var changes;
 	if(property !== void 0){
-		var changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
+		changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
 		if(!changes || changes.length === 0){
 			console.log(element, template, property, item);
 			console.error(`Failed to run syntheticTemplate because property '${property}' is not observed`);
 			return false;
 		}
 	}
-	else{ // This will trying to update all binding
-		if(template.parse.length === 0)
-			return false;
-
-		var changes = void 0;
-	}
+	else if(template.parse.length === 0)
+		return false;
+	// else: Update all binding
 
 	const changesReference = element.sf$elementReferences;
 

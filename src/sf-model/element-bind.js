@@ -372,7 +372,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 
 	// modelRefRoot_path index is not related with modelRefRoot property/key position
 	let properties = template.modelRefRoot_path;
-	if(template.bindList === void 0){
+	if(template.repeatedList === void 0){
 		for (var i = 0; i < properties.length; i++)
 			modelToViewBinding(modelScope, properties[i], ref);
 	}

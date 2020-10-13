@@ -133,6 +133,11 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
 		template.bindList = this;
+
+		if(this.constructor === RepeatedList){
+			template.repeatedList = true;
+			self.repeatedListBindRoot(template, modelRef);
+		}
 	}
 	else if(element.hasAttribute('sf-as-scope'))
 		EM.asScope = true;
