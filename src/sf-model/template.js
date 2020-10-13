@@ -289,7 +289,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 		}
 
 		if(template.specialElement.repeat){
-			// Process element for sf-repeat-this
+			// Process element for sf-each
 			const specialRepeat = template.specialElement.repeat;
 			const specialRepeat_ = new Array(specialRepeat.length);
 			for (var i = 0; i < specialRepeat.length; i++) {
@@ -340,10 +340,8 @@ const syntheticRepeatedList = function(template, property, modelScope){
 	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;
 	const changes = template.modelRefRoot[property];
 
-	for (var i = 0; i < bindList.length; i++) {
-		bindList[i]
-	}
-	console.log(321, template, property, modelScope, changes);
+	for (var i = 0, n=elements.length; i < n; i++)
+		syntheticTemplate(elements[i], template, property, bindList[i]);
 }
 
 var animFrameMode = false;
@@ -372,8 +370,10 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 	const { parsed } = changesReference;
 	const repeatListIndex = element.sf$repeatListIndex;
 
-	if(!asyncing && template.parse.length !== 0)
-		templateExec(template.parse, item, changes, parsed, repeatListIndex);
+	if(!asyncing
+	   && template.parse.length !== 0
+	   && templateExec(template.parse, item, changes, parsed, repeatListIndex) === false)
+		return;
 
 	if(!asyncing && animFrameMode === false){
 		if(changesReference.async === true)

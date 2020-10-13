@@ -334,11 +334,11 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// Remove repeated list from further process
 	// To avoid data parser
-	const backup = targetNode.querySelectorAll('[sf-repeat-this]');
+	const backup = targetNode.querySelectorAll('[sf-each]');
 	for (var i = 0; i < backup.length; i++) {
 		var current = backup[i];
 		var flag = document.createElement('template');
-		flag.classList.add('sf-repeat-this-prepare');
+		flag.classList.add('sf-each-prepare');
 		current.parentNode.replaceChild(flag, current);
 	}
 
@@ -439,7 +439,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	internal.component.skip = tempSkip;
 
 	// Restore element repeated list
-	const restore = copy.getElementsByClassName('sf-repeat-this-prepare');
+	const restore = copy.getElementsByClassName('sf-each-prepare');
 	for (var i = 0; i < backup.length; i++) {
 		var current = restore[0];
 		current.parentNode.replaceChild(backup[i], current);
@@ -586,17 +586,17 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		}
 	}
 
-	// Get the indexes for sf-repeat-this
+	// Get the indexes for sf-each
 	if(template.specialElement.repeat !== void 0){
 		const specialRepeat = template.specialElement.repeat;
 		for (var i = 0; i < specialRepeat.length; i++) {
 			var el = specialRepeat[i];
 			specialRepeat[i] = {
 				addr:$.getSelector(el, true),
-				rule:el.getAttribute('sf-repeat-this')
+				rule:el.getAttribute('sf-each')
 			};
 
-			el.removeAttribute('sf-repeat-this');
+			el.removeAttribute('sf-each');
 		}
 	}
 
@@ -665,7 +665,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 				continue;
 
 			var attrs = currentNode.attributes;
-			if(attrs['sf-repeat-this'] !== void 0){
+			if(attrs['sf-each'] !== void 0){
 				if(collectOther.repeat === void 0)
 					collectOther.repeat = [];
 

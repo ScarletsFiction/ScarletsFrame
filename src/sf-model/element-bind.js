@@ -81,8 +81,12 @@ internal.model.removeModelBinding = function(ref, isDeep){
 				continue;
 
 			var temp = bindRef[i];
-			if(temp.bindList) // ToDo
+			if(temp.bindList){
+				if(temp.template.bindList.$EM === void 0)
+					bindRef.splice(i, 1);
+
 				continue;
+			}
 
 			if(temp.element.isConnected === false)
 				bindRef.splice(i, 1);

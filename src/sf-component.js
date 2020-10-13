@@ -214,7 +214,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		if(element.sf$componentIgnore === true)
 			return;
 
-		if(element.hasAttribute('sf-repeat-this')){
+		if(element.hasAttribute('sf-each')){
 			element.sf$componentIgnore = true;
 			return;
 		}

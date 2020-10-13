@@ -1,8 +1,5 @@
-// Info: repeated list that using root binding or using property from root model (not the list property)
-// will be slower on array operation because it's managing possible memory leak
-
 // Known bugs: using keys for repeated list won't changed when refreshed
-// - we also need to support bind into array key if specified
+// - we also need to support bind into array/object index/key if specified
 
 // var warnUnsupport = true;
 const repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
@@ -17,11 +14,11 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 			element = elements[i];
 
 			// ToDo: find the culprit why we need to check this
-			if(!element.hasAttribute('sf-repeat-this'))
+			if(!element.hasAttribute('sf-each'))
 				continue;
 
-			script = element.getAttribute('sf-repeat-this');
-			element.removeAttribute('sf-repeat-this');
+			script = element.getAttribute('sf-each');
+			element.removeAttribute('sf-each');
 		}
 
 		element.sf$componentIgnore = true;
