@@ -220,8 +220,8 @@ class SFSpace extends HTMLElement {
 	}
 	connectedCallback(){
 		if(this.sf$destroying !== void 0){
-			delete this.sf$destroying;
 			clearTimeout(this.sf$destroying);
+			delete this.sf$destroying;
 		}
 
 		if(this.sf$firstInit === void 0)

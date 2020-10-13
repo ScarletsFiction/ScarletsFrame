@@ -7,9 +7,8 @@ internal.model.removeModelBinding = function(ref, isDeep){
 
 	const bindedKey = ref.sf$bindedKey;
 	for(let key in bindedKey){
-		if(ref[key] !== void 0 && (ref[key].constructor === RepeatedProperty || ref[key].constructor === RepeatedList)){
-			const obj = ref[key];
-
+		const obj = ref[key];
+		if(obj !== void 0 && obj.$EM !== void 0){
 			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
 			if(obj.constructor === RepeatedList){
 				for (var i = 0; i < obj.length; i++){
@@ -108,13 +107,12 @@ internal.model.removeModelBinding = function(ref, isDeep){
 		if(bindRef.length === 0){
 			delete bindedKey[key];
 
-			if(ref[key] === void 0 || Object.getOwnPropertyDescriptor(ref, key).set === void 0)
+			if(obj === void 0 || Object.getOwnPropertyDescriptor(ref, key).set === void 0)
 				continue;
 
 			// Reconfigure / Remove property descriptor
-			var temp = ref[key];
 			delete ref[key];
-			ref[key] = temp;
+			ref[key] = obj;
 		}
 	}
 
