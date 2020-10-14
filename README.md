@@ -8,6 +8,15 @@ A frontend framework that can help you write a simple web structure with complex
 
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
+### Breaking changes since 0.31.0
+```xml
+<!-- Old -->
+<div sf-repeat-this="..."></div>
+
+<!-- Changed into -->
+<div sf-each="..."></div>
+```
+
 ### Breaking changes since 0.30.0
 ```js
 sf.model('stuff', function(self){
