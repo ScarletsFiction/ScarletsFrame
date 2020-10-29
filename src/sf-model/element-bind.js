@@ -188,7 +188,9 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 						enumerable: true,
 						configurable: true,
 						get:()=> value,
-						set:(val)=> Object.assign(value, val)
+						set:(val)=>{
+							Object.assign(value, val)
+						}
 					});
 				}
 
