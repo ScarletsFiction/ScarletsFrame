@@ -4,7 +4,9 @@ const sourcemaps = require('gulp-sourcemaps');
 const header = require('gulp-header');
 const rename = require('gulp-rename');
 const fs = require('fs');
-const notifier = require('node-notifier');
+
+// const notifier = require('node-notifier'); // For other OS
+const notifier = new require('node-notifier/notifiers/balloon')(); // For Windows
 
 let uglify, babel;
 gulp.task('enableCompile', function(done){
@@ -52,7 +54,8 @@ gulp.task('watch-js', function(){
     .on('end', function(){
       notifier.notify({
         title: 'Gulp Compilation',
-        message: 'JavaScript was finished!'
+        message: 'JavaScript was finished!',
+        timeout: 4, time: 4,
       });
     });
 });
