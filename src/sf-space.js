@@ -29,8 +29,8 @@ function createRoot_(registered, id, space){
 			temp = temp[scope] = {$el:$()};
 
 			const func = modelFunc[scope];
-			if(func && func.constructor !== Function)
-				modelFunc[scope](temp, SpaceScope);
+			if(func && func.constructor === Function)
+				func(temp, SpaceScope);
 
 			return temp;
 		}
