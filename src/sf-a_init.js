@@ -28,7 +28,7 @@ if(typeof document === void 0)
 var HTMLTemplates = window.templates || {};
 var TemplatePending = [];
 Object.defineProperty(window, 'templates', {
-	set: function(val){
+	set: (val)=>{
 		HTMLTemplates = val;
 		hotReload && internal.hotTemplate(val);
 
@@ -40,9 +40,7 @@ Object.defineProperty(window, 'templates', {
 				temp[i]();
 		}
 	},
-	get: function(){
-		return HTMLTemplates;
-	}
+	get:()=> HTMLTemplates
 });
 
 // ===== Module Init =====
@@ -53,6 +51,9 @@ function NOOP(){}
 var emptyArray = Object.freeze({length:0});
 
 var sf = function(el, returnNode){
+	if(el === void 0)
+		el = $0;
+
 	// If it's Node type
 	if(el.tagName !== void 0){
 		if(el.sf$controlled === void 0 && !(el.sf$elementReferences && el.sf$elementReferences.template.bindList))
@@ -90,10 +91,8 @@ var sfRegex = {
 ;(function(){
 	function createScope(value){
 		return {configurable:true, enumerable:true,
-			get:function(){return value},
-			set:function(val){
-				value = val;
-			}
+			get:()=> value,
+			set:(val)=> value = val
 		};
 	}
 

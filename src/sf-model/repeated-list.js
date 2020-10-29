@@ -95,12 +95,8 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		hiddenProperty(this, '$EM', EM, true);
 		Object.defineProperty(targetDeep, `on$${prop}`, {
 			configurable: true,
-			get(){
-				return callback;
-			},
-			set(val){
-				Object.assign(callback, val);
-			}
+			get:()=> callback,
+			set:(val)=> Object.assign(callback, val)
 		});
 	}
 	else if(this.$EM.constructor === ElementManipulatorProxy)
@@ -201,10 +197,8 @@ class RepeatedProperty{ // extends Object
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
-				get(){
-					return that;
-				},
-				set(val){
+				get:()=> that,
+				set:(val)=> {
 					const olds = that._list;
 					const news = Object.keys(val);
 
@@ -342,8 +336,8 @@ function ProxyProperty(obj, prop, force){
 		Object.defineProperty(obj, prop, {
 			configurable:true,
 			enumerable:true,
-			get(){return temp},
-			set(val){
+			get:()=> temp,
+			set:(val)=> {
 				temp = val;
 				obj.refresh(prop);
 			}
@@ -418,10 +412,8 @@ class RepeatedList extends Array{
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
-				get(){
-					return that;
-				},
-				set(val){
+				get:()=> that,
+				set:(val)=> {
 					if(val.length === 0)
 						that.splice(0);
 					else that.remake(val, true);

@@ -38,8 +38,8 @@ sf.events = (function(){
 			Object.defineProperty(Events, name, {
 				enumerable:true,
 				configurable:true,
-				get(){return active},
-				set(val){
+				get:()=> active,
+				set:(val)=> {
 					if(active === val)
 						return;
 

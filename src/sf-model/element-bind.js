@@ -187,13 +187,8 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 					Object.defineProperty(model, propertyName[i], {
 						enumerable: true,
 						configurable: true,
-						get(){
-							return value;
-						},
-						set(val){
-							Object.assign(value, val);
-							return val;
-						}
+						get:()=> value,
+						set:(val)=> Object.assign(value, val)
 					});
 				}
 
@@ -278,23 +273,21 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 
 	if(_on)
 		Object.defineProperty(model, `on$${propertyName}`, {
-			set(val){_on = val},
-			get(){return _on}
+			set:(val)=> _on = val,
+			get:()=> _on
 		});
 
 	if(_m2v)
 		Object.defineProperty(model, `m2v$${propertyName}`, {
-			set(val){_m2v = val},
-			get(){return _on}
+			set:(val)=>_m2v = val,
+			get:()=> _m2v
 		});
 
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,
-		get(){
-			return objValue;
-		},
-		set(val){
+		get:()=> objValue,
+		set:(val)=> {
 			if(objValue !== val){
 				let newValue, noFeedback, temp;
 				if(inputBoundRunning === false){
