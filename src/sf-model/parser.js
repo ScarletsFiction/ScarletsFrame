@@ -17,10 +17,10 @@ const dataParser = function(html, _model_, template, _modelScope, preParsedRefer
 
 			// Mask item variable
 			if(template.modelRef_regex !== void 0)
-				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> left+'_model_'+right);
+				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
 
 			// Mask model for variable
-			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> before+'_modelScope.'+matched);
+			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
 		});
 
 		temp = temp.trim();
@@ -64,10 +64,10 @@ const uniqueDataParser = function(html, template, _modelScope){
 
 			// Mask item variable
 			if(template.modelRef_regex !== void 0)
-				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> left+'_model_'+right);
+				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
 
 			// Mask model for variable
-			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> before+'_modelScope.'+matched);
+			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
 		});
 
 		let check = false;
@@ -81,14 +81,14 @@ const uniqueDataParser = function(html, template, _modelScope){
 			elseIf.data = {_modelScope};
 
 			// Trim Data
-			elseIf.if = [condition.trim(), elseIf.if.trim()];
+			elseIf.if = {cond:condition.trim(), val:elseIf.if.trim()};
 			if(elseIf.elseValue !== null)
 				elseIf.elseValue = elseIf.elseValue.trim();
 
 			for (let i = 0; i < elseIf.elseIf.length; i++) {
 				const ref = elseIf.elseIf[i];
-				ref[0] = ref[0].trim();
-				ref[1] = ref[1].trim();
+				ref.cond = ref.cond.trim();
+				ref.val = ref.val.trim();
 			}
 
 			// Push data
@@ -109,7 +109,7 @@ const uniqueDataParser = function(html, template, _modelScope){
 	return [prepared, preParsedReference];
 }
 
-// {if, elseIf:([if, value], ...), elseValue}
+// {ifCond, elseIf:({ifCond, val}, ...), elseValue}
 var findElse = function(text){
 	text = text.join(':');
 	var else_ = null;
@@ -135,7 +135,7 @@ var findElse = function(text){
 	obj.elseIf = new Array(text.length);
 	for (let i = 0; i < text.length; i++) {
 		const val = text[i].split(':');
-		obj.elseIf[i] = [val.shift(), val.join(':')];
+		obj.elseIf[i] = {cond:val.shift(), val:val.join(':')};
 	}
 
 	return obj;
@@ -156,7 +156,7 @@ function addressAttributes(currentNode, template){
 			}
 
 			if(template.modelRef_regex)
-				attr.value = attr.value.replace(template.modelRef_regex, (full, left, right)=> left+'_model_'+right);
+				attr.value = attr.value.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
 
 			keys.push({
 				name:attr.name,
@@ -319,7 +319,7 @@ const createModelKeysRegex = internal.model.createModelKeysRegex = function(targ
 	const obj = {};
 
 	// Don't match text inside quote, or object keys
-	obj.modelRefRoot_regex = RegExp(sfRegex.scopeVar+'('+modelKeys+')', 'g');
+	obj.modelRefRoot_regex = RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g');
 	if(mask !== null)
 		obj.modelRef_regex = RegExp(sfRegex.getSingleMask.join(mask), 'gm');
 
@@ -394,9 +394,9 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 			// Dynamic data
 			if(current.type === REF_IF){
-				var checkList = current.if.join(';');
-				current.if[0] = modelScript(mask, current.if[0], repeatedListKey);
-				current.if[1] = modelScript(mask, current.if[1], repeatedListKey);
+				var checkList = `${current.if.cond};${current.if.val}`;
+				current.if.cond = modelScript(mask, current.if.cond, repeatedListKey);
+				current.if.val = modelScript(mask, current.if.val, repeatedListKey);
 
 				if(current.elseValue !== null){
 					checkList += `;${current.elseValue}`;
@@ -406,9 +406,9 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				for (let a = 0; a < current.elseIf.length; a++) {
 					const refElif = current.elseIf[a];
 
-					checkList += refElif.join(';');
-					refElif[0] = modelScript(mask, refElif[0], repeatedListKey);
-					refElif[1] = modelScript(mask, refElif[1], repeatedListKey);
+					checkList += `${refElif.cond};${refElif.val}`;
+					refElif.cond = modelScript(mask, refElif.cond, repeatedListKey);
+					refElif.val = modelScript(mask, refElif.val, repeatedListKey);
 				}
 			}
 			else if(current.type === REF_EXEC){

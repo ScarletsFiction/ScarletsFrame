@@ -64,13 +64,13 @@ function request(method, url, data, options, callback){
 
 				if(val.constructor === Array){
 					for (let i = 0; i < val.length; i++)
-						data.append(name+'[]', val[i]);
+						data.append(`${name}[]`, val[i]);
 					continue;
 				}
 
 				if(val.constructor === Object){
 					for(let valKey in val)
-						data.append(name+'['+valKey+']', val[valKey]);
+						data.append(`${name}[${valKey}]`, val[valKey]);
 					continue;
 				}
 
@@ -156,17 +156,17 @@ function serializeQuery(params) {
 		const val = params[key];
 		if (val.constructor === Array){
 			for (let i = 0; i < val.length; i++)
-				keys.push(key+"[]="+encodeURIComponent(val[i]));
+				keys.push(`${key}[]=${encodeURIComponent(val[i])}`);
 			continue;
 		}
 
 		if(val.constructor === Object){
 			for(let valKey in val)
-				keys.push(key+"["+valKey+"]="+encodeURIComponent(val[valKey]));
+				keys.push(`${key}[${valKey}]=${encodeURIComponent(val[valKey])}`);
 			continue;
 		}
 
-		keys.push(key+"="+encodeURIComponent(val));
+		keys.push(`${key}=${encodeURIComponent(val)}`);
 	}
 
 	return keys.join('&');

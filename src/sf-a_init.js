@@ -159,9 +159,9 @@ function stringifyPropertyPath(properties){
 	var remake = properties[0];
 	for (var i = 1; i < properties.length; i++) {
 		if(properties[i].constructor === Number)
-			remake += '['+properties[i]+']';
+			remake += `[${properties[i]}]`;
 		else
-			remake += '.'+properties[i];
+			remake += `.${properties[i]}`;
 	}
 
 	return remake;

@@ -4,11 +4,11 @@ function elseIfHandle(else_, item, modelScope){
 	// Else if
 	for (let i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		if(!elseIf[i][0](item, modelScope, _escapeParse))
+		if(!elseIf[i].cond(item, modelScope, _escapeParse))
 			continue;
 
 		// Get the value
-		return elseIf[i][1](item, modelScope, _escapeParse);
+		return elseIf[i].val(item, modelScope, _escapeParse);
 	}
 
 	// Else
@@ -69,7 +69,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			// Conditional type
 			if(ref.type === REF_IF){
 				// If condition was not meet
-				if(!ref.if[0](item, ref.data._modelScope, _escapeParse, repeatListIndex)){
+				if(!ref.if.cond(item, ref.data._modelScope, _escapeParse, repeatListIndex)){
 					temp = elseIfHandle(ref, item, ref.data._modelScope, repeatListIndex);
 
 					if(changed === false){
@@ -81,7 +81,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 					continue;
 				}
 
-				temp = ref.if[1](item, ref.data._modelScope, _escapeParse, repeatListIndex);
+				temp = ref.if.val(item, ref.data._modelScope, _escapeParse, repeatListIndex);
 
 				if(changed === false){
 					if(parsed[a] === temp) continue;
@@ -91,8 +91,17 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 				parsed[a] = temp;
 			}
 		} catch(e) {
-			temp = (ref.get || ref.if).toString();
-			temp = temp.split(') {', 2)[1].slice(1, -2);
+			if(ref.get !== void 0){
+				temp = ref.get.toString();
+				temp = temp.split('\n) {\n', 2)[1].slice(0, -2);
+			}
+			else{
+				var temp2 = ref.if.cond.toString();
+				temp2 = 'if('+temp2.split('\n) {\nreturn ', 2)[1].slice(0, -2)+'){\n';
+
+				temp = temp2 + ref.if.val.toString().split('\n) {\n', 2)[1];
+			}
+
 			temp = temp.replace(/(_model_|_modelScope)\./g, '');
 			temp = temp.replace(/var _model_=.*?;/, '');
 

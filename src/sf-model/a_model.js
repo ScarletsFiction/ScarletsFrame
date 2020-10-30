@@ -97,7 +97,7 @@ function trimIndentation(text){
 	if(indent === void 0) return text;
 	indent = indent.length - indent.trim().length;
 	if(indent === 0) return text;
-	return text.replace(RegExp('^([\\t ]{'+indent+'})', 'gm'), '');
+	return text.replace(RegExp(`^([\\t ]{${indent}})`, 'gm'), '');
 }
 
 // ToDo: Perf
@@ -122,9 +122,9 @@ function modelScript(mask, script, repeatedListKey){
 	var which = script.match(modelScript_);
 
 	if(which === null)
-		script = 'return '+script;
+		script = `return ${script}`;
 	else if(which[0] === '_result_')
-		script = 'var _result_="";'+script.split('@return').join('_result_+=')+';return _result_';
+		script = `var _result_="";${script.split('@return').join('_result_+=')};return _result_`;
 	else
 		script = script.split('@return').join('return');
 

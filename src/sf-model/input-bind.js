@@ -303,7 +303,7 @@ const bindInput = internal.model.bindInput = function(temp, modelLocal, mask, mo
 		let model = modelLocal;
 		let currentModel = modelLocal;
 		if(mask !== void 0){
-			if(propertyName.indexOf(mask+'.') === 0)
+			if(propertyName.indexOf(`${mask}.`) === 0)
 				propertyName = propertyName.replace(/\w+\./, '');
 			else
 				currentModel = model = modelScope;
