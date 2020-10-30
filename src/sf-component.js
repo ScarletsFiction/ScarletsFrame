@@ -253,12 +253,14 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			$item[attr[i].nodeName] = attr[i].value;
 		}
 
+		let useItem = true;
 		if(element.model !== void 0 && !(element.model instanceof Object)){
 			$item = element.model;
 			element.model = void 0;
+			useItem = false;
 		}
 
-		const newObj = element.model || (asScope ? $item : (
+		const newObj = element.model || (asScope && useItem ? $item : (
 			inherit !== void 0 ? new inherit() : {}
 		));
 
@@ -331,6 +333,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		// Custom component that written on the DOM
 		else{
+			// Temporary element
+			if(registrar[3] === void 0 && element.hasAttribute('sf-as-template')){
+				element.removeAttribute('sf-as-template');
+				self.html(name, element.outerHTML);
+			}
+
 			const specialElement = {
 				repeat:[],
 				input:[]

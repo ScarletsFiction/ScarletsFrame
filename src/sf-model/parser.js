@@ -313,7 +313,7 @@ const createModelKeysRegex = internal.model.createModelKeysRegex = function(targ
 	const modelKeys = self.modelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
-		throw new Error("Template model's property was not found, maybe some script haven't been loaded");
+		throw new Error("Model has no property instead of '$el', maybe some script haven't been loaded");
 	}
 
 	const obj = {};
@@ -591,9 +591,18 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		const specialRepeat = template.specialElement.repeat;
 		for (var i = 0; i < specialRepeat.length; i++) {
 			var el = specialRepeat[i];
+			var rule = el.getAttribute('sf-each');
+
+			if(template.modelRef_regex_mask !== void 0){
+				var temp = ` in ${template.modelRef_regex_mask}.`;
+
+				if(rule.includes(temp))
+					rule = rule.replace(temp, ' in ');
+			}
+
 			specialRepeat[i] = {
 				addr:$.getSelector(el, true),
-				rule:el.getAttribute('sf-each')
+				rule
 			};
 
 			el.removeAttribute('sf-each');
@@ -604,9 +613,14 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 		const specialScope = template.specialElement.scope;
 		for (var i = 0; i < specialScope.length; i++) {
 			var el = specialScope[i];
+			var rule = parsePropertyPath(el.getAttribute('sf-scope'));
+
+			if(template.modelRef_regex_mask !== void 0 && rule[0] === template.modelRef_regex_mask)
+				rule.shift();
+
 			specialScope[i] = {
 				addr:$.getSelector(el, true),
-				rule:parsePropertyPath(el.getAttribute('sf-scope'))
+				rule
 			};
 
 			el.removeAttribute('sf-scope');
