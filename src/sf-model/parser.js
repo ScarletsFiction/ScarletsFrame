@@ -33,7 +33,7 @@ const dataParser = function(html, _model_, template, _modelScope, preParsedRefer
 			if(justName === true)
 				preParsedReference.push(temp);
 			else
-				preParsedReference.push({type:REF_DIRECT, data:{_model_, _modelScope}, check:temp});
+				preParsedReference.push({type:REF_DIRECT, data:{_modelScope}, check:temp});
 			return `{{%=${preParsed.length + lastParsedIndex - 1}%`;
 		}
 		return `{{%=${exist + lastParsedIndex}%`;
@@ -53,7 +53,12 @@ const uniqueDataParser = function(html, template, _modelScope){
 		matched = dataParser(matched, null, template, _modelScope, vars, true)
 				.split('\\').join('\\\\').split('"').join('\\"').split("\n").join("\\\n");
 
-		return `_result_ += (function(){return _escapeParse("${matched}", [${vars.join(',')} ])}).apply(null, arguments);`;
+		if(vars.length !== 0){
+			var temp = `_result_ += "${escapeParse(matched, vars)}"`;
+			return temp;
+		}
+
+		return `_result_ += "${matched}";`;
 	});
 
 	const preParsedReference = [];

@@ -71,6 +71,7 @@ var sf = function(el, returnNode){
 var hotReload = false;
 var sfRegex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
+	getAttrQuotes:/=(\\['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	scopeVar:'(^|[^.\\]\\w])',
 	// escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
 
@@ -168,11 +169,11 @@ function stringifyPropertyPath(properties){
 }
 
 var _es = '%@~';
-function avoidQuotes(str, func, onQuotes){
+function avoidQuotes(str, func, onQuotes, isAttr){
 	str = str.split(_es).join('-');
 
 	var temp = [];
-	str = str.replace(sfRegex.getQuotes, function(full){
+	str = str.replace(isAttr ? sfRegex.getAttrQuotes : sfRegex.getQuotes, function(full){
 		temp.push(full);
 		return _es+(temp.length-1)+_es;
 	});

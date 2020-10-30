@@ -105,6 +105,12 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			temp = temp.replace(/(_model_|_modelScope)\./g, '');
 			temp = temp.replace(/var _model_=.*?;/, '');
 
+			if(temp.indexOf('return ') === 0)
+				temp = temp.slice(7);
+
+			if(temp.includes('\n') === false)
+				temp = `{{ ${temp} }}`;
+
 			if(e.message === "Can't continue processing the template"){
 				console.groupCollapsed("Click here to open more information..");
 				console.log("%cError in template's script:\n", 'color:orange', temp);

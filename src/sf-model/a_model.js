@@ -100,25 +100,32 @@ function trimIndentation(text){
 	return text.replace(RegExp(`^([\\t ]{${indent}})`, 'gm'), '');
 }
 
-// ToDo: Perf
-function _escapeParse(html, vars){
+function _escapeParse(val, type){
+	if(type === 0) // HTML
+		return sf.dom.escapeText(val);
+
+	// Attr
+	return val !== null && val !== void 0
+		? val.toString().split('"').join('&quot;').split("'").join("&#39;") : val;
+}
+
+function escapeParse(html, vars){
 	return avoidQuotes(html, function(noQuot){
 		// Escape for value in HTML
 		return noQuot.replace(templateParser_regex, function(full, match){
-			return sf.dom.escapeText(vars[match]);
+			return `"+_escapeParse(${vars[match]}, 0)+"`;
 		});
 	}, function(inQuot){
 		// Escape for value in attributes
 		return inQuot.replace(templateParser_regex, function(full, match){
-			return vars[match] && vars[match].constructor === String
-				? vars[match].split('"').join('&quot;').split("'").join("&#39;")
-				: vars[match];
+			return `"+_escapeParse(${vars[match]}, 1)+"`;
 		});
-	});
+	}, true).split('+""').join('');
 }
 
 var modelScript_ = /_result_|return/;
-function modelScript(mask, script, repeatedListKey){
+function modelScript(mask, _script, repeatedListKey){
+	var script = _script;
 	var which = script.match(modelScript_);
 
 	if(which === null)
@@ -141,7 +148,7 @@ function modelScript(mask, script, repeatedListKey){
 			return new Function(args, script);
 		return new Function(args, repeatedListKey, script);
 	} catch(e){
-		console.log(script);
+		console.log(_script);
 		console.error(e);
 		sf.onerror && sf.onerror(e);
 	}
