@@ -544,9 +544,11 @@ function queryElements(arr, selector){
 
 // Fix for IE11 and Safari, due to lack of writable length
 function recreateDOMList($el, length){
-	const args = ['sel'];
+	const args = new Array(length)
+	args[0] = 'sel';
+
 	for (var i = 1; i < length; i++)
-		args.push(`a${i}`);
+		args[i] = `a${i}`;
 
 	const obj = {};
 	const temp = Function('o', `return function(${args.join(',')}){return o.find(sel)}`)(obj);

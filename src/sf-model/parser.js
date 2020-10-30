@@ -589,16 +589,15 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	// Get the indexes for sf-each
 	if(template.specialElement.repeat !== void 0){
 		const specialRepeat = template.specialElement.repeat;
+		var isDeep = template.modelRef_regex_mask !== void 0;
+		var temp = isDeep && ` in ${template.modelRef_regex_mask}.`;
+
 		for (var i = 0; i < specialRepeat.length; i++) {
 			var el = specialRepeat[i];
 			var rule = el.getAttribute('sf-each');
 
-			if(template.modelRef_regex_mask !== void 0){
-				var temp = ` in ${template.modelRef_regex_mask}.`;
-
-				if(rule.includes(temp))
-					rule = rule.replace(temp, ' in ');
-			}
+			if(isDeep && rule.includes(temp))
+				rule = rule.replace(temp, ' in ');
 
 			specialRepeat[i] = {
 				addr:$.getSelector(el, true),

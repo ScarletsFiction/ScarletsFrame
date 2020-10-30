@@ -108,11 +108,13 @@ const inputSelectBound = function(e){
 	ref.viewInputted = true;
 	const { typeData } = ref;
 
-	let value = [];
+	let value;
 	if(ref.multiple === true){
 		const temp = ref.selectedOptions;
+		value = new Array(temp.length);
+
 		for (let i = 0; i < temp.length; i++)
-			value.push(typeData === Number ? Number(temp[i].value) : temp[i].value);
+			value[i] = typeData === Number ? Number(temp[i].value) : temp[i].value;
 	}
 	else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
 
