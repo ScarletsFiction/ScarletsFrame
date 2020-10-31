@@ -11,7 +11,7 @@ function url(){
 	return url.paths + hashes_ + (data_.length !== 1 ? data_ : '');
 };
 
-sf.url = url;
+exports.url = url;
 
 let hashes = url.hashes = {};
 url.data = [];
@@ -21,14 +21,15 @@ url.paths = '/';
 function push(){
 	window.history.pushState((window.history.state || 0) + 1, '', self());
 }
-url.push = push;
+
+exports.push = push;
 
 // Remove next history and change current history
 function replace(){
 	window.history.replaceState(window.history.state, '', self());
 }
 
-url.replace = replace;
+exports.replace = replace;
 
 function get(name, index){
 	url.parse();
@@ -42,7 +43,7 @@ function get(name, index){
 	return hashes[name].split('/')[index+1];
 }
 
-url.get = get;
+exports.get = get;
 
 function parse(url){
 	if(url !== void 0){
@@ -75,6 +76,5 @@ function parse(url){
 	return self;
 }
 
-url.parse = parse;
-
+exports.parse = parse;
 url.parse();
