@@ -1,7 +1,6 @@
 // Known bugs: using keys for repeated list won't changed when refreshed
 // - we also need to support bind into array/object index/key if specified
 
-// var warnUnsupport = true;
 const repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
 	let element, script;
 
@@ -145,6 +144,25 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	EM.elementRef = new WeakMap();
 	EM.callback = callback; // Update callback
 	parentNode.$EM = EM;
+
+	// Check if this was nested repeated element
+	if(template && modelKeysRegex.bindList !== void 0){
+		EM.template.parentTemplate = modelKeysRegex;
+		var _list = modelKeysRegex.scopes._list;
+
+// ToDo: Change this to "new Set"
+		if(_list === void 0)
+			_list = modelKeysRegex.scopes._list = [];
+
+		if(modelKeysRegex.uniqPattern !== void 0)
+			_list.push(modelKeysRegex.uniqPattern);
+
+		if(modelKeysRegex.modelRef_regex_mask !== void 0)
+			_list.push(modelKeysRegex.modelRef_regex_mask);
+
+		EM.template.scopes = modelKeysRegex.scopes;
+		_list.regex = new RegExp(sfRegex.getScopeList.join(_list.join('|')), 'gm');
+	}
 
 	if(uniqPattern !== void 0)
 		EM.template.uniqPattern = uniqPattern;
@@ -348,9 +366,7 @@ function ProxyProperty(obj, prop, force){
 // This is called only once when RepeatedProperty/RepeatedList is initializing
 // So we don't need to use cache
 function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNode, namespace){
-	let temp,
-		{ isComponent,
-		template } = EM;
+	let temp, { isComponent, template } = EM;
 
 	if(that.constructor === RepeatedProperty){
 		temp = that;
@@ -360,13 +376,18 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	const len = that.length;
 	let elem;
 	for (var i = 0; i < len; i++) {
+// ToDo: the first/parent/root key/value haven't been assigned to scopes before child
+		if(template.parentTemplate !== void 0){
+			if(template.uniqPattern)
+				template.scopes[template.uniqPattern] = (temp === void 0 ? i : temp._list[i]);
+
+			template.scopes[template.modelRef_regex_mask] = that[i];
+		}
+
 		if(isComponent)
 			elem = new template(that[i], namespace, EM.asScope);
 		else{
-			if(temp === void 0)
-				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && i);
-			else
-				elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && temp._list[i]);
+			elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && (temp === void 0 ? i : temp._list[i]));
 		}
 
 		if(typeof that[i] === "object"){

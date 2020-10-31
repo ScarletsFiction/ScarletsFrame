@@ -82,6 +82,7 @@ var sfRegex = {
 	itemsObserve:/\b(_model_|_modelScope)\.([\w\[\].]+)/g,
 	parsePropertyPath:/(?:\[([\w]+)\]|\.([\w]+))/g,
 	getSingleMask:['([^\\w.]|^)','([^\\w:]|$)'], //gm
+	getScopeList:['(?:[^\\w.]|^)(',')(?:[^\\w:]|$)'], //gm
 
 	inputAttributeType:/checkbox|radio|hidden/,
 	anyCurlyBracket:/{{.*?}}/,
@@ -316,7 +317,7 @@ function toArray(b){
 	return c;
 }
 
-function findErrorLocation(text, error, sliced, msg){
+function findErrorLocation(text, error, slicedX, msg, slicedY){
 	var location = error.stack.match(/mous>:(.*?)\)/);
 	if(location === null){
 		console.log(msg, 'color:orange', text);
@@ -325,8 +326,8 @@ function findErrorLocation(text, error, sliced, msg){
 
 	location = location[1].split(':').map(Number);
 
-	location[0] -= 2;
-	location[1] -= sliced || 0;
+	location[0] -= 2 + slicedY;
+	location[1] -= slicedX;
 	if(location[1] < 0) location[1] = 0;
 
 	text = text.split('\n');

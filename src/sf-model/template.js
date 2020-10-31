@@ -105,10 +105,15 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			temp = temp.replace(/(_model_|_modelScope)\./g, '');
 			temp = temp.replace(/var _model_=.*?;/, '');
 
-			var sliced = 0;
+			var slicedX = 0, slicedY = 0;
+			if(temp.indexOf('/**/') === 0){
+				temp = temp.slice(temp.indexOf('\n')+1);
+				slicedY = 1;
+			}
+
 			if(temp.indexOf('return ') === 0){
 				temp = temp.slice(7);
-				sliced = 7;
+				slicedX = 7;
 			}
 
 			if(temp.includes('\n') === false)
@@ -116,11 +121,11 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 
 			if(e.message === "Can't continue processing the template"){
 				console.groupCollapsed("Click here to open more information..");
-				findErrorLocation(temp, e, sliced, "%cError in template's script:\n");
+				findErrorLocation(temp, e, slicedX, "%cError in template's script:\n", slicedY);
 			}
 			else{
 				console.groupCollapsed("%cError message:", 'color:orange', e.message, "\nClick here to open more information..");
-				findErrorLocation(temp, e, sliced, "%cWhen processing template's script:\n");
+				findErrorLocation(temp, e, slicedX, "%cWhen processing template's script:\n", slicedY);
 			}
 
 			throw new Error("Can't continue processing the template");
@@ -201,6 +206,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 			            "\n - Element:", template.html,
 			            "\n - Item value:", item,
 			            "\n - Model root:", modelRef);
+			console.log(template);
 
 			if(modelRef.$el !== void 0){
 				var el = modelRef.$el[0];

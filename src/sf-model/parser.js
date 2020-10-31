@@ -376,12 +376,14 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	let copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 
 	// Extract data to be parsed
-	var _modelScoped = {_modelScope:modelScope};
-	copy = uniqueDataParser(copy, template, _modelScoped);
+	template.scopes = modelRegex.bindList !== void 0 ? modelRegex.scopes : {_modelScope:modelScope};
+	copy = uniqueDataParser(copy, template, template.scopes);
 	const preParsed = copy[1];
-	copy = dataParser(copy[0], null, template, _modelScoped, preParsed);
+	copy = dataParser(copy[0], null, template, template.scopes, preParsed);
 
 	function findModelProperty(){
+		const _list = template.scopes._list;
+
 		for (let i = 0; i < preParsed.length; i++) {
 			const current = preParsed[i];
 
@@ -392,27 +394,27 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				delete current.check;
 
 				// Convert to function
-				current.get = modelScript(mask, check, repeatedListKey);
+				current.get = modelScript(mask, check, repeatedListKey, _list);
 				continue;
 			}
 
 			// Dynamic data
 			if(current.type === REF_IF){
 				var checkList = `${current.if.cond};${current.if.val}`;
-				current.if.cond = modelScript(mask, current.if.cond, repeatedListKey);
-				current.if.val = modelScript(mask, current.if.val, repeatedListKey);
+				current.if.cond = modelScript(mask, current.if.cond, repeatedListKey, _list);
+				current.if.val = modelScript(mask, current.if.val, repeatedListKey, _list);
 
 				if(current.elseValue !== null){
 					checkList += `;${current.elseValue}`;
-					current.elseValue = modelScript(mask, current.elseValue, repeatedListKey);
+					current.elseValue = modelScript(mask, current.elseValue, repeatedListKey, _list);
 				}
 
 				for (let a = 0; a < current.elseIf.length; a++) {
 					const refElif = current.elseIf[a];
 
 					checkList += `${refElif.cond};${refElif.val}`;
-					refElif.cond = modelScript(mask, refElif.cond, repeatedListKey);
-					refElif.val = modelScript(mask, refElif.val, repeatedListKey);
+					refElif.cond = modelScript(mask, refElif.cond, repeatedListKey, _list);
+					refElif.val = modelScript(mask, refElif.val, repeatedListKey, _list);
 				}
 			}
 			else if(current.type === REF_EXEC){
@@ -420,7 +422,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 				delete current.check;
 
 				// Convert to function
-				current.get = modelScript(mask, checkList, repeatedListKey);
+				current.get = modelScript(mask, checkList, repeatedListKey, _list);
 			}
 
 			toObserve.template.i = i;
@@ -778,7 +780,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 	const binded = new WeakSet();
-	var _modelScoped = void 0;
+	var _modelScoped = modelKeysRegex.bindList !== void 0 ? modelKeysRegex.scopes : void 0;
 
 	for(let current of nodes){
 		// Get reference for debugging
@@ -812,7 +814,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 
 				if(attr.value.includes('{{')){
 					if(_modelScoped === void 0)
-						_modelScoped = {_modelScope:modelRef};
+						template.scopes = _modelScoped = {_modelScope:modelRef};
 
 					attr.value = dataParser(attr.value, null, template, _modelScoped, preParsedRef);
 				}

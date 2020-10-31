@@ -310,12 +310,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 			if(copy.parse.length !== 0){
 				copy.parse = copy.parse.slice(0);
-				var _modelScoped = {_modelScope:newObj};
+				copy.scopes = {_modelScope:newObj};
 
 				// Deep copy the original properties to new object
 				for (var i = 0; i < copy.parse.length; i++) {
 					copy.parse[i] = Object.create(copy.parse[i]);
-					copy.parse[i].data = _modelScoped;
+					copy.parse[i].data = copy.scopes;
 				}
 			}
 

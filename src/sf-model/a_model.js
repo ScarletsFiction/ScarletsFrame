@@ -124,7 +124,7 @@ function escapeParse(html, vars){
 }
 
 var modelScript_ = /_result_|return/;
-function modelScript(mask, script, repeatedListKey){
+function modelScript(mask, script, repeatedListKey, _list){
 	var which = script.match(modelScript_);
 
 	if(which === null)
@@ -138,6 +138,19 @@ function modelScript(mask, script, repeatedListKey){
 		script = script.split('_model_').join(mask);
 
 	var args = `${mask ? mask : '_model_'},_modelScope,_eP`;
+
+	if(_list !== void 0){
+		let temp = script.matchAll(_list.regex);
+		let temp_ = '_d=this.data';
+
+		for (var i = 0; i < _list.length; i++) {
+			const item = _list[i];
+			temp_ += `,${item}=_d.${item}`;
+		}
+
+		script = `/**/var ${temp_}\n${script}`;
+		console.log(script, _list);
+	}
 
 	try{
 		if(repeatedListKey === void 0)
