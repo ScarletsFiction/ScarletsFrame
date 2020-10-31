@@ -315,3 +315,29 @@ function toArray(b){
 
 	return c;
 }
+
+function findErrorLocation(text, error, sliced, msg){
+	var location = error.stack.match(/mous>:(.*?)\)/);
+	if(location === null){
+		console.log(msg, 'color:orange', text);
+		return;
+	}
+
+	location = location[1].split(':').map(Number);
+
+	location[0] -= 2;
+	location[1] -= sliced || 0;
+	if(location[1] < 0) location[1] = 0;
+
+	text = text.split('\n');
+	if(location[0] === 1 && text[0].slice(0, 1) === '{')
+		location[1] += 3;
+
+	var textMsg = " ".repeat(location[1]);
+	textMsg += "%c^ Around here%c";
+
+	text.splice(location[0], 0, textMsg);
+	text = text.join('\n');
+
+	console.log(msg+'%c'+text, 'color:orange', '', 'color:#ffa666;font-weight:bold', '')
+}

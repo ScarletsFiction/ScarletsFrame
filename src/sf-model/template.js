@@ -105,21 +105,22 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			temp = temp.replace(/(_model_|_modelScope)\./g, '');
 			temp = temp.replace(/var _model_=.*?;/, '');
 
-			if(temp.indexOf('return ') === 0)
+			var sliced = 0;
+			if(temp.indexOf('return ') === 0){
 				temp = temp.slice(7);
+				sliced = 7;
+			}
 
 			if(temp.includes('\n') === false)
 				temp = `{{ ${temp} }}`;
 
 			if(e.message === "Can't continue processing the template"){
 				console.groupCollapsed("Click here to open more information..");
-				console.log("%cError in template's script:\n", 'color:orange', temp);
+				findErrorLocation(temp, e, sliced, "%cError in template's script:\n");
 			}
 			else{
 				console.groupCollapsed("%cError message:", 'color:orange', e.message, "\nClick here to open more information..");
-				console.log(e.stack);
-				console.log("%cWhen processing template's script:\n", 'color:orange', temp);
-				console.groupEnd();
+				findErrorLocation(temp, e, sliced, "%cWhen processing template's script:\n");
 			}
 
 			throw new Error("Can't continue processing the template");
@@ -196,7 +197,18 @@ const templateParser = internal.model.templateParser = function(template, item, 
 		else parsed = emptyArray;
 	}catch(e){
 		if(e.message === "Can't continue processing the template"){
-			console.error("Error when processing:", template.html, item, modelRef);
+			console.log("Error when processing:",
+			            "\n - Element:", template.html,
+			            "\n - Item value:", item,
+			            "\n - Model root:", modelRef);
+
+			if(modelRef.$el !== void 0){
+				var el = modelRef.$el[0];
+				if(el && el.constructor === SFModel)
+					console.log("From one of shared model's element:", modelRef.$el.slice(0));
+				else console.log(el);
+			}
+
 			console.groupEnd();
 		}
 		else sf.onerror && sf.onerror(e);
