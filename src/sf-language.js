@@ -410,7 +410,7 @@ function refreshLang(list, noPending){
 
 		appliedElement.add(elem);
 
-		if(internal.model.syntheticTemplate(elem, elem.sf$elementReferences.template, void 0, model) !== false)
+		if(internal.model.syntheticTemplate(elem, elem.sf$elementReferences.template, void 0, model, true) !== false)
 			continue; // updated
 
 		elem.sf_lang = void 0;
