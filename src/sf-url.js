@@ -18,16 +18,19 @@ url.data = [];
 url.paths = '/';
 
 // Push into latest history
-url.push = function(){
+function push(){
 	window.history.pushState((window.history.state || 0) + 1, '', self());
 }
+url.push = push;
 
 // Remove next history and change current history
-url.replace = function(){
+function replace(){
 	window.history.replaceState(window.history.state, '', self());
 }
 
-url.get = function(name, index){
+url.replace = replace;
+
+function get(name, index){
 	url.parse();
 
 	if(name.constructor === Number)
@@ -39,7 +42,9 @@ url.get = function(name, index){
 	return hashes[name].split('/')[index+1];
 }
 
-url.parse = function(url){
+url.get = get;
+
+function parse(url){
 	if(url !== void 0){
 		const data = {hashes:{}};
 
@@ -69,5 +74,7 @@ url.parse = function(url){
 	url.paths = window.location.pathname;
 	return self;
 }
+
+url.parse = parse;
 
 url.parse();
