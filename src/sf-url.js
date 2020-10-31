@@ -14,8 +14,13 @@ function url(){
 exports.url = url;
 
 let hashes = url.hashes = {};
+exports.hashes = hashes;
+
 url.data = [];
+exports.data = url.data;
+
 url.paths = '/';
+exports.paths = url.paths;
 
 // Push into latest history
 function push(){
