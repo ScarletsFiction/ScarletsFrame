@@ -257,22 +257,22 @@ self.init = function(el){
 	if(self.list[self.default] === void 0)
 		self.list[self.default] = {};
 
-	refreshLang(list);
+	refreshLang(list, false, function(){
+		if(pending !== false && self.serverURL !== false){
+			const callback = function(){
+				pending = false;
+				refreshLang(pendingElement, true);
+			}
 
-	if(pending !== false && self.serverURL !== false){
-		const callback = function(){
-			pending = false;
-			refreshLang(pendingElement, true);
+			callback.callbackOnly = true;
+			pendingCallback.push(callback);
+
+			startRequest();
 		}
 
-		callback.callbackOnly = true;
-		pendingCallback.push(callback);
-
-		startRequest();
-	}
-
-	if(pending !== false && self.serverURL === false)
-		console.warn("Some language was not found, and the serverURL was set to false", pending);
+		if(pending !== false && self.serverURL === false)
+			console.warn("Some language was not found, and the serverURL was set to false", pending);
+	});
 }
 
 function diveObject(obj, path, setValue){
@@ -315,106 +315,110 @@ internal.language.refreshLang = function(el){
 	refreshLang(el);
 };
 
-function refreshLang(list, noPending){
-	let defaultLang = self.list[self.default];
-	const parentElement = new Set();
+function refreshLang(list, noPending, callback){
+	requestAnimationFrame(function(){
+		let defaultLang = self.list[self.default];
+		const parentElement = new Set();
 
-	if(defaultLang === void 0)
-		defaultLang = self.list[self.default] = {};
+		if(defaultLang === void 0)
+			defaultLang = self.list[self.default] = {};
 
-	const checks = new WeakSet();
-	for (let i = list.length-1; i >= 0; i--) {
-		if((list[i].sf_lang === self.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
-			list.splice(i, 1);
-			continue;
-		}
+		const checks = new WeakSet();
+		for (let i = list.length-1; i >= 0; i--) {
+			if((list[i].sf_lang === self.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
+				list.splice(i, 1);
+				continue;
+			}
 
-		var elem = list[i];
-		if(checks.has(elem))
-			continue;
+			var elem = list[i];
+			if(checks.has(elem))
+				continue;
 
-		checks.add(elem);
+			checks.add(elem);
 
-		// Preserve model/component binding
-		// We will reapply the template later
-		if(elem.sf$elementReferences !== void 0 && elementReferencesRefresh(elem)){
-			parentElement.add(elem);
-			continue;
-		}
-		else{
-			const modelElement = sf(elem, true);
-			if(modelElement !== null){
-				if(parentElement.has(modelElement))
-					continue;
-
-				// Run below once
-				if(modelElement.sf$elementReferences !== void 0 && elementReferencesRefresh(modelElement)){
-					parentElement.add(modelElement);
-					continue;
-				}
-
-				const construct = (elem.constructor._ref || elem.constructor);
-				if(construct === HTMLInputElement || construct === HTMLTextAreaElement){
-					if(!elem.hasAttribute('placeholder'))
+			// Preserve model/component binding
+			// We will reapply the template later
+			if(elem.sf$elementReferences !== void 0 && elementReferencesRefresh(elem)){
+				parentElement.add(elem);
+				continue;
+			}
+			else{
+				const modelElement = sf(elem, true);
+				if(modelElement !== null){
+					if(parentElement.has(modelElement))
 						continue;
+
+					// Run below once
+					if(modelElement.sf$elementReferences !== void 0 && elementReferencesRefresh(modelElement)){
+						parentElement.add(modelElement);
+						continue;
+					}
+
+					const construct = (elem.constructor._ref || elem.constructor);
+					if(construct === HTMLInputElement || construct === HTMLTextAreaElement){
+						if(!elem.hasAttribute('placeholder'))
+							continue;
+					}
 				}
+			}
+
+			const target = elem.getAttribute('sf-lang');
+			const value = diveObject(defaultLang, target);
+
+			if(value === void 0){
+			    if(noPending !== true){
+					if(pending === false)
+				    	pending = {};
+
+				    diveObject(pending, target, 1);
+					pendingElement.push(elem);
+			    }
+
+				continue;
+			}
+
+			if(noPending === true)
+				list.splice(i, 1);
+
+			if(elem.hasAttribute('placeholder'))
+				elem.setAttribute('placeholder', value);
+			else{
+				const construct = (elem.constructor._ref || elem.constructor);
+				if(construct !== HTMLInputElement && construct !== HTMLTextAreaElement)
+					assignSquareBracket(value, elem);
 			}
 		}
 
-		const target = elem.getAttribute('sf-lang');
-		const value = diveObject(defaultLang, target);
+		if(parentElement.size === 0)
+			return callback && callback();
 
-		if(value === void 0){
-		    if(noPending !== true){
-				if(pending === false)
-			    	pending = {};
+		const appliedElement = new WeakSet();
 
-			    diveObject(pending, target, 1);
-				pendingElement.push(elem);
-		    }
+		// Reapply template (component)
+		for(var elem of parentElement){
+			elem.sf_lang = self.default;
 
-			continue;
+			let { model } = elem;
+			if(model === void 0)
+				model = sf(elem);
+
+			// Avoid model that doesn't have binding
+			if(model.sf$bindedKey === void 0)
+				continue;
+
+			if(appliedElement.has(elem))
+				continue;
+
+			appliedElement.add(elem);
+
+			if(internal.model.syntheticTemplate(elem, elem.sf$elementReferences.template, void 0, model, true) !== false)
+				continue; // updated
+
+			elem.sf_lang = void 0;
 		}
 
-		if(noPending === true)
-			list.splice(i, 1);
-
-		if(elem.hasAttribute('placeholder'))
-			elem.setAttribute('placeholder', value);
-		else{
-			const construct = (elem.constructor._ref || elem.constructor);
-			if(construct !== HTMLInputElement && construct !== HTMLTextAreaElement)
-				assignSquareBracket(value, elem);
-		}
-	}
-
-	if(parentElement.size === 0)
-		return;
-
-	const appliedElement = new WeakSet();
-
-	// Reapply template (component)
-	for(var elem of parentElement){
-		elem.sf_lang = self.default;
-
-		let { model } = elem;
-		if(model === void 0)
-			model = sf(elem);
-
-		// Avoid model that doesn't have binding
-		if(model.sf$bindedKey === void 0)
-			continue;
-
-		if(appliedElement.has(elem))
-			continue;
-
-		appliedElement.add(elem);
-
-		if(internal.model.syntheticTemplate(elem, elem.sf$elementReferences.template, void 0, model, true) !== false)
-			continue; // updated
-
-		elem.sf_lang = void 0;
-	}
+		callback && callback();
+	});
 }
 
 const templateParser_regex_split = /{{%=[0-9]+%/g;

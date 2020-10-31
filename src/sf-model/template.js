@@ -372,7 +372,7 @@ const syntheticRepeatedList = function(template, property, modelScope){
 }
 
 var animFrameMode = false;
-const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, force, asyncing){
+const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
 	var changes;
 	if(property !== void 0){
 		changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
@@ -399,8 +399,7 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 
 	if(!asyncing
 	   && template.parse.length !== 0
-	   && templateExec(template.parse, item, changes, parsed, repeatListIndex) === false
-	   && force === void 0)
+	   && templateExec(template.parse, item, changes, parsed, repeatListIndex) === false)
 		return;
 
 	if(!asyncing && animFrameMode === false){
@@ -411,7 +410,7 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 		requestAnimationFrame(function(){
 			changesReference.async = false;
 			animFrameMode = true;
-			syntheticTemplate(element, template, property, item, force, true);
+			syntheticTemplate(element, template, property, item, true);
 			animFrameMode = false;
 		});
 		return;
