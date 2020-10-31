@@ -6,32 +6,32 @@ function url(){
 		hashes_ += `#${keys}${hashes[keys]}`;
 	}
 
-	const data_ = `|${self.data.join('|')}`;
+	const data_ = `|${url.data.join('|')}`;
 
-	return self.paths + hashes_ + (data_.length !== 1 ? data_ : '');
+	return url.paths + hashes_ + (data_.length !== 1 ? data_ : '');
 };
 
 sf.url = url;
 
-let hashes = self.hashes = {};
-self.data = [];
-self.paths = '/';
+let hashes = url.hashes = {};
+url.data = [];
+url.paths = '/';
 
 // Push into latest history
-self.push = function(){
+url.push = function(){
 	window.history.pushState((window.history.state || 0) + 1, '', self());
 }
 
 // Remove next history and change current history
-self.replace = function(){
+url.replace = function(){
 	window.history.replaceState(window.history.state, '', self());
 }
 
-self.get = function(name, index){
-	self.parse();
+url.get = function(name, index){
+	url.parse();
 
 	if(name.constructor === Number)
-		return self.paths.split('/')[name+1];
+		return url.paths.split('/')[name+1];
 
 	if(hashes[name] === void 0)
 		return;
@@ -39,7 +39,7 @@ self.get = function(name, index){
 	return hashes[name].split('/')[index+1];
 }
 
-self.parse = function(url){
+url.parse = function(url){
 	if(url !== void 0){
 		const data = {hashes:{}};
 
@@ -56,18 +56,18 @@ self.parse = function(url){
 		return data;
 	}
 
-	self.data = window.location.hash.split('|');
-	var hashes_ = self.data.shift().split('#');
+	url.data = window.location.hash.split('|');
+	var hashes_ = url.data.shift().split('#');
 
-	hashes = self.hashes = {};
+	hashes = url.hashes = {};
 	for (var i = 1; i < hashes_.length; i++) {
 		var temp = hashes_[i].split('/');
 		hashes[temp.shift()] = `/${temp.join('/')}`;
 	}
 
 	// Paths
-	self.paths = window.location.pathname;
+	url.paths = window.location.pathname;
 	return self;
 }
 
-self.parse();
+url.parse();
