@@ -1,4 +1,3 @@
-;(function(){
 const self = sf.url = function(){
 	// Hashes
 	let hashes_ = '';
@@ -70,5 +69,3 @@ self.parse = function(url){
 }
 
 self.parse();
-
-})();
