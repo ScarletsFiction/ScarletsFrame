@@ -1,4 +1,4 @@
-const self = sf.url = function(){
+function url(){
 	// Hashes
 	let hashes_ = '';
 	for(let keys in hashes){
@@ -10,6 +10,8 @@ const self = sf.url = function(){
 
 	return self.paths + hashes_ + (data_.length !== 1 ? data_ : '');
 };
+
+sf.url = url;
 
 let hashes = self.hashes = {};
 self.data = [];
