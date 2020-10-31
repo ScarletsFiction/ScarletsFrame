@@ -100,7 +100,7 @@ function trimIndentation(text){
 	return text.replace(RegExp(`^([\\t ]{${indent}})`, 'gm'), '');
 }
 
-function _escapeParse(val, type){
+function _eP(val, type){
 	if(type === 0) // HTML
 		return sf.dom.escapeText(val);
 
@@ -113,19 +113,18 @@ function escapeParse(html, vars){
 	return avoidQuotes(html, function(noQuot){
 		// Escape for value in HTML
 		return noQuot.replace(templateParser_regex, function(full, match){
-			return `"+_escapeParse(${vars[match]}, 0)+"`;
+			return `"+_eP(${vars[match]}, 0)+"`;
 		});
 	}, function(inQuot){
 		// Escape for value in attributes
 		return inQuot.replace(templateParser_regex, function(full, match){
-			return `"+_escapeParse(${vars[match]}, 1)+"`;
+			return `"+_eP(${vars[match]}, 1)+"`;
 		});
 	}, true).split('+""').join('');
 }
 
 var modelScript_ = /_result_|return/;
-function modelScript(mask, _script, repeatedListKey){
-	var script = _script;
+function modelScript(mask, script, repeatedListKey){
 	var which = script.match(modelScript_);
 
 	if(which === null)
@@ -138,17 +137,14 @@ function modelScript(mask, _script, repeatedListKey){
 	if(mask && script.includes('_model_'))
 		script = script.split('_model_').join(mask);
 
-	var args = mask ? mask : '_model_';
-	if(script.includes('_escapeParse') === false)
-		args += ',_modelScope,_eP';
-	else args += ',_modelScope,_escapeParse';
+	var args = `${mask ? mask : '_model_'},_modelScope,_eP`;
 
 	try{
 		if(repeatedListKey === void 0)
 			return new Function(args, script);
 		return new Function(args, repeatedListKey, script);
 	} catch(e){
-		console.log(_script);
+		console.log(script);
 		console.error(e);
 		sf.onerror && sf.onerror(e);
 	}
@@ -163,7 +159,7 @@ var applyParseIndex = internal.model.applyParseIndex = function(templateValue, i
 			templateValue[2*i+1] = temp;
 		else{
 			var ref = templateParse[a];
-			temp = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
+			temp = ref.get(item, ref.data._modelScope, _eP, repeatListIndex);
 
 			templateValue[2*i+1] = temp.constructor === Object ? JSON.stringify(temp) : temp;
 		}

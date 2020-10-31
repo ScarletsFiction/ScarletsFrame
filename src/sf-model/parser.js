@@ -6,7 +6,7 @@
 // object[0] is slower than array[0]
 
 // ToDo: directly create parse_index from here
-const dataParser = function(html, _model_, template, _modelScope, preParsedReference, justName){
+const dataParser = function(html, _model_, template, _modelScoped, preParsedReference, justName){
 	const preParsed = [];
 	const lastParsedIndex = preParsedReference.length;
 
@@ -33,7 +33,7 @@ const dataParser = function(html, _model_, template, _modelScope, preParsedRefer
 			if(justName === true)
 				preParsedReference.push(temp);
 			else
-				preParsedReference.push({type:REF_DIRECT, data:{_modelScope}, check:temp});
+				preParsedReference.push({type:REF_DIRECT, data:_modelScoped, check:temp});
 			return `{{%=${preParsed.length + lastParsedIndex - 1}%`;
 		}
 		return `{{%=${exist + lastParsedIndex}%`;
@@ -43,20 +43,18 @@ const dataParser = function(html, _model_, template, _modelScope, preParsedRefer
 }
 
 // Dynamic data parser
-const uniqueDataParser = function(html, template, _modelScope){
+const uniqueDataParser = function(html, template, _modelScoped){
 	// Build script preparation
 	html = html.replace(sfRegex.allTemplateBracket, function(full, matched){ // {[ ... ]}
 		if(sfRegex.anyCurlyBracket.test(matched) === false) // {{ ... }}
 			return `_result_ += '${matched.split("\\").join("\\\\").split("'").join("\\'").split("\n").join("\\\n")}'`;
 
 		const vars = [];
-		matched = dataParser(matched, null, template, _modelScope, vars, true)
+		matched = dataParser(matched, null, template, _modelScoped, vars, true)
 				.split('\\').join('\\\\').split('"').join('\\"').split("\n").join("\\\n");
 
-		if(vars.length !== 0){
-			var temp = `_result_ += "${escapeParse(matched, vars)}"`;
-			return temp;
-		}
+		if(vars.length !== 0)
+			return `_result_ += "${escapeParse(matched, vars)}"`;
 
 		return `_result_ += "${matched}";`;
 	});
@@ -83,7 +81,7 @@ const uniqueDataParser = function(html, template, _modelScope){
 			const condition = check.shift();
 			const elseIf = findElse(check);
 			elseIf.type = REF_IF;
-			elseIf.data = {_modelScope};
+			elseIf.data = _modelScoped;
 
 			// Trim Data
 			elseIf.if = {cond:condition.trim(), val:elseIf.if.trim()};
@@ -105,7 +103,7 @@ const uniqueDataParser = function(html, template, _modelScope){
 		// And always check/remove closing ']}' in user content
 		check = temp.split('@exec');
 		if(check.length !== 1){
-			preParsedReference.push({type:REF_EXEC, data:{_modelScope}, check:check[1]});
+			preParsedReference.push({type:REF_EXEC, data:_modelScoped, check:check[1]});
 			return `{{%%=${preParsedReference.length - 1}`;
 		}
 		return '';
@@ -378,9 +376,10 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 	let copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 
 	// Extract data to be parsed
-	copy = uniqueDataParser(copy, template, modelScope);
+	var _modelScoped = {_modelScope:modelScope};
+	copy = uniqueDataParser(copy, template, _modelScoped);
 	const preParsed = copy[1];
-	copy = dataParser(copy[0], null, template, modelScope, preParsed);
+	copy = dataParser(copy[0], null, template, _modelScoped, preParsed);
 
 	function findModelProperty(){
 		for (let i = 0; i < preParsed.length; i++) {
@@ -779,6 +778,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 
 self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 	const binded = new WeakSet();
+	var _modelScoped = void 0;
 
 	for(let current of nodes){
 		// Get reference for debugging
@@ -810,8 +810,12 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 			for (var i = 0; i < attrs.length; i++) {
 				const attr = attrs[i];
 
-				if(attr.value.includes('{{'))
-					attr.value = dataParser(attr.value, null, template, modelRef, preParsedRef);
+				if(attr.value.includes('{{')){
+					if(_modelScoped === void 0)
+						_modelScoped = {_modelScope:modelRef};
+
+					attr.value = dataParser(attr.value, null, template, _modelScoped, preParsedRef);
+				}
 			}
 
 			template.addresses = addressAttributes(current, template);

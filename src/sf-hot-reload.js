@@ -285,11 +285,12 @@ function hotComponentTemplate(scope, name){
 
 			if(copy.parse.length !== 0){
 				copy.parse = copy.parse.slice(0);
+				var _modelScoped = {_modelScope:model};
 
 				// Deep copy the original properties to new object
 				for (let i = 0; i < copy.parse.length; i++) {
 					copy.parse[i] = Object.create(copy.parse[i]);
-					copy.parse[i].data = {_modelScope:model};
+					copy.parse[i].data = _modelScoped;
 				}
 			}
 

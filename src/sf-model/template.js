@@ -4,18 +4,18 @@ function elseIfHandle(else_, item, modelScope){
 	// Else if
 	for (let i = 0; i < elseIf.length; i++) {
 		// Check the condition
-		if(!elseIf[i].cond(item, modelScope, _escapeParse))
+		if(!elseIf[i].cond(item, modelScope, _eP))
 			continue;
 
 		// Get the value
-		return elseIf[i].val(item, modelScope, _escapeParse);
+		return elseIf[i].val(item, modelScope, _eP);
 	}
 
 	// Else
 	if(else_.elseValue === null)
 		return '';
 
-	return else_.elseValue(item, modelScope, _escapeParse);
+	return else_.elseValue(item, modelScope, _eP);
 }
 
 // ==== Template parser ====
@@ -35,7 +35,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 		try{
 			// Direct evaluation type
 			if(ref.type === REF_DIRECT){
-				temp = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
+				temp = ref.get(item, ref.data._modelScope, _eP, repeatListIndex);
 				if(temp === void 0)
 					temp = '';
 				else{
@@ -55,7 +55,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			}
 
 			if(ref.type === REF_EXEC){
-				temp = ref.get(item, ref.data._modelScope, _escapeParse, repeatListIndex);
+				temp = ref.get(item, ref.data._modelScope, _eP, repeatListIndex);
 
 				if(changed === false){
 					if(parsed[a] === temp) continue;
@@ -69,7 +69,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			// Conditional type
 			if(ref.type === REF_IF){
 				// If condition was not meet
-				if(!ref.if.cond(item, ref.data._modelScope, _escapeParse, repeatListIndex)){
+				if(!ref.if.cond(item, ref.data._modelScope, _eP, repeatListIndex)){
 					temp = elseIfHandle(ref, item, ref.data._modelScope, repeatListIndex);
 
 					if(changed === false){
@@ -81,7 +81,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 					continue;
 				}
 
-				temp = ref.if.val(item, ref.data._modelScope, _escapeParse, repeatListIndex);
+				temp = ref.if.val(item, ref.data._modelScope, _eP, repeatListIndex);
 
 				if(changed === false){
 					if(parsed[a] === temp) continue;
