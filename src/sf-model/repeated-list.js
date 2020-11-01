@@ -1,6 +1,7 @@
 // Known bugs: using keys for repeated list won't changed when refreshed
 // - we also need to support bind into array/object index/key if specified
 
+var referenceToChild;
 const repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
 	let element, script;
 
@@ -57,17 +58,19 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 
 		const { constructor } = target;
 
-		if(constructor === Array || constructor === RepeatedList){
+		if(constructor === Array || constructor === RepeatedList)
 			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
-			continue;
-		}
-
-		if(constructor === Object || constructor === RepeatedProperty){
+		else if(constructor === Object || constructor === RepeatedProperty)
 			RepeatedProperty.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
+		else{
+			console.error(pattern[1], target, "should be an array or object but got", constructor);
 			continue;
 		}
 
-		console.error(pattern[1], target, "should be an array or object but got", constructor);
+		if(referenceToChild !== void 0){
+			modelKeysRegex.specialElement.repeat[i].template = referenceToChild;
+			referenceToChild = void 0;
+		}
 	}
 }
 
@@ -147,10 +150,9 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 	// Check if this was nested repeated element
 	if(template && modelKeysRegex.bindList !== void 0){
-		EM.template.parentTemplate = modelKeysRegex;
+		template.parentTemplate = modelKeysRegex;
 		var _list = modelKeysRegex.scopes._list;
 
-// ToDo: Change this to "new Set"
 		if(_list === void 0)
 			_list = modelKeysRegex.scopes._list = [];
 
@@ -160,8 +162,11 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		if(modelKeysRegex.modelRef_regex_mask !== void 0)
 			_list.push(modelKeysRegex.modelRef_regex_mask);
 
-		EM.template.scopes = modelKeysRegex.scopes;
+		template.scopes = modelKeysRegex.scopes;
 		_list.regex = new RegExp(sfRegex.getScopeList.join(_list.join('|')), 'gm');
+
+		referenceToChild = template;
+		console.log(template);
 	}
 
 	if(uniqPattern !== void 0)
@@ -373,11 +378,13 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 		that = Object.values(that);
 	}
 
+	// Has child repeated element
+	const hasChild = template.parentTemplate !== void 0 || (template.specialElement && template.specialElement.repeat !== void 0);
+
 	const len = that.length;
 	let elem;
 	for (var i = 0; i < len; i++) {
-// ToDo: the first/parent/root key/value haven't been assigned to scopes before child
-		if(template.parentTemplate !== void 0){
+		if(hasChild){
 			if(template.uniqPattern)
 				template.scopes[template.uniqPattern] = (temp === void 0 ? i : temp._list[i]);
 

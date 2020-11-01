@@ -106,7 +106,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			temp = temp.replace(/var _model_=.*?;/, '');
 
 			var slicedX = 0, slicedY = 0;
-			if(temp.indexOf('/**/') === 0){
+			if(temp.includes('var/**/_d')){
 				temp = temp.slice(temp.indexOf('\n')+1);
 				slicedY = 1;
 			}

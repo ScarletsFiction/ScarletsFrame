@@ -148,8 +148,7 @@ function modelScript(mask, script, repeatedListKey, _list){
 			temp_ += `,${item}=_d.${item}`;
 		}
 
-		script = `/**/var ${temp_}\n${script}`;
-		console.log(script, _list);
+		script = `var/**/${temp_}\n${script}`;
 	}
 
 	try{
