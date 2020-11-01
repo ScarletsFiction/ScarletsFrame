@@ -19,6 +19,21 @@ class VirtualScrollManipulator {
 	topHeight = 1;
 	prepareSize = 12/2;
 	totalHeight = 0;
+	callbacks = void 0;
+	currentPosition = 1; // 0 middle, 1 top, 2 bottom
+
+	currentPositionChanged(id){
+		var callbacks = this.callbacks;
+		if(callbacks === void 0 || id === this.currentPosition)
+			return;
+
+		if(id === 1)
+			callbacks.hitCeiling && callbacks.hitCeiling();
+		else if(id === 2)
+			callbacks.hitFloor && callbacks.hitFloor();
+
+		this.currentPosition = id;
+	}
 
 	constructor(root, $EM, firstEl){
 		this.$EM = $EM;
@@ -157,6 +172,9 @@ class VirtualScrollManipulator {
 
 		this.iTop.style.height = this.topHeight+'px';
 		this.iBottom.style.height = this.bottomHeight+'px';
+
+		// Since the beginning the scroll will start from the top
+		this.currentPosition = 1;
 	}
 
 	waitObservedElement(el, ratio){
@@ -214,6 +232,7 @@ class VirtualScrollManipulator {
 
 		if(i >= until){
 			this.iBottom.style.height = this.bottomHeight+'px';
+			this.currentPositionChanged(0);
 			return;
 		}
 
@@ -275,6 +294,11 @@ class VirtualScrollManipulator {
 
 		this.iTop.style.height = this.topHeight+'px';
 		this.iBottom.style.height = this.bottomHeight+'px';
+
+		if(this.topHeight === 1)
+			this.currentPositionChanged(1);
+		else if(this.bottomHeight === 1)
+			this.currentPositionChanged(2);
 	}
 
 	observeVisibility(index){

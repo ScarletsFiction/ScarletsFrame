@@ -430,8 +430,8 @@ class RepeatedList extends Array{
 		const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
 
 		// Initialize property once
+		let target;
 		if(that.constructor !== RepeatedList){
-			let target;
 			if(prop.constructor !== Array)
 				target = modelRef;
 			else{
@@ -468,6 +468,8 @@ class RepeatedList extends Array{
 			// Put DOM element to the EM.elements only, and inject to the real DOM when ready
 			injectArrayElements(EM, parentNode, true, that, modelRef, parentNode, namespace);
 			EM.$VSM.startInjection();
+
+			EM.$VSM.callbacks = target[`on$${prop}`];
 		}
 		else if(alone === true){
 			// Output to real DOM if not being used for virtual list
