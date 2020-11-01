@@ -83,3 +83,6 @@ function parse(url){
 
 exports.parse = parse;
 url.parse();
+
+// TODO for backwards compatibility until we fix other files
+sf.url = exports;
