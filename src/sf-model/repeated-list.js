@@ -1,14 +1,16 @@
 // Known bugs: using keys for repeated list won't changed when refreshed
 // - we also need to support bind into array/object index/key if specified
 
-var referenceToChild;
+var RE_ProcessIndex;
 const repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
+	// modelKeysRegex can be a template too
 	let element, script;
 
 	for (let i = 0; i < elements.length; i++) {
 		if(elements[i].getAttribute === void 0){
 			element = elements[i].el;
 			script = elements[i].rule;
+			RE_ProcessIndex = i;
 		}
 		else{
 			element = elements[i];
@@ -66,11 +68,6 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 			console.error(pattern[1], target, "should be an array or object but got", constructor);
 			continue;
 		}
-
-		if(referenceToChild !== void 0){
-			modelKeysRegex.specialElement.repeat[i].template = referenceToChild;
-			referenceToChild = void 0;
-		}
 	}
 }
 
@@ -117,16 +114,23 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 	EM.asScope = void 0;
 
-	let template;
+	let template, originalAddr;
 	if(!isComponent){
 		// Get reference for debugging
 		processingElement = element;
 
-		let container;
-		if(element.namespaceURI === 'http://www.w3.org/2000/svg' && (element.constructor._ref || element.constructor) !== SVGSVGElement)
-			container = 'svg';
+		if(modelKeysRegex.specialElement !== void 0)
+			originalAddr = modelKeysRegex.specialElement.repeat[RE_ProcessIndex];
 
-		template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
+		if(!originalAddr || originalAddr.template === void 0){
+			let container;
+			if(element.namespaceURI === 'http://www.w3.org/2000/svg' && (element.constructor._ref || element.constructor) !== SVGSVGElement)
+				container = 'svg';
+
+			template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
+		}
+		else template = Object.create(originalAddr.template);
+
 		template.bindList = this;
 
 		if(this.constructor === RepeatedList){
@@ -149,7 +153,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	parentNode.$EM = EM;
 
 	// Check if this was nested repeated element
-	if(template && modelKeysRegex.bindList !== void 0){
+	if(originalAddr && originalAddr.template === void 0 && modelKeysRegex.bindList !== void 0){
 		template.parentTemplate = modelKeysRegex;
 		var _list = modelKeysRegex.scopes._list;
 
@@ -165,8 +169,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 		template.scopes = modelKeysRegex.scopes;
 		_list.regex = new RegExp(sfRegex.getScopeList.join(_list.join('|')), 'gm');
 
-		referenceToChild = template;
-		console.log(template);
+		originalAddr.template = template;
 	}
 
 	if(uniqPattern !== void 0)
