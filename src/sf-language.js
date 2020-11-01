@@ -610,6 +610,12 @@ function refreshTemplate(elemRef){
 			continue;
 
 		const elem = $.childIndexes(addresses[i].address, template.html).parentNode;
+
+		if(addresses[i].sf_lang !== void 0){
+			addresses.splice(i, 1);
+			continue;
+		}
+
 		if(elem.hasAttribute('sf-lang') === false)
 			continue;
 
@@ -635,7 +641,12 @@ function refreshTemplate(elemRef){
 
 		for (let a = 0; a < eRef.length; a++){
 			const { ref } = eRef[a];
-			ref.address = $.getSelector($.childIndexes(ref.address, elem), true, template.html);
+			const temp = $.childIndexes(ref.address, elem);
+			ref.address = $.getSelector(temp, true, template.html);
+
+			if(temp.parentNode.hasAttribute('sf-lang') === false)
+				ref.sf_lang = true;
+
 			addresses.push(ref);
 		}
 	}
