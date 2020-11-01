@@ -1,3 +1,5 @@
+const SfUrl = require("./sf-url");
+
 class SFPageView extends HTMLElement{}
 if(window.sf$proxy)
 	SFPageView._ref = window.sf$proxy.SFPageView;
@@ -183,7 +185,7 @@ const self = sf.views = function View(selector, name){
 
 	// Init current URL as current View Path
 	if(name === slash)
-		self.currentPath = sf.url.paths;
+		self.currentPath = SfUrl.paths;
 	else if(name === false)
 		self.currentPath = '';
 	else{
@@ -339,12 +341,12 @@ const self = sf.views = function View(selector, name){
 
 				if(name === slash && !rootDOM.childElementCount){
 					self.currentPath = '';
-					firstRouted = self.goto(sf.url.paths);
+					firstRouted = self.goto(SfUrl.paths);
 				}
 
 				if(pendingAutoRoute){
-					if(sf.url.hashes[name] !== void 0)
-						firstRouted = self.goto(sf.url.hashes[name]);
+					if(SfUrl.hashes[name] !== void 0)
+						firstRouted = self.goto(SfUrl.hashes[name]);
 					else
 						firstRouted = self.goto('/');
 
@@ -515,13 +517,13 @@ const self = sf.views = function View(selector, name){
 			return;
 
 		if(name === slash)
-			sf.url.paths = path;
+			SfUrl.paths = path;
 		else if(name)
-			sf.url.hashes[name] = path;
+			SfUrl.hashes[name] = path;
 
 		// This won't trigger popstate event
 		if(!disableHistoryPush && _routeCount === void 0 && name !== false)
-			sf.url.push();
+			SfUrl.push();
 
 		// Check if view was exist
 		if(rootDOM.isConnected === false){
@@ -898,8 +900,8 @@ const self = sf.views = function View(selector, name){
 
 self.list = {};
 self.goto = function(url){
-	const parsed = sf.url.parse(url);
-	sf.url.data = parsed.data;
+	const parsed = SfUrl.parse(url);
+	SfUrl.data = parsed.data;
 
 	const views = self.list;
 
