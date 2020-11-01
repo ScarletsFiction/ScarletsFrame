@@ -21,17 +21,17 @@ class VirtualScrollManipulator {
 	totalHeight = 0;
 	callbacks = void 0;
 	currentPosition = 1; // 0 middle, 1 top, 2 bottom
+	nearPosition = 0; // 0 undefined, 1 top, 2 bottom
 
 	currentPositionChanged(id){
 		var callbacks = this.callbacks;
 		if(callbacks === void 0 || id === this.currentPosition)
 			return;
 
-		// ToDo: change 'hit' to 'near', and add an watcher when it actually 'hit'
 		if(id === 1)
-			callbacks.hitCeiling && callbacks.hitCeiling();
+			callbacks.nearCeiling && callbacks.nearCeiling();
 		else if(id === 2)
-			callbacks.hitFloor && callbacks.hitFloor();
+			callbacks.nearFloor && callbacks.nearFloor();
 
 		this.currentPosition = id;
 	}
@@ -89,8 +89,21 @@ class VirtualScrollManipulator {
 			let refreshed = false;
 			for(let i=entries.length-1; i>=0; i--){
 				const entry = entries[i];
-				if(entry.intersectionRect.height <= 1)
+				if(entry.intersectionRect.height <= 1){
+					if(that.bottomHeight !== that.topHeight){
+						if(that.nearPosition !== 0){
+							if(that.nearPosition === 1 && entry.target === that.iTop)
+								that.callbacks.hitCeiling && that.callbacks.hitCeiling();
+							else if(that.nearPosition === 2 && entry.target === that.iBottom)
+								that.callbacks.hitFloor && that.callbacks.hitFloor();
+
+							that.nearPosition = 0;
+						}
+						else that.nearPosition = that.currentPosition;
+					}
+
 					continue;
+				}
 
 				if(entry.target === that.iTop || entry.target === that.iBottom){
 					if(entry.isIntersecting === false || refreshed)
