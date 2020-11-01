@@ -27,6 +27,7 @@ class VirtualScrollManipulator {
 		if(callbacks === void 0 || id === this.currentPosition)
 			return;
 
+		// ToDo: change 'hit' to 'near', and add an watcher when it actually 'hit'
 		if(id === 1)
 			callbacks.hitCeiling && callbacks.hitCeiling();
 		else if(id === 2)
@@ -232,7 +233,9 @@ class VirtualScrollManipulator {
 
 		if(i >= until){
 			this.iBottom.style.height = this.bottomHeight+'px';
-			this.currentPositionChanged(0);
+
+			if(this.topHeight !== 1)
+				this.currentPositionChanged(0);
 			return;
 		}
 
@@ -294,6 +297,9 @@ class VirtualScrollManipulator {
 
 		this.iTop.style.height = this.topHeight+'px';
 		this.iBottom.style.height = this.bottomHeight+'px';
+
+		if(this.topHeight === 1 && this.bottomHeight === 1)
+			return;
 
 		if(this.topHeight === 1)
 			this.currentPositionChanged(1);
