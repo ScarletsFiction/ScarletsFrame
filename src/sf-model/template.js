@@ -353,7 +353,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 		}
 
 		// Parse if it's not HTMLElement
-		tDOM = $.parseElement(parsed[ref.direct]);
+		tDOM = $.parseElement(ref.dynamicFlag.currentHTML = parsed[ref.direct]);
 		for (var a = 0, n = tDOM.length; a < n; a++) {
 			ref.parentNode.insertBefore(tDOM[0], ref.dynamicFlag);
 		}
@@ -428,7 +428,12 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 
 		if(cRef.dynamicFlag !== void 0){ // Dynamic data
 			if(parsed[cRef.direct] !== void 0){
-				const tDOM = Array.from($.parseElement(parsed[cRef.direct]));
+				let temp2 = parsed[cRef.direct];
+				if(cRef.dynamicFlag.currentHTML === temp2)
+					continue;
+
+				cRef.dynamicFlag.currentHTML = temp2;
+				const tDOM = Array.from($.parseElement(temp2));
 				const currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 				let notExist = false;
 
