@@ -205,8 +205,8 @@ const templateParser = internal.model.templateParser = function(template, item, 
 			console.log("%cTemplate's data:%c", 'color:orange', '',
 			            "\n - Element:", template.html,
 			            "\n - Item value:", item,
-			            "\n - Model root:", modelRef);
-			console.log(template);
+			            "\n - Model root:", modelRef,
+			            "\n - Internal cache:", template);
 
 			if(modelRef.$el !== void 0){
 				var el = modelRef.$el[0];

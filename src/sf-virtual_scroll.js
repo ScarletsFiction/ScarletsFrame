@@ -21,7 +21,6 @@ class VirtualScrollManipulator {
 	totalHeight = 0;
 	callbacks = void 0;
 	currentPosition = 1; // 0 middle, 1 top, 2 bottom
-	nearPosition = 0; // 0 undefined, 1 top, 2 bottom
 
 	currentPositionChanged(id){
 		var callbacks = this.callbacks;
@@ -86,20 +85,15 @@ class VirtualScrollManipulator {
 			const entries = that.lastEntries;
 			that.lastEntries = void 0;
 
-			let refreshed = false;
+			let refreshed = false, hitPos = 0;
 			for(let i=entries.length-1; i>=0; i--){
 				const entry = entries[i];
 				if(entry.intersectionRect.height <= 1){
-					if(that.bottomHeight !== that.topHeight){
-						if(that.nearPosition !== 0){
-							if(that.nearPosition === 1 && entry.target === that.iTop)
-								that.callbacks.hitCeiling && that.callbacks.hitCeiling();
-							else if(that.nearPosition === 2 && entry.target === that.iBottom)
-								that.callbacks.hitFloor && that.callbacks.hitFloor();
-
-							that.nearPosition = 0;
-						}
-						else that.nearPosition = that.currentPosition;
+					if(entry.isIntersecting && entry.intersectionRect.height === 1){
+						if(entry.target === that.iTop)
+							hitPos |= 1;
+						else if(entry.target === that.iBottom)
+							hitPos |= 2;
 					}
 
 					continue;
@@ -109,12 +103,21 @@ class VirtualScrollManipulator {
 					if(entry.isIntersecting === false || refreshed)
 						continue;
 
+					if(hitPos !== 0) hitPos = 3;
+
 					refreshed = true;
 					that.recalculateScrollPosition();
 				}
 				else if(that.observeMap.has(entry.target))
 					that.waitObservedElement(entry.target, entry.intersectionRatio);
 			}
+
+			if(hitPos === 0 || hitPos === 3) return;
+
+			if(hitPos === 1 && that.bottomHeight > 2)
+				that.callbacks.hitCeiling && that.callbacks.hitCeiling();
+			else if(hitPos === 2 && that.topHeight > 2)
+				that.callbacks.hitFloor && that.callbacks.hitFloor();
 		}
 
 		this.observer = new IntersectionObserver(function(entries){
