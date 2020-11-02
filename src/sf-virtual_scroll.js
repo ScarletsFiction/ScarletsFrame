@@ -48,14 +48,14 @@ class VirtualScrollManipulator {
 		root.appendChild(this.iBottom);
 		root.insertBefore(firstEl, this.iBottom);
 
-		const styled = window.getComputedStyle(firstEl);
-		this.elMargin = Number(styled.marginBottom.slice(0, -2)) + Number(styled.marginTop.slice(0, -2));
-
-		this.elMaxHeight = this.elHeight = firstEl.offsetHeight + this.elMargin;
-		firstEl.remove();
-
 		const that = this;
 		requestAnimationFrame(function(){
+			const styled = window.getComputedStyle(firstEl);
+			that.elMargin = Number(styled.marginBottom.slice(0, -2)) + Number(styled.marginTop.slice(0, -2));
+
+			that.elMaxHeight = that.elHeight = firstEl.offsetHeight + that.elMargin;
+			firstEl.remove();
+
 			setTimeout(function(){
 				if(!root.isConnected) return; // Somewhat it's detached
 
@@ -113,10 +113,11 @@ class VirtualScrollManipulator {
 			}
 
 			if(hitPos === 0 || hitPos === 3) return;
+			that.currentPosition = hitPos;
 
-			if(hitPos === 1 && that.bottomHeight > 2)
+			if(hitPos === 1 && (that.bottomHeight > 2 || entries.length === 1))
 				that.callbacks.hitCeiling && that.callbacks.hitCeiling();
-			else if(hitPos === 2 && that.topHeight > 2)
+			else if(hitPos === 2 && (that.topHeight > 2 || entries.length === 1))
 				that.callbacks.hitFloor && that.callbacks.hitFloor();
 		}
 
@@ -227,9 +228,21 @@ class VirtualScrollManipulator {
 		this.waitingMap = false;
 	}
 
-	recalculateScrollPosition(){
-		if(this.listSize === void 0)
+	recalculatePending = false;
+	// appendPos: 1 bottom, 2 top
+	recalculateScrollPosition(afterPending, appendPos){
+		if(this.listSize === void 0 || this.recalculatePending)
 			return; // Haven't been initialized
+
+		if(afterPending === void 0){
+			this.recalculatePending = true;
+			let that = this;
+			requestAnimationFrame(function(){
+				that.recalculatePending = false;
+				that.recalculateScrollPosition(true);
+			});
+			return;
+		}
 
 		const { scrollTop } = this.iScroller;
 		const { elList } = this;
@@ -254,6 +267,11 @@ class VirtualScrollManipulator {
 				this.currentPositionChanged(0);
 			return;
 		}
+
+		if(appendPos === 1)
+			this.iScroller.scrollTop -= 5;
+		else if(appendPos === 2)
+			this.iScroller.scrollTop += 5;
 
 		this.firstCursor = i;
 
@@ -401,12 +419,12 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	append(index){
-		this.recalculateScrollPosition();
+		this.recalculateScrollPosition(void 0, 1);
 	},
 
 	prepend(index){
 		this.recalculateElementData(index);
-		this.recalculateScrollPosition();
+		this.recalculateScrollPosition(void 0, 2);
 	},
 
 	move(from, to, count, vDOM){
