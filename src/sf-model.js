@@ -63,7 +63,7 @@ function findBindListElement(el, includeComponent){
 		const ref = currentElement.sf$elementReferences && currentElement.sf$elementReferences.template.bindList;
 
 		const VSM = currentElement.parentNode.$VSM;
-		if(VSM !== void 0) return i + VSM.firstCursor;
+		if(VSM !== void 0) return i - 1 + VSM.firstCursor; // -1 for virtual spacer
 		return i;
 	}
 
