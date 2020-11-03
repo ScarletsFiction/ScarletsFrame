@@ -104,15 +104,15 @@ Some feature not work on IE11.
 <script type="text/javascript">
   // Polyfill for Old Browser
   (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
-    if(window.PointerEvent === void 0)
+    if(!window.PointerEvent)
       z('https://code.jquery.com/pep/0.4.3/pep.js');
-    if(window.MutationObserver === void 0)
+    if(!window.MutationObserver)
       window.MutationObserver = window.WebKitMutationObserver;
-    if(window.Reflect === void 0)
+    if(!window.Reflect)
       z('https://unpkg.com/core-js-bundle@latest/minified.js');
-    if(window.customElements === void 0)
+    if(!window.customElements)
       z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
-    if(window.ResizeObserver === void 0)
+    if(!window.ResizeObserver)
       z('https://polyfill.io/v3/polyfill.min.js?features=ResizeObserver%2CIntersectionObserver%2CIntersectionObserverEntry');
   })();
 </script>
@@ -128,13 +128,13 @@ And include it on your project with webpack ([example](https://github.com/krause
 const sf = require('scarletsframe');
 // import sf from "scarletsframe";
 
-sf.model('things', (self, root) => {
-  ...
+sf.model('things', function(self, root) {
+  self.something = 123;
 });
 ```
 
 ## Contribution
-If you want to help in ScarletsFrame please fork this project and edit on your repository, then make a pull request to here. Otherwise, you can help with donation via [patreon](https://www.patreon.com/stefansarya).
+If you want to help in ScarletsFrame please fork this project and edit on your repository, then make a pull request to here. Otherwise, you can help with donation via [kofi](https://ko-fi.com/stefansarya).
 
 ## License
 ScarletsFrame is under the MIT license.
