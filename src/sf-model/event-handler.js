@@ -99,6 +99,8 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 			if(call !== void 0)
 				call.call(event.target, event, event.target.model, _modelScope, withKey && event.target.sf$repeatListIndex);
 		};
+
+		script.listener = listener;
 	}
 
 	// Get function reference
@@ -231,6 +233,8 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 
 			script.call(this, ev);
 		}
+
+		callback.listener = script;
 	}
 
 	(rootHandler || that).addEventListener(eventName, callback, options);
@@ -304,6 +308,8 @@ var specialEvent = internal.model.specialEvent = {
 			view.addEventListener('pointermove', callbackMove);
 		}
 
+		callbackStart.listener = script;
+
 		function callbackEnd(ev){
 			view.removeEventListener('pointermove', callbackMove);
 			evStart = null;
@@ -319,12 +325,14 @@ var specialEvent = internal.model.specialEvent = {
 		}
 	},
 	gesture(that, keys, script, _modelScope){
-		touchGesture(that, function callback(data){
+		function callback(data){
 			script.call(that, data);
-		});
+		}
+
+		touchGesture(that);
+		callback.listener = script;
 	},
 	dragmove(that, keys, script, _modelScope){
-		that.style.touchAction = 'none';
 		function callbackMove(ev){
 			ev.stopPropagation();
 			ev.preventDefault();
@@ -332,15 +340,18 @@ var specialEvent = internal.model.specialEvent = {
 			script.call(that, ev);
 		}
 
-		function prevent(ev){ev.preventDefault()}
+		function prevent(ev){
+			if(ev.cancelable) ev.preventDefault()
+		}
 
 		let view = document;
 		const callbackStart = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
+			that.style.touchAction = 'none';
 
 			script.call(that, ev);
-			view = ev.view.document;
+			view = ev.view === null ? ev.target.ownerDocument : ev.view.document;
 
 			view.addEventListener('pointermove', callbackMove);
 			view.addEventListener('touchmove', prevent, {passive: false});
@@ -351,15 +362,18 @@ var specialEvent = internal.model.specialEvent = {
 		const callbackEnd = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
+			that.style.touchAction = '';
 
 			script.call(that, ev);
-			view = ev.view.document;
+			view = ev.view === null ? ev.target.ownerDocument : ev.view.document;
 
 			view.removeEventListener('pointermove', callbackMove);
 			view.removeEventListener('touchmove', prevent, {passive: false});
 			view.removeEventListener('pointercancel', callbackEnd, {once:true});
 			that.addEventListener('pointerdown', callbackStart, {once:true});
 		};
+
+		callbackStart.listener = script;
 
 		that.addEventListener('pointerdown', callbackStart);
 
@@ -375,7 +389,7 @@ var specialEvent = internal.model.specialEvent = {
 			ev.preventDefault();
 		});
 
-		that.addEventListener('drop', function drop(ev){
+		function drop(ev){
 			ev.preventDefault();
 
 			if(ev.dataTransfer.items) {
@@ -388,7 +402,10 @@ var specialEvent = internal.model.specialEvent = {
 				script.call(that, found);
 			}
 			else script.call(that, ev.dataTransfer.files);
-		});
+		}
+
+		that.addEventListener('drop', drop);
+		drop.listener = script;
 
 		that['sf$eventDestroy_filedrop'] = function(){
 			that.removeEventListener('dragover', dragover);
