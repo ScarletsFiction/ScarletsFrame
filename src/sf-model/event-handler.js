@@ -348,13 +348,14 @@ var specialEvent = internal.model.specialEvent = {
 		const callbackStart = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
-			that.style.touchAction = 'none';
 
 			script.call(that, ev);
 			view = ev.view === null ? ev.target.ownerDocument : ev.view.document;
 
+			if(isTouchDevice())
+				that.addEventListener('touchmove', prevent, {passive:false, once:true});
+
 			view.addEventListener('pointermove', callbackMove);
-			view.addEventListener('touchmove', prevent, {passive: false});
 			view.addEventListener('pointerup', callbackEnd, {once:true});
 			view.addEventListener('pointercancel', callbackEnd, {once:true});
 		}
@@ -362,19 +363,19 @@ var specialEvent = internal.model.specialEvent = {
 		const callbackEnd = function(ev){
 			ev.preventDefault();
 			ev.stopPropagation();
-			that.style.touchAction = '';
 
 			script.call(that, ev);
 			view = ev.view === null ? ev.target.ownerDocument : ev.view.document;
 
+			if(isTouchDevice())
+				that.removeEventListener('touchmove', prevent, {passive:false, once:true});
+
 			view.removeEventListener('pointermove', callbackMove);
-			view.removeEventListener('touchmove', prevent, {passive: false});
 			view.removeEventListener('pointercancel', callbackEnd, {once:true});
 			that.addEventListener('pointerdown', callbackStart, {once:true});
 		};
 
 		callbackStart.listener = script;
-
 		that.addEventListener('pointerdown', callbackStart);
 
 		that['sf$eventDestroy_dragmove'] = function(){

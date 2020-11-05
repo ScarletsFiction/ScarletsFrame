@@ -342,3 +342,5 @@ function findErrorLocation(text, error, slicedX, msg, slicedY){
 
 	console.log(msg+'%c'+text, 'color:orange', '', 'color:#ffa666;font-weight:bold', '')
 }
+
+const isTouchDevice = ()=> navigator.maxTouchPoints !== 0;
