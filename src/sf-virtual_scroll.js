@@ -50,14 +50,14 @@ class VirtualScrollManipulator {
 		root.insertBefore(firstEl, this.iBottom);
 
 		const that = this;
-		requestAnimationFrame(function(){
+		requestAnimationFrame(()=> {
 			const styled = window.getComputedStyle(firstEl);
 			that.elMargin = Number(styled.marginBottom.slice(0, -2)) + Number(styled.marginTop.slice(0, -2));
 
 			that.elMaxHeight = that.elHeight = firstEl.offsetHeight + that.elMargin;
 			firstEl.remove();
 
-			setTimeout(function(){
+			setTimeout(()=> {
 				if(!root.isConnected) return; // Somewhat it's detached
 
 				let scroller = internal.findScrollerElement(root);
@@ -122,7 +122,7 @@ class VirtualScrollManipulator {
 				that.callbacks.hitFloor && that.callbacks.hitFloor();
 		}
 
-		this.observer = new IntersectionObserver(function(entries){
+		this.observer = new IntersectionObserver((entries)=> {
 			if(that.lastEntries === void 0)
 				requestAnimationFrame(intersectionCallback);
 			that.lastEntries = entries;
@@ -135,20 +135,20 @@ class VirtualScrollManipulator {
 		this.observer.observe(this.iBottom);
 
 		if(this.dynamicSize){
-			this.rObserver = new ResizeObserver(function(entries){
+			this.rObserver = new ResizeObserver((entries)=> {
 				const { elList } = that;
 				let refresh = elList.length;
 
 				for(var i=0; i<entries.length; i++){
-					var el = entries[i].target;
-					const newHeight = el.offsetHeight + that.elMargin;
+					const { target } = entries[i];
+					const newHeight = target.offsetHeight + that.elMargin;
 
-					if(el.sf$heightPos !== newHeight){
-						that.totalHeight -= el.sf$heightPos;
+					if(target.sf$heightPos !== newHeight){
+						that.totalHeight -= target.sf$heightPos;
 						that.totalHeight += newHeight;
-						el.sf$heightPos = newHeight;
+						target.sf$heightPos = newHeight;
 
-						const index = elList.indexOf(el);
+						const index = elList.indexOf(target);
 						if(index !== -1 && refresh > index)
 							refresh = index;
 
@@ -164,7 +164,7 @@ class VirtualScrollManipulator {
 
 				for(var i=refresh; i<elList.length; i++){
 					const before = elList[i-1];
-					var el = elList[i];
+					const el = elList[i];
 					if(before === void 0){
 						el.sf$scrollPos = 1;
 						continue;
@@ -174,23 +174,26 @@ class VirtualScrollManipulator {
 				}
 
 				if(that.lastCursor !== elList.length){
-					var el = elList[that.lastCursor];
-					that.bottomHeight = that.totalHeight - (el.sf$scrollPos + el.sf$heightPos);
+					const el = elList[that.lastCursor];
+					if(el !== void 0)
+						that.bottomHeight = that.totalHeight - (el.sf$scrollPos + el.sf$heightPos);
+					else
+						that.lastCursor = elList.length-1;
 
 					if(that.bottomHeight < 0)
 						that.bottomHeight = 2;
 				}
 				else that.bottomHeight = 1;
 
-				that.iBottom.style.height = that.bottomHeight+'px';
+				this.iBottom.style.height = `${this.bottomHeight}px`;
 			});
 
 			this.bottomHeight = 2;
 		}
 		else this.bottomHeight = this.elMaxHeight * this.elList.length;
 
-		this.iTop.style.height = this.topHeight+'px';
-		this.iBottom.style.height = this.bottomHeight+'px';
+		this.iTop.style.height = `${this.topHeight}px`;
+		this.iBottom.style.height = `${this.bottomHeight}px`;
 
 		// Since the beginning the scroll will start from the top
 		this.currentPosition = 1;
@@ -238,7 +241,7 @@ class VirtualScrollManipulator {
 		if(afterPending === void 0){
 			this.recalculatePending = true;
 			let that = this;
-			requestAnimationFrame(function(){
+			requestAnimationFrame(()=> {
 				that.recalculatePending = false;
 				that.recalculateScrollPosition(true, appendPos);
 			});
@@ -262,7 +265,7 @@ class VirtualScrollManipulator {
 		if(until > elList.length) until = elList.length;
 
 		if(i >= until){
-			this.iBottom.style.height = this.bottomHeight+'px';
+			this.iBottom.style.height = `${this.bottomHeight}px`;
 
 			if(this.topHeight !== 1)
 				this.currentPositionChanged(0);
@@ -343,8 +346,8 @@ class VirtualScrollManipulator {
 
 		if(this.bottomHeight < 0) this.bottomHeight = 2;
 
-		this.iTop.style.height = this.topHeight+'px';
-		this.iBottom.style.height = this.bottomHeight+'px';
+		this.iTop.style.height = `${this.topHeight}px`;
+		this.iBottom.style.height = `${this.bottomHeight}px`;
 
 		virtualScrolling = false;
 		if(this.topHeight === 1 && this.bottomHeight === 1)
@@ -465,9 +468,8 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	removeRange(index, other){
-		for (let i = index; i < other; i++) {
+		for (let i = index; i < other; i++)
 			this.totalHeight -= this.elList[i].sf$heightPos;
-		}
 
 		this.elList.splice(index, other-index);
 		this.recalculateElementData(index);
@@ -546,7 +548,7 @@ class VirtualScroll{
 
 ;(function(){
 	let styleInitialized = false;
-	internal.addScrollerStyle = function(){
+	internal.addScrollerStyle = ()=> {
 		if(styleInitialized === false){
 			let style = document.getElementById('sf-styles');
 
@@ -557,29 +559,28 @@ class VirtualScroll{
 			}
 
 			style.sheet.insertRule(
-			'.sf-virtual-list .virtual-spacer{'+
-				'visibility: hidden !important;'+
-				'position: relative !important;'+
-				'transform-origin: 0 0 !important;'+
-				'width: 1px !important;'+
-				'margin: 0 !important;'+
-				'padding: 0 !important;'+
-				'background: none !important;'+
-				'border: none !important;'+
-				'box-shadow: none !important;'+
-				'transition: none !important;'+
-			 '}', style.sheet.cssRules.length);
+`.sf-virtual-list .virtual-spacer{\
+visibility:hidden!important;\
+position:relative!important;\
+transform-origin:0 0!important;\
+width:1px!important;\
+margin:0!important;\
+padding:0!important;\
+background:none!important;\
+border:none!important;\
+box-shadow:none!important;\
+transition:none!important;\
+pointer-events:none;\
+}`, style.sheet.cssRules.length);
 
 			style.sheet.insertRule(
-			'.sf-scroll-element {'+
-				'backface-visibility: hidden;'+
-			'}', style.sheet.cssRules.length);
+			'.sf-scroll-element{backface-visibility:hidden;}', style.sheet.cssRules.length);
 			styleInitialized = true;
 		}
 	}
 
 	const isScroller = /auto|scroll|overlay|hidden/;
-	internal.findScrollerElement = function(el){
+	internal.findScrollerElement = (el)=> {
 		const doc = el.ownerDocument;
 		const win = doc.defaultView;
 		if(!win) return null;
