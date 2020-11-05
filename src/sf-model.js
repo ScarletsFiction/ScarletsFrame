@@ -159,6 +159,8 @@ class SFModel extends HTMLElement {
 		this.sf$firstInit = true;
 	}
 	connectedCallback(){
+		if(virtualScrolling) return;
+
 		if(this.sf$destroying !== void 0){
 			clearTimeout(this.sf$destroying);
 			delete this.sf$destroying;
@@ -201,6 +203,8 @@ class SFModel extends HTMLElement {
 		internal.modelPending[name].push(this);
 	}
 	disconnectedCallback(){
+		if(virtualScrolling) return;
+
 		const that = this;
 		const destroy = function(){
 			if(that.model === void 0)

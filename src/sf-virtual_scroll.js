@@ -6,6 +6,7 @@
 const ElementManipulatorProxy = internal.EMP;
 const ElementManipulator = internal.EM;
 const VSM_Threshold = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+let virtualScrolling = false;
 
 class VirtualScrollManipulator {
 	waitMap = new Set();
@@ -239,7 +240,7 @@ class VirtualScrollManipulator {
 			let that = this;
 			requestAnimationFrame(function(){
 				that.recalculatePending = false;
-				that.recalculateScrollPosition(true);
+				that.recalculateScrollPosition(true, appendPos);
 			});
 			return;
 		}
@@ -275,6 +276,9 @@ class VirtualScrollManipulator {
 
 		this.firstCursor = i;
 
+		if(appendPos === void 0)
+			virtualScrolling = true;
+
 		const expect = elList[i] || null;
 		let next = this.iTop.nextElementSibling;
 		let last;
@@ -296,18 +300,16 @@ class VirtualScrollManipulator {
 
 		this.topHeight = expect.sf$scrollPos;
 
+		next = next.nextElementSibling || this.iBottom;
 		for(; i < until; i++){
 			last = elList[i];
-			next.insertAdjacentElement('afterEnd', last);
+			this.iRoot.insertBefore(last, next);
 
 			if(last.sf$removed && this.dynamicSize)
 				this.rObserver.observe(last);
 
 			last.sf$removed = false;
-			next = last;
 		}
-
-		next = next.nextElementSibling;
 
 		while(next !== this.iBottom){
 			last = next;
@@ -332,6 +334,7 @@ class VirtualScrollManipulator {
 		this.iTop.style.height = this.topHeight+'px';
 		this.iBottom.style.height = this.bottomHeight+'px';
 
+		virtualScrolling = false;
 		if(this.topHeight === 1 && this.bottomHeight === 1)
 			return;
 

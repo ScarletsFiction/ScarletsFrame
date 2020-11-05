@@ -440,7 +440,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 		connectedCallback(which){
 			// Maybe it's not the time
-			if(this.model === void 0 || this.sf$componentIgnore === true)
+			if(virtualScrolling || this.model === void 0 || this.sf$componentIgnore === true)
 				return;
 
 			if(this.sf$detaching !== void 0){
@@ -471,7 +471,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		}
 
 		disconnectedCallback(){
-			if(this.sf$componentIgnore)
+			if(virtualScrolling || this.sf$componentIgnore)
 				return;
 
 			// Skip if it's not initialized
