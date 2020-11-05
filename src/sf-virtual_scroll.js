@@ -283,28 +283,40 @@ class VirtualScrollManipulator {
 		let next = this.iTop.nextElementSibling;
 		let last;
 
-		while(next !== expect){
+		for (var a = i; a < until; a++)
+			elList[a].$Vi = a;
+
+		if(next === this.iBottom)
+			this.iBottom
+		else while(next !== expect && next !== this.iBottom){
 			last = next;
-			last.sf$removed = true;
 			next = last.nextElementSibling;
 
-			if(next !== this.iBottom){
-				next = this.iTop;
-				break;
-			}
+			if(last.$Vi >= i && last.$Vi < until)
+				continue;
 
 			last.remove();
+			last.sf$removed = true;
+
 			if(this.dynamicSize)
 				this.rObserver.unobserve(last);
 		}
 
 		this.topHeight = expect.sf$scrollPos;
 
-		next = next.nextElementSibling || this.iBottom;
+		if(next === this.iBottom)
+			next = this.iTop;
+
+		next = next.nextElementSibling;
 		for(; i < until; i++){
 			last = elList[i];
-			this.iRoot.insertBefore(last, next);
 
+			if(last === next){
+				next = next.nextElementSibling;
+				continue;
+			}
+
+			this.iRoot.insertBefore(last, next);
 			if(last.sf$removed && this.dynamicSize)
 				this.rObserver.observe(last);
 
