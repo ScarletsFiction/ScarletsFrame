@@ -46,12 +46,12 @@ window.addEventListener('popstate', function(ev){
 }, false);
 
 const cachedURL = {};
+const knownKeys = ['path','url','template','templateURL','html','on','routes','beforeRoute','defaultData','cache'];
 
 internal.router = {};
 internal.router.parseRoutes = function(obj_, selectorList){
 	const routes = [];
 	const pattern = /\/:([^/]+)/g;
-    const knownKeys = /^(path|url|template|templateURL|html|on|routes|beforeRoute|defaultData|cache)$/;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -120,9 +120,8 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				route.cache = true;
 
 			const hasChild = [];
-
 			for(var keys in ref) {
-                if(knownKeys.test(keys))
+                if(knownKeys.includes(keys))
                 	continue;
 
 				hasChild.push(keys);

@@ -84,7 +84,7 @@ var sfRegex = {
 	getSingleMask:['([^\\w.]|^)','([^\\w:]|$)'], //gm
 	getScopeList:['(?:[^\\w.]|^)(',')(?:[^\\w:]|$)'], //gm
 
-	inputAttributeType:/checkbox|radio|hidden/,
+	inputAttributeType:['checkbox','radio','hidden'],
 	anyCurlyBracket:/{{.*?}}/,
 	allTemplateBracket:/{\[([\s\S]*?)\]}/g,
 	anyOperation:/[ =(+-]/,
