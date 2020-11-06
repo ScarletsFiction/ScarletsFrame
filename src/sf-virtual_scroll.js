@@ -385,7 +385,6 @@ class VirtualScrollManipulator {
 // For repeated-list.js
 Object.assign(VirtualScrollManipulator.prototype, {
 	startInjection(){
-		// console.log(this.elList);
 		const { elList } = this;
 		let n = this.listSize;
 		if(n > elList.length)
@@ -579,13 +578,13 @@ pointer-events:none;\
 		}
 	}
 
-	const isScroller = ['auto','scroll','overlay','hidden'];
+	const isScroller = /auto|scroll|overlay|hidden/;
 	internal.findScrollerElement = (el)=> {
 		const doc = el.ownerDocument;
 		const win = doc.defaultView;
 		if(!win) return null;
 
-		while(el !== null && isScroller.includes(win.getComputedStyle(el).overflow) === false){
+		while(el !== null && isScroller.test(win.getComputedStyle(el).overflow) === false){
 			el = el.parentNode;
 			if(el === doc.body)
 				return null;
