@@ -52,9 +52,9 @@ class VirtualScrollManipulator {
 		const that = this;
 		requestAnimationFrame(()=> {
 			const styled = window.getComputedStyle(firstEl);
-			that.elMargin = Number(styled.marginBottom.slice(0, -2)) + Number(styled.marginTop.slice(0, -2));
+			that.elMarginY = parseFloat(styled.marginBottom) + parseFloat(styled.marginTop);
 
-			that.elMaxHeight = that.elHeight = firstEl.offsetHeight + that.elMargin;
+			that.elMaxHeight = that.elHeight = firstEl.offsetHeight + that.elMarginY;
 			firstEl.remove();
 
 			setTimeout(()=> {
@@ -139,9 +139,10 @@ class VirtualScrollManipulator {
 				const { elList } = that;
 				let refresh = elList.length;
 
+				var target;
 				for(var i=0; i<entries.length; i++){
-					const { target } = entries[i];
-					const newHeight = target.offsetHeight + that.elMargin;
+					target = entries[i].target;
+					const newHeight = target.offsetHeight + that.elMarginY;
 
 					if(target.sf$heightPos !== newHeight){
 						that.totalHeight -= target.sf$heightPos;
@@ -173,6 +174,8 @@ class VirtualScrollManipulator {
 					el.sf$scrollPos = before.sf$scrollPos + before.sf$heightPos;
 				}
 
+				that.recalculateMargin(void 0, void 0, target);
+
 				if(that.lastCursor !== elList.length){
 					const el = elList[that.lastCursor];
 					if(el !== void 0)
@@ -197,6 +200,36 @@ class VirtualScrollManipulator {
 
 		// Since the beginning the scroll will start from the top
 		this.currentPosition = 1;
+	}
+
+	recalculateMargin(totalX, totalY, showedEl){
+		if(totalX === void 0 && totalY === void 0){
+			showedEl = showedEl || this.iRoot.children[1];
+			if(showedEl === this.iBottom) return;
+
+			const styled = window.getComputedStyle(showedEl);
+			totalX = parseFloat(styled.marginLeft) + parseFloat(styled.marginRight);
+			totalY = parseFloat(styled.marginTop) + parseFloat(styled.marginBottom);
+		}
+
+		if(this.elMarginY === totalY) return;
+
+		const oldMarginY = this.elMarginY;
+		this.elMarginY = totalY;
+
+		this.elMaxHeight = (this.elMaxHeight - oldMarginY) + totalY;
+		this.elHeight = (this.elHeight - oldMarginY) + totalY;
+
+		const { elList } = this;
+		this.totalHeight = (this.totalHeight - oldMarginY*elList.length) + totalY*elList.length;
+
+		for(var i=0; i < elList.length; i++){
+			const target = elList[i];
+			target.sf$heightPos = (target.sf$heightPos - oldMarginY) + totalY;
+
+			if(i !== 0)
+				target.sf$scrollPos = (target.sf$scrollPos - oldMarginY) + totalY;
+		}
 	}
 
 	waitObservedElement(el, ratio){
@@ -406,7 +439,7 @@ Object.assign(VirtualScrollManipulator.prototype, {
 
 	newElementInit(el, before){
 		if(el.sf$heightPos === void 0)
-			el.sf$heightPos = this.elHeight + this.elMargin;
+			el.sf$heightPos = this.elHeight + this.elMarginY;
 
 		if(before === 0)
 			el.sf$scrollPos = 1;
