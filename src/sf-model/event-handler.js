@@ -329,7 +329,7 @@ var specialEvent = internal.model.specialEvent = {
 			script.call(that, data);
 		}
 
-		touchGesture(that);
+		touchGesture(that, callback);
 		callback.listener = script;
 	},
 	dragmove(that, keys, script, _modelScope){
