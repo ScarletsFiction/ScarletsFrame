@@ -210,6 +210,11 @@ class VirtualScrollManipulator {
 			const styled = window.getComputedStyle(showedEl);
 			totalX = parseFloat(styled.marginLeft) + parseFloat(styled.marginRight);
 			totalY = parseFloat(styled.marginTop) + parseFloat(styled.marginBottom);
+
+			if(Number.isNaN(totalX))
+				totalX = this.elMarginX;
+			if(Number.isNaN(totalY))
+				totalY = this.elMarginY;
 		}
 
 		if(this.elMarginY === totalY) return;
@@ -315,18 +320,21 @@ class VirtualScrollManipulator {
 		if(appendPos === void 0)
 			virtualScrolling = true;
 
-		const expect = elList[i] || null;
+		const expect = elList[i] || this.iBottom;
 		let next = this.iTop.nextElementSibling;
 		let last;
 
 		for (var a = i; a < until; a++)
 			elList[a].$Vi = a;
 
-		if(next === this.iBottom)
-			this.iBottom
-		else while(next !== expect && next !== this.iBottom){
+		while(next !== expect){
 			last = next;
 			next = last.nextElementSibling;
+
+			if(next === null){
+				next = this.iBottom;
+				break;
+			}
 
 			if(last.$Vi >= i && last.$Vi < until)
 				continue;
@@ -338,12 +346,10 @@ class VirtualScrollManipulator {
 				this.rObserver.unobserve(last);
 		}
 
-		this.topHeight = expect.sf$scrollPos;
-
 		if(next === this.iBottom)
-			next = this.iTop;
+			next = this.iTop.nextElementSibling;
 
-		next = next.nextElementSibling;
+		this.topHeight = expect.sf$scrollPos;
 		for(; i < until; i++){
 			last = elList[i];
 

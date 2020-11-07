@@ -87,6 +87,9 @@ sf.window = {
 		linker.loaded = function(){
 			windows[winID] = linker;
 
+			if(linker.sf.space === void 0)
+				throw new Error("Looks like ScarletsFrame.js can't be loaded from the other window.");
+
 			linker.sf.space.list = sf.space.list;
 
 			// Proxying
