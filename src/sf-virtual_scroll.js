@@ -177,11 +177,11 @@ class VirtualScrollManipulator {
 				that.recalculateMargin(void 0, void 0, target);
 
 				if(that.lastCursor !== elList.length){
-					const el = elList[that.lastCursor];
+					const el = elList[that.lastCursor-1];
 					if(el !== void 0)
 						that.bottomHeight = that.totalHeight - (el.sf$scrollPos + el.sf$heightPos);
 					else
-						that.lastCursor = elList.length-1;
+						that.lastCursor = elList.length;
 
 					if(that.bottomHeight < 0)
 						that.bottomHeight = 2;
@@ -231,10 +231,9 @@ class VirtualScrollManipulator {
 		for(var i=0; i < elList.length; i++){
 			const target = elList[i];
 			target.sf$heightPos = (target.sf$heightPos - oldMarginY) + totalY;
-
-			if(i !== 0)
-				target.sf$scrollPos = (target.sf$scrollPos - oldMarginY) + totalY;
 		}
+
+		this.recalculateElementData(0);
 	}
 
 	waitObservedElement(el, ratio){
@@ -350,6 +349,9 @@ class VirtualScrollManipulator {
 			next = this.iTop.nextElementSibling;
 
 		this.topHeight = expect.sf$scrollPos;
+		if(this.topHeight > 1)
+			this.topHeight -= this.elMarginY/2;
+
 		for(; i < until; i++){
 			last = elList[i];
 
@@ -375,7 +377,7 @@ class VirtualScrollManipulator {
 				this.rObserver.unobserve(last);
 		}
 
-		last = elList[until];
+		last = elList[until-1];
 		this.lastCursor = until;
 
 		if(i === elList.length)
