@@ -78,10 +78,27 @@ function findBindListElement(el, includeComponent){
 				func = {class:func};
 			}
 		}
-		else internal.modelInherit[name] = options.extend;
-		const scope = namespace || self;
+		else{
+			if(func === void 0){
+				let root = (namespace || sf.model).root;
 
+				if(root[name] === void 0){
+					options.$el = $();
+					root[name] = options;
+				}
+				else if(hotReload)
+					hotModel(root, name, options);
+				else Object.assign(root[name], options);
+
+				return root[name];
+			}
+
+			internal.modelInherit[name] = options.extend;
+		}
+
+		const scope = namespace || self;
 		let scopeTemp;
+
 		if(hotReload)
 			hotModel(scope, name, func);
 		else{
