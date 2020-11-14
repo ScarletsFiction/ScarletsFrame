@@ -23,7 +23,7 @@ if(Element.prototype.closest === void 0){
 			if(elem === document)
 				return null;
 
-			if(elem.matches(selector) === true)
+			if(elem.matches(selector))
 				return elem;
 
 			elem = elem.parentNode;
