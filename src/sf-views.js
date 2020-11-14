@@ -928,6 +928,9 @@ $(function(){
 	$.on(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
+		if(ev.isTrusted === false && rejectUntrusted)
+			return sf.security.report && sf.security.report(1,ev);
+
 		const attr = this.getAttribute('href');
 		if(attr.slice(0, 1) === '@'){ // ignore
 			const target = this.getAttribute('target');

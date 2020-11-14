@@ -137,6 +137,11 @@ var sfRegex = {
 	}
 })();
 
+let rejectUntrusted = false;
+sf.security = function(level){
+	if(level & 1) rejectUntrusted = true;
+}
+
 function parsePropertyPath(str){
 	var temp = [];
 	temp.unshift(str.replace(sfRegex.parsePropertyPath, function(full, g1, g2){

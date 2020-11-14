@@ -1,8 +1,3 @@
-let rejectUntrusted = false;
-sf.security = function(level){
-	if(level & 1) rejectUntrusted = true;
-}
-
 function eventHandler(that, data, _modelScope, rootHandler, template){
 	const modelKeys = sf.model.modelKeys(_modelScope, true);
 
@@ -17,6 +12,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	});
 
 	const name_ = data.name.slice(1);
+	let wantTrusted = name_.includes('.trusted') || rejectUntrusted;
 
 	// Create custom listener for repeated element
 	if(rootHandler){
@@ -78,8 +74,13 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		}
 
 		// We need to get element with 'sf-bind-list' and check current element before processing
-		script = function(event){
-			const elem = event.target;
+		script = function(ev){
+			if(ev.isTrusted === false && wantTrusted){
+				sf.security.report && sf.security.report(1, ev);
+				return;
+			}
+
+			const elem = ev.target;
 			if(elem === rootHandler)
 				return;
 
@@ -90,25 +91,44 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 
 				var call = findEventFromList($.getSelector(elem, true, realThat));
 				if(call !== void 0)
-					call.call($.childIndexes(found, realThat), event, realThat.model, _modelScope, withKey && realThat.sf$repeatListIndex);
+					call.call($.childIndexes(found, realThat), ev, realThat.model, _modelScope, withKey && realThat.sf$repeatListIndex);
 
 				return;
 			}
 
 			var call = findEventFromList(void 0);
 			if(call !== void 0)
-				call.call(event.target, event, event.target.model, _modelScope, withKey && event.target.sf$repeatListIndex);
+				call.call(ev.target, ev, ev.target.model, _modelScope, withKey && ev.target.sf$repeatListIndex);
 		};
 
 		script.listener = listener;
 	}
 
 	// Get function reference
-	else if(direct)
+	else if(direct){
 		script = eval(script);
 
+		if(rejectUntrusted || name_.includes('.trusted')){
+			let original = script;
+			script = function(ev){
+				if(ev.isTrusted === false){
+					sf.security.report && sf.security.report(1, ev);
+					return;
+				}
+
+				original(ev);
+			}
+		}
+	}
+
 	// Wrap into a function, var event = firefox compatibility
-	else script = (new Function('_modelScope', 'event', script)).bind(that, _modelScope);
+	else{
+		if(wantTrusted){
+			script = 'if(!event.isTrusted){sf.security.report&&sf.security.report(1,event);return};'+ script;
+		}
+
+		script = (new Function('_modelScope', 'event', script)).bind(that, _modelScope);
+	}
 
 	let containSingleChar = false;
 	let keys = name_.split('.');
@@ -125,8 +145,6 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	}
 
 	keys = new Set(keys);
-	if(rejectUntrusted)
-		keys.add('trusted');
 
 	const options = {};
 	if(keys.has('once')){
@@ -177,13 +195,6 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		var callback = script;
 	else{
 		var callback = function(ev){
-			if(ev.isTrusted === false && keys.has('trusted')){
-				if(rejectUntrusted && sf.security.report)
-					sf.security.report(ev);
-
-				return;
-			}
-
 			if(keys.has('stop'))
 				ev.stopPropagation();
 			else if(keys.has('stopAll')){
