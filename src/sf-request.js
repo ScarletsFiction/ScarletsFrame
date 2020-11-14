@@ -82,34 +82,55 @@ function request(method, url, data, options, callback){
 	if(!callback || callback.constructor !== Object)
 		callback = {done:callback};
 
-	xhr.fail = function(func){
-		callback.fail = func;
-		return xhr;
-	}
-	xhr.done = function(func){
-		callback.done = func;
-		return xhr;
-	}
-	xhr.always = function(func){
-		callback.always = func;
-		return xhr;
-	}
-	xhr.progress = function(func){
-		xhr.onprogress = xhr.onloadstart = func;
-		return xhr;
-	}
-	xhr.uploadProgress = function(func){
-		xhr.upload.onprogress = xhr.upload.onloadstart = func;
-		return xhr;
-	}
+	xhr._cb = callback;
+	xhr._opt = options;
 
-	xhr.onerror = function(){
-		sf.request.onerror && sf.request.onerror(xhr);
-		callback.fail && callback.fail(xhr.status);
-		callback.always && callback.always('error');
-	}
+	Object.setPrototypeOf(xhr, ReqEventRegister.prototype);
+	xhr.finally = xhr.always;
+	xhr.catch = xhr.fail;
 
-	xhr.onload = function(){
+	options.beforeSend && options.beforeSend(xhr);
+	xhr.send(data);
+
+	return xhr;
+}
+
+class ReqEventRegister extends XMLHttpRequest{
+	fail(func){
+		this._cb.fail = func;
+		return this;
+	}
+	always(func){
+		this._cb.always = func;
+		return this;
+	}
+	done(func){
+		this._cb.done = func;
+		return this;
+	}
+	progress(func){
+		this.onprogress = this.onloadstart = func;
+		return this;
+	}
+	uploadProgress(func){
+		this.upload.onprogress = this.upload.onloadstart = func;
+		return this;
+	}
+	then(resolved, rejected){
+		this._cb.done = resolved;
+		this._cb.fail = rejected;
+		return this;
+	}
+	onerror(){
+		sf.request.onerror && sf.request.onerror(this);
+		this._cb.fail && this._cb.fail(this.status);
+		this._cb.always && this._cb.always('error');
+	}
+	onload(){
+		const xhr = this;
+		const callback = this._cb;
+		const options = this._opt;
+
 		if((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0){
 			if(options.receiveType === 'JSON'){
 				let parsed = void 0;
@@ -143,11 +164,6 @@ function request(method, url, data, options, callback){
 		statusCode[xhr.status] && statusCode[xhr.status](xhr);
 		callback.always && callback.always(xhr.status);
 	}
-
-	options.beforeSend && options.beforeSend(xhr);
-	xhr.send(data);
-
-	return xhr;
 }
 
 function serializeQuery(params) {
