@@ -1,3 +1,6 @@
+if(!window.TouchEvent)
+	window.TouchEvent = void 0;
+
 function eventHandler(that, data, _modelScope, rootHandler, template){
 	const modelKeys = sf.model.modelKeys(_modelScope, true);
 
