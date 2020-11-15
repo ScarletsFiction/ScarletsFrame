@@ -499,10 +499,10 @@ const self = sf.views = function View(selector, name){
 		}
 
 		pendingAutoRoute = false;
-		path = path.split('?')[0];
+		const realPath = path.split('?')[0];
 
 		// Get template URL
-		const url = routes.findRoute(path);
+		const url = routes.findRoute(realPath);
 		if(!url){
 			return routeErrorPassEvent(404, {
 				path,
@@ -900,6 +900,7 @@ self.list = {};
 self.goto = function(url){
 	const parsed = sf.url.parse(url);
 	sf.url.data = parsed.data;
+	sf.url.queries = parsed.queries;
 
 	const views = self.list;
 

@@ -2,17 +2,29 @@
 const self = sf.url = function(){
 	// Hashes
 	let hashes_ = '';
+	let hashes = self.hashes;
 	for(let keys in hashes){
 		if(hashes[keys] === '/') continue;
 		hashes_ += `#${keys}${hashes[keys]}`;
 	}
 
-	const data_ = `|${self.data.join('|')}`;
+	// Queries
+	let queries_ = '';
+	let queries = self.queries;
+	for(let keys in queries){
+		if(queries_.length === 0)
+			queries_ += '?';
+		else queries_ += '&';
 
-	return self.paths + hashes_ + (data_.length !== 1 ? data_ : '');
+		queries_ += `${keys}=${encodeURI(queries[keys])}`;
+	}
+
+	const data_ = `|${self.data.join('|')}`;
+	return self.paths + queries_ + hashes_ + (data_.length !== 1 ? data_ : '');
 };
 
-let hashes = self.hashes = {};
+self.hashes = {};
+self.queries = {};
 self.data = [];
 self.paths = '/';
 
@@ -40,28 +52,45 @@ self.get = function(name, index){
 
 self.parse = function(url){
 	if(url !== void 0){
-		const data = {hashes:{}};
-
+		const data = {hashes:{}, queries:{}};
 		data.data = url.split('|');
-		var hashes_ = data.data.shift().split('#');
 
+		var hashes_ = data.data.shift().split('#');
 		for (var i = 1; i < hashes_.length; i++) {
 			var temp = hashes_[i].split('/');
 			data.hashes[temp.shift()] = `/${temp.join('/')}`;
 		}
 
+		var queries_ = hashes_[0].split('?');
+		if(queries_.length !== 1){
+			queries_ = queries_[1].split('&');
+			for (var i = 0; i < queries_.length; i++) {
+				var temp = queries_[i].split('=');
+				data.queries[temp[0]] = decodeURI(temp[1]);
+			}
+		}
+
 		// Paths
-		data.paths = url.split('#')[0];
+		data.paths = url.split('#')[0].split('?')[0];
 		return data;
 	}
 
 	self.data = window.location.hash.split('|');
-	var hashes_ = self.data.shift().split('#');
 
-	hashes = self.hashes = {};
+	let hashes = self.hashes = {};
+	var hashes_ = self.data.shift().split('#');
 	for (var i = 1; i < hashes_.length; i++) {
 		var temp = hashes_[i].split('/');
 		hashes[temp.shift()] = `/${temp.join('/')}`;
+	}
+
+	let queries = self.queries = {};
+	if(window.location.search.length !== 0){
+		var queries_ = window.location.search.slice(1).split('&');
+		for (var i = 0; i < queries_.length; i++) {
+			var temp = queries_[i].split('=');
+			queries[temp[0]] = decodeURI(temp[1]);
+		}
 	}
 
 	// Paths
