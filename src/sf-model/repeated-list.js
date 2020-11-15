@@ -523,7 +523,6 @@ class RepeatedList extends Array{
 		}
 
 		const lastLength = this.length;
-		const ret = Array.prototype.splice.apply(this, arguments);
 
 		// Removing data
 		let real = arguments[0];
@@ -535,6 +534,7 @@ class RepeatedList extends Array{
 		for (var i = limit - 1; i >= 0; i--)
 			this.$EM.remove(real + i);
 
+		const ret = Array.prototype.splice.apply(this, arguments);
 		if(arguments.length >= 3){ // Inserting data
 			limit = arguments.length - 2;
 
@@ -1191,9 +1191,18 @@ class ElementManipulator{
 			this.clearBinding(exist, index, index+1);
 
 		if(exist[index]){
-			const currentEl = exist[index];
-
 			if(this.callback.remove){
+				if(this.elements !== void 0)
+					var currentEl = exist[index];
+				else{
+					// Fix bug when some element are pending to be deleted
+					const item = this.list[index]
+					for (var i = 0, n=exist.length; i < n; i++)
+						if(exist[i].model === item) break;
+
+					var currentEl = exist[i];
+				}
+
 				let currentRemoved = false;
 				const startRemove = function(){
 					if(currentRemoved) return;
@@ -1206,9 +1215,8 @@ class ElementManipulator{
 				if(!this.callback.remove(currentEl, startRemove))
 					startRemove();
 			}
-
 			// Auto remove if no callback
-			else currentEl.remove();
+			else exist[index].remove();
 
 			if(this.$VSM) this.$VSM.remove(index);
 
