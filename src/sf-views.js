@@ -499,6 +499,7 @@ const self = sf.views = function View(selector, name){
 		}
 
 		pendingAutoRoute = false;
+		path = path.split('?')[0];
 
 		// Get template URL
 		const url = routes.findRoute(path);
