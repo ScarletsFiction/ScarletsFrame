@@ -86,8 +86,6 @@ function findBindListElement(el, includeComponent){
 					options.$el = $();
 					root[name] = options;
 				}
-				else if(hotReload)
-					hotModel(root, name, options);
 				else Object.assign(root[name], options);
 
 				return root[name];
