@@ -1,101 +1,139 @@
 ;(function(){
 const self = sf.url = function(){
-	// Hashes
-	let hashes_ = '';
-	let hashes = self.hashes;
-	for(let keys in hashes){
-		if(hashes[keys] === '/') continue;
-		hashes_ += `#${keys}${hashes[keys]}`;
+	// Hash
+	let hash_ = '';
+	let hash = self.hash;
+	for(let keys in hash){
+		if(hash[keys] === '/') continue;
+		hash_ += `#${keys}${hash[keys]}`;
 	}
 
-	// Queries
-	let queries_ = '';
-	let queries = self.queries;
-	for(let keys in queries){
-		if(queries_.length === 0)
-			queries_ += '?';
-		else queries_ += '&';
+	// Query
+	let query_ = '';
+	let query = self.query;
+	for(let keys in query){
+		if(query_.length === 0)
+			query_ += '?';
+		else query_ += '&';
 
-		queries_ += `${keys}=${encodeURI(queries[keys])}`;
+		query_ += `${keys}=${encodeURI(query[keys])}`;
 	}
 
 	const data_ = `|${self.data.join('|')}`;
-	return self.paths + queries_ + hashes_ + (data_.length !== 1 ? data_ : '');
+	return self.path + query_ + hash_ + (data_.length !== 1 ? data_ : '');
 };
 
-self.hashes = {};
-self.queries = {};
+self.hash = {};
+self.query = {};
 self.data = [];
-self.paths = '/';
+self.path = '/';
 
 // Push into latest history
 self.push = function(){
 	window.history.pushState((window.history.state || 0) + 1, '', self());
+	triggerListener();
 }
 
 // Remove next history and change current history
 self.replace = function(){
 	window.history.replaceState(window.history.state, '', self());
+	triggerListener();
 }
 
 self.get = function(name, index){
 	self.parse();
 
 	if(name.constructor === Number)
-		return self.paths.split('/')[name+1];
+		return self.path.split('/')[name+1];
 
-	if(hashes[name] === void 0)
+	if(hash[name] === void 0)
 		return;
 
-	return hashes[name].split('/')[index+1];
+	return hash[name].split('/')[index+1];
 }
 
 self.parse = function(url){
 	if(url !== void 0){
-		const data = {hashes:{}, queries:{}};
+		const data = {hash:{}, query:{}};
 		data.data = url.split('|');
 
-		var hashes_ = data.data.shift().split('#');
-		for (var i = 1; i < hashes_.length; i++) {
-			var temp = hashes_[i].split('/');
-			data.hashes[temp.shift()] = `/${temp.join('/')}`;
+		var hash_ = data.data.shift().split('#');
+		for (var i = 1; i < hash_.length; i++) {
+			var temp = hash_[i].split('/');
+			data.hash[temp.shift()] = `/${temp.join('/')}`;
 		}
 
-		var queries_ = hashes_[0].split('?');
-		if(queries_.length !== 1){
-			queries_ = queries_[1].split('&');
-			for (var i = 0; i < queries_.length; i++) {
-				var temp = queries_[i].split('=');
-				data.queries[temp[0]] = decodeURI(temp[1]);
+		var query_ = hash_[0].split('?');
+		if(query_.length !== 1){
+			query_ = query_[1].split('&');
+			for (var i = 0; i < query_.length; i++) {
+				var temp = query_[i].split('=');
+				data.query[temp[0]] = decodeURI(temp[1]);
 			}
 		}
 
-		// Paths
-		data.paths = url.split('#')[0].split('?')[0];
+		// Path
+		data.path = url.split('#')[0].split('?')[0];
 		return data;
 	}
 
 	self.data = window.location.hash.split('|');
 
-	let hashes = self.hashes = {};
-	var hashes_ = self.data.shift().split('#');
-	for (var i = 1; i < hashes_.length; i++) {
-		var temp = hashes_[i].split('/');
-		hashes[temp.shift()] = `/${temp.join('/')}`;
+	let hash = self.hash = {};
+	var hash_ = self.data.shift().split('#');
+	for (var i = 1; i < hash_.length; i++) {
+		var temp = hash_[i].split('/');
+		hash[temp.shift()] = `/${temp.join('/')}`;
 	}
 
-	let queries = self.queries = {};
+	let query = self.query = {};
 	if(window.location.search.length !== 0){
-		var queries_ = window.location.search.slice(1).split('&');
-		for (var i = 0; i < queries_.length; i++) {
-			var temp = queries_[i].split('=');
-			queries[temp[0]] = decodeURI(temp[1]);
+		var query_ = window.location.search.slice(1).split('&');
+		for (var i = 0; i < query_.length; i++) {
+			var temp = query_[i].split('=');
+			query[temp[0]] = decodeURI(temp[1]);
 		}
 	}
 
-	// Paths
-	self.paths = window.location.pathname;
+	// Path
+	self.path = window.location.pathname;
 	return self;
+}
+
+let listener = {query:[], hash:[], path:[], data:[]};
+self.on = function(name, options, callback){
+	if(options.constructor === Function)
+		callback = options;
+	else callback.path = options.path;
+
+	listener[name].push(callback);
+}
+
+self.once = function(name, options, callback){
+	(options.constructor === Function ? options : callback).once = true;
+	self.on(name, options, callback);
+}
+
+self.off = function(name, callback){
+	const list = listener[name];
+	list.splice(list.indexOf(callback), 1);
+}
+
+function triggerListener(){
+	for(var key in listener){
+		const list = listener[key];
+		if(list.length === 0) continue;
+
+		for (var i = 0; i < list.length; i++) {
+			const callback = list[i];
+			if(callback.path !== void 0){
+				if(callback.path !== self.path)
+					continue;
+			}
+
+			callback(self[key]);
+		}
+	}
 }
 
 self.parse();

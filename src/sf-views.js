@@ -182,7 +182,7 @@ const self = sf.views = function View(selector, name){
 
 	// Init current URL as current View Path
 	if(name === slash)
-		self.currentPath = sf.url.paths;
+		self.currentPath = sf.url.path;
 	else if(name === false)
 		self.currentPath = '';
 	else{
@@ -338,12 +338,12 @@ const self = sf.views = function View(selector, name){
 
 				if(name === slash && !rootDOM.childElementCount){
 					self.currentPath = '';
-					firstRouted = self.goto(sf.url.paths);
+					firstRouted = self.goto(sf.url.path);
 				}
 
 				if(pendingAutoRoute){
-					if(sf.url.hashes[name] !== void 0)
-						firstRouted = self.goto(sf.url.hashes[name]);
+					if(sf.url.hash[name] !== void 0)
+						firstRouted = self.goto(sf.url.hash[name]);
 					else
 						firstRouted = self.goto('/');
 
@@ -515,9 +515,9 @@ const self = sf.views = function View(selector, name){
 			return;
 
 		if(name === slash)
-			sf.url.paths = path;
+			sf.url.path = path;
 		else if(name)
-			sf.url.hashes[name] = path;
+			sf.url.hash[name] = path;
 
 		// This won't trigger popstate event
 		if(!disableHistoryPush && _routeCount === void 0 && name !== false)
@@ -900,22 +900,22 @@ self.list = {};
 self.goto = function(url){
 	const parsed = sf.url.parse(url);
 	sf.url.data = parsed.data;
-	sf.url.queries = parsed.queries;
+	sf.url.query = parsed.query;
 
 	const views = self.list;
 
 	for(let list in self.list){
 		// For root path
 		if(list === slash){
-			if(views[slash].currentPath !== parsed.paths)
-				views[slash].goto(parsed.paths);
+			if(views[slash].currentPath !== parsed.path)
+				views[slash].goto(parsed.path);
 
 			continue;
 		}
 
 		// For hash path
-		if(parsed.hashes[list] !== views[list].currentPath)
-			views[list].goto(parsed.hashes[list] || '/');
+		if(parsed.hash[list] !== views[list].currentPath)
+			views[list].goto(parsed.hash[list] || '/');
 	}
 }
 
