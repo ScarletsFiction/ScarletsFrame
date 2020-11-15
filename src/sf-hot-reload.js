@@ -1,6 +1,7 @@
 // Allow direct function replacement to accelerate development
 // Note: This feature will allocate more small memory and small slow down
 // ToDo: Fix memory leak on RepeatedElement when using this feature
+// ToDo: Make the implementation more efficient
 let hotReloadAll = false; // All model property
 
 let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
@@ -26,10 +27,12 @@ sf.hotReload = function(mode){
 		(Space) => {compName:[scopes]}
 	*/);
 
-	internalProp = {};
-	['init', 'reinit', 'destroy', '$el'].forEach(function(val){
-		internalProp[val] = true;
-	});
+	internalProp = {
+		init:true,
+		reinit:true,
+		destroy:true,
+		$el:true,
+	};
 
 	$(function(){
 		backupTemplate = Object.assign({}, templates);

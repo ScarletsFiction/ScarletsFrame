@@ -86,9 +86,6 @@ function request(method, url, data, options, callback){
 	xhr._opt = options;
 
 	Object.setPrototypeOf(xhr, ReqEventRegister.prototype);
-	xhr.finally = xhr.always;
-	xhr.catch = xhr.fail;
-
 	xhr.onerror = ReqEventRegister.onerror;
 	xhr.onload = ReqEventRegister.onload;
 
@@ -168,6 +165,12 @@ class ReqEventRegister extends XMLHttpRequest{
 		callback.always && callback.always(xhr.status);
 	}
 }
+
+;(function(){
+	const proto = ReqEventRegister.prototype;
+	proto.finally = proto.always;
+	proto.catch = proto.fail;
+})();
 
 function serializeQuery(params) {
 	const keys = [];
