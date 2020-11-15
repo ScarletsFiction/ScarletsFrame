@@ -41,8 +41,8 @@ window.addEventListener('popstate', function(ev){
 
 	// Reparse URL
 	self.goto();
-
 	disableHistoryPush = false;
+	sf.url.trigger();
 }, false);
 
 const cachedURL = {};

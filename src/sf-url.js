@@ -31,13 +31,13 @@ self.path = '/';
 // Push into latest history
 self.push = function(){
 	window.history.pushState((window.history.state || 0) + 1, '', self());
-	triggerListener();
+	self.trigger();
 }
 
 // Remove next history and change current history
 self.replace = function(){
 	window.history.replaceState(window.history.state, '', self());
-	triggerListener();
+	self.trigger();
 }
 
 self.get = function(name, index){
@@ -119,7 +119,7 @@ self.off = function(name, callback){
 	list.splice(list.indexOf(callback), 1);
 }
 
-function triggerListener(){
+self.trigger = function(){
 	for(var key in listener){
 		const list = listener[key];
 		if(list.length === 0) continue;
