@@ -89,6 +89,9 @@ function request(method, url, data, options, callback){
 	xhr.finally = xhr.always;
 	xhr.catch = xhr.fail;
 
+	xhr.onerror = ReqEventRegister.onerror;
+	xhr.onload = ReqEventRegister.onload;
+
 	options.beforeSend && options.beforeSend(xhr);
 	xhr.send(data);
 
@@ -121,12 +124,12 @@ class ReqEventRegister extends XMLHttpRequest{
 		this._cb.fail = rejected;
 		return this;
 	}
-	onerror(){
+	static onerror(){
 		sf.request.onerror && sf.request.onerror(this);
 		this._cb.fail && this._cb.fail(this.status);
 		this._cb.always && this._cb.always('error');
 	}
-	onload(){
+	static onload(){
 		const xhr = this;
 		const callback = this._cb;
 		const options = this._opt;
