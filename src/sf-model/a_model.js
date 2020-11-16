@@ -66,9 +66,8 @@ var scope = internal.model = {};
 internal.initPendingComponentScope = initPendingComponentScope;
 function initPendingComponentScope(list, html){
 	for (var i = 0; i < list.length; i++) {
-		var ref = list[i];
+		var el, ref = list[i];
 
-		var el;
 		if(ref.constructor !== Object){
 			ref.rule = parsePropertyPath(ref.getAttribute('sf-scope'));
 			ref.removeAttribute('sf-scope');
@@ -76,13 +75,27 @@ function initPendingComponentScope(list, html){
 		}
 		else el = $.childIndexes(ref.addr, html);
 
+		const obj = deepProperty(html.model, ref.rule);
+		const temp = ref.rule.slice(0);
+		const key = temp.pop();
+
+		Object.defineProperty(deepProperty(html.model, temp) || html.model, key, {
+			enumerabe:true,
+			configurable:true,
+			get:()=> obj,
+			set:(val)=>{
+				Object.assign(obj, val)
+				obj.reinit !== void 0 && obj.reinit();
+			}
+		});
+
 		// Put a flag that it was ready to be initialized when component was loaded
 		if(el.sf$constructor === void 0){
-			el.model = deepProperty(html.model, ref.rule);
+			el.model = obj;
 			continue;
 		}
 
-		el.sf$constructor(deepProperty(html.model, ref.rule), null, true);
+		el.sf$constructor(obj, null, true);
 		el.connectedCallback();
 	}
 }
