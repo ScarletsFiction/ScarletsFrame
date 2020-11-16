@@ -189,12 +189,13 @@ self.trigger = function(){
 
 		for (var i = 0; i < list.length; i++) {
 			const callback = list[i];
-			if(callback.path !== void 0){
-				if(callback.path !== self.path)
-					continue;
-			}
+			if(callback.path !== void 0 && callback.path !== self.path)
+				continue;
 
 			callback(self[key]);
+
+			if(callback.once)
+				list.splice(i--, 1);
 		}
 	}
 }
