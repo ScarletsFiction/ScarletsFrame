@@ -70,8 +70,9 @@ self.parse = function(url){
 		obj.routes = {};
 		obj.data = {};
 
-		URLQuery = location.search.slice(1);
 		[URLHash, URLData] = location.hash.split('#;');
+		if(location.search.length !== 0)
+			URLQuery = location.search.slice(1);
 
 		if(URLHash.length !== 0)
 			URLHash = URLHash.slice(1).split('#');

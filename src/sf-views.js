@@ -338,7 +338,9 @@ const self = sf.views = function View(selector, name){
 
 				if(name === slash && !rootDOM.childElementCount){
 					self.currentPath = '';
+					disableHistoryPush = true;
 					firstRouted = self.goto(sf.url.path);
+					disableHistoryPush = false;
 				}
 
 				if(pendingAutoRoute){
@@ -898,7 +900,7 @@ const self = sf.views = function View(selector, name){
 
 self.list = {};
 self.goto = function(url){
-	const parsed = sf.url.parse(url);
+	const parsed = sf.url.parse(url || true);
 	sf.url.data = parsed.data;
 	sf.url.query = parsed.query;
 	// sf.url.routes = parsed.routes;
