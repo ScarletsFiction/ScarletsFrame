@@ -478,20 +478,13 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 			// Check for dynamic mode
 			if(indexes.length !== 0){
 				innerHTML = innerHTML.split(/{{%%=[0-9]+/gm);
-				for (var a = 0; a < innerHTML.length; a++) {
+				for(var a = 0; a < innerHTML.length; a++)
 					innerHTML[a] = trimIndentation(innerHTML[a]).trim();
-				}
+
 				ref.textContent = innerHTML.shift();
 
 				const parent = ref.parentNode;
 				const { nextSibling } = ref;
-
-				// Dynamic boundary start
-				let addressStart = null;
-				if(indexes.length !== 0 && ref.textContent.length !== 0)
-					addressStart = $.getSelector(ref, true);
-				else if(ref.previousSibling !== null)
-					addressStart = $.getSelector(ref.previousSibling, true);
 
 				// Find boundary ends
 				const commentFlag = addressed.length;
@@ -503,31 +496,36 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 					addressed.push({
 						nodeType:-1,
 						parse_index:indexes[a],
-						startFlag:addressStart,
+						startFlag:flag,
 						address:$.getSelector(flag, true)
 					});
+				}
 
-					if(innerHTML[a]){
-						const textNode = document.createTextNode(innerHTML[a]);
-						parent.insertBefore(textNode, nextSibling);
+				if(ref.textContent === '')
+					ref.remove();
 
-						// Get new start flag
-						if(a + 1 < indexes.length)
-							addressStart = $.getSelector(textNode, true);
+				// Process the comment flag only
+				for (var a = commentFlag; a < addressed.length; a++) {
+					const addr = addressed[a];
+					if(addr.nodeType !== -1) continue;
+
+					const prev = addr.startFlag.previousSibling;
+					if(prev === null){
+						addr.startFlag = null;
+						continue;
 					}
-					else if(addressStart !== null && a + 1 < indexes.length){
-						addressStart = addressStart.slice();
-						addressStart[addressStart.length-1]++;
-					}
+
+					addr.startFlag = $.getSelector(prev, true);
 				}
 
 				// Merge boundary address
 				if(ref.textContent === ''){
-					ref.remove();
-
 					// Process the comment flag only
 					for (var a = commentFlag; a < addressed.length; a++) {
-						var ref = addressed[a].address;
+						const addr = addressed[a];
+						if(addr.nodeType !== -1) continue;
+
+						var ref = addr.address;
 						ref[ref.length - 1]--;
 					}
 					continue;

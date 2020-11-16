@@ -352,9 +352,11 @@ const templateParser = internal.model.templateParser = function(template, item, 
 			continue;
 		}
 
+		ref.dynamicFlag.currentHTML = tDOM;
+
 		// Parse if it's not HTMLElement
 		if(tDOM.length !== 0)
-			tDOM = $.parseElement(ref.dynamicFlag.currentHTML = tDOM);
+			tDOM = $.parseElement(tDOM);
 		else tDOM = document.createTextNode(tDOM);
 
 		for(var a = 0, n = tDOM.length; a < n; a++)
