@@ -353,10 +353,12 @@ const templateParser = internal.model.templateParser = function(template, item, 
 		}
 
 		// Parse if it's not HTMLElement
-		tDOM = $.parseElement(ref.dynamicFlag.currentHTML = parsed[ref.direct]);
-		for (var a = 0, n = tDOM.length; a < n; a++) {
+		if(tDOM.length !== 0)
+			tDOM = $.parseElement(ref.dynamicFlag.currentHTML = tDOM);
+		else tDOM = document.createTextNode(tDOM);
+
+		for(var a = 0, n = tDOM.length; a < n; a++)
 			ref.parentNode.insertBefore(tDOM[0], ref.dynamicFlag);
-		}
 	}
 
 	return html;
