@@ -1,6 +1,7 @@
 // Known bugs: using keys for repeated list won't changed when refreshed
 // - we also need to support bind into array/object index/key if specified
 
+var RE_Assign = false;
 var RE_ProcessIndex;
 const repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
 	// modelKeysRegex can be a template too
@@ -128,6 +129,12 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 				container = 'svg';
 
 			template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
+
+			if(originalAddr !== void 0 && originalAddr.rule !== void 0){
+				originalAddr.template = Object.assign({}, template);
+				const temp = originalAddr.template;
+				delete temp.bindList;
+			}
 		}
 		else template = Object.create(originalAddr.template);
 
@@ -153,7 +160,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	parentNode.$EM = EM;
 
 	// Check if this was nested repeated element
-	if(originalAddr && originalAddr.template === void 0 && modelKeysRegex.bindList !== void 0){
+	if(originalAddr && modelKeysRegex.bindList !== void 0){
 		template.parentTemplate = modelKeysRegex;
 		var _list = modelKeysRegex.scopes._list;
 
@@ -447,6 +454,8 @@ class RepeatedList extends Array{
 				set:(val)=> {
 					if(val.length === 0)
 						that.splice(0);
+					else if(RE_Assign)
+						that.assign(val);
 					else that.remake(val, true);
 				}
 			});
@@ -516,8 +525,8 @@ class RepeatedList extends Array{
 		return this.length;
 	}
 
-	splice(){
-		if(arguments[0] === 0 && arguments[1] === void 0){
+	splice(index, limit, addition){
+		if(index === 0 && limit === void 0){
 			this.$EM.clear(0);
 			return Array.prototype.splice.apply(this, arguments);
 		}
@@ -525,25 +534,22 @@ class RepeatedList extends Array{
 		const lastLength = this.length;
 
 		// Removing data
-		let real = arguments[0];
-		if(real < 0) real = lastLength + real;
-
-		let limit = arguments[1];
+		if(index < 0) index = lastLength + index;
 		if(!limit && limit !== 0) limit = this.length;
 
 		for (var i = limit - 1; i >= 0; i--)
-			this.$EM.remove(real + i);
+			this.$EM.remove(index + i);
 
 		const ret = Array.prototype.splice.apply(this, arguments);
 		if(arguments.length >= 3){ // Inserting data
 			limit = arguments.length - 2;
 
 			// Trim the index if more than length
-			if(real >= this.length)
-				real = this.length - 1;
+			if(index >= this.length)
+				index = this.length - 1;
 
 			for (var i = 0; i < limit; i++)
-				this.$EM.insertAfter(real + i);
+				this.$EM.insertAfter(index + i);
 		}
 
 		return ret;
@@ -716,8 +722,14 @@ class RepeatedList extends Array{
 				if(i === this.length)
 					break;
 
-				if(this[i + fromIndex] !== withArray[i])
+				// ToDo: Deep assign
+				if(this[i + fromIndex] !== withArray[i]){
+					let oldStatus = RE_Assign;
+					RE_Assign = true;
+
 					Object.assign(this[i + fromIndex], withArray[i]);
+					RE_Assign = oldStatus;
+				}
 			}
 		}
 
@@ -778,18 +790,18 @@ class RepeatedList extends Array{
 
 		// Build from zero
 		if(lastLength === 0){
-			Array.prototype.push.apply(this, arguments[0]);
+			Array.prototype.push.apply(this, newList);
 			this.$EM.hardRefresh(0);
 			return;
 		}
 
 		// Clear all items and merge the new one
 		var temp = [0, lastLength];
-		Array.prototype.push.apply(temp, arguments[0]);
+		Array.prototype.push.apply(temp, newList);
 		Array.prototype.splice.apply(this, temp);
 
 		// Rebuild all element
-		if(arguments[1] !== true){
+		if(atMiddle !== true){
 			this.$EM.clear(0);
 			this.$EM.hardRefresh(0);
 		}
