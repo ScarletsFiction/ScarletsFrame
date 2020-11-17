@@ -722,12 +722,12 @@ class RepeatedList extends Array{
 				if(i === this.length)
 					break;
 
-				// ToDo: Deep assign
-				if(this[i + fromIndex] !== withArray[i]){
+				const old = this[i + fromIndex], now = withArray[i];
+				if(old !== now){
 					let oldStatus = RE_Assign;
 					RE_Assign = true;
 
-					Object.assign(this[i + fromIndex], withArray[i]);
+					Object.assign(old, now);
 					RE_Assign = oldStatus;
 				}
 			}

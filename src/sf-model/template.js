@@ -382,6 +382,25 @@ const syntheticRepeatedList = function(template, property, modelScope){
 }
 
 var animFrameMode = false;
+const animFrameStack = [];
+
+var runFramePending = false;
+function runFrameStack(){
+	animFrameMode = true;
+	for (var i = 0; i < animFrameStack.length; i++) {
+		const t = animFrameStack[i];
+
+		// if you want to know what is this
+		// try to find "animFrameStack.push({" from your editor
+		t.q.async = false;
+		syntheticTemplate(t.w, t.e, t.r, t.t, true);
+
+	}
+
+	animFrameStack.length = 0;
+	runFramePending = animFrameMode = false;
+}
+
 const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
 	var changes;
 	if(property !== void 0){
@@ -417,12 +436,15 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 			return;
 
 		changesReference.async = true;
-		requestAnimationFrame(function(){
-			changesReference.async = false;
-			animFrameMode = true;
-			syntheticTemplate(element, template, property, item, true);
-			animFrameMode = false;
-		});
+
+		// if you want to know what is this for
+		// try to find "runFrameStack(" from your editor
+		animFrameStack.push({q:changesReference, w:element, e:template, r:property, t:item});
+
+		if(!runFramePending){
+			runFramePending = true;
+			requestAnimationFrame(runFrameStack);
+		}
 		return;
 	}
 
@@ -480,8 +502,8 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 			}
 
 			// Direct value
-			if(parsed[cRef.ref.direct] !== void 0){
-				temp = parsed[cRef.ref.direct];
+			temp = parsed[cRef.ref.direct];
+			if(temp !== void 0){
 				if(cRef.textContent.textContent === temp) continue;
 
 				const ref_ = cRef.textContent;
