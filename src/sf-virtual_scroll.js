@@ -554,15 +554,17 @@ class VirtualScroll{
 		console.log('Please set "visibilityCallback" property when using "observeVisibility"');
 	}
 
+	// Note: Don't use ...spread for args
 	_proxying(name, args){
+		const func = VirtualScrollManipulator.prototype[name];
 		if(this.$EM.constructor === ElementManipulatorProxy){
 			const { list } = this.$EM;
 			let val;
 			for (let i = 0; i < list.length; i++)
-				val = VirtualScrollManipulator.prototype[name].apply(list[i].$VSM, args);
+				val = func.apply(list[i].$VSM, args);
 			return val;
 		}
-		else return VirtualScrollManipulator.prototype[name].apply(this.$EM.$VSM, args);
+		else return func.apply(this.$EM.$VSM, args);
 	}
 
 	observeVisibility(index){

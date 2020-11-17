@@ -326,7 +326,7 @@ const self = sf.views = function View(selector, name){
 	}
 
 	self.addRoute = function(obj){
-		routes.push.apply(routes, internal.router.parseRoutes(obj, selectorList));
+		routes.push(...internal.router.parseRoutes(obj, selectorList));
 
 		if(!initialized)
 			getSelector();
@@ -610,7 +610,7 @@ const self = sf.views = function View(selector, name){
 			toBeShowed(dom);
 
 			if(pendingShowed !== void 0)
-				self.relatedDOM.push.apply(self.relatedDOM, pendingShowed);
+				self.relatedDOM.push(...pendingShowed);
 
 			if(tempDOM !== null){
 				// Old route
