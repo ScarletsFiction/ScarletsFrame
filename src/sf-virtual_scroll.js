@@ -486,16 +486,14 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	move(from, to, count, vDOM){
-		if(to < from)
-			from = to;
+		if(from > to) from = to;
 
 		this.recalculateElementData(from);
 		this.recalculateScrollPosition();
 	},
 
 	swap(index, other){
-		if(other < index)
-			index = other;
+		if(index > other) index = other;
 
 		this.recalculateElementData(index);
 		this.recalculateScrollPosition();

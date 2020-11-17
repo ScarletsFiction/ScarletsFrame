@@ -535,8 +535,13 @@ class RepeatedList extends Array{
 
 		const lastLength = this.length;
 
+		if(lastLength === 0) index = 0;
+		// Trim the index if more than length
+		else if(arguments.length >= 3 && index >= lastLength)
+			index = lastLength - 1;
 		// Removing data
-		if(index < 0) index = lastLength + index;
+		else if(index < 0) index = lastLength + index;
+
 		if(!limit && limit !== 0) limit = this.length;
 
 		for (var i = limit - 1; i >= 0; i--)
@@ -545,10 +550,6 @@ class RepeatedList extends Array{
 		const ret = super.splice.apply(this, arguments);
 		if(arguments.length >= 3){ // Inserting data
 			limit = arguments.length - 2;
-
-			// Trim the index if more than length
-			if(index >= this.length)
-				index = this.length - 1;
 
 			for (var i = 0; i < limit; i++)
 				this.$EM.insertAfter(index + i);
@@ -819,9 +820,7 @@ class RepeatedList extends Array{
 
 	move(from, to, count){
 		if(from === to) return;
-
-		if(count === void 0)
-			count = 1;
+		if(count === void 0) count = 1;
 
 		this.$EM.move(from, to, count);
 		super.splice(to, 0, ...super.splice(from, count));
@@ -1141,11 +1140,13 @@ class ElementManipulator{
 					this.callback.update(vDOM[i], 'move');
 			}
 		}
-		else this.$VSM.move(from, to, count, vDOM);
 
 		if(this.elements !== void 0){
 			exist.splice(from, count);
-			exist.splice(from, 0, ...vDOM);
+			exist.splice(to, 0, ...vDOM);
+
+			if(this.$VSM !== void 0)
+				this.$VSM.move(from, to, count, vDOM);
 		}
 	}
 
@@ -1265,7 +1266,7 @@ class ElementManipulator{
 		}
 
 		if(this.elements !== void 0)
-			exist.splice(index-1, 0, temp);
+			exist.splice(index, 0, temp);
 
 		if(this.$VSM) this.$VSM.insertAfter(index);
 
