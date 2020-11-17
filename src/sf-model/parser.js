@@ -777,7 +777,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 }
 
 self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
-	const binded = new WeakSet();
+	const binded = new Set();
 	var _modelScoped = modelKeysRegex && modelKeysRegex.bindList !== void 0 ? modelKeysRegex.scopes : void 0;
 
 	for(let current of nodes){

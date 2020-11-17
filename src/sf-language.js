@@ -323,7 +323,7 @@ function refreshLang(list, noPending, callback){
 		if(defaultLang === void 0)
 			defaultLang = self.list[self.default] = {};
 
-		const checks = new WeakSet();
+		const checks = new Set();
 		for (let i = list.length-1; i >= 0; i--) {
 			if((list[i].sf_lang === self.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
 				list.splice(i, 1);
@@ -392,7 +392,7 @@ function refreshLang(list, noPending, callback){
 		if(parentElement.size === 0)
 			return callback && callback();
 
-		const appliedElement = new WeakSet();
+		const appliedElement = new Set();
 
 		// Reapply template (component)
 		for(var elem of parentElement){
