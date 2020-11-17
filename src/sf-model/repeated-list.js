@@ -1,5 +1,7 @@
 // Known bugs: using keys for repeated list won't changed when refreshed
 // - we also need to support bind into array/object index/key if specified
+//
+// Note: using .apply can be more faster than ...spread
 
 var RE_Assign = false;
 var RE_ProcessIndex;
@@ -511,12 +513,12 @@ class RepeatedList extends Array{
 
 	pop(){
 		this.$EM.remove(this.length - 1);
-		return Array.prototype.pop.apply(this, arguments);
+		return super.pop();
 	}
 
 	push(){
 		const lastLength = this.length;
-		Array.prototype.push.apply(this, arguments);
+		super.push.apply(this, arguments);
 
 		if(arguments.length === 1)
 			this.$EM.append(lastLength);
@@ -528,7 +530,7 @@ class RepeatedList extends Array{
 	splice(index, limit, addition){
 		if(index === 0 && limit === void 0){
 			this.$EM.clear(0);
-			return Array.prototype.splice.apply(this, arguments);
+			return super.splice.apply(this, arguments);
 		}
 
 		const lastLength = this.length;
@@ -540,7 +542,7 @@ class RepeatedList extends Array{
 		for (var i = limit - 1; i >= 0; i--)
 			this.$EM.remove(index + i);
 
-		const ret = Array.prototype.splice.apply(this, arguments);
+		const ret = super.splice.apply(this, arguments);
 		if(arguments.length >= 3){ // Inserting data
 			limit = arguments.length - 2;
 
@@ -556,24 +558,20 @@ class RepeatedList extends Array{
 	}
 
 	shift(){
-		const ret = Array.prototype.shift.apply(this, arguments);
-
+		const ret = super.shift();
 		this.$EM.remove(0);
 		return ret;
 	}
 
 	unshift(){
-		Array.prototype.unshift.apply(this, arguments);
+		super.unshift.apply(this, arguments);
 
 		if(arguments.length === 1)
 			this.$EM.prepend(0);
+		else for (let i = arguments.length - 1; i >= 0; i--)
+			this.$EM.prepend(i);
 
-		else{
-			for (let i = arguments.length - 1; i >= 0; i--)
-				this.$EM.prepend(i);
-		}
-
-		return this.slice(0, arguments.length);
+		return this.length;
 	}
 
 	constructor(arr){return new Array(arr)}
@@ -710,9 +708,9 @@ class RepeatedList extends Array{
 
 			if(withArray.length !== 0){
 				if(putLast === false)
-					this.unshift.apply(this, withArray);
+					this.unshift(...withArray);
 				else
-					this.push.apply(this, withArray);
+					this.push(...withArray);
 			}
 
 			return this;
@@ -738,13 +736,13 @@ class RepeatedList extends Array{
 
 		const lastLength = this.length;
 		if(withArray.length > this.length){
-			Array.prototype.push.apply(this, withArray.slice(this.length));
+			super.push(...withArray.slice(this.length));
 			this.$EM.hardRefresh(lastLength);
 			return this;
 		}
 
 		if(withArray.length < this.length){
-			Array.prototype.splice.call(this, withArray.length);
+			super.splice(withArray.length);
 			this.$EM.removeRange(withArray.length, lastLength);
 			return this;
 		}
@@ -768,20 +766,14 @@ class RepeatedList extends Array{
 			// Add new element at the end
 			if(matchLeft === 0){
 				if(newList.length === lastLength) return;
-
-				var temp = newList.slice(lastLength);
-				temp.unshift(lastLength, 0);
-				this.splice.apply(this, temp);
+				this.splice(lastLength, 0, ...newList.slice(lastLength));
 				return;
 			}
 
 			// Add new element at the middle
 			else if(matchLeft !== lastLength){
 				if(atMiddle === true){
-					var temp = newList.slice(i);
-					temp.unshift(i, lastLength - i);
-					Array.prototype.splice.apply(this, temp);
-
+					super.splice(i, lastLength - i, ...newList.slice(i));
 					this.refresh(i, lastLength);
 				}
 				return;
@@ -790,15 +782,13 @@ class RepeatedList extends Array{
 
 		// Build from zero
 		if(lastLength === 0){
-			Array.prototype.push.apply(this, newList);
+			super.push(...newList);
 			this.$EM.hardRefresh(0);
 			return;
 		}
 
 		// Clear all items and merge the new one
-		var temp = [0, lastLength];
-		Array.prototype.push.apply(temp, newList);
-		Array.prototype.splice.apply(this, temp);
+		super.splice(0, lastLength, ...newList);
 
 		// Rebuild all element
 		if(atMiddle !== true){
@@ -834,10 +824,7 @@ class RepeatedList extends Array{
 			count = 1;
 
 		this.$EM.move(from, to, count);
-
-		const temp = Array.prototype.splice.call(this, from, count);
-		temp.unshift(to, 0);
-		Array.prototype.splice.apply(this, temp);
+		super.splice(to, 0, ...super.splice(from, count));
 	}
 
 	// Return single element from first $EM
@@ -879,12 +866,12 @@ class RepeatedList extends Array{
 			arguments[0] = item.model;
 		}
 
-		return Array.prototype.indexOf.apply(this, arguments);
+		return super.indexOf.apply(this, arguments);
 	}
 
 	reverse(){
 		this.$EM.reverse();
-		Array.prototype.reverse.call(this);
+		super.reverse();
 	}
 
 	refresh(index, length){
@@ -1158,8 +1145,7 @@ class ElementManipulator{
 
 		if(this.elements !== void 0){
 			exist.splice(from, count);
-			vDOM.unshift(from, 0);
-			exist.splice.apply(exist, vDOM);
+			exist.splice(from, 0, ...vDOM);
 		}
 	}
 
@@ -1488,7 +1474,7 @@ class ElementManipulatorProxy{
 		const $EMs = this.list;
 		for (let i = 0; i < $EMs.length; i++) {
 			const em = $EMs[i];
-			list.push.apply(list, queryElements((em.parentChilds || em.elements), selector));
+			list.push(...queryElements((em.parentChilds || em.elements), selector));
 		}
 		return $(list);
 	}
