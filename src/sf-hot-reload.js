@@ -10,6 +10,7 @@ let backupTemplate, backupCompTempl;
 ;(function(){
 const gEval = hotReloadEval;
 
+console.log("[ScarletsFrame Warn] Hot reload module was included.");
 sf.hotReload = function(mode){
 	if(mode === 1)
 		hotReload = true;
