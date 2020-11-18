@@ -235,6 +235,22 @@ function parsePatternRule(modelRef, pattern, proto){
 	};
 }
 
+// This will be called when constructing the
+// Repeated (Property,Map,Set), but not for RepeatedList
+function afterConstruct(modelRef, element, rule, parentNode, namespace){
+	const { that } = rule;
+
+	const alone = prepareRepeated.apply(that, arguments);
+	const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
+
+	if(alone === true){
+		// Output to real DOM if not being used for virtual list
+		EM.parentChilds = parentNode.children;
+		injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
+	}
+	else alone();
+}
+
 class RepeatedProperty{ // extends Object
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
@@ -275,19 +291,11 @@ class RepeatedProperty{ // extends Object
 			});
 		}
 
-		const alone = prepareRepeated.apply(that, arguments);
-		const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
+		afterConstruct.apply(this, arguments);
 
 		// Proxy known property
 		for(let key in that)
 			ProxyProperty(that, key, true);
-
-		if(alone === true){
-			// Output to real DOM if not being used for virtual list
-			EM.parentChilds = parentNode.children;
-			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
-		}
-		else alone();
 	}
 
 	getElement(prop){
@@ -377,19 +385,7 @@ class RepeatedMap extends Map{
 			});
 		}
 
-		const alone = prepareRepeated.apply(that, arguments);
-		const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
-
-		// Proxy known property
-		for(let key in that)
-			ProxyProperty(that, key, true);
-
-		if(alone === true){
-			// Output to real DOM if not being used for virtual list
-			EM.parentChilds = parentNode.children;
-			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
-		}
-		else alone();
+		afterConstruct.apply(this, arguments);
 	}
 	constructor(arg){return new Map(arg)}
 	set(key, val){
@@ -442,19 +438,7 @@ class RepeatedSet extends Set{
 			});
 		}
 
-		const alone = prepareRepeated.apply(that, arguments);
-		const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
-
-		// Proxy known property
-		for(let key in that)
-			ProxyProperty(that, key, true);
-
-		if(alone === true){
-			// Output to real DOM if not being used for virtual list
-			EM.parentChilds = parentNode.children;
-			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
-		}
-		else alone();
+		afterConstruct.apply(this, arguments);
 	}
 	constructor(arg){return new Set(arg)}
 	add(val){
