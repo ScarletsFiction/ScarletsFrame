@@ -19,6 +19,10 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 
 	// Create custom listener for repeated element
 	if(rootHandler){
+		if(rootHandler.sf$listListenerLock === void 0)
+			rootHandler.sf$listListenerLock = new WeakSet();
+
+		rootHandler.sf$listListenerLock.add(template);
 		const elementIndex = $.getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
 
 		if(rootHandler.sf$listListener === void 0)
@@ -27,6 +31,8 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		let withKey = false;
 		if(template.uniqPattern !== void 0)
 			withKey = true;
+
+		// ToDo today: $0.parentElement.sf$listListener
 
 		if(direct)
 			var func = eval(script);
@@ -38,20 +44,15 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		}
 
 		let listener = rootHandler.sf$listListener[name_];
-		if(listener === void 0){
-			listener = rootHandler.sf$listListener[name_] = [[elementIndex, func]];
-			listener.set = new Set([elementIndex.join('')]);
-		}
+		if(listener === void 0)
+			listener = rootHandler.sf$listListener[name_] = [[elementIndex, func, template]];
 		else{
-			if(listener.set.has(elementIndex.join('')) === false){
-				listener.push([elementIndex, func]);
-				listener.set.add(elementIndex.join(''));
-			}
+			listener.push([elementIndex, func, template]);
 			return;
 		}
 
 		let found = null;
-		const findEventFromList = function(arr){
+		const findEventFromList = function(arr, template){
 			// Partial array compare ([0,1,2] with [0,1,2,3,4] ==> true)
 			parent:for (let i = 0; i < listener.length; i++) {
 				const ref = listener[i];
@@ -62,6 +63,9 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 					found = ref[0];
 					return ref[1];
 				}
+
+				if(ref[2] !== template)
+					continue;
 
 				const ref2 = ref[0];
 				for (let z = 0; z < ref2.length; z++) {
@@ -87,21 +91,21 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 			if(elem === rootHandler)
 				return;
 
-			if(!elem.sf$elementReferences || !elem.sf$elementReferences.template.bindList){
+			if(!elem.sf$elementReferences?.template.bindList){
 				const realThat = findBindListElement(elem);
 				if(realThat === null)
 					return;
 
-				var call = findEventFromList($.getSelector(elem, true, realThat));
+				var call = findEventFromList($.getSelector(elem, true, realThat), realThat.sf$elementReferences.template);
 				if(call !== void 0)
-					call.call($.childIndexes(found, realThat), ev, realThat.model, _modelScope, withKey && realThat.sf$repeatListIndex);
+					call.call($.childIndexes(found, realThat), ev, realThat.model, _modelScope, realThat.sf$repeatListIndex);
 
 				return;
 			}
 
 			var call = findEventFromList(void 0);
 			if(call !== void 0)
-				call.call(ev.target, ev, ev.target.model, _modelScope, withKey && ev.target.sf$repeatListIndex);
+				call.call(ev.target, ev, ev.target.model, _modelScope, ev.target.sf$repeatListIndex);
 		};
 
 		script.listener = listener;

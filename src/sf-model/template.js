@@ -140,7 +140,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 
 		// Pass to event handler
 		if(refB.event){
-			if(rootHandler === void 0 || rootHandler.sf$listListenerLock === void 0)
+			if(!rootHandler?.sf$listListenerLock?.has(template))
 				eventHandler(current, refB, modelRef || item, rootHandler, template);
 
 			continue;
@@ -294,9 +294,6 @@ const templateParser = internal.model.templateParser = function(template, item, 
 			pendingInsert.push(cRef);
 		}
 	}
-
-	if(rootHandler !== void 0)
-		rootHandler.sf$listListenerLock = true;
 
 	// Save model item reference to node
 	html.model = item;
