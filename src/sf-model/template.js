@@ -202,6 +202,11 @@ const templateParser = internal.model.templateParser = function(template, item, 
 		else parsed = emptyArray;
 	}catch(e){
 		if(e.message === "Can't continue processing the template"){
+			if(modelRef === void 0){
+				modelRef = item;
+				item = void 0;
+			}
+
 			console.log("%cTemplate's data:%c", 'color:orange', '',
 			            "\n - Element:", template.html,
 			            "\n - Item value:", item,
