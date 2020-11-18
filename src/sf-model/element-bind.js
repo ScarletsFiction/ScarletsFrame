@@ -37,6 +37,9 @@ internal.model.removeModelBinding = function(ref, isDeep){
 					}
 				}
 
+				if(list.length === 1)
+					obj.$EM = obj.$EM.list[0];
+
 				if(list.length !== 0)
 					continue;
 			}
