@@ -62,15 +62,25 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 		}
 
 		const { constructor } = target;
-
+		let construct;
 		if(constructor === Array || constructor === RepeatedList)
-			RepeatedList.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
+			construct = RepeatedList.construct;
 		else if(constructor === Object || constructor === RepeatedProperty)
-			RepeatedProperty.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
+			construct = RepeatedProperty.construct;
+		else if(constructor === Map || constructor === RepeatedMap)
+			construct = RepeatedMap.construct;
+		else if(constructor === Set || constructor === RepeatedSet)
+			construct = RepeatedSet.construct;
+		else if(constructor === WeakSet || constructor === WeakMap){
+			console.error(pattern[1], target, "WeakMap or WeakSet is not supported");
+			continue;
+		}
 		else{
 			console.error(pattern[1], target, "should be an array or object but got", constructor);
 			continue;
 		}
+
+		construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 	}
 }
 
@@ -276,13 +286,6 @@ class RepeatedProperty{ // extends Object
 		else alone();
 	}
 
-	$el(selector){
-		const { $EM } = this;
-		if($EM.constructor === ElementManipulatorProxy)
-			return $EM.$el(selector)
-		return $(queryElements(($EM.parentChilds || $EM.elements), selector));
-	}
-
 	getElement(prop){
 		if(prop === void 0 || prop === null)
 			return; // undefined
@@ -327,6 +330,26 @@ class RepeatedProperty{ // extends Object
 			}
 		}
 	}
+}
+
+class RepeatedMap extends Map{
+	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
+		console.error("sf-each with Map still incomplete");
+	}
+	constructor(arg){return new Map(arg)}
+	set(){}
+	clear(){}
+	delete(){}
+}
+
+class RepeatedSet extends Set{
+	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
+		console.error("sf-each with Set still incomplete");
+	}
+	constructor(arg){return new Set(arg)}
+	add(){}
+	clear(){}
+	delete(){}
 }
 
 // Only for Object or RepeatedProperty
@@ -478,8 +501,8 @@ class RepeatedList extends Array{
 
 			// Put DOM element to the EM.elements only, and inject to the real DOM when ready
 			injectArrayElements(EM, parentNode, true, that, modelRef, parentNode, namespace);
-			EM.$VSM.startInjection();
 
+			EM.$VSM.startInjection();
 			EM.$VSM.callbacks = target[`on$${prop}`];
 		}
 		else if(alone === true){
@@ -502,13 +525,6 @@ class RepeatedList extends Array{
 
 			scroller.classList.add('sf-scroll-element');
 		}, 1000);
-	}
-
-	$el(selector){
-		const { $EM } = this;
-		if($EM.constructor === ElementManipulatorProxy)
-			return $EM.$el(selector)
-		return $(queryElements(($EM.parentChilds || $EM.elements), selector));
 	}
 
 	pop(){
@@ -636,7 +652,7 @@ class RepeatedList extends Array{
 
 			let processed;
 			if(putLast === true)
-				processed = new WeakSet();
+				processed = new Set();
 
 			that:for(var i = fromIndex; i < this.length; i++){
 				if(putLast === true && processed.has(this[i]))
@@ -1195,7 +1211,7 @@ class ElementManipulator{
 					var currentEl = exist[index];
 				else{
 					// Fix bug when some element are pending to be deleted
-					const item = this.list[index]
+					const item = this.list[index];
 					for (var i = 0, n=exist.length; i < n; i++)
 						if(exist[i].model === item) break;
 
@@ -1562,3 +1578,23 @@ function RE_getBindedList(modelRoot, binded){
 
 	return check.sf$bindedKey[binded[binded.length - 1]];
 }
+
+;{
+	const RE_Prototype = {
+		// For RepeatedProperty, RepeatedList, RepeatedMap, RepeatedSet
+		$el:{
+			value:(selector)=> {
+				const { $EM } = this;
+				if($EM.constructor === ElementManipulatorProxy)
+					return $EM.$el(selector)
+				return $(queryElements(($EM.parentChilds || $EM.elements), selector));
+			}
+		},
+	};
+
+	const d = Object.defineProperties;
+	d(RepeatedProperty.prototype, RE_Prototype);
+	d(RepeatedList.prototype, RE_Prototype);
+	d(RepeatedMap.prototype, RE_Prototype);
+	d(RepeatedSet.prototype, RE_Prototype);
+};
