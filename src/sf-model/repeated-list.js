@@ -62,15 +62,15 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 		}
 
 		const { constructor } = target;
-		let construct;
+		let proto;
 		if(constructor === Array || constructor === RepeatedList)
-			construct = RepeatedList.construct;
+			proto = RepeatedList;
 		else if(constructor === Object || constructor === RepeatedProperty)
-			construct = RepeatedProperty.construct;
+			proto = RepeatedProperty;
 		else if(constructor === Map || constructor === RepeatedMap)
-			construct = RepeatedMap.construct;
+			proto = RepeatedMap;
 		else if(constructor === Set || constructor === RepeatedSet)
-			construct = RepeatedSet.construct;
+			proto = RepeatedSet;
 		else if(constructor === WeakSet || constructor === WeakMap){
 			console.error(pattern[1], target, "WeakMap or WeakSet is not supported");
 			continue;
@@ -80,21 +80,15 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 			continue;
 		}
 
-		construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
+		// Parse the sf-each="rule in pattern"
+		pattern = parsePatternRule(modelRef, pattern, proto);
+		proto.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 	}
 }
 
-function prepareRepeated(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-	let callback, prop = pattern[1], targetDeep;
-
-	if(prop.constructor !== Array)
-		targetDeep = modelRef;
-	else{
-		targetDeep = deepProperty(modelRef, prop.slice(0, -1));
-		prop = prop[prop.length - 1];
-	}
-
-	callback = targetDeep[`on$${prop}`] || {};
+function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
+	const {target, prop, pattern} = rule;
+	let callback = target[`on$${prop}`] || {};
 
 	const compTemplate = (namespace || sf.component).registered[element.tagName.toLowerCase()];
 	if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
@@ -105,7 +99,7 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 
 	if(this.$EM === void 0){
 		hiddenProperty(this, '$EM', EM, true);
-		Object.defineProperty(targetDeep, `on$${prop}`, {
+		Object.defineProperty(target, `on$${prop}`, {
 			configurable: true,
 			get:()=> callback,
 			set:(val)=> Object.assign(callback, val)
@@ -215,30 +209,40 @@ function prepareRepeated(modelRef, element, pattern, parentNode, namespace, mode
 	}
 }
 
+function parsePatternRule(modelRef, pattern, proto){
+	let prop = pattern[1];
+	const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
+
+	var firstInit;
+	if(that.constructor !== proto){
+		Object.setPrototypeOf(that, proto.prototype);
+		firstInit = true;
+	}
+
+	// that = the list object
+	// target = model or the parent object of the list
+	// prop = property name
+
+	if(prop.constructor !== Array)
+		return {that, target: modelRef, prop, pattern, firstInit};
+
+	return {
+		that,
+		target: deepProperty(modelRef, prop.slice(0, -1)),
+		prop: prop[prop.length-1],
+		pattern,
+		firstInit
+	};
+}
+
 class RepeatedProperty{ // extends Object
-	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-		let prop = pattern[1];
-		const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
+	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
+		const {that, target, prop, firstInit} = rule;
 
 		// Initialize property once
-		if(that.constructor !== RepeatedProperty){
-			// Hide property that have $
-			for(let k in that){
-				if(k.includes('$'))
-					hiddenProperty(that, k, that[k], true);
-			}
-
+		if(firstInit){
 			hiddenProperty(that, '_list', Object.keys(that), true);
 
-			let target;
-			if(prop.constructor !== Array)
-				target = modelRef;
-			else{
-				target = deepProperty(modelRef, prop.slice(0, -1));
-				prop = prop[prop.length-1];
-			}
-
-			Object.setPrototypeOf(that, RepeatedProperty.prototype);
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
@@ -333,23 +337,136 @@ class RepeatedProperty{ // extends Object
 }
 
 class RepeatedMap extends Map{
-	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
+	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		console.error("sf-each with Map still incomplete");
+		const {that, target, prop, firstInit} = rule;
+
+		// Initialize property once
+		if(firstInit){
+			hiddenProperty(that, '_list', Object.keys(that), true);
+
+			Object.defineProperty(target, prop, {
+				enumerable: true,
+				configurable: true,
+				get:()=> that,
+				set:(val)=> {
+					const olds = that._list;
+					const news = Object.keys(val);
+
+					// Assign if keys order was similar
+					for (var a = 0; a < olds.length; a++) {
+						if(olds[a] === news[a]){
+							that[olds[a]] = val[olds[a]];
+							continue;
+						}
+						break;
+					}
+
+					// Return if all new value has been assigned
+					if(a === news.length && olds[a] === void 0)
+						return;
+
+					for (var i = a; i < olds.length; i++)
+						sf.delete(that, olds[i]);
+
+					for (var i = a; i < news.length; i++)
+						sf.set(that, news[i], val[news[i]]);
+
+					that._list = news;
+				}
+			});
+		}
+
+		const alone = prepareRepeated.apply(that, arguments);
+		const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
+
+		// Proxy known property
+		for(let key in that)
+			ProxyProperty(that, key, true);
+
+		if(alone === true){
+			// Output to real DOM if not being used for virtual list
+			EM.parentChilds = parentNode.children;
+			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
+		}
+		else alone();
 	}
 	constructor(arg){return new Map(arg)}
-	set(){}
-	clear(){}
-	delete(){}
+	set(key, val){
+		if(super.has(key)){
+			return;
+		}
+
+		super.apply(this, arguments);
+	}
+	clear(){
+		super.clear();
+	}
+	delete(key){
+		super.delete(key);
+	}
 }
 
 class RepeatedSet extends Set{
-	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
+	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		console.error("sf-each with Set still incomplete");
+		const {that, target, prop, firstInit} = rule;
+
+		// Initialize property once
+		if(firstInit){
+			Object.defineProperty(target, prop, {
+				enumerable: true,
+				configurable: true,
+				get:()=> that,
+				set:(val)=> {
+					// Delete first
+					for(const v of that){
+						if(val.has !== void 0){
+							if(!val.has(v)) val.delete(v);
+							continue;
+						}
+
+						// If an Array
+						!val.includes(v) && that.delete(v);
+					}
+
+					// Adding new item
+					if(val.set) for(const v of val){
+						!that.has(v) && that.add(v);
+					}
+					else for(var i = 0; i < val.length; i++) {
+						const temp = val[i];
+						!that.has(temp) && that.add(temp);
+					}
+				}
+			});
+		}
+
+		const alone = prepareRepeated.apply(that, arguments);
+		const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
+
+		// Proxy known property
+		for(let key in that)
+			ProxyProperty(that, key, true);
+
+		if(alone === true){
+			// Output to real DOM if not being used for virtual list
+			EM.parentChilds = parentNode.children;
+			injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
+		}
+		else alone();
 	}
 	constructor(arg){return new Set(arg)}
-	add(){}
-	clear(){}
-	delete(){}
+	add(val){
+		if(super.has(val)) return;
+		super.add(val);
+	}
+	clear(){
+		super.clear();
+	}
+	delete(val){
+		super.delete(val);
+	}
 }
 
 // Only for Object or RepeatedProperty
@@ -457,21 +574,11 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 }
 
 class RepeatedList extends Array{
-	static construct(modelRef, element, pattern, parentNode, namespace, modelKeysRegex){
-		let prop = pattern[1];
-		const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
+	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
+		const {that, target, prop, firstInit} = rule;
 
 		// Initialize property once
-		let target;
-		if(that.constructor !== RepeatedList){
-			if(prop.constructor !== Array)
-				target = modelRef;
-			else{
-				target = deepProperty(modelRef, prop.slice(0, -1));
-				prop = prop[prop.length-1];
-			}
-
-			Object.setPrototypeOf(that, RepeatedList.prototype);
+		if(firstInit){
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
