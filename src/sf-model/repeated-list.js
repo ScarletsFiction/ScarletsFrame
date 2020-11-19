@@ -86,6 +86,32 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 	}
 }
 
+function parsePatternRule(modelRef, pattern, proto){
+	let prop = pattern[1];
+	const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
+
+	var firstInit;
+	if(that.constructor !== proto){
+		Object.setPrototypeOf(that, proto.prototype);
+		firstInit = true;
+	}
+
+	// that = the list object
+	// target = model or the parent object of the list
+	// prop = property name
+
+	if(prop.constructor !== Array)
+		return {that, target: modelRef, prop, pattern, firstInit};
+
+	return {
+		that,
+		target: deepProperty(modelRef, prop.slice(0, -1)),
+		prop: prop[prop.length-1],
+		pattern,
+		firstInit
+	};
+}
+
 function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 	const {target, prop, pattern} = rule;
 	let callback = target[`on$${prop}`] || {};
@@ -202,37 +228,13 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 
 		if(that.length !== void 0)
 			EM.elements = new Array(that.length);
+		if(that instanceof Map || that instanceof Set)
+			EM.elements = new Array(that.size);
 		else EM.elements = [];
 
 		// Output to real DOM if not being used for virtual list
 		injectArrayElements(EM, parentNode, EM.bound_end, that, modelRef, parentNode);
 	}
-}
-
-function parsePatternRule(modelRef, pattern, proto){
-	let prop = pattern[1];
-	const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
-
-	var firstInit;
-	if(that.constructor !== proto){
-		Object.setPrototypeOf(that, proto.prototype);
-		firstInit = true;
-	}
-
-	// that = the list object
-	// target = model or the parent object of the list
-	// prop = property name
-
-	if(prop.constructor !== Array)
-		return {that, target: modelRef, prop, pattern, firstInit};
-
-	return {
-		that,
-		target: deepProperty(modelRef, prop.slice(0, -1)),
-		prop: prop[prop.length-1],
-		pattern,
-		firstInit
-	};
 }
 
 // This will be called when constructing the
@@ -246,6 +248,7 @@ function afterConstruct(modelRef, element, rule, parentNode, namespace){
 	if(alone === true){
 		// Output to real DOM if not being used for virtual list
 		EM.parentChilds = parentNode.children;
+
 		injectArrayElements(EM, parentNode, void 0, that, modelRef, parentNode, namespace);
 	}
 	else alone();
@@ -346,66 +349,6 @@ class RepeatedProperty{ // extends Object
 
 class RepeatedMap extends Map{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
-		console.error("sf-each with Map still incomplete");
-		const {that, target, prop, firstInit} = rule;
-
-		// Initialize property once
-		if(firstInit){
-			hiddenProperty(that, '_list', Object.keys(that), true);
-
-			Object.defineProperty(target, prop, {
-				enumerable: true,
-				configurable: true,
-				get:()=> that,
-				set:(val)=> {
-					const olds = that._list;
-					const news = Object.keys(val);
-
-					// Assign if keys order was similar
-					for (var a = 0; a < olds.length; a++) {
-						if(olds[a] === news[a]){
-							that[olds[a]] = val[olds[a]];
-							continue;
-						}
-						break;
-					}
-
-					// Return if all new value has been assigned
-					if(a === news.length && olds[a] === void 0)
-						return;
-
-					for (var i = a; i < olds.length; i++)
-						sf.delete(that, olds[i]);
-
-					for (var i = a; i < news.length; i++)
-						sf.set(that, news[i], val[news[i]]);
-
-					that._list = news;
-				}
-			});
-		}
-
-		afterConstruct.apply(this, arguments);
-	}
-	constructor(arg){return new Map(arg)}
-	set(key, val){
-		if(super.has(key)){
-			return;
-		}
-
-		super.apply(this, arguments);
-	}
-	clear(){
-		super.clear();
-	}
-	delete(key){
-		super.delete(key);
-	}
-}
-
-class RepeatedSet extends Set{
-	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
-		console.error("sf-each with Set still incomplete");
 		const {that, target, prop, firstInit} = rule;
 
 		// Initialize property once
@@ -416,21 +359,74 @@ class RepeatedSet extends Set{
 				get:()=> that,
 				set:(val)=> {
 					// Delete first
-					for(const v of that){
-						if(val.has !== void 0){
-							if(!val.has(v)) val.delete(v);
-							continue;
-						}
-
-						// If an Array
-						!val.includes(v) && that.delete(v);
-					}
+					for(const [key, v] of that)
+						!val.has(key) && that.delete(key);
 
 					// Adding new item
-					if(val.set) for(const v of val){
-						!that.has(v) && that.add(v);
+					for(const [key, v] of val){
+						if(that.get(key) === v) continue;
+						that.set(key, v);
 					}
-					else for(var i = 0; i < val.length; i++) {
+				}
+			});
+		}
+
+		afterConstruct.apply(this, arguments);
+	}
+	constructor(arg){return new Map(arg)}
+	set(key, val){
+		if(super.has(key)){
+			const oldVal = super.get(key);
+			if(oldVal === val) return this;
+			this.$EM.remove(key, oldVal, true);
+		}
+
+		super.set.apply(this, arguments);
+		this.$EM.append(key, val, true);
+		return this;
+	}
+	clear(){
+		super.clear();
+		this.$EM.hardRefresh(0);
+		return this;
+	}
+	delete(key){
+		if(!this.has(key)) return this;
+
+		const val = super.get(key);
+		super.delete(key);
+		this.$EM.remove(key, val, true);
+		return this;
+	}
+}
+
+class RepeatedSet extends Set{
+	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
+		const {that, target, prop, firstInit} = rule;
+
+		// Initialize property once
+		if(firstInit){
+			Object.defineProperty(target, prop, {
+				enumerable: true,
+				configurable: true,
+				get:()=> that,
+				set:(val)=> {
+					// If an Set
+					if(val.has !== void 0){
+						for(const v of that) // Delete first
+							!val.has(v) && that.delete(v);
+
+						for(const v of val) // Adding new item
+							!that.has(v) && that.add(v);
+
+						return;
+					}
+
+					// If an Array
+					for(const v of that) // Delete first
+						!val.includes(v) && that.delete(v);
+
+					for(var i = 0; i < val.length; i++) { // Adding new item
 						const temp = val[i];
 						!that.has(temp) && that.add(temp);
 					}
@@ -442,14 +438,22 @@ class RepeatedSet extends Set{
 	}
 	constructor(arg){return new Set(arg)}
 	add(val){
-		if(super.has(val)) return;
+		if(super.has(val)) return this;
 		super.add(val);
+		this.$EM.append(void 0, val,  false);
+		return this;
 	}
 	clear(){
 		super.clear();
+		this.$EM.hardRefresh(0);
+		return this;
 	}
 	delete(val){
+		if(!this.has(val)) return this;
+
 		super.delete(val);
+		this.$EM.remove(void 0, val, false);
+		return this;
 	}
 }
 
@@ -504,40 +508,84 @@ function ProxyProperty(obj, prop, force){
 	}
 }
 
-// This is called only once when RepeatedProperty/RepeatedList is initializing
+// This is called only once when RepeatedElement is initializing
 // So we don't need to use cache
 function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNode, namespace){
-	let temp, { isComponent, template } = EM;
+	let temp, elem, scopes, { isComponent, template } = EM;
+
+	// Has child repeated element
+	const hasChild = template.parentTemplate !== void 0 || (template.specialElement && template.specialElement.repeat !== void 0);
+	if(hasChild)
+		scopes = template.scopes;
+
+	if(that.constructor === RepeatedMap || that.constructor === RepeatedSet){
+		const isMap = that instanceof Map;
+		let i = -1;
+		for(let item of that){
+			i++;
+
+			let key;
+			if(isMap) [key, item] = item;
+
+			if(hasChild){
+				if(template.uniqPattern)
+					scopes[template.uniqPattern] = key;
+
+				scopes[template.modelRef_regex_mask] = item;
+			}
+
+			if(isComponent){
+				if(isMap)
+					item.$key = key;
+
+				elem = new template(item, namespace, EM.asScope);
+			}
+			else elem = templateParser(template, item, false, modelRef, parentNode, void 0, key);
+
+			if(typeof item === "object"){
+				if(isComponent === false)
+					self.bindElement(elem, modelRef, template, item);
+
+				EM.elementRef.set(item, elem);
+			}
+
+			if(beforeChild === void 0)
+				tempDOM.appendChild(elem);
+			else{
+				EM.elements[i] = elem;
+				tempDOM.insertBefore(elem, beforeChild);
+			}
+		}
+		return;
+	}
 
 	if(that.constructor === RepeatedProperty){
 		temp = that;
 		that = Object.values(that);
 	}
 
-	// Has child repeated element
-	const hasChild = template.parentTemplate !== void 0 || (template.specialElement && template.specialElement.repeat !== void 0);
-
 	const len = that.length;
-	let elem;
 	for (var i = 0; i < len; i++) {
+		const item = that[i];
+
 		if(hasChild){
 			if(template.uniqPattern)
-				template.scopes[template.uniqPattern] = (temp === void 0 ? i : temp._list[i]);
+				scopes[template.uniqPattern] = (temp === void 0 ? i : temp._list[i]);
 
-			template.scopes[template.modelRef_regex_mask] = that[i];
+			scopes[template.modelRef_regex_mask] = item;
 		}
 
 		if(isComponent)
-			elem = new template(that[i], namespace, EM.asScope);
+			elem = new template(item, namespace, EM.asScope);
 		else{
-			elem = templateParser(template, that[i], false, modelRef, parentNode, void 0, template.uniqPattern && (temp === void 0 ? i : temp._list[i]));
+			elem = templateParser(template, item, false, modelRef, parentNode, void 0, template.uniqPattern && (temp === void 0 ? i : temp._list[i]));
 		}
 
-		if(typeof that[i] === "object"){
+		if(typeof item === "object"){
 			if(isComponent === false)
-				self.bindElement(elem, modelRef, template, that[i]);
+				self.bindElement(elem, modelRef, template, item);
 
-			EM.elementRef.set(that[i], elem);
+			EM.elementRef.set(item, elem);
 		}
 
 		if(beforeChild === void 0)
@@ -550,6 +598,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 		}
 	}
 
+	// For RepeatedProperty
 	if(temp !== void 0){
 		var i = 0;
 		for(let keys in temp)
@@ -1017,8 +1066,10 @@ class RepeatedList extends Array{
 }
 
 class ElementManipulator{
-	createElement(index){
-		const item = this.list[index];
+	createElement(index, item, isMap){
+		if(isMap === void 0) // array
+			item = this.list[index];
+
 		if(item === void 0) return;
 
 		const { template } = this;
@@ -1090,7 +1141,7 @@ class ElementManipulator{
 		}
 
 		if(this.elements !== void 0)
-			exist.length = list.length;
+			exist.length = list.length || 0;
 
 		for (var i = index; i < list.length; i++) {
 			const ref = list[i];
@@ -1290,8 +1341,16 @@ class ElementManipulator{
 		}
 	}
 
-	remove(index){
+	remove(index, item, isMap){
 		const exist = this.parentChilds || this.elements;
+		if(isMap !== void 0){
+			let key = isMap === true ? index : void 0;
+			for (index = 0; index < exist.length; index++) {
+				const el = exist[index];
+				if(el.model === item && (key === void 0 || el.sf$repeatListIndex === key))
+					break;
+			}
+		}
 
 		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(exist, index, index+1);
@@ -1301,8 +1360,10 @@ class ElementManipulator{
 				if(this.elements !== void 0)
 					var currentEl = exist[index];
 				else{
-					// Fix bug when some element are pending to be deleted
-					const item = this.list[index];
+					// This for fix bug when some element are pending to be deleted
+					if(isMap === void 0)
+						item = this.list[index];
+
 					for (var i = 0, n=exist.length; i < n; i++)
 						if(exist[i].model === item) break;
 
@@ -1317,11 +1378,11 @@ class ElementManipulator{
 					currentEl.remove();
 				};
 
-				// Auto remove if return false
+				// Instant remove if return falsy value
 				if(!this.callback.remove(currentEl, startRemove))
 					startRemove();
 			}
-			// Auto remove if no callback
+			// Instant remove if no callback
 			else exist[index].remove();
 
 			if(this.$VSM) this.$VSM.remove(index);
@@ -1402,9 +1463,9 @@ class ElementManipulator{
 		if(this.$VSM) this.$VSM.prepend(index);
 	}
 
-	append(index){
+	append(index, item, isMap){
 		const exist = this.parentChilds || this.elements;
-		const temp = this.createElement(index);
+		const temp = this.createElement(index, item, isMap);
 
 		if(this.elements !== void 0)
 			exist.push(temp);
@@ -1590,60 +1651,61 @@ class ElementManipulatorProxy{
 	hardRefresh(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].hardRefresh.apply(list[i], arguments);
+			EM_Proto.hardRefresh.apply(list[i], arguments);
 	}
 	update(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].update.apply(list[i], arguments);
+			EM_Proto.update.apply(list[i], arguments);
 	}
 	move(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].move.apply(list[i], arguments);
+			EM_Proto.move.apply(list[i], arguments);
 	}
 	swap(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].swap.apply(list[i], arguments);
+			EM_Proto.swap.apply(list[i], arguments);
 	}
 	remove(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].remove.apply(list[i], arguments);
+			EM_Proto.remove.apply(list[i], arguments);
 	}
 	removeRange(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].removeRange.apply(list[i], arguments);
+			EM_Proto.removeRange.apply(list[i], arguments);
 	}
 	clear(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].clear.apply(list[i], arguments);
+			EM_Proto.clear.apply(list[i], arguments);
 	}
 	insertAfter(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].insertAfter.apply(list[i], arguments);
+			EM_Proto.insertAfter.apply(list[i], arguments);
 	}
 	prepend(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].prepend.apply(list[i], arguments);
+			EM_Proto.prepend.apply(list[i], arguments);
 	}
 	append(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].append.apply(list[i], arguments);
+			EM_Proto.append.apply(list[i], arguments);
 	}
 	reverse(){
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
-			list[i].reverse.apply(list[i], arguments);
+			EM_Proto.reverse.apply(list[i], arguments);
 	}
 }
 
+var EM_Proto = ElementManipulator.prototype;
 internal.EM = ElementManipulator;
 internal.EMP = ElementManipulatorProxy;
 
