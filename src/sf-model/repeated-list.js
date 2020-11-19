@@ -254,6 +254,37 @@ function afterConstruct(modelRef, element, rule, parentNode, namespace){
 	else alone();
 }
 
+function forceRefreshKeyData(list){
+	if(list.$EM.constructor === ElementManipulatorProxy){
+		list.$EM.list.forEach(refreshKeyFromEM);
+		return;
+	}
+
+	refreshKeyFromEM(list.$EM);
+}
+
+function refreshKeyFromEM(EM){
+	const {template, list} = EM;
+	if(template.modelRef._sfkey_ === void 0) return;
+	const elements = EM.elements || EM.parentChilds;
+
+	if(list.constructor === RepeatedList){
+		for (var i = 0; i < list.length; i++) {
+			const temp = elements[i];
+			temp.sf$repeatListIndex = i;
+			syntheticTemplate(temp, template, '_sfkey_', list[i]);
+		}
+	}
+	else{ // RepeatedMap
+		var i = 0;
+		for(const [key, val] of list){
+			const temp = elements[i++];
+			temp.sf$repeatListIndex = key;
+			syntheticTemplate(temp, template, '_sfkey_', val);
+		}
+	}
+}
+
 class RepeatedProperty{ // extends Object
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
@@ -397,6 +428,9 @@ class RepeatedMap extends Map{
 		super.delete(key);
 		this.$EM.remove(key, val, true);
 		return this;
+	}
+	refresh(){
+		forceRefreshKeyData(this);
 	}
 }
 
@@ -1062,6 +1096,8 @@ class RepeatedList extends Array{
 			if(oldElem === void 0 || elems[i].model !== oldElem.model)
 				this.$EM.update(i, 1);
 		}
+
+		forceRefreshKeyData(this);
 	}
 }
 
@@ -1092,6 +1128,11 @@ class ElementManipulator{
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
 					temp.sf$bindedBackup = void 0;
+				}
+
+				if(template.modelRef._sfkey_ !== void 0){
+					temp.sf$repeatListIndex = index;
+					syntheticTemplate(temp, template, '_sfkey_', item);
 				}
 			}
 
@@ -1182,6 +1223,11 @@ class ElementManipulator{
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
 					temp.sf$bindedBackup = void 0;
 				}
+
+				if(this.template.modelRef._sfkey_ !== void 0){
+					temp.sf$repeatListIndex = i;
+					syntheticTemplate(temp, this.template, '_sfkey_', ref);
+				}
 			}
 
 			if(this.$VSM === void 0)
@@ -1257,6 +1303,11 @@ class ElementManipulator{
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
 					temp.sf$bindedBackup = void 0;
+				}
+
+				if(this.template.modelRef._sfkey_ !== void 0){
+					temp.sf$repeatListIndex = i;
+					syntheticTemplate(temp, this.template, '_sfkey_', ref);
 				}
 			}
 

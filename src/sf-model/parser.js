@@ -375,6 +375,12 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	let copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 
+	if(repeatedListKey !== void 0){
+		const temp = RegExp(sfRegex.getSingleMask.join(repeatedListKey), 'gm');
+		temp.key = repeatedListKey;
+		repeatedListKey = temp;
+	}
+
 	// Extract data to be parsed
 	template.scopes = modelRegex.bindList !== void 0 ? modelRegex.scopes : {_modelScope:modelScope};
 	copy = uniqueDataParser(copy, template, template.scopes);
@@ -561,6 +567,22 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	delete toObserve.template.i;
 	toObserve.template = void 0;
+
+	// Find keyed function
+	if(repeatedListKey !== void 0){
+		const keyed = [];
+		for (var i = 0; i < preParsed.length; i++) {
+			const current = preParsed[i];
+
+			// ToDo: Support for @if/else
+			if(current.get === void 0) continue;
+			if(current.get.length === 4)
+				keyed.push(i);
+		}
+
+		if(keyed.length !== 0)
+			template.modelRef._sfkey_ = keyed;
+	}
 
 	revalidateTemplateRef(template, modelScope);
 
