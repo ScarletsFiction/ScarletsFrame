@@ -62,7 +62,7 @@ self.replace = function(){
 self.parse = function(url){
 	let obj, URLQuery, URLHash, URLData;
 
-	if(url === true){
+	if(url === true || url === void 0){
 		obj = self;
 		obj.path = location.pathname;
 

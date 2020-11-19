@@ -17,10 +17,24 @@ internal.model.removeModelBinding = function(ref, isDeep){
 					else break;
 				}
 			}
+			else if(obj.constructor === RepeatedMap){
+				for(const [k, v] of obj){
+					if(typeof v === 'object')
+						internal.model.removeModelBinding(v);
+					else break;
+				}
+			}
+			else if(obj.constructor === RepeatedSet){
+				for(const v of obj){
+					if(typeof v === 'object')
+						internal.model.removeModelBinding(v);
+					else break;
+				}
+			}
 			else{
-				for(let rp in obj){
-					if(typeof obj[rp] === 'object')
-						internal.model.removeModelBinding(obj[rp]);
+				for(const k in obj){
+					if(typeof obj[k] === 'object')
+						internal.model.removeModelBinding(obj[k]);
 					else break;
 				}
 			}

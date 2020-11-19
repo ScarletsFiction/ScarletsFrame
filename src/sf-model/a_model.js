@@ -140,7 +140,7 @@ var modelScript_ = /_result_|return/;
 function modelScript(mask, script, repeatedListKey, _list){
 	var which = script.match(modelScript_);
 
-	if(repeatedListKey !== void 0 && !repeatedListKey.test(repeatedListKey.key))
+	if(repeatedListKey !== void 0 && !repeatedListKey.test(script))
 		repeatedListKey = void 0;
 
 	if(which === null)

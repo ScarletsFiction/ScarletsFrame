@@ -135,12 +135,14 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 	return changed;
 }
 function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template){
+	const registerRootEvent = !rootHandler?.sf$listListenerLock?.has(template);
+
 	for(let a = 0; a < ref.length; a++){
 		const refB = ref[a];
 
 		// Pass to event handler
 		if(refB.event){
-			if(!rootHandler?.sf$listListenerLock?.has(template))
+			if(registerRootEvent)
 				eventHandler(current, refB, modelRef || item, rootHandler, template);
 
 			continue;
