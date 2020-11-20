@@ -10,14 +10,14 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 	let element, script;
 
 	for (let i = 0; i < elements.length; i++) {
-		if(elements[i].getAttribute === void 0){
-			element = elements[i].el;
-			script = elements[i].rule;
+		element = elements[i];
+
+		if(element.getAttribute === void 0){
+			script = element.rule;
+			element = element.el;
 			RE_ProcessIndex = i;
 		}
 		else{
-			element = elements[i];
-
 			// ToDo: find the culprit why we need to check this
 			if(!element.hasAttribute('sf-each'))
 				continue;
@@ -171,6 +171,9 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 		else template = Object.create(originalAddr.template);
 
 		template.bindList = this;
+
+		if(devMode === true)
+			template.rootIndex = $.getSelector(parentNode, true, sf(parentNode, true));
 
 		if(this.constructor === RepeatedList){
 			template.repeatedList = true;

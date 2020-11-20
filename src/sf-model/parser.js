@@ -891,7 +891,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 				self.bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
 		}
 	} catch(e) {
-		templateErrorInfo(e, current, void 0, modelRef, template);
+		templateErrorInfo(e, current, "(Not from sf-each)", modelRef, template);
 		throw e;
 	}
 }

@@ -60,7 +60,6 @@ self.init = function(el, modelName, namespace){
 		model.constructor.init && model.constructor.init.call(model, (namespace || sf.model), el);
 }
 
-var processingElement = null;
 var scope = internal.model = {};
 
 internal.initPendingComponentScope = initPendingComponentScope;
@@ -202,4 +201,61 @@ var parseIndexAllocate = internal.model.parseIndexAllocate = function(arr){
 
 	if(arr[arr.length-1] === '')
 		arr.pop();
+}
+
+function findErrorLocation(text, error, slicedX, msg, slicedY){
+	var location = error.stack.match(/mous>:(.*?)\)/);
+	if(location === null){
+		console.log(msg, 'color:orange', text);
+		return;
+	}
+
+	location = location[1].split(':').map(Number);
+
+	location[0] -= 2 + slicedY;
+	location[1] -= slicedX;
+	if(location[1] < 0) location[1] = 0;
+
+	text = text.split('\n');
+	if(location[0] === 1 && text[0].slice(0, 1) === '{')
+		location[1] += 3;
+
+	var textMsg = " ".repeat(location[1]);
+	textMsg += "%c^ Around here%c";
+
+	text.splice(location[0], 0, textMsg);
+	text = text.join('\n');
+
+	console.log(msg+'%c'+text, 'color:orange', '', 'color:#ffa666;font-weight:bold', '')
+}
+
+var processingElement = null;
+function templateErrorInfo(e, element, item, modelRef, template){
+	if(e.message === "Can't continue processing the template"){
+		var el, isSingle = 'From element:';
+		if(modelRef.$el !== void 0){
+			el = modelRef.$el[0];
+			if(el && el.constructor === SFModel){
+				if(modelRef.$el.length !== 1){
+					isSingle = "From one of shared model's element:";
+					parentElement = modelRef.$el.slice(0);
+				}
+			}
+		}
+
+		var sfeach;
+		if(devMode && template.rootIndex)
+			sfeach = $.childIndexes(template.rootIndex, el) || void 0;
+
+		console.log("%cTemplate's data:%c", 'color:orange', '',
+		            "\n - Parent Element:", el,
+		            "\n - SF-Each's Parent:", sfeach,
+		            "\n - Element Skeleton:", element,
+			        "\n - Item value:", item,
+		            "\n - Model root:", modelRef,
+		            "\n - Internal cache:", {template});
+
+		console.groupEnd();
+	}
+	else sf.onerror && sf.onerror(e);
 }

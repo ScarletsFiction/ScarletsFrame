@@ -3,6 +3,7 @@
 // ToDo: Fix memory leak on RepeatedElement when using this feature
 // ToDo: Make the implementation more efficient
 let hotReloadAll = false; // All model property
+devMode = true;
 
 let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 let backupTemplate, backupCompTempl;
@@ -10,7 +11,6 @@ let backupTemplate, backupCompTempl;
 ;(function(){
 const gEval = hotReloadEval;
 
-console.log("[ScarletsFrame Warn] Hot reload module was included.");
 sf.hotReload = function(mode){
 	if(mode === 1)
 		hotReload = true;
