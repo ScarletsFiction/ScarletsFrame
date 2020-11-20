@@ -348,4 +348,27 @@ function findErrorLocation(text, error, slicedX, msg, slicedY){
 	console.log(msg+'%c'+text, 'color:orange', '', 'color:#ffa666;font-weight:bold', '')
 }
 
+function templateErrorInfo(e, element, item, modelRef, template){
+	if(e.message === "Can't continue processing the template"){
+		console.log("%cTemplate's data:%c", 'color:orange', '',
+		            "\n - Element:", element,
+			        "\n - Item value:", item || "(Not from sf-each)",
+		            "\n - Model root:", modelRef,
+		            "\n - Internal cache:", template);
+
+		if(modelRef.$el !== void 0){
+			var el = modelRef.$el[0];
+			if(el && el.constructor === SFModel){
+				if(modelRef.$el.length === 1)
+					console.log("%cFrom element:", 'color:orange', el);
+				else console.log("%cFrom one of shared model's element:\n", 'color:orange', modelRef.$el.slice(0));
+			}
+			else console.log("%cFrom element:", 'color:orange', el);
+		}
+
+		console.groupEnd();
+	}
+	else sf.onerror && sf.onerror(e);
+}
+
 const isTouchDevice = ()=> navigator.maxTouchPoints !== 0;

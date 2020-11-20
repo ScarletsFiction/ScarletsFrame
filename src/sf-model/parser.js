@@ -802,91 +802,97 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 	const binded = new Set();
 	var _modelScoped = modelKeysRegex && modelKeysRegex.bindList !== void 0 ? modelKeysRegex.scopes : void 0;
 
-	for(let current of nodes){
-		// Get reference for debugging
-		processingElement = current;
+	var template, current;
+	try{
+		for(current of nodes){
+			// Get reference for debugging
+			processingElement = current;
 
-		if(current.nodeType === 3 && binded.has(current.parentNode) === false){
-			if(current.parentNode.constructor._ref === SFModel._ref){
-				// Auto wrap element if parent is 'SF-M'
-				const replace = document.createElement('span');
-				current.parentNode.insertBefore(replace, current);
-				replace.appendChild(current);
-			}
-
-			self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
-			binded.add(current.parentNode);
-			continue;
-		}
-
-		// Create attribute template only because we're not going to process HTML content
-		if(current.sf$onlyAttribute !== void 0){
-			const preParsedRef = [];
-
-			const template = Object.create(modelKeysRegex);
-			template.parse = preParsedRef;
-			template.modelRefRoot = {};
-			template.modelRefRoot_path = [];
-
-			const attrs = current.attributes;
-			for (var i = 0; i < attrs.length; i++) {
-				const attr = attrs[i];
-
-				if(attr.value.includes('{{')){
-					if(_modelScoped === void 0)
-						template.scopes = _modelScoped = {_modelScope:modelRef};
-
-					attr.value = dataParser(attr.value, null, template, _modelScoped, preParsedRef);
+			if(current.nodeType === 3 && binded.has(current.parentNode) === false){
+				if(current.parentNode.constructor._ref === SFModel._ref){
+					// Auto wrap element if parent is 'SF-M'
+					const replace = document.createElement('span');
+					current.parentNode.insertBefore(replace, current);
+					replace.appendChild(current);
 				}
+
+				self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
+				binded.add(current.parentNode);
+				continue;
 			}
 
-			template.addresses = addressAttributes(current, template);
-			toObserve.template = template;
+			// Create attribute template only because we're not going to process HTML content
+			if(current.sf$onlyAttribute !== void 0){
+				const preParsedRef = [];
 
-			// Create as function
-			for (var i = 0; i < preParsedRef.length; i++) {
-				const ref = preParsedRef[i];
+				template = Object.create(modelKeysRegex);
+				template.parse = preParsedRef;
+				template.modelRefRoot = {};
+				template.modelRefRoot_path = [];
 
-				if(ref.type === REF_DIRECT){
-					toObserve.template.i = i;
-					var check = ref.check.replace(sfRegex.itemsObserve, toObserve);
-					delete ref.check;
+				const attrs = current.attributes;
+				for (var i = 0; i < attrs.length; i++) {
+					const attr = attrs[i];
 
-					// Convert to function
-					ref.get = modelScript(void 0, check);
-					continue;
+					if(attr.value.includes('{{')){
+						if(_modelScoped === void 0)
+							template.scopes = _modelScoped = {_modelScope:modelRef};
+
+						attr.value = dataParser(attr.value, null, template, _modelScoped, preParsedRef);
+					}
 				}
+
+				template.addresses = addressAttributes(current, template);
+				toObserve.template = template;
+
+				// Create as function
+				for (var i = 0; i < preParsedRef.length; i++) {
+					const ref = preParsedRef[i];
+
+					if(ref.type === REF_DIRECT){
+						toObserve.template.i = i;
+						var check = ref.check.replace(sfRegex.itemsObserve, toObserve);
+						delete ref.check;
+
+						// Convert to function
+						ref.get = modelScript(void 0, check);
+						continue;
+					}
+				}
+
+				delete toObserve.template.i;
+				toObserve.template = void 0;
+
+				revalidateTemplateRef(template, modelRef);
+
+				let parsed;
+				if(preParsedRef.length !== 0){
+					parsed = new Array(preParsedRef.length);
+					templateExec(preParsedRef, modelRef, void 0, parsed);
+				}
+				else parsed = emptyArray;
+
+				const currentRef = [];
+				parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef, void 0, template, true);
+
+				// Save reference to element
+				if(currentRef.length !== 0){
+					currentRef.template = template;
+					current.sf$elementReferences = currentRef;
+				}
+
+				self.bindElement(current, modelRef, template);
+
+				delete current.sf$onlyAttribute;
+				continue;
 			}
 
-			delete toObserve.template.i;
-			toObserve.template = void 0;
-
-			revalidateTemplateRef(template, modelRef);
-
-			let parsed;
-			if(preParsedRef.length !== 0){
-				parsed = new Array(preParsedRef.length);
-				templateExec(preParsedRef, modelRef, void 0, parsed);
-			}
-			else parsed = emptyArray;
-
-			const currentRef = [];
-			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef, void 0, template, true);
-
-			// Save reference to element
-			if(currentRef.length !== 0){
-				currentRef.template = template;
-				current.sf$elementReferences = currentRef;
-			}
-
-			self.bindElement(current, modelRef, template);
-
-			delete current.sf$onlyAttribute;
-			continue;
+			if(current.nodeType !== 3)
+				self.bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
 		}
-
-		if(current.nodeType !== 3)
-			self.bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
+	} catch(e) {
+		templateErrorInfo(e, current, void 0, modelRef, template);
+		throw e;
 	}
 }
 

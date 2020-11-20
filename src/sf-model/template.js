@@ -201,29 +201,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 		}
 		else parsed = emptyArray;
 	}catch(e){
-		if(e.message === "Can't continue processing the template"){
-			if(modelRef === void 0){
-				modelRef = item;
-				item = void 0;
-			}
-
-			console.log("%cTemplate's data:%c", 'color:orange', '',
-			            "\n - Element:", template.html,
-			            "\n - Item value:", item,
-			            "\n - Model root:", modelRef,
-			            "\n - Internal cache:", template);
-
-			if(modelRef.$el !== void 0){
-				var el = modelRef.$el[0];
-				if(el && el.constructor === SFModel)
-					console.log("%cFrom one of shared model's element:\n", 'color:orange', modelRef.$el.slice(0));
-				else console.log(el);
-			}
-
-			console.groupEnd();
-		}
-		else sf.onerror && sf.onerror(e);
-
+		templateErrorInfo(e, template.html, item, modelRef, template);
 		throw e;
 	}
 
