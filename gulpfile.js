@@ -8,9 +8,9 @@ const fs = require('fs');
 // const notifier = require('node-notifier'); // For other OS
 const notifier = new require('node-notifier/notifiers/balloon')(); // For Windows
 
-let uglify, babel;
+let terser, babel;
 gulp.task('enableCompile', function(done){
-  uglify = require('gulp-uglify-es').default;
+  terser = require('gulp-terser');
   babel = require("gulp-babel");
   removeOldMap('dist/');
 
@@ -80,7 +80,7 @@ gulp.task('js-es5', ()=>
         ]
       ]
     }))
-    .pipe(uglify())
+    .pipe(terser())
     .pipe(header(theHeader))
     .pipe(rename({extname:'.min.js'}))
     .pipe(sourcemaps.write('.', dateMinify))
@@ -91,7 +91,7 @@ gulp.task('js-es6', ()=>
   gulp.src(theOrderES6)
     .pipe(sourcemaps.init())
     .pipe(concat('scarletsframe.es6.js'))
-    .pipe(uglify())
+    .pipe(terser())
     .pipe(header(theHeader))
     .pipe(sourcemaps.write('.', dateMinify))
     .pipe(gulp.dest('dist'))
@@ -101,7 +101,7 @@ gulp.task('js-hot', ()=>
   gulp.src(devTest)
     .pipe(sourcemaps.init())
     .pipe(concat('scarletsframe.hot.js'))
-    .pipe(uglify())
+    .pipe(terser())
     .pipe(header(theHeader))
     .pipe(sourcemaps.write('.', dateMinify))
     .pipe(gulp.dest('dist'))
