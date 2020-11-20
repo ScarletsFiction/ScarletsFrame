@@ -8,7 +8,8 @@ A frontend framework that can help you write a simple web structure with complex
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
 ### Breaking changes since 0.32.0
-There are some changes if you're using sf.url
+There are some changes if you're using sf.url. But actually this feature haven't documented before 0.32.0 on the Wiki, so it was already expected to breaking xD. If you see some undocumented feature feel free to make an issue/question to make sure if it was stable for the next version.
+
 ```js
 // Old
 sf.url.paths = ''; // Main URL path
@@ -28,7 +29,8 @@ path == '/my/path';
 query == {search:'myself'};
 data == {hello:'world'}
 ```
-If you're not using sf.views you will need to call `sf.url.parse(true)` to parse current URL from the address bar. You can pass it with String parameter instead if you want to parse your URL without affecting sf.url's data. More information please go to the Wiki.
+
+If you're not using sf.views for routing you will need to manually call `sf.url.parse(true)` to parse current URL from the address bar. You can pass it with String parameter instead if you want to parse your URL without affecting sf.url's data. More information please go to the Wiki.
 
 ### Breaking changes since 0.31.0
 ```xml
