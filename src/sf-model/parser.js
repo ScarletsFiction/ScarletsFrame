@@ -871,7 +871,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 			else parsed = emptyArray;
 
 			const currentRef = [];
-			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef, void 0, template);
+			parserForAttribute(current, template.addresses, null, modelRef, parsed, currentRef, void 0, template, true);
 
 			// Save reference to element
 			if(currentRef.length !== 0){

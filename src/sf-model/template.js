@@ -134,9 +134,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 
 	return changed;
 }
-function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template){
-	const registerRootEvent = !rootHandler?.sf$listListenerLock?.has(template);
-
+function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template, registerRootEvent){
 	for(let a = 0; a < ref.length; a++){
 		const refB = ref[a];
 
@@ -251,6 +249,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 	const pendingInsert = [];
 
 	changesReference.parsed = parsed;
+	const registerRootEvent = !rootHandler?.sf$listListenerLock?.has(template);
 
 	// Find element where the data belongs to
 	for (var i = 0; i < addresses.length; i++) {
@@ -259,7 +258,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
-			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference, rootHandler, template); //26ms
+			parserForAttribute(current, ref.attributes, item, modelRef, parsed, changesReference, rootHandler, template, registerRootEvent); //26ms
 			continue;
 		}
 
