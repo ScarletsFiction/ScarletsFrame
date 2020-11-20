@@ -7,6 +7,17 @@ A frontend framework that can help you write a simple web structure with complex
 
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
+### Breaking changes since 0.32.0
+```js
+// Old
+sf.url.paths = '';
+sf.url.hashes = {};
+
+// Changed into
+sf.url.path = '';
+sf.url.routes = {};
+```
+
 ### Breaking changes since 0.31.0
 ```xml
 <!-- Old -->
@@ -95,29 +106,6 @@ $ npm start
 $ gulp
 ```
 
-### Polyfill for older browser
-If you want to support some old browser, you need to add some polyfill before the framework.<br>
-It's working on Chrome version 26 and should working on Android KitKat stock browser.<br>
-For Safari or iOS browser you may need to polyfill PointerEvent too<br>
-Some feature not work on IE11.
-```html
-<script type="text/javascript">
-  // Polyfill for Old Browser
-  (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
-    if(!window.PointerEvent)
-      z('https://code.jquery.com/pep/0.4.3/pep.js');
-    if(!window.MutationObserver)
-      window.MutationObserver = window.WebKitMutationObserver;
-    if(!window.Reflect)
-      z('https://unpkg.com/core-js-bundle@latest/minified.js');
-    if(!window.customElements)
-      z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
-    if(!window.ResizeObserver)
-      z('https://polyfill.io/v3/polyfill.min.js?features=ResizeObserver%2CIntersectionObserver%2CIntersectionObserverEntry');
-  })();
-</script>
-```
-
 ## Bundle with NPM
 ```sh
 $ npm i scarletsframe
@@ -132,6 +120,31 @@ sf.model('things', function(self, root) {
   self.something = 123;
 });
 ```
+
+### Polyfill for older browser
+If you want to support some old browser, you need to add some polyfill before the framework.<br>
+For Safari or iOS browser you may need to polyfill PointerEvent too<br>
+Some feature not work on IE11.
+<details>
+  <summary>Click here to see the polyfills</summary>
+  ```html
+  <script type="text/javascript">
+    // Polyfill for Old Browser
+    (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
+      if(!window.PointerEvent)
+        z('https://code.jquery.com/pep/0.4.3/pep.js');
+      if(!window.MutationObserver)
+        window.MutationObserver = window.WebKitMutationObserver;
+      if(!window.Reflect)
+        z('https://unpkg.com/core-js-bundle@latest/minified.js');
+      if(!window.customElements)
+        z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+      if(!window.ResizeObserver)
+        z('https://polyfill.io/v3/polyfill.min.js?features=ResizeObserver%2CIntersectionObserver%2CIntersectionObserverEntry');
+    })();
+  </script>
+  ```
+</details>
 
 ## Contribution
 If you want to help in ScarletsFrame please fork this project and edit on your repository, then make a pull request to here. Otherwise, you can help with donation via [kofi](https://ko-fi.com/stefansarya).

@@ -53,14 +53,14 @@ export declare namespace sf {
 	export function url(): string;
 	export namespace url {
 		/** URL Data */
-		const data: string[];
-		/** Hashes route path from URL */
-		const hashes: {};
+		const data: {};
+		/** Hash path from URL */
+		const routes: {};
 		/** URL Pathname */
-		const paths: string;
-		/**
-		 * Parse URL data from a string
-		 */
+		const path: string;
+		/** GET Query in the URL */
+		const query: string;
+		/** Parse URL data from a string */
 		function parse(url: string): URLData;
 	}
 	export function lang(): void;
@@ -235,9 +235,10 @@ declare class SFSpace {
 	destroy(): void;
 }
 declare class URLData {
-	data: string[];
-	hashes: {};
-	paths: string;
+	path: string;
+	data: {};
+	routes: {};
+	query: {};
 }
 interface WindowOptions {
 	id?: string;
