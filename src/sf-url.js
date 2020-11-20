@@ -63,6 +63,8 @@ self.parse = function(url){
 	let obj, URLQuery, URLHash, URLData;
 
 	if(url === true || url === void 0){
+		url = true;
+
 		obj = self;
 		obj.path = location.pathname;
 
@@ -139,6 +141,7 @@ self.parse = function(url){
 		}
 	}
 
+	if(url === true) return;
 	return obj;
 }
 
