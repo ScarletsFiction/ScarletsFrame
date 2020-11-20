@@ -8,15 +8,27 @@ A frontend framework that can help you write a simple web structure with complex
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
 ### Breaking changes since 0.32.0
+There are some changes if you're using sf.url
 ```js
 // Old
-sf.url.paths = '';
-sf.url.hashes = {};
+sf.url.paths = ''; // Main URL path
+sf.url.hashes = {}; // Hash routes
+sf.url.data = []; // Custom URL data
 
 // Changed into
-sf.url.path = '';
-sf.url.routes = {};
+sf.url.path = ''; // Main URL path
+sf.url.routes = {}; // Hash routes
+sf.url.data = {}; // Custom URL data
+
+// New
+sf.url.query = {}; // URL GET query
+
+// Example: https://domain.com/my/path?search=myself#|hello:world
+path == '/my/path';
+query == {search:'myself'};
+data == {hello:'world'}
 ```
+If you're not using sf.views you will need to call `sf.url.parse(true)` to parse current URL from the address bar. You can pass it with String parameter instead if you want to parse your URL without affecting sf.url's data. More information please go to the Wiki.
 
 ### Breaking changes since 0.31.0
 ```xml
