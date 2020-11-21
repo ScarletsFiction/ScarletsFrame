@@ -45,26 +45,36 @@ self.data = {}; // {UniqID: [String, ...], UniqID: String}
 const history = window.history;
 const location = window.location;
 
+function isURLSimilar(){
+	const now = self();
+	if(now === location.origin + location.href) return;
+	return now;
+}
+
 // Push into latest history
 self.push = function(){
-	history.pushState((history.state || 0) + 1, '', self());
+	const now = isURLSimilar();
+	if(now === void 0) return;
+
+	history.pushState((history.state || 0) + 1, '', );
 	self.trigger();
 }
 
 // Remove next history and change current history
 self.replace = function(){
+	const now = isURLSimilar();
+	if(now === void 0) return;
+
 	history.replaceState(history.state, '', self());
 	self.trigger();
 }
 
-// If url === true, it will parse current URL save the data into sf.url
+// If url === undefined, it will parse current URL save the data into sf.url
 // If url is String, it will parse the String and create new object to save the data
 self.parse = function(url){
 	let obj, URLQuery, URLHash, URLData;
 
-	if(url === true || url === void 0){
-		url = true;
-
+	if(url === void 0){
 		obj = self;
 		obj.path = location.pathname;
 
@@ -141,7 +151,6 @@ self.parse = function(url){
 		}
 	}
 
-	if(url === true) return;
 	return obj;
 }
 
@@ -182,6 +191,12 @@ self.once = function(name, options, callback){
 
 self.off = function(name, callback){
 	const list = listener[name];
+
+	if(callback === void 0){
+		list.length = 0;
+		return;
+	}
+
 	list.splice(list.indexOf(callback), 1);
 }
 
@@ -203,5 +218,5 @@ self.trigger = function(){
 	}
 }
 
-self.parse(true);
+self.parse();
 })();

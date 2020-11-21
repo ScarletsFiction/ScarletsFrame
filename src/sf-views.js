@@ -39,7 +39,7 @@ window.addEventListener('popstate', function(ev){
 
 	// console.warn('historyIndex', historyIndex, window.history.state, routeDirection > 0 ? 'forward' : 'backward');
 
-	// Reparse URL
+	// Reparse current URL
 	self.goto();
 	disableHistoryPush = false;
 	sf.url.trigger();
@@ -516,14 +516,16 @@ const self = sf.views = function View(selector, name){
 		if(url.beforeRoute !== void 0 && url.beforeRoute(url.data))
 			return;
 
-		if(name === slash)
-			sf.url.path = path;
-		else if(name)
-			sf.url.routes[name] = path;
+		if(_routeCount === void 0){
+			if(name === slash)
+				sf.url.path = path;
+			else if(name)
+				sf.url.routes[name] = path;
 
-		// This won't trigger popstate event
-		if(!disableHistoryPush && _routeCount === void 0 && name !== false)
-			sf.url.push();
+			// This won't trigger popstate event
+			if(!disableHistoryPush && name !== false)
+				sf.url.push();
+		}
 
 		// Check if view was exist
 		if(rootDOM.isConnected === false){
@@ -900,7 +902,7 @@ const self = sf.views = function View(selector, name){
 
 self.list = {};
 self.goto = function(url){
-	const parsed = sf.url.parse(url || true);
+	const parsed = sf.url.parse(url);
 	sf.url.data = parsed.data;
 	sf.url.query = parsed.query;
 	// sf.url.routes = parsed.routes;
