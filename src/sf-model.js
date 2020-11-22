@@ -95,17 +95,14 @@ function findBindListElement(el, includeComponent){
 		}
 
 		const scope = namespace || self;
-		let scopeTemp;
-
 		if(hotReload)
 			hotModel(scope, name, func);
-		else{
-			scopeTemp = scope(name);
 
-			// Call it it's a function
-			if(func.constructor === Function)
-				func(scopeTemp, scope);
-		}
+		let scopeTemp = scope(name);
+
+		// Call it it's a function
+		if(!hotReload && func.constructor === Function)
+			func(scopeTemp, scope);
 
 		if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
 			const temp = internal.modelPending[name];
@@ -116,8 +113,15 @@ function findBindListElement(el, includeComponent){
 			delete internal.modelPending[name];
 		}
 
+		if(devMode){
+			Object.defineProperty(scopeTemp.$el, '$scopeFunc', {
+				configurable: true,
+				value: func
+			});
+		}
+
 		// Return model scope
-		return scopeTemp || scope(name);
+		return scopeTemp;
 	}
 
 	// Get property of the model

@@ -117,6 +117,13 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		else if(hotReload)
 			hotComponentRefresh(scope, name, func);
 
+		if(devMode){
+			Object.defineProperty(registrar[2], '$scopeFunc', {
+				configurable: true,
+				value: func
+			});
+		}
+
 		// Return list of created component
 		return registrar[2];
 	}
