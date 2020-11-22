@@ -56,7 +56,7 @@ self.push = function(){
 	const now = isURLSimilar();
 	if(now === void 0) return;
 
-	history.pushState((history.state || 0) + 1, '', );
+	history.pushState((history.state || 0) + 1, '', now);
 	self.trigger();
 }
 
@@ -131,7 +131,7 @@ self.parse = function(url){
 	if(URLQuery !== void 0){
 		URLQuery = URLQuery.split('&');
 		for (var i = 0; i < URLQuery.length; i++) {
-			var temp = URLQuery[i].split('=');
+			const temp = URLQuery[i].split('=');
 			query[temp[0]] = decodeURI(temp[1]);
 		}
 	}
