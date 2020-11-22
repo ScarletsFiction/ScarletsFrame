@@ -44,7 +44,7 @@ class DOMList{
 			return this;
 		}
 
-		if(elements.length === void 0){
+		if(elements.length === void 0 || elements === window){
 			this[0] = elements;
 			this.length = 1;
 			return this;
@@ -526,7 +526,7 @@ class DOMList{
 }
 
 function _DOMList(list){
-	if(!list || list.forEach === void 0 || list.constructor !== NodeList)
+	if(!list || list.forEach === void 0 || list.constructor !== NodeList || list === window)
 		return new DOMList(list);
 
 	const { length } = list;
