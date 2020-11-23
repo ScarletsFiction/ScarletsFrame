@@ -1,0 +1,46 @@
+sf-dev-mode{
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 1000;
+}
+
+.sf-shadow-mark{
+	top:0;
+	left:0;
+	background: #47a2ff54;
+	pointer-events:none;
+	position:fixed;
+}
+
+.sf-side-info{
+	top: 30%;
+	border-radius: 0 10px 10px 0;
+	box-shadow: 0 0 10px black;
+	color: white;
+	left: 0;
+	transform: translate(-100%, -50%);
+	background: #383838fa;
+	position: fixed;
+	opacity: 0;
+	transition-property: opacity, transform;
+	transition: 0.7s ease-in-out;
+}
+
+.sf-side-info.opened{
+	opacity: 1;
+	transform: translate(0%, -50%);
+}
+
+.sf-side-info .title{
+	padding: 8px;
+}
+.sf-side-info.have-list .title{
+	border-bottom: 2px solid #ecaa2f;
+}
+
+.sf-side-info.have-list .list{
+	margin-top: 3px;
+	padding: 8px;
+	padding-top: 2px;
+}
