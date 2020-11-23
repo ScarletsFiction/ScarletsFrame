@@ -109,7 +109,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		const construct = defineComponent(name);
 		registrar[1] = construct;
 
-		registrar[2].root = construct;
+		Object.defineProperty(registrar[2], 'root', {value:construct});
 		window[`$${capitalizeLetters(name.split('-'))}`] = construct;
 
 		if(waitingHTML[name] !== void 0)
@@ -327,7 +327,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			}
 
 			if(tempDOM === true)
-				var parsed = internal.model.templateParser(copy, newObj, void 0, void 0, void 0, element);
+				var parsed = internal.model.templateParser(copy, newObj, void 0, void 0, void 0, element, void 0, namespace);
 			else{
 				var parsed = internal.model.templateParser(copy, newObj);
 				element.appendChild(parsed);
@@ -387,8 +387,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		}
 		else{
 			let temp = namespace.components[name];
-			if(temp === void 0)
+			if(temp === void 0){
 				temp = namespace.components[name] = [];
+				temp.$name = name;
+				Object.defineProperty(temp, 'root', {value:registrar[2].root});
+			}
 
 			temp.push(newObj);
 			element.sf$collection = temp;
@@ -406,6 +409,10 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	class SFComponent extends HTMLElement{
 		constructor($item, namespace, asScope){
 			super();
+
+			// Return if it's being used for sf-each
+			if(this.hasAttribute('sf-each') || this.hasAttribute('sf-as-scope'))
+				return;
 
 			// Return if the component has sf-scope
 			// Because it will be recreated after the parent

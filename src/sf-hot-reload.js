@@ -90,6 +90,9 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		return;
 	}
 
+	if(scope.$el === void 0)
+		scope.$el = $();
+
 	var firstTime = scope.$el._hotReload === void 0;
 	if(firstTime)
 		Object.defineProperty(scope.$el, '_hotReload', {value: true});
@@ -118,7 +121,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	else Object.setPrototypeOf(scope, func.class.prototype);
 
 	if(haveLoaded.has(scope) || forceHaveLoaded)
-		!firstTime && scope.hotReloaded && scope.hotReloaded(scope);
+		(!firstTime || forceHaveLoaded) && scope.hotReloaded && scope.hotReloaded(scope);
 	else
 		haveLoaded.add(scope);
 }

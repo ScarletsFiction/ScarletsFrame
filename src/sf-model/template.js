@@ -187,7 +187,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 	}
 }
 
-const templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy, repeatListIndex){
+const templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy, repeatListIndex, namespace){
 	processingElement = template.html;
 
 	let html = original === true ? template.html : template.html.cloneNode(true);
@@ -314,7 +314,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 				};
 			}
 
-			repeatedListBinding(specialRepeat_, item, void 0, template);
+			repeatedListBinding(specialRepeat_, item, namespace, template);
 		}
 
 		// Process element for sf-scope

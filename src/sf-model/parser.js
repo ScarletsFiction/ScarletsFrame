@@ -333,7 +333,7 @@ const createModelKeysRegex = internal.model.createModelKeysRegex = function(targ
 // ToDo: need performance optimization
 self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex, preserveRegex, repeatedListKey){
 	if(targetNode.model !== void 0)
-		return console.error('[Violation] element already has a model, template extraction aborted', targetNode, targetNode.model, mask, modelScope);
+		return console.error('Element already has a model, template extraction was aborted', targetNode, targetNode.model, mask, modelScope);
 
 	// Remove repeated list from further process
 	// To avoid data parser
