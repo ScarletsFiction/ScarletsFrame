@@ -86,9 +86,9 @@ if(window.sf$proxy === void 0)
 
 class Space{
 	inherit = {};
-	// modelList = {default:{}};
+	// modelList = {default:{model-name:{ model here }}};
 	// modelFunc = {};
-	// componentList = {default:{}};
+	// componentList = {default:{comp-name:[ comp list here ]}};
 
 	constructor(namespace, options){
 		if(namespace === void 0)
@@ -174,17 +174,18 @@ class Space{
 					const arg = old[i];
 					sf.model.init(arg[0], arg[1], arg[2], this.default);
 				}
-				return this.modelList;
+				return this.modelList.default[name];
 			}
 		}
 
 		sf.model.for(name, options, func, this.default);
-		return this.modelList;
+		return this.modelList.default[name];
 	}
 
 	component(name, options, func){
-		sf.component(name, options, func, this.default);
-		return this.componentList;
+		const temp = this.componentList.default;
+		temp[name] = sf.component(name, options, func, this.default);
+		return temp[name];
 	}
 
 	destroy(){
