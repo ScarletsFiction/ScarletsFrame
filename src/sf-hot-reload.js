@@ -325,3 +325,15 @@ function hotComponentTemplate(scope, name){
 
 	backupCompTempl.set(registrar, registrar[3]);
 }
+
+setTimeout(function(){
+	$(function(){
+		if(window.SFDevSpace === void 0){
+			console.groupCollapsed("Looks like SF Development Tools was not loaded.\nClick here to expand...");
+			console.log("Please change the latest with the version you're currently use");
+			console.log("https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js");
+			console.log("https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css");
+			console.groupEnd();
+		}
+	});
+}, 1);

@@ -205,7 +205,6 @@ SFDevSpace.component('sf-view-info', {
 // Add to body when DOM was finished loading
 sf.dom(function(){
 	$('body').append('<sf-space sf_devmode><sf-dev-mode/></sf-space>');
-	console.log(SFDevMode[0]);
 });
 
 // For browser console
