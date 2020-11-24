@@ -38,9 +38,27 @@ sf-dev-mode{
 .sf-side-info.have-list .title{
 	border-bottom: 2px solid #ecaa2f;
 }
+.sf-side-info .list-title{
+	display: none;
+	padding: 5px 5px 0 5px;
+	border-bottom: 1px dashed white;
+	color: gray;
+	font-weight: bold;
+}
+.sf-side-info .list-title.true{
+	display: block;
+}
 
-.sf-side-info.have-list .list{
+.sf-side-info .list.true{
 	margin-top: 3px;
 	padding: 8px;
-	padding-top: 2px;
+	padding-top: 1px;
+}
+
+sf-view-info{
+	margin-top: 5px;
+	margin-bottom: 5px;
+	display: block;
+	padding: 5px;
+	box-shadow: 0 0 20px 0px black;
 }

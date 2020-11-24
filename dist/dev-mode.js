@@ -10,8 +10,21 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 	"></div>
 	<div class="sf-side-info {{ sideOpened ? 'opened' : ''}} {{ haveList ? 'have-list' : ''}}">
 		<div class="title">{{ message }}</div>
-		<div class="list">
+		<div class="list-title {{ spaceList }}">Space List</div>
+		<div class="space-list list {{ spaceList }}">
+			<sf-space-info sf-each="val in spaces" sf-as-scope/>
+		</div>
+		<div class="list-title {{ modelList }}">Model List</div>
+		<div class="model-list list {{ modelList }}">
 			<sf-model-info sf-each="val in models" sf-as-scope/>
+		</div>
+		<div class="list-title {{ componentList }}">Component List</div>
+		<div class="component-list list {{ componentList }}">
+			<sf-component-info sf-each="val in components" sf-as-scope/>
+		</div>
+		<div class="list-title {{ viewList }}">Views Info</div>
+		<div class="view-list list {{ viewList }}">
+			<sf-view-info sf-each="val in views" sf-as-scope/>
 		</div>
 	</div>`
 }, function(My){
@@ -22,7 +35,24 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 	My.sideOpenLock = false;
 	My.haveList = false;
 	My.message = "Development Mode Enabled";
+
+	My.spaces = [];
+	My.spaceList = false;
 	My.models = [];
+	My.modelList = false;
+	My.components = [];
+	My.componentList = false;
+	My.views = [];
+	My.viewList = false;
+
+	function clearArrays(){
+		My.spaces.splice(0);
+		My.models.splice(0);
+		My.components.splice(0);
+		My.views.splice(0);
+		My.spaceList = My.modelList = My.componentList = My.viewList = false;
+		My.haveList = false;
+	}
 
 	$('body').on('pointermove', function(e){
 		if(e.ctrlKey && e.altKey){
@@ -33,7 +63,7 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 
 				if(My.haveList){
 					My.haveList = false;
-					My.models.splice(0);
+					clearArrays();
 				}
 				return;
 			}
@@ -46,14 +76,16 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 			My.hasShadow = true;
 			My.sideOpened = true;
 			My.haveList = true;
+			My.sideOpenLock = false;
 			My.message = "Inspecting Element";
 			scanElementFrame(e);
 		}
 		else{
 			if(My.sideOpenLock === false)
-				My.models.splice(0);
+				clearArrays();
 
-			if(My.models.length === 0){
+			if(My.models.length === 0 && My.components.length === 0
+			   && My.spaces.length === 0 && My.views.length === 0){
 				My.haveList = false;
 				My.sideOpened = false;
 			}
@@ -64,11 +96,15 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 
 	function scanElementFrame(e){
 		var nested = 0;
-		var frameList = [];
+		var modelList = [];
+		var componentList = [];
+		var spaceList = [];
+		var viewList = [];
 
+		// Model/Component
 		var modelEl = e.target;
 		while(modelEl = sf(modelEl, true)){
-			frameList.push({
+			(modelEl.sf$collection ? componentList : modelList).push({
 				name: modelEl.sf$controlled || '{embedded template}',
 				nested,
 				model: modelEl.model,
@@ -82,7 +118,43 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 			nested++;
 		};
 
-		My.models.assign(frameList);
+		My.modelList = My.models.length !== 0;
+		My.models.assign(modelList);
+		My.componentList = My.components.length !== 0;
+		My.components.assign(componentList);
+
+		// Space
+		var spaces = $(e.target).parents('sf-space');
+		spaceList.length = spaces.length;
+		for (var i = 0; i < spaces.length; i++) {
+			const current = spaces[i];
+			spaceList[i] = {
+				space:current.sf$space,
+				name:current.sf$spaceName,
+				id:current.sf$spaceID,
+			};
+		}
+
+		My.spaceList = My.spaces.length !== 0;
+		My.spaces.assign(spaceList);
+
+		// Space
+		var views = $(e.target).parents('sf-page-view');
+		viewList.length = views.length;
+		for (var i = 0; i < views.length; i++) {
+			const current = views[i];
+			const parent = current.parentNode;
+			viewList[i] = {
+				pages:parent.sf$cachedDOM,
+				name:parent.tagName.toLowerCase(),
+				path:current.routePath,
+				ref:current.routeCached,
+				data:current.routerData && (Object.assign({}, current.routerData)),
+			};
+		}
+
+		My.viewList = My.views.length !== 0;
+		My.views.assign(viewList);
 	}
 
 	My.init = function(){
@@ -99,6 +171,35 @@ SFDevSpace.component('sf-model-info', {
 `
 }, function(My, root){
 	// My.name = $item.name;
+});
+
+// sf-each-> sf-as-scope enabled
+SFDevSpace.component('sf-component-info', {
+	html:`
+	<div>{{ name }}</div>
+`
+}, function(My, root){
+	// My.name = $item.name;
+});
+
+// sf-each-> sf-as-scope enabled
+SFDevSpace.component('sf-space-info', {
+	html:`
+	<div>{{ name }}</div>
+`
+}, function(My, root){
+	// My.name = $item.name;
+});
+
+// sf-each-> sf-as-scope enabled
+SFDevSpace.component('sf-view-info', {
+	html:`
+	<div>Name: {{ name }}</div>
+	<div>URL: {{ path }}</div>
+	<div>Data: {{ data }}</div>
+`
+}, function(My, root){
+	// My.path = $item.path;
 });
 
 // Add to body when DOM was finished loading
@@ -126,7 +227,15 @@ sf.dom(function(){
 			e.stopPropagation();
 
 			var component = SFDevMode[0];
-			const frameList = component.models;
+			const frameList = new Array(component.models.length + component.components.length);
+
+			let temp = component.models;
+			for (var i = 0; i < temp.length; i++)
+				frameList[temp[i].nested] = temp[i];
+
+			temp = component.components;
+			for (var i = 0; i < temp.length; i++)
+				frameList[temp[i].nested] = temp[i];
 
 			if(frameList.length !== 0){
 				component.message = "Frame Inspection Tools";
