@@ -120,8 +120,19 @@ class DOMList{
 		}
 
 		const t = [];
-		for (let i = 0; i < this.length; i++)
-			t.push.apply(t, this[i].closest(selector));
+		for (let i = 0; i < this.length; i++){
+			const current = this[i].closest(selector);
+			current !== null && t.push(current);
+		}
+		return _DOMList(t);
+	}
+	parents(selector){
+		const t = [];
+		for (let i = 0; i < this.length; i++){
+			var current = this[i];
+			while((current = current.parentNode.closest(selector)) !== null)
+				t.push(current);
+		}
 		return _DOMList(t);
 	}
 	prev(selector){
