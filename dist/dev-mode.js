@@ -8,7 +8,7 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		width: {{ width }}px;
 		height: {{ height }}px;
 	"></div>
-	<div class="sf-side-info {{ sideOpened ? 'opened' : ''}} {{ haveList ? 'have-list' : ''}}">
+	<div class="sf-side-info {{ sideOpenLock ? 'locked' : ''}} {{ sideOpened ? 'opened' : ''}} {{ haveList ? 'have-list' : ''}}">
 		<div class="title">{{ message }}</div>
 		<div class="list-title {{ spaceList }}">Space List</div>
 		<div class="space-list list {{ spaceList }}">

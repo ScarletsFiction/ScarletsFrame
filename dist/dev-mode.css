@@ -14,6 +14,7 @@ sf-dev-mode{
 }
 
 .sf-side-info{
+	pointer-events: none;
 	top: 30%;
 	border-radius: 0 10px 10px 0;
 	box-shadow: 0 0 10px black;
@@ -25,6 +26,9 @@ sf-dev-mode{
 	opacity: 0;
 	transition-property: opacity, transform;
 	transition: 0.7s ease-in-out;
+}
+.sf-side-info.locked{
+	pointer-events: all;
 }
 
 .sf-side-info.opened{

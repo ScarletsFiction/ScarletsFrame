@@ -327,13 +327,8 @@ function hotComponentTemplate(scope, name){
 }
 
 setTimeout(function(){
-	$(function(){
-		if(window.SFDevSpace === void 0){
-			console.groupCollapsed("Looks like SF Development Tools was not loaded.\nClick here to expand...");
-			console.log("Please change the latest with the version you're currently use");
-			console.log("https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js");
-			console.log("https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css");
-			console.groupEnd();
-		}
-	});
+	var path = $('script[src*="scarletsframe"]')[0].src;
+	path = path.split('scarletsframe')[0];
+	sf.loader.js([path+'dev-mode.js']);
+	sf.loader.css([path+'dev-mode.css']);
 }, 1);
