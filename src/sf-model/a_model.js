@@ -233,7 +233,13 @@ var processingElement = null;
 function templateErrorInfo(e, element, item, modelRef, template){
 	if(e.message === "Can't continue processing the template"){
 		var el, isSingle = 'From element:';
-		if(modelRef.$el !== void 0){
+
+		if(item?.$el !== void 0 && modelRef?.$el === void 0){
+			modelRef = item;
+			item = void 0;
+		}
+
+		if(modelRef?.$el !== void 0){
 			el = modelRef.$el[0];
 			if(el && el.constructor === SFModel){
 				if(modelRef.$el.length !== 1){
