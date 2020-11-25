@@ -89,7 +89,7 @@ sf-model-viewer{
 sf-model-viewer .title{
 	border-bottom: 2px solid #ecaa2f;
 	background: #0000006b;
-	padding: 5px;
+	padding: 5px 60px 5px 5px;
 }
 
 sf-model-viewer .list{

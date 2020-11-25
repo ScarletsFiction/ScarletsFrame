@@ -301,6 +301,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 	My.close = function(e){
 		e.target.parentNode.remove();
+		window.Q = void 0;
 	}
 
 	My.hoverReactive = function(e){
@@ -522,15 +523,6 @@ sf.dom(function(){
 					"\nElement:", modelEl,
 					"\nReferences:", ref
 				);
-
-				if(nested === 0){
-					CF = model;
-					El = modelEl;
-				}
-				else{
-					window[`PF${nested}`] = model;
-					window[`El${nested}`] = modelEl;
-				}
 			}
 
 			for (var i = 0; i < frameList.length; i++)
