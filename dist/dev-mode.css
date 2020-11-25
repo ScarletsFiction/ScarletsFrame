@@ -15,7 +15,7 @@ sf-dev-mode{
 
 .sf-side-info{
 	pointer-events: none;
-	top: 30%;
+	top: 50%;
 	border-radius: 0 10px 10px 0;
 	box-shadow: 0 0 10px black;
 	color: white;
@@ -105,7 +105,9 @@ sf-model-viewer .list .value{
 	display: inline-block;
 	color: #b3b3b3;
 	max-height: 60px;
-	overflow: auto;
+	overflow-y: auto;
+	max-width: 100%;
+	overflow-x: hidden;
 	vertical-align: bottom;
 }
 

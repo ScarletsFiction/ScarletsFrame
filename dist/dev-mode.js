@@ -273,6 +273,43 @@ SFDevSpace.model('sf.shadows', function(My){
 	}
 });
 
+SFDevSpace.swallowObject = function(obj){
+	if(obj instanceof HTMLElement)
+		return '<'+obj.tagName.toLowerCase()+'>';
+
+	var text = '';
+	var isArray = obj instanceof Array;
+
+	var temp = [];
+	if(isArray){
+		text += '[';
+		for (var i = 0; i < obj.length; i++) {
+			if(obj[i] instanceof HTMLElement)
+				temp.push('<'+obj[i].tagName.toLowerCase()+'>');
+			else if(typeof obj[i] === 'object')
+				temp.push('{...}');
+			else if(typeof obj[i] === 'function')
+				temp.push('Function()');
+			else temp.push(obj[i]);
+		}
+	}
+	else{
+		text += '{';
+		for(const key in obj){
+			if(obj[key] instanceof HTMLElement)
+				temp.push('<'+obj[key].tagName.toLowerCase()+'>');
+			else if(typeof obj[key] === 'object')
+				temp.push(key+':{...}');
+			else if(typeof obj[key] === 'function')
+				temp.push('Function()');
+			else temp.push(key+':'+obj[key]);
+		}
+	}
+
+	text += temp.join(', ');
+	return text+(isArray ? ']' : '}');
+}
+
 // Dynamic HTML Template
 SFDevSpace.component('sf-model-viewer', function(My, include){
 	// My.titles;
@@ -285,9 +322,23 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	My.x = 210;
 	My.y = 100;
 
+	My.objects = {};
+
 	My.dragmove = function(e){
 		My.x += e.movementX;
 		My.y += e.movementY;
+	}
+
+	My.init = function(){
+		setTimeout(function(){
+			My.refreshObject();
+		}, 1000);
+	}
+
+	My.refreshObject = function(){
+		const list = My.objects;
+		for(const key in list)
+			list[key] = SFDevSpace.swallowObject(My.model[key]);
 	}
 
 	My.hoverLeaving = function(e){
@@ -347,7 +398,14 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 	My.clickObject = function(e){
 		var propName = $(e.target).prev('span').html();
-		SFDevSpace.addDynamicView(My.titles.concat(propName), My.model[propName]);
+		var that = My.model[propName];
+
+		if(that instanceof HTMLElement){
+			console.log('%cwindow.Q >>', 'color:yellow', that);
+			return;
+		}
+
+		SFDevSpace.addDynamicView(My.titles.concat(propName), that);
 	}
 
 	My.preventDefault = function(e){
@@ -443,10 +501,10 @@ SFDevSpace.addDynamicView = function(titles, model){
 	for (var i = 0; i < statelists.length; i++)
 		template += `<div class="statelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${statelists[i]}</span> : <div class="value" @click="clickStatelist">{ ... }</div></div>`;
 
-	template += '</div><div class="object-list list">';
+	template += '</div><div class="object-list list"><div class="info" @click="refreshObject">Click here to refresh</div>';
 
 	for (var i = 0; i < objects.length; i++)
-		template += `<div class="object"><span>${objects[i].slice(1, -1)}</span> : <div class="value" @click="clickObject">{{ model${objects[i]} }}</div></div>`;
+		template += `<div class="object"><span>${objects[i].slice(1, -1)}</span> : <div class="value" @click="clickObject">{{ objects${objects[i]} }}</div></div>`;
 
 	template += '</div><div class="function-list list"><div class="info">Shift+Click to execute</div>';
 
@@ -455,7 +513,7 @@ SFDevSpace.addDynamicView = function(titles, model){
 		args = args.ref || args;
 
 		if(args.length !== 0){
-			const len = args;
+			const len = args.length;
 			args = args.toString().split(')')[0].split('(')[1];
 			if(args === void 0)
 				args = '...'+len;
@@ -473,6 +531,7 @@ SFDevSpace.addDynamicView = function(titles, model){
 	const el = $(template+"</div></sf-model-viewer>")[0];
 	parent.append(el);
 	el.sf$constructor({ titles, model }, SFDevSpace, true);
+	el.connectedCallback();
 
 	if(reactive.length !== 0) el.model.state = 'reactive';
 	else if(passive.length !== 0) el.model.state = 'passive';
