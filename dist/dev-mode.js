@@ -503,8 +503,10 @@ SFDevSpace.addDynamicView = function(titles, model){
 
 	template += '</div><div class="object-list list"><div class="info" @click="refreshObject">Click here to refresh</div>';
 
-	for (var i = 0; i < objects.length; i++)
+	for (var i = 0; i < objects.length; i++){
+		if(objects[i].includes('(')) continue;
 		template += `<div class="object"><span>${objects[i].slice(1, -1)}</span> : <div class="value" @click="clickObject">{{ objects${objects[i]} }}</div></div>`;
+	}
 
 	template += '</div><div class="function-list list"><div class="info">Shift+Click to execute</div>';
 
