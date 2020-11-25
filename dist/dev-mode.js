@@ -372,15 +372,20 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		const elList = [];
 		for (var i = 0; i < bindedKey.length; i++) {
 			var current = bindedKey[i];
-			if(current.element === void 0
-			   || current.prop && current.prop.indexOf('model.') === 0)
+			if(current.element === void 0)
 				continue;
 
 			elList.push(current.element);
 		}
 
 		if(bindedKey.input)
-			elList.push.apply(elList, bindedKey.input);
+		for (var i = 0; i < bindedKey.input.length; i++) {
+			const temp = bindedKey.input[i];
+			if(temp.parentNode.classList.contains('reactive'))
+				continue;
+
+			elList.push(temp1);
+		}
 
 		Shadows.create(elList);
 	}
