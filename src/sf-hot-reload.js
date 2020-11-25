@@ -327,8 +327,10 @@ function hotComponentTemplate(scope, name){
 }
 
 setTimeout(function(){
-	var path = $('script[src*="scarletsframe"]')[0].src;
-	path = path.split('scarletsframe')[0];
+	if(window.SFDevSpace !== void 0) return;
+
+	var path = $('script[src*="scarletsframe."]')[0].src;
+	path = path.split('scarletsframe.')[0];
 	sf.loader.js([path+'dev-mode.js']);
 	sf.loader.css([path+'dev-mode.css']);
 }, 1);

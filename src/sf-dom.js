@@ -623,29 +623,27 @@ function recreateDOMList($el, length){
 		element = isNext ? element.nextSibling : element.previousSibling;
 		while (element !== null) {
 			if(findNodes === false){
+				if(element.matches === void 0){
+					element = isNext ? element.nextSibling : element.previousSibling;
+					continue;
+				}
 				if(element.matches(selector) === true){
-					if(one)
-						return element;
+					if(one) return element;
 					result.push(element);
 				}
 			}
 			else{
 				if(element === selector){
-					if(one)
-						return true;
+					if(one) return true;
 					break;
 				}
 				result.push(element);
 			}
 
-			if(isNext)
-				element = element.nextSibling;
-			else
-				element = element.previousSibling;
+			element = isNext ? element.nextSibling : element.previousSibling;
 		}
 
-		if(one)
-			return;
+		if(one) return;
 		return result;
 	}
 

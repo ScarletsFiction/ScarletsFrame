@@ -158,7 +158,7 @@ function parsePropertyPath(str){
 
 		temp.push(g2);
 		return '';
-	}));
+	}).trim());
 
 	return temp;
 }

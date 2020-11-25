@@ -114,6 +114,9 @@ function findBindListElement(el, includeComponent){
 		}
 
 		if(devMode){
+			if(scopeTemp.$el === void 0)
+				scopeTemp.$el = $();
+
 			Object.defineProperty(scopeTemp.$el, '$scopeFunc', {
 				configurable: true,
 				value: func

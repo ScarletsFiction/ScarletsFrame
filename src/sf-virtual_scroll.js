@@ -614,7 +614,7 @@ pointer-events:none;\
 }`, style.sheet.cssRules.length);
 
 			style.sheet.insertRule(
-			'.sf-scroll-element{backface-visibility:hidden;}', style.sheet.cssRules.length);
+			'.sf-scroll-element,textarea{backface-visibility:hidden}', style.sheet.cssRules.length);
 			styleInitialized = true;
 		}
 	}
