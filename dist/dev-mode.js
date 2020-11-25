@@ -20,6 +20,10 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		{{ sideOpened ? 'opened' : ''}}
 		{{ haveList ? 'have-list' : ''}}
 	">
+		<div class="sf-close" @click="close" style="
+			margin-right:8px;
+			display: {{ haveList ? '' : 'none'}}
+		">x</div>
 		<div class="title">{{ message }}</div>
 		<div class="list-title {{ spaceList }}">Space List</div>
 		<div class="space-list list {{ spaceList }}">
@@ -63,6 +67,12 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		My.views.splice(0);
 		My.spaceList = My.modelList = My.componentList = My.viewList = false;
 		My.haveList = false;
+	}
+
+	My.close = function(){
+		My.hasShadow = false;
+		My.sideOpened = false;
+		clearArrays();
 	}
 
 	var locking = false;
@@ -445,7 +455,7 @@ SFDevSpace.addDynamicView = function(titles, model){
 			<span sf-each="val in titles">{{ val }}</span>
 		</div>
 		<div class="transfer" @click="transferToConsole">🧐</div>
-		<div class="close" @click="close">x</div>
+		<div class="sf-close" @click="close">x</div>
 		<div class="switcher">
 			<div class="item {{ state === 'reactive'}}" @click="state = 'reactive'">Reactive</div>
 			<div class="item {{ state === 'passive'}}" @click="state = 'passive'">Passive</div>

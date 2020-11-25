@@ -131,7 +131,7 @@ sf-component-info > div, sf-model-info > div{
 	cursor: pointer;
 }
 
-sf-model-viewer .close, sf-model-viewer .transfer{
+sf-model-viewer .sf-close, sf-model-viewer .transfer, .sf-side-info .sf-close{
 	width: 30px;
 	height: 30px;
 	position: absolute;
