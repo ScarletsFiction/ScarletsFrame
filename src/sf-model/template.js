@@ -382,14 +382,21 @@ function runFrameStack(){
 	runFramePending = animFrameMode = false;
 }
 
+const C_zero = [0];
 const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
 	var changes;
 	if(property !== void 0){
 		changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
+
 		if(!changes || changes.length === 0){
-			console.log(element, template, property, item);
-			console.error(`Failed to run syntheticTemplate because property '${property}' is not observed`);
-			return false;
+			if(template.modelRefRoot_path.length === 1 && template.modelRefRoot_path[0].includes(property)){
+				changes = C_zero;
+			}
+			else{
+				console.log(element, template, property, item);
+				console.error(`Failed to run syntheticTemplate because property '${property}' is not observed`);
+				return false;
+			}
 		}
 	}
 	else if(template.parse.length === 0)

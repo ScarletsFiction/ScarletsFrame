@@ -177,22 +177,24 @@ const inputBoundRun = function(val, elements){
 		if(inputBoundRunning === elements[i])
 			continue; // Avoid multiple assigment
 
-		if(elements.type === 1) // text
-			elements[i].value = val;
-		else if(elements.type === 2) // select options
-			assignElementData.select(val, elements[i]);
-		else if(elements.type === 3) // radio
-			elements[i].checked = val == elements[i].value;
-		else if(elements.type === 4) // checkbox
-			assignElementData.checkbox(val, elements[i]);
-		else if(elements.type === 5){ // file
-			assignElementData.file(val, elements[i]);
+		const el = elements[i];
+
+		if(el.sfType === 1) // text
+			el.value = val;
+		else if(el.sfType === 2) // select options
+			assignElementData.select(val, el);
+		else if(el.sfType === 3) // radio
+			el.checked = val == el.value;
+		else if(el.sfType === 4) // checkbox
+			assignElementData.checkbox(val, el);
+		else if(el.sfType === 5){ // file
+			assignElementData.file(val, el);
 			continue;
 		}
 
 		const ev = new Event('change');
 		ev.fromSFFramework = true;
-		elements[i].dispatchEvent(ev);
+		el.dispatchEvent(ev);
 	}
 }
 
@@ -267,6 +269,8 @@ const elementBoundChanges = function(model, property, element, oneWay, modelLoca
 				element.value = val;
 		}
 	}
+
+	element.sfType = type;
 
 	if(oneWay === true) return;
 	modelToViewBinding(modelLocal, propertyNameLocal || property, inputBoundRun, element, type);
