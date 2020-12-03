@@ -220,8 +220,6 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 			if(ev.constructor === KeyboardEvent){
 				if(containSingleChar && !keys.has(ev.key))
 					return;
-
-				ev.preventDefault();
 			}
 
 			/*
@@ -235,18 +233,14 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 			else if(ev.constructor === MouseEvent || ev.constructor === PointerEvent){
 				if(pointerCode !== 0 && !(ev.buttons === 0 ? pointerCode & (1 << (ev.which-1)) : ev.buttons === pointerCode))
 					return;
-
-				ev.preventDefault();
 			}
 
 			else if(ev.constructor === TouchEvent){
 				if(containSingleChar && !keys.has(ev.touches.length))
 					return;
-
-				ev.preventDefault();
 			}
 
-			else if(keys.has('prevent'))
+			if(keys.has('prevent'))
 				ev.preventDefault();
 
 			script.call(this, ev);
