@@ -358,6 +358,19 @@ const syntheticRepeatedList = function(template, property, modelScope){
 	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;
 	const changes = template.modelRefRoot[property];
 
+	if(elements === void 0 && bindList.$EM.list !== void 0){
+		const list = bindList.$EM.list;
+		for (let j = 0; j < list.length; j++) {
+			elements = list[j];
+			elements = elements.elements || elements.parentChilds;
+
+			for (var i = 0, n=elements.length; i < n; i++)
+				syntheticTemplate(elements[i], template, property, bindList[i]);
+		}
+
+		return;
+	}
+
 	for (var i = 0, n=elements.length; i < n; i++)
 		syntheticTemplate(elements[i], template, property, bindList[i]);
 }

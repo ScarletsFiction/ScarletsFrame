@@ -118,9 +118,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			hotComponentRefresh(scope, name, func);
 
 		if(devMode){
-			Object.defineProperty(registrar[2], '$scopeFunc', {
+			Object.defineProperty(registrar[2], '$devData', {
 				configurable: true,
-				value: func
+				value: {
+					func,
+					filePath: getCallerFile(namespace ? 3 : 2)
+				}
 			});
 		}
 
@@ -217,6 +220,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		if(internal.component.skip)
 			return;
+
+		element.sf$asScope = asScope;
 
 		if(element.sf$componentIgnore === true)
 			return;
@@ -516,6 +521,13 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 				if(hotReload)
 					hotComponentRemove(that);
+
+				if(that.sf$asScope){
+					const i = that.model.$el.indexOf(that);
+					if(i !== -1)
+						that.model.$el = that.model.$el.splice(i, 1);
+					internal.model.removeModelBinding(that.model, false, true);
+				}
 			}
 
 			if(window.destroying)

@@ -71,6 +71,7 @@ function initPendingComponentScope(list, html){
 			ref.rule = parsePropertyPath(ref.getAttribute('sf-scope'));
 			ref.removeAttribute('sf-scope');
 			el = ref;
+			el.sf$asScope = true;
 		}
 		else el = $.childIndexes(ref.addr, html);
 

@@ -1,9 +1,9 @@
-internal.model.removeModelBinding = function(ref, isDeep){
+internal.model.removeModelBinding = function(ref, isDeep, isLazy){
 	if(ref === void 0)
 		return;
 
 	if(window.sf$proxy !== void 0)
-		return window.sf$proxy.removeModelBinding(ref, isDeep);
+		return window.sf$proxy.removeModelBinding.apply(null, arguments);
 
 	const bindedKey = ref.sf$bindedKey;
 	for(let key in bindedKey){
@@ -13,28 +13,28 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			if(obj.constructor === RepeatedList){
 				for (var i = 0; i < obj.length; i++){
 					if(typeof obj[i] === 'object')
-						internal.model.removeModelBinding(obj[i]);
+						internal.model.removeModelBinding(obj[i], false, isLazy);
 					else break;
 				}
 			}
 			else if(obj.constructor === RepeatedMap){
 				for(const [k, v] of obj){
 					if(typeof v === 'object')
-						internal.model.removeModelBinding(v);
+						internal.model.removeModelBinding(v, false, isLazy);
 					else break;
 				}
 			}
 			else if(obj.constructor === RepeatedSet){
 				for(const v of obj){
 					if(typeof v === 'object')
-						internal.model.removeModelBinding(v);
+						internal.model.removeModelBinding(v, false, isLazy);
 					else break;
 				}
 			}
 			else{
 				for(const k in obj){
 					if(typeof obj[k] === 'object')
-						internal.model.removeModelBinding(obj[k]);
+						internal.model.removeModelBinding(obj[k], false, isLazy);
 					else break;
 				}
 			}
@@ -45,7 +45,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 				for (var i = list.length-1; i >= 0; i--) {
 					if(list[i].parentNode.isConnected === false){
 						if(!list[i].isComponent)
-							repeatedRemoveDeepBinding(obj, list[i].template.modelRef_path);
+							repeatedRemoveDeepBinding(obj, list[i].template.modelRef_path, isLazy);
 
 						list.splice(i, 1);
 					}
@@ -59,7 +59,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			}
 			else if(obj.$EM.parentNode.isConnected === false){
 				if(!obj.$EM.isComponent)
-					repeatedRemoveDeepBinding(obj, obj.$EM.template.modelRef_path);
+					repeatedRemoveDeepBinding(obj, obj.$EM.template.modelRef_path, isLazy);
 			}
 			else continue;
 
@@ -70,9 +70,11 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			}
 
 			delete obj.$EM;
-			delete bindedKey[key];
-			delete ref[key];
-			ref[key] = obj;
+			if(isLazy === void 0){
+				delete bindedKey[key];
+				delete ref[key];
+				ref[key] = obj;
+			}
 
 			// Reset prototype without copying the array to new reference
 			if(obj.constructor === RepeatedList){
@@ -81,11 +83,13 @@ internal.model.removeModelBinding = function(ref, isDeep){
 			}
 
 			// Reset object proxies
-			Object.setPrototypeOf(obj, Object.prototype);
-			for(let objKey in obj){
-				var temp = obj[objKey];
-				delete obj[objKey];
-				obj[objKey] = temp;
+			if(isLazy === void 0){
+				Object.setPrototypeOf(obj, Object.prototype);
+				for(let objKey in obj){
+					const temp = obj[objKey];
+					delete obj[objKey];
+					obj[objKey] = temp;
+				}
 			}
 
 			continue;
@@ -121,7 +125,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 				}
 		}
 
-		if(bindRef.length === 0){
+		if(bindRef.length === 0 && isLazy === void 0){
 			delete bindedKey[key];
 
 			if(obj === void 0 || Object.getOwnPropertyDescriptor(ref, key).set === void 0)
@@ -141,7 +145,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 	for(let path in deep){
 		const model = deepProperty(ref, path.split('%$'));
 		if(model !== void 0)
-			internal.model.removeModelBinding(model, true);
+			internal.model.removeModelBinding(model, true, isLazy);
 	}
 }
 
@@ -149,7 +153,7 @@ internal.model.removeModelBinding = function(ref, isDeep){
 if(window.sf$proxy === void 0)
 	forProxying.removeModelBinding = internal.model.removeModelBinding;
 
-function repeatedRemoveDeepBinding(obj, refPaths){
+function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 	if(refPaths.length === 0)
 		return;
 
@@ -164,7 +168,7 @@ function repeatedRemoveDeepBinding(obj, refPaths){
 				if(deep === void 0)
 					continue;
 
-				internal.model.removeModelBinding(deep);
+				internal.model.removeModelBinding(deep, false, isLazy);
 			}
 			continue that;
 		}
@@ -174,7 +178,7 @@ function repeatedRemoveDeepBinding(obj, refPaths){
 			if(deep === void 0)
 				continue;
 
-			internal.model.removeModelBinding(deep);
+			internal.model.removeModelBinding(deep, false, isLazy);
 		}
 	}
 }
