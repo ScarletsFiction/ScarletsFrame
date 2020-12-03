@@ -33,6 +33,8 @@ sf.loader = new function(){
 	    ev.target.removeEventListener('load', self.f, {once:true});
 	    ev.target.removeEventListener('error', self.f, {once:true});
 
+	    if(whenProgress === null) return;
+
 		for (let i = 0; i < whenProgress.length; i++)
 			whenProgress[i](self.loadedContent, self.totalContent);
 	}

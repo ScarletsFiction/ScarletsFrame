@@ -170,6 +170,8 @@ class Space{
 				this.modelList.default[name] = {};
 
 			if(old !== void 0 && old.constructor === Array){
+				sf.model.for(name, options, func, this.default);
+
 				for (let i = 0; i < old.length; i++){
 					const arg = old[i];
 					sf.model.init(arg[0], arg[1], arg[2], this.default);
