@@ -117,9 +117,12 @@ function findBindListElement(el, includeComponent){
 			if(scopeTemp.$el === void 0)
 				scopeTemp.$el = $();
 
-			Object.defineProperty(scopeTemp.$el, '$scopeFunc', {
+			Object.defineProperty(scopeTemp.$el, '$devData', {
 				configurable: true,
-				value: func
+				value: {
+					func,
+					filePath: getCallerFile(namespace ? 2 : 2)
+				}
 			});
 		}
 

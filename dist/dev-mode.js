@@ -21,7 +21,6 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		{{ haveList ? 'have-list' : ''}}
 	">
 		<div class="sf-close" @click="close" style="
-			margin-right:8px;
 			display: {{ haveList ? '' : 'none'}}
 		">x</div>
 		<div class="title">{{ message }}</div>
@@ -43,6 +42,8 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		</div>
 	</div>`
 }, function(My){
+	var $ = sf.dom;
+
 	My.hasShadow = false;
 	My.x = My.y = 0;
 	My.width = My.height = 0;
@@ -133,7 +134,7 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 				model: modelEl.model,
 				modelEl,
 				ref: {
-					script: modelEl.model.$el?.$scopeFunc || modelEl.sf$collection?.$scopeFunc
+					script: modelEl.model.$el?.$devData || modelEl.sf$collection?.$devData
 				},
 			});
 
@@ -211,9 +212,7 @@ sf.dom(function(){
 
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-model-info', {
-	html:`
-	<div @click="clicked">{{ name }}</div>
-`
+	html:`<div @click="clicked">{{ name }}</div>`
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(){
@@ -326,6 +325,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	// My.model;
 
 	const Shadows = include('sf.shadows');
+	var $ = sf.dom;
 
 	My.state = 'reactive';
 
@@ -452,7 +452,8 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	Be careful when creating the template dynamically.
 */
 SFDevSpace.addDynamicView = function(titles, model){
-	const parent = sf.dom('sf-space .sf-viewer');
+	var $ = sf.dom;
+	const parent = $('sf-space .sf-viewer');
 	var template = `<sf-model-viewer sf-as-scope style="
 		transform: translate({{ x }}px, {{ y }}px);
 	">

@@ -334,3 +334,11 @@ setTimeout(function(){
 	sf.loader.js([path+'dev-mode.js']);
 	sf.loader.css([path+'dev-mode.css']);
 }, 1);
+
+function getCallerFile(step){
+	try{throw new Error()}catch(e){
+		var temp = e.stack.split('\n')[step+2];
+		if(!temp) return '';
+		return temp.split('://').pop();
+	}
+}

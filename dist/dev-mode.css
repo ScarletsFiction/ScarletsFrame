@@ -37,7 +37,7 @@ sf-dev-mode{
 }
 
 .sf-side-info .title{
-	padding: 8px;
+	padding: 8px 25px 8px 8px;
 }
 .sf-side-info.have-list .title{
 	border-bottom: 2px solid #ecaa2f;

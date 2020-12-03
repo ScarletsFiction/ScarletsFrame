@@ -328,6 +328,18 @@ const self = sf.views = function View(selector, name){
 	self.addRoute = function(obj){
 		routes.push(...internal.router.parseRoutes(obj, selectorList));
 
+		if(devMode){
+			if(self.$devData === void 0)
+				Object.defineProperty(self, '$devData', {
+					configurable: true,
+					value: {
+						path:[],
+					}
+				});
+
+			self.$devData.path.push(getCallerFile(1));
+		}
+
 		if(!initialized)
 			getSelector();
 
