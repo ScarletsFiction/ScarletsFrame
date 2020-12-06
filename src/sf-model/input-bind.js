@@ -170,7 +170,7 @@ var assignElementData = {
 }
 
 const inputBoundRun = function(val, elements){
-	if(val === null || val === void 0)
+	if(val == null)
 		return;
 
 	for (let i = 0; i < elements.length; i++) {
@@ -219,7 +219,7 @@ const elementBoundChanges = function(model, property, element, oneWay, modelLoca
 
 	var type = 0;
 	let typeData = null;
-	if(val !== null && val !== void 0)
+	if(val != null)
 		typeData = val.constructor;
 
 	const assignedType = (element.getAttribute('typedata') || '').toLowerCase();

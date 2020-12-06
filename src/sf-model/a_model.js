@@ -118,8 +118,7 @@ function _eP(val, type){
 		return sf.dom.escapeText(val);
 
 	// Attr
-	return val !== null && val !== void 0
-		? val.toString().split('"').join('&quot;').split("'").join("&#39;") : val;
+	return val != null ? val.toString().split('"').join('&quot;').split("'").join("&#39;") : val;
 }
 
 function escapeParse(html, vars){

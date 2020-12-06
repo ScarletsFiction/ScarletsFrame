@@ -36,7 +36,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			// Direct evaluation type
 			if(ref.type === REF_DIRECT){
 				temp = ref.get(item, ref.data._modelScope, _eP, repeatListIndex);
-				if(temp === void 0)
+				if(temp == null)
 					temp = '';
 				else{
 					if(temp.constructor === Object)

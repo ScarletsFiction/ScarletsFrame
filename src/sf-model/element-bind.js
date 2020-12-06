@@ -288,7 +288,7 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	bindedKey._regex = callback.template && callback.template.modelRefRoot_regex;
 
 	let objValue = model[propertyName]; // Object value
-	if(objValue === void 0 || objValue === null)
+	if(objValue == null)
 		objValue = '';
 
 	let _on = model[`on$${propertyName}`]; // Everytime value's going changed, callback value will assigned as new value

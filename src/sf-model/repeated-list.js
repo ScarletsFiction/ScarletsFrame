@@ -336,7 +336,7 @@ class RepeatedProperty{ // extends Object
 	}
 
 	getElement(prop){
-		if(prop === void 0 || prop === null)
+		if(prop == null)
 			return; // undefined
 
 		let { $EM } = this;
@@ -1021,7 +1021,7 @@ class RepeatedList extends Array{
 
 	// Return single element from first $EM
 	getElement(index){
-		if(index === void 0 || index === null)
+		if(index == null)
 			return; // undefined
 
 		let { $EM } = this;
@@ -1048,7 +1048,7 @@ class RepeatedList extends Array{
 	}
 
 	indexOf(item){
-		if(item !== void 0 && item !== null && item.children !== void 0 && item.children.constructor === HTMLCollection){
+		if(item != null && item.children !== void 0 && item.children.constructor === HTMLCollection){
 			if(!item.sf$elementReferences || !item.sf$elementReferences.template.bindList)
 				item = findBindListElement(item);
 
@@ -1647,7 +1647,7 @@ class ElementManipulatorProxy{
 		}
 	}
 	getElement_RP(instance, prop){
-		if(prop === void 0 || prop === null)
+		if(prop == null)
 			return [];
 
 		const { list } = this;
@@ -1667,7 +1667,7 @@ class ElementManipulatorProxy{
 		return got;
 	}
 	getElement_RL(instance, index){
-		if(index === void 0 || index === null)
+		if(index == null)
 			return [];
 
 		const { list } = this;
