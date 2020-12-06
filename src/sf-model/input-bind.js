@@ -170,8 +170,7 @@ var assignElementData = {
 }
 
 const inputBoundRun = function(val, elements){
-	if(val == null)
-		return;
+	if(val == null) val = '';
 
 	for (let i = 0; i < elements.length; i++) {
 		if(inputBoundRunning === elements[i])
