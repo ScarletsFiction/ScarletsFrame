@@ -91,7 +91,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 			if(elem === rootHandler)
 				return;
 
-			if(!elem.sf$elementReferences?.template.bindList){
+			if(!(elem.sf$elementReferences && elem.sf$elementReferences.template.bindList)){
 				const realThat = findBindListElement(elem);
 				if(realThat === null)
 					return;

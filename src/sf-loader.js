@@ -33,6 +33,11 @@ sf.loader = new function(){
 	    ev.target.removeEventListener('load', self.f, {once:true});
 	    ev.target.removeEventListener('error', self.f, {once:true});
 
+	    if(pendingOrderedJS.length !== 0){
+	    	if(pendingOrderedJS.length + self.loadedContent === self.totalContent)
+	    		document.head.appendChild(pendingOrderedJS.shift());
+	    }
+
 	    if(whenProgress === null) return;
 
 		for (let i = 0; i < whenProgress.length; i++)
@@ -72,6 +77,12 @@ sf.loader = new function(){
 		}
 		self.turnedOff = false;
 
+		var ordered;
+		if(async && async.constructor === Object){
+			ordered = async.ordered;
+			async = async.async;
+		}
+
 		self.totalContent = self.totalContent + list.length;
 		for(var i = 0; i < list.length; i++){
 			const s = document.createElement('script');
@@ -80,9 +91,14 @@ sf.loader = new function(){
 	        s.src = list[i];
 	        s.addEventListener('load', self.f, {once:true});
 	        s.addEventListener('error', self.f, {once:true});
-	        document.head.appendChild(s);
+
+	        if(!ordered)
+	        	document.head.appendChild(s);
+	        else pendingOrderedJS.push(s);
 		}
 	}
+
+	var pendingOrderedJS = [];
 
 	let lastState = '';
 	self.waitImages = function(){

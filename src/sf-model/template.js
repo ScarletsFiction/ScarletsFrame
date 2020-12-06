@@ -227,7 +227,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 	const pendingInsert = [];
 
 	changesReference.parsed = parsed;
-	const registerRootEvent = !rootHandler?.sf$listListenerLock?.has(template);
+	let registerRootEvent = !(rootHandler && rootHandler.sf$listListenerLock && rootHandler.sf$listListenerLock.has(template));
 
 	// Find element where the data belongs to
 	for (var i = 0; i < addresses.length; i++) {
