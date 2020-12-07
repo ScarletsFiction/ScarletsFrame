@@ -526,8 +526,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 					const i = that.model.$el.indexOf(that);
 					if(i !== -1)
 						that.model.$el = that.model.$el.splice(i, 1);
-					internal.model.removeModelBinding(that.model, false, true);
 				}
+				internal.model.removeModelBinding(that.model, void 0, true);
 			}
 
 			if(window.destroying)

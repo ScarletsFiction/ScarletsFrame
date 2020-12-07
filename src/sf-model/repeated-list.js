@@ -47,7 +47,7 @@ const repeatedListBinding = internal.model.repeatedListBinding = function(elemen
 
 				// Cache deep
 				if(modelRef.sf$internal)
-					modelRef.sf$internal[isDeep.slice(0, -1).join('%$')] = true;
+					modelRef.sf$internal.deepBinding[isDeep.slice(0, -1).join('%$')] = true;
 			}
 
 			if(target === void 0)

@@ -265,7 +265,13 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		return;
 
 	if(originalPropertyName.constructor === Array){
-		// Cache deep sf$bindingKey path if this a shared model
+		if(originalModel.sf$internal === void 0){
+			Object.defineProperty(model, 'sf$internal', {configurable:true, value:{
+				deepBinding:{}
+			}});
+		}
+
+		// Cache deep sf$bindingKey path
 		if(originalModel.sf$internal !== void 0 && originalPropertyName.length !== 1)
 			originalModel.sf$internal.deepBinding[originalPropertyName.slice(0, -1).join('%$')] = true;
 
