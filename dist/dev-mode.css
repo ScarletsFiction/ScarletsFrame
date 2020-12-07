@@ -116,6 +116,15 @@ sf-model-viewer .reactive{
     white-space: pre-wrap;
 }
 
+sf-model-viewer span{
+	cursor: default;
+}
+
+sf-model-viewer .statelist .value,
+sf-model-viewer .object .value{
+	cursor: pointer;
+}
+
 sf-model-viewer .list textarea{
 	background: none;
 	outline: none;
