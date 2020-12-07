@@ -154,6 +154,9 @@ sf-model-viewer .switcher .item{
 	padding: 6px;
 	cursor: pointer;
 }
+sf-model-viewer .switcher .item.empty{
+	color: gray;
+}
 
 sf-model-viewer .switcher .item.true{
 	box-shadow: 0 0 9px white;
