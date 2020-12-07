@@ -152,6 +152,9 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 
 		var temp = {ref:refB};
 
+		if(hotReload)
+			temp.element = current;
+
 		if(refB.name === 'style')
 			temp.style = current.style;
 		else{

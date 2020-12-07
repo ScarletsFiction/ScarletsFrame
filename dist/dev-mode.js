@@ -215,8 +215,8 @@ SFDevSpace.component('sf-model-info', {
 	html:`<div @click="clicked">{{ name }}</div>`
 }, function(My, root){
 	// My.name = $item.name;
-	My.clicked = function(){
-		SFDevSpace.addDynamicView(My.name, My.model, My);
+	My.clicked = function(e){
+		SFDevSpace.addDynamicView(My.name, My.model, e);
 	}
 });
 
@@ -227,8 +227,8 @@ SFDevSpace.component('sf-component-info', {
 `
 }, function(My, root){
 	// My.name = $item.name;
-	My.clicked = function(){
-		SFDevSpace.addDynamicView(My.name, My.model, My);
+	My.clicked = function(e){
+		SFDevSpace.addDynamicView(My.name, My.model, e);
 	}
 });
 
@@ -319,6 +319,8 @@ SFDevSpace.swallowObject = function(obj){
 	return text+(isArray ? ']' : '}');
 }
 
+SFDevSpace.currentActive = {panel:null};
+
 // Dynamic HTML Template
 SFDevSpace.component('sf-model-viewer', function(My, include){
 	// My.titles;
@@ -328,6 +330,9 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	var $ = sf.dom;
 
 	My.state = 'reactive';
+	My.isEmpty = {};
+
+	My.currentActive = SFDevSpace.currentActive;
 
 	My.x = 210;
 	My.y = 100;
@@ -337,9 +342,12 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	My.dragmove = function(e){
 		My.x += e.movementX;
 		My.y += e.movementY;
+		My.currentActive.panel = My.isEmpty;
 	}
 
 	My.init = function(){
+		My.currentActive.panel = My.isEmpty; // This will trigger z-index: 1
+
 		setTimeout(function(){
 			My.refreshObject();
 		}, 1000);
@@ -365,6 +373,25 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		window.Q = void 0;
 	}
 
+	function isInArray(val, arr){
+		for (var i = 0; i < val.length; i++)
+			if(arr.includes(val[i]))
+				return true;
+
+		return false;
+	}
+
+	function getTheElement(elList, ref){
+		if(ref.textContent !== void 0)
+			elList.push(ref.textContent.parentNode);
+		else if(ref.element !== void 0)
+			elList.push(ref.element);
+		else if(ref.attribute !== void 0)
+			elList.push(ref.attribute.ownerElement);
+		else if(ref.parentNode !== void 0)
+			elList.push(ref.parentNode);
+	}
+
 	My.hoverReactive = function(e){
 		var propName = e.target.innerHTML;
 		var bindedKey = My.model.sf$bindedKey[propName];
@@ -372,9 +399,41 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		const elList = [];
 		for (var i = 0; i < bindedKey.length; i++) {
 			var current = bindedKey[i];
-			if(current.element === void 0)
+			if(current.element === void 0){
+				if(current.attribute !== void 0)
+					elList.push(current.attribute.ownerElement);
 				continue;
+			}
 
+			if(current.template.html !== void 0){
+				const elRefs = current.element.sf$elementReferences;
+				current = (current.template.modelRef && current.template.modelRef[propName]) || current.template.modelRefRoot[propName];
+
+				for (var j = 0; j < elRefs.length; j++) {
+					const ref = elRefs[j];
+					if(ref.ref !== void 0){
+						if(ref.ref.direct !== void 0){
+							if(current.includes(ref.ref.direct))
+								getTheElement(elList, ref);
+						}
+						else if(ref.ref.parse_index !== void 0){
+							if(isInArray(ref.ref.parse_index, current))
+								getTheElement(elList, ref);
+						}
+						continue;
+					}
+
+					if(ref.direct !== void 0){
+						if(current.includes(ref.direct))
+							getTheElement(elList, ref);
+					}
+					else if(ref.parse_index !== void 0){
+						if(isInArray(ref.parse_index, current))
+							getTheElement(elList, ref);
+					}
+				}
+				break;
+			}
 			elList.push(current.element);
 		}
 
@@ -408,7 +467,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		var propName = $(e.target).prev('span').html();
 		window.Q = My.model[propName];
 		console.log('%cwindow.Q >>', 'color:yellow', My.model[propName]);
-		SFDevSpace.addDynamicView(My.titles.concat(propName), window.Q);
+		SFDevSpace.addDynamicView(My.titles.concat(propName), window.Q, e);
 	}
 
 	My.clickObject = function(e){
@@ -420,7 +479,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 			return;
 		}
 
-		SFDevSpace.addDynamicView(My.titles.concat(propName), that);
+		SFDevSpace.addDynamicView(My.titles.concat(propName), that, e);
 	}
 
 	My.preventDefault = function(e){
@@ -451,11 +510,12 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	can't be created by your user. (You must sanitize any user input!)
 	Be careful when creating the template dynamically.
 */
-SFDevSpace.addDynamicView = function(titles, model){
+SFDevSpace.addDynamicView = function(titles, model, ev){
 	var $ = sf.dom;
 	const parent = $('sf-space .sf-viewer');
 	var template = `<sf-model-viewer sf-as-scope style="
 		transform: translate({{ x }}px, {{ y }}px);
+		z-index: {{ isEmpty === currentActive.panel ? 1 : 0 }};
 	">
 		<div class="title" @dragmove="dragmove">
 			<span sf-each="val in titles">{{ val }}</span>
@@ -463,13 +523,13 @@ SFDevSpace.addDynamicView = function(titles, model){
 		<div class="transfer" @click="transferToConsole">🧐</div>
 		<div class="sf-close" @click="close">x</div>
 		<div class="switcher">
-			<div class="item {{ state === 'reactive'}}" @click="state = 'reactive'">Reactive</div>
-			<div class="item {{ state === 'passive'}}" @click="state = 'passive'">Passive</div>
-			<div class="item {{ state === 'statelist'}}" @click="state = 'statelist'">List</div>
-			<div class="item {{ state === 'object'}}" @click="state = 'object'">Object</div>
-			<div class="item {{ state === 'function'}}" @click="state = 'function'">Function</div>
+			<div class="item {{ state === 'reactive'}} {{ isEmpty.reactive }}" @click="state = 'reactive'">Reactive</div>
+			<div class="item {{ state === 'passive'}} {{ isEmpty.passive }}" @click="state = 'passive'">Passive</div>
+			<div class="item {{ state === 'statelist'}} {{ isEmpty.statelist }}" @click="state = 'statelist'">List</div>
+			<div class="item {{ state === 'object'}} {{ isEmpty.object }}" @click="state = 'object'">Object</div>
+			<div class="item {{ state === 'function'}} {{ isEmpty.function }}" @click="state = 'function'">Function</div>
 		</div>
-		<div class="list-{{ state }}">`;
+		<div class="list-{{ state }}">`; // We will close <sf-model-viewer> later
 
 	var reactive = [];
 	var passive = [];
@@ -551,11 +611,22 @@ SFDevSpace.addDynamicView = function(titles, model){
 	el.sf$constructor({ titles, model }, SFDevSpace, true);
 	el.connectedCallback();
 
-	if(reactive.length !== 0) el.model.state = 'reactive';
-	else if(passive.length !== 0) el.model.state = 'passive';
-	else if(statelists.length !== 0) el.model.state = 'statelist';
-	else if(objects.length !== 0) el.model.state = 'object';
-	else if(functions.length !== 0) el.model.state = 'function';
+	model = el.model;
+
+	if(reactive.length !== 0) model.state = 'reactive';
+	else if(passive.length !== 0) model.state = 'passive';
+	else if(statelists.length !== 0) model.state = 'statelist';
+	else if(objects.length !== 0) model.state = 'object';
+	else if(functions.length !== 0) model.state = 'function';
+
+	if(reactive.length === 0) model.isEmpty.reactive = 'empty';
+	if(passive.length === 0) model.isEmpty.passive = 'empty';
+	if(statelists.length === 0) model.isEmpty.statelist = 'empty';
+	if(objects.length === 0) model.isEmpty.object = 'empty';
+	if(functions.length === 0) model.isEmpty.function = 'empty';
+
+	model.x = ev.x;
+	model.y = ev.y;
 }
 
 // For browser console
