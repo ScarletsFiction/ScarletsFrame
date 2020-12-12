@@ -548,7 +548,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 			continue;
 		}
 
-		const temp = isNaN(key) ? '.'+key+' ' : `[${key}]`;
+		const temp = isNaN(key[0]) ? '.'+key+' ' : `['${key.split("'").join("\\'")}']`;
 
 		if(type === 'function')
 			functions.push(temp);
