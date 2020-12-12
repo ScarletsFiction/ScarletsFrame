@@ -1,4 +1,5 @@
 sf.events = (function(){
+	var self = {};
 	self._listener = {};
 	self._statusTrigger = {};
 
