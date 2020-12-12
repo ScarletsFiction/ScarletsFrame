@@ -909,6 +909,22 @@ const self = sf.views = function View(selector, name){
 		return true;
 	}
 
+	self.resetCache = function(){
+		delete cachedURL[views.currentDOM.routeCached.templateURL];
+		self.currentDOM.remove();
+
+		const relation = views.relatedDOM;
+		for (var i = 1; i < relation.length; i++){
+			delete cachedURL[relation[i].routeCached.templateURL];
+			relation[i].remove();
+		}
+
+		const temp = self.currentPath;
+		self.currentPath = '';
+		self.currentDOM = {routeCached:{}};
+		self.goto(temp);
+	}
+
 	return self;
 };
 
@@ -934,6 +950,10 @@ self.goto = function(url){
 		if(parsed.routes[list] !== views[list].currentPath)
 			views[list].goto(parsed.routes[list] || '/');
 	}
+}
+
+self.resetCache = function(){
+	cachedURL = {};
 }
 
 // Listen to every link click, capture mode
