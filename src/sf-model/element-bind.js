@@ -222,10 +222,6 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		}
 	}
 
-	// We can't redefine length on array
-	if(model.constructor === Array && propertyName === 'length')
-		return;
-
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);
@@ -259,8 +255,17 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 		}
 	}
 
+	var isALength = false;
+
+	// We can't redefine length on array
+	if(model.splice !== void 0 && propertyName === 'length')
+		isALength = '$length'; // Array
+	else if(model.entries !== void 0 && propertyName === 'size' && (model.add !== void 0 || model.set !== void 0)){
+		isALength = '$size'; // Set/Map
+	}
+
 	// Proxy property
-	const desc = Object.getOwnPropertyDescriptor(model, propertyName);
+	const desc = isALength !== false ? {set:true} : Object.getOwnPropertyDescriptor(model, propertyName);
 	if(desc !== void 0 && desc.set !== void 0 && (!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex))
 		return;
 
@@ -276,6 +281,18 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 			originalModel.sf$internal.deepBinding[originalPropertyName.slice(0, -1).join('%$')] = true;
 
 		originalPropertyName = stringifyPropertyPath(originalPropertyName);
+	}
+
+	if(isALength !== false && model[isALength] === void 0){
+		Object.defineProperty(model, isALength, {
+			value(){
+				var temp;
+				for (let i = 0; i < bindedKey.length; i++) {
+					temp = bindedKey[i];
+					syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel);
+				}
+			}
+		});
 	}
 
 	// Add custom original because the creation was from different template

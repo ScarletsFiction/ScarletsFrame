@@ -982,7 +982,7 @@ function revalidateBindingPath(refRoot, paths, modelRef){
 			refRoot[str] = collect;
 		}
 		// We're not binding the native stuff
-		else if((deep.constructor === Array && path[path.length-1] === 'length') || deep.constructor === Function){
+		else if(deep.constructor === Function){
 			// Delete the property
 			var str = stringifyPropertyPath(path);
 			for(var keys in refRoot){

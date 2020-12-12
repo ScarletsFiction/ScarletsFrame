@@ -414,6 +414,8 @@ class RepeatedMap extends Map{
 			if(oldVal === val) return this;
 			this.$EM.remove(key, oldVal, true);
 		}
+		else if(this.$size !== void 0)
+			this.$size();
 
 		super.set.apply(this, arguments);
 		this.$EM.append(key, val, true);
@@ -422,6 +424,9 @@ class RepeatedMap extends Map{
 	clear(){
 		super.clear();
 		this.$EM.hardRefresh(0);
+
+		if(this.$size !== void 0 && this.size !== 0)
+			this.$size();
 		return this;
 	}
 	delete(key){
@@ -430,6 +435,8 @@ class RepeatedMap extends Map{
 		const val = super.get(key);
 		super.delete(key);
 		this.$EM.remove(key, val, true);
+
+		if(this.$size !== void 0) this.$size();
 		return this;
 	}
 	refresh(){
@@ -478,11 +485,16 @@ class RepeatedSet extends Set{
 		if(super.has(val)) return this;
 		super.add(val);
 		this.$EM.append(void 0, val,  false);
+
+		if(this.$size !== void 0) this.$size();
 		return this;
 	}
 	clear(){
 		super.clear();
 		this.$EM.hardRefresh(0);
+
+		if(this.$size !== void 0 && this.size !== 0)
+			this.$size();
 		return this;
 	}
 	delete(val){
@@ -490,6 +502,8 @@ class RepeatedSet extends Set{
 
 		super.delete(val);
 		this.$EM.remove(void 0, val, false);
+
+		if(this.$size !== void 0) this.$size();
 		return this;
 	}
 }
@@ -706,6 +720,7 @@ class RepeatedList extends Array{
 
 	pop(){
 		this.$EM.remove(this.length - 1);
+		if(this.$length !== void 0) this.$length();
 		return super.pop();
 	}
 
@@ -717,6 +732,7 @@ class RepeatedList extends Array{
 			this.$EM.append(lastLength);
 		else this.$EM.hardRefresh(lastLength);
 
+		if(this.$length !== void 0) this.$length();
 		return this.length;
 	}
 
@@ -748,12 +764,15 @@ class RepeatedList extends Array{
 				this.$EM.insertAfter(index + i);
 		}
 
+		if(this.$length !== void 0) this.$length();
 		return ret;
 	}
 
 	shift(){
 		const ret = super.shift();
 		this.$EM.remove(0);
+
+		if(this.$length !== void 0) this.$length();
 		return ret;
 	}
 
@@ -765,6 +784,7 @@ class RepeatedList extends Array{
 		else for (let i = arguments.length - 1; i >= 0; i--)
 			this.$EM.prepend(i);
 
+		if(this.$length !== void 0) this.$length();
 		return this.length;
 	}
 
@@ -932,14 +952,14 @@ class RepeatedList extends Array{
 		if(withArray.length > this.length){
 			super.push(...withArray.slice(this.length));
 			this.$EM.hardRefresh(lastLength);
-			return this;
 		}
-
-		if(withArray.length < this.length){
+		else{
 			super.splice(withArray.length);
 			this.$EM.removeRange(withArray.length, lastLength);
-			return this;
 		}
+
+		if(this.$length !== void 0) this.$length();
+		return this;
 	}
 
 	remake(newList, atMiddle){
@@ -961,6 +981,8 @@ class RepeatedList extends Array{
 			if(matchLeft === 0){
 				if(newList.length === lastLength) return;
 				this.splice(lastLength, 0, ...newList.slice(lastLength));
+
+				if(this.$length !== void 0) this.$length();
 				return;
 			}
 
@@ -969,6 +991,8 @@ class RepeatedList extends Array{
 				if(atMiddle === true){
 					super.splice(i, lastLength - i, ...newList.slice(i));
 					this.refresh(i, lastLength);
+
+					if(this.$length !== void 0) this.$length();
 				}
 				return;
 			}
@@ -978,6 +1002,8 @@ class RepeatedList extends Array{
 		if(lastLength === 0){
 			super.push(...newList);
 			this.$EM.hardRefresh(0);
+
+			if(this.$length !== void 0) this.$length();
 			return;
 		}
 
@@ -1000,6 +1026,7 @@ class RepeatedList extends Array{
 			this.$EM.hardRefresh(0, this.length);
 		}
 
+		if(this.$length !== void 0) this.$length();
 		return this;
 	}
 
