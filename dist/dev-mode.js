@@ -548,7 +548,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 			continue;
 		}
 
-		const temp = isNaN(key[0]) ? '.'+key+' ' : `['${key.split("'").join("\\'")}']`;
+		const temp = isNaN(key[0]) ? '.'+key : `['${key.split("'").join("\\'")}']`;
 
 		if(type === 'function')
 			functions.push(temp);
@@ -562,15 +562,21 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 		}
 	}
 
+	function cleanPropName(key){
+		if(key[0] === '.')
+			return key.slice(1);
+		return key.slice(2, -2);
+	}
+
 	template += '<div class="reactive-list list">';
 
 	for (var i = 0; i < reactive.length; i++)
-		template += `<div class="reactive"><span @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${reactive[i].slice(1, -1)}</span> : <textarea sf-bind="model${reactive[i]}"></textarea></div>`;
+		template += `<div class="reactive"><span @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span> : <textarea sf-bind="model${reactive[i]}"></textarea></div>`;
 
 	template += '</div><div class="passive-list list">';
 
 	for (var i = 0; i < passive.length; i++)
-		template += `<div class="passive"><span>${passive[i].slice(1, -1)}</span> : <div class="value">{{ model${passive[i]} }}</div></div>`;
+		template += `<div class="passive"><span>${cleanPropName(passive[i])}</span> : <div class="value">{{ model${passive[i]} }}</div></div>`;
 
 	template += '</div><div class="statelist-list list">';
 
@@ -581,13 +587,13 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 	for (var i = 0; i < objects.length; i++){
 		if(objects[i].includes('(')) continue;
-		template += `<div class="object"><span>${objects[i].slice(1, -1)}</span> : <div class="value" @click="clickObject">{{ objects${objects[i]} }}</div></div>`;
+		template += `<div class="object"><span>${cleanPropName(objects[i])}</span> : <div class="value" @click="clickObject">{{ objects${objects[i]} }}</div></div>`;
 	}
 
 	template += '</div><div class="function-list list"><div class="info">Shift+Click to execute</div>';
 
 	for (var i = 0; i < functions.length; i++){
-		var args = model[functions[i].slice(1, -1)];
+		var args = model[cleanPropName(functions[i])];
 		args = args.ref || args;
 
 		if(args.length !== 0){
@@ -598,7 +604,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 		}
 		else args = '';
 
-		template += `<div class="function ${functions[i].includes('$') && 'gray'}" @pointerdown="preventDefault" @click="clickFunction">${functions[i].slice(1, -1)}(<span>${args}</span>)</div>`;
+		template += `<div class="function ${functions[i].includes('$') && 'gray'}" @pointerdown="preventDefault" @click="clickFunction">${cleanPropName(functions[i])}(<span>${args}</span>)</div>`;
 	}
 
 	template += '</div>';
