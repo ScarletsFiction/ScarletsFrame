@@ -11,6 +11,13 @@ let backupTemplate, backupCompTempl;
 ;(function(){
 const gEval = hotReloadEval;
 
+$(function(){
+	setTimeout(()=> {
+		if(!hotReload)
+			console.log('[ScarletsFrame] %cHot reload was inactive', 'color:yellow');
+	}, 5000);
+})
+
 sf.hotReload = function(mode){
 	if(mode === 1)
 		hotReload = true;
@@ -334,6 +341,8 @@ setTimeout(function(){
 	sf.loader.js([path+'dev-mode.js']);
 	sf.loader.css([path+'dev-mode.css']);
 }, 1);
+
+if(devMode) console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 
 function getCallerFile(step){
 	try{throw new Error()}catch(e){
