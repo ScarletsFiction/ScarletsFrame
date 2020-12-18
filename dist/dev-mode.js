@@ -443,7 +443,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 			if(temp.parentNode.classList.contains('reactive'))
 				continue;
 
-			elList.push(temp1);
+			elList.push(temp);
 		}
 
 		Shadows.create(elList);
