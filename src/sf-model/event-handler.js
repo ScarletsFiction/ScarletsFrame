@@ -181,7 +181,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 	}
 
 	if(specialEvent[eventName]){
-		specialEvent[eventName](that, keys, script, _modelScope, rootHandler);
+		specialEvent[eventName]((rootHandler || that), keys, script, _modelScope, rootHandler);
 		return;
 	}
 
