@@ -159,7 +159,7 @@ function findBindListElement(el, includeComponent){
 				return temp;
 			}
 
-			return Array.from(keys);
+			return [...keys];
 		}
 
 		var keys = [];

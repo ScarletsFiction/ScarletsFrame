@@ -463,7 +463,7 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 					continue;
 
 				cRef.dynamicFlag.currentHTML = temp2;
-				const tDOM = Array.from($.parseElement(temp2));
+				const tDOM = toArray($.parseElement(temp2));
 				const currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
 				let notExist = false;
 

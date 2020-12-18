@@ -461,7 +461,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// It seems we can't use for.. of because need to do from backward
 	// Start addressing
-	const nodes = Array.from(self.queuePreprocess(copy, true, template.specialElement));
+	const nodes = [...self.queuePreprocess(copy, true, template.specialElement)];
 	const addressed = [];
 
 	for (var i = nodes.length - 1; i >= 0; i--) {
