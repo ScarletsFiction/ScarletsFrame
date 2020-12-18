@@ -132,7 +132,7 @@ function escapeParse(html, vars){
 		return inQuot.replace(templateParser_regex, function(full, match){
 			return `"+_eP(${vars[match]}, 1)+"`;
 		});
-	}, true).split('+""').join('');
+	}, true).trim().split('+""').join('');
 }
 
 var modelScript_ = /_result_|return/;

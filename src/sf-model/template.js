@@ -462,33 +462,31 @@ const syntheticTemplate = internal.model.syntheticTemplate = function(element, t
 				if(cRef.dynamicFlag.currentHTML === temp2)
 					continue;
 
-				cRef.dynamicFlag.currentHTML = temp2;
-				const tDOM = toArray($.parseElement(temp2));
+				const tDOM = $.parseElement(cRef.dynamicFlag.currentHTML = temp2);
+				const tDOMLength = tDOM.length;
 				const currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
-				let notExist = false;
+
+				let z = tDOMLength;
+
+				// Remove if over index
+				if(tDOMLength < currentDOM.length) {
+					for (var a = currentDOM.length-1; a >= tDOMLength; a--)
+						currentDOM[a].remove();
+				}
 
 				// Replace if exist, skip if similar
-				for (var a = tDOM.length-1; a >= 0; a--) {
-					if(currentDOM[a] === void 0){
-						notExist = true;
+				for (var a = 0; a < tDOMLength; a++) {
+					if(currentDOM[a] === void 0)
 						break;
-					}
 
-					if(currentDOM[a].isEqualNode(tDOM[a]) === false)
-						cRef.parentNode.replaceChild(tDOM[a], currentDOM[a]);
+					z--;
+					if(currentDOM[a].isEqualNode(tDOM[z]) === false)
+						cRef.parentNode.replaceChild(tDOM[z], currentDOM[a]);
 				}
 
 				// Add if not exist
-				if(notExist){
-					for (var a = 0; a < tDOM.length; a++)
-						cRef.parentNode.insertBefore(tDOM[a], cRef.dynamicFlag);
-				}
-
-				// Remove if over index
-				else{
-					for (var a = tDOM.length; a < currentDOM.length; a++)
-						currentDOM[a].remove();
-				}
+				for (; a < tDOMLength; a++)
+					cRef.parentNode.insertBefore(tDOM[0], cRef.dynamicFlag);
 
 				haveChanges = true;
 			}
