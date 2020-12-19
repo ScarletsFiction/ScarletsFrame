@@ -168,7 +168,17 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 				delete temp.bindList;
 			}
 		}
-		else template = Object.create(originalAddr.template);
+		else{
+			template = Object.create(originalAddr.template);
+
+			// Deep Copy
+			var parses = template.parse = template.parse.slice(0);
+			for (let i = 0; i < parses.length; i++) {
+				let ref = parses[i] = Object.assign({}, parses[i]);
+				ref.data = Object.assign({}, ref.data);
+				ref.data._modelScope = modelRef;
+			}
+		}
 
 		template.bindList = this;
 
