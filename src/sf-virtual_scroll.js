@@ -55,7 +55,7 @@ class VirtualScrollManipulator {
 			const styled = window.getComputedStyle(firstEl);
 			that.elMarginY = parseFloat(styled.marginBottom) + parseFloat(styled.marginTop);
 
-			that.elMaxHeight = that.elHeight = firstEl.offsetHeight + that.elMarginY;
+			that.elMaxHeight = that.elHeight = firstEl.offsetHeight + that.elMarginY || 20;
 			firstEl.remove();
 
 			setTimeout(()=> {
