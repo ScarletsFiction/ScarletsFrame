@@ -2,7 +2,8 @@
 // You must credit me on your code. I was struggling alone for many
 // day to make this working since using scroll event :(
 
-// ToDo: add sf$scrollPos and sf$heightPos
+// sf$scrollPos need to start from 1 (iTop's height)
+
 const ElementManipulatorProxy = internal.EMP;
 // const ElementManipulator = internal.EM;
 const VSM_Threshold = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -488,12 +489,19 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	move(from, to, count, vDOM){
 		if(from > to) from = to;
 
+		// ToDo: reset sf$scrollPos of first element to 1
+		// Fix this if this implementation was buggy
+		if(from === 0)
+			this.elList[from].sf$scrollPos = 1;
+
 		this.recalculateElementData(from);
 		this.recalculateScrollPosition();
 	},
 
 	swap(index, other){
 		if(index > other) index = other;
+		if(index === 0)
+			this.elList[other].sf$scrollPos = 1;
 
 		this.recalculateElementData(index);
 		this.recalculateScrollPosition();
@@ -501,15 +509,22 @@ Object.assign(VirtualScrollManipulator.prototype, {
 
 	remove(index){
 		this.totalHeight -= this.elList[index].sf$heightPos;
+		if(index === 0 && this.elList[1] !== void 0)
+			this.elList[1].sf$scrollPos = 1;
+
 		this.recalculateElementData(index);
 		this.recalculateScrollPosition();
 	},
 
 	removeRange(index, other){
-		for (let i = index; i < other; i++)
+		for (var i = index; i < other; i++)
 			this.totalHeight -= this.elList[i].sf$heightPos;
 
+		if(index === 0 && this.elList[i] !== void 0)
+			this.elList[i].sf$scrollPos = 1;
+
 		this.elList.splice(index, other-index);
+
 		this.recalculateElementData(index);
 		this.recalculateScrollPosition();
 	},
@@ -529,6 +544,9 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	reverse(){
+		if(this.elList.length !== 0)
+			this.elList[this.elList.length-1].sf$scrollPos = 1;
+
 		this.recalculateElementData(0);
 		this.recalculateScrollPosition();
 	},
