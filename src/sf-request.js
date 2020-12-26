@@ -46,8 +46,8 @@ function request(method, url, data, options, callback){
 
 	xhr.open(method, url, options.async || true, options.user, options.password);
 
-	if(options.receiveType)
-		xhr.responseType = options.receiveType.toLowerCase();
+	if(options.responseType)
+		xhr.responseType = options.responseType;
 
 	if(options.mimeType)
 		xhr.overrideMimeType(options.mimeType);
@@ -108,7 +108,7 @@ function request(method, url, data, options, callback){
 class ReqEventRegister extends XMLHttpRequest{
 	test(){
 		this._cb.done = function(data){
-			console.log('%cSuccess:', 'color:green', data);
+			console.log('%cSuccess:', 'color:#1bd52b', data);
 		}
 		this._cb.fail = function(status, data){
 			console.error(`%cError (${status}):`, 'color:yellow', data);
@@ -142,7 +142,7 @@ class ReqEventRegister extends XMLHttpRequest{
 	static ontimeout(){
 		sf.request.onerror && sf.request.onerror(this);
 		this._cb.fail && this._cb.fail('timeout');
-		this._cb.always && this._cb.always('error');
+		this._cb.always && this._cb.always('timeout');
 	}
 	static onerror(){
 		sf.request.onerror && sf.request.onerror(this);
