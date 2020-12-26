@@ -46,6 +46,15 @@ function request(method, url, data, options, callback){
 
 	xhr.open(method, url, options.async || true, options.user, options.password);
 
+	if(options.receiveType)
+		xhr.responseType = options.receiveType.toLowerCase();
+
+	if(options.mimeType)
+		xhr.overrideMimeType(options.mimeType);
+
+	if(options.timeout)
+		xhr.timeout = options.timeout;
+
 	if(options.headers)
 		for(var name in options.headers)
 			xhr.setRequestHeader(name, options.headers[name]);
@@ -87,6 +96,7 @@ function request(method, url, data, options, callback){
 
 	Object.setPrototypeOf(xhr, ReqEventRegister.prototype);
 	xhr.onerror = ReqEventRegister.onerror;
+	xhr.ontimeout = ReqEventRegister.ontimeout;
 	xhr.onload = ReqEventRegister.onload;
 
 	options.beforeSend && options.beforeSend(xhr);
@@ -96,6 +106,14 @@ function request(method, url, data, options, callback){
 }
 
 class ReqEventRegister extends XMLHttpRequest{
+	test(){
+		this._cb.done = function(data){
+			console.log('%cSuccess:', 'color:green', data);
+		}
+		this._cb.fail = function(status, data){
+			console.error(`%cError (${status}):`, 'color:yellow', data);
+		}
+	}
 	fail(func){
 		this._cb.fail = func;
 		return this;
@@ -120,6 +138,11 @@ class ReqEventRegister extends XMLHttpRequest{
 		this._cb.done = resolved;
 		this._cb.fail = rejected;
 		return this;
+	}
+	static ontimeout(){
+		sf.request.onerror && sf.request.onerror(this);
+		this._cb.fail && this._cb.fail('timeout');
+		this._cb.always && this._cb.always('error');
 	}
 	static onerror(){
 		sf.request.onerror && sf.request.onerror(this);
@@ -146,7 +169,7 @@ class ReqEventRegister extends XMLHttpRequest{
 				}
 			}
 			else{
-				callback.done && callback.done(xhr.responseText || xhr.response, xhr.status);
+				callback.done && callback.done(xhr.response, xhr.status);
 				sf.request.onsuccess && sf.request.onsuccess(xhr);
 			}
 		}
@@ -158,7 +181,7 @@ class ReqEventRegister extends XMLHttpRequest{
 					callback.fail(xhr.status, xhr.responseText);
 				}
 			}
-			else callback.fail(xhr.status, xhr.responseText);
+			else callback.fail(xhr.status, xhr.response);
 		}
 
 		statusCode[xhr.status] && statusCode[xhr.status](xhr);
