@@ -226,12 +226,12 @@ function findErrorLocation(text, error, slicedX, msg, slicedY){
 	text.splice(location[0], 0, textMsg);
 	text = text.join('\n');
 
-	console.log(msg+'%c'+text, 'color:orange', '', 'color:#ffa666;font-weight:bold', '')
+	console.log(msg+'%c'+text, 'color:orange', '', 'color:#ffa666;font-weight:bold', '');
 }
 
 var processingElement = null;
 function templateErrorInfo(e, element, item, modelRef, template){
-	if(e.message === "Can't continue processing the template"){
+	if(e.sf$throwed){
 		var el, isSingle = 'From element:';
 
 		if(item?.$el !== void 0 && modelRef?.$el === void 0){

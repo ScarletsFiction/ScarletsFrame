@@ -119,7 +119,7 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 			if(temp.includes('\n') === false)
 				temp = `{{ ${temp} }}`;
 
-			if(e.message === "Can't continue processing the template"){
+			if(e.sf$throwed){
 				console.groupCollapsed("Click here to open more information..");
 				findErrorLocation(temp, e, slicedX, "%cError in template's script:\n", slicedY);
 			}
@@ -128,7 +128,8 @@ const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
 				findErrorLocation(temp, e, slicedX, "%cWhen processing template's script:\n", slicedY);
 			}
 
-			throw new Error("Can't continue processing the template");
+			e.sf$throwed = true;
+			throw e;
 		}
 	}
 
