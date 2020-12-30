@@ -75,6 +75,10 @@ class VirtualScrollManipulator {
 					that.dynamicSize = true;
 
 				that.init();
+
+				const callback = that.$EM.callback;
+				if(callback && callback.virtualScrollInit)
+					callback.virtualScrollInit(that);
 			}, 500);
 		});
 	}
@@ -324,8 +328,15 @@ class VirtualScrollManipulator {
 		let next = this.iTop.nextElementSibling;
 		let last;
 
-		for (var a = i; a < until; a++)
+		for (var a = i; a < until; a++){
+			if(elList[a] === void 0){
+				until = a;
+				console.log('ToDo: fix this part');
+				break;
+			}
+
 			elList[a].$Vi = a;
+		}
 
 		while(next !== expect){
 			last = next;
