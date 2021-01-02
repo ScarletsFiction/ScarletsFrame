@@ -29,7 +29,7 @@
     "gulp-terser": "^2.0.0",
     "gulp-rename": "^1.4.0",
     "gulp-sourcemaps": "^2.6.5",
-    "node-notifier": "^7.0.1",
+    "node-notifier": "^8.0.1",
     "serberries": "^1.4.7"
   },
   "main": "dist/scarletsframe.min.js",
