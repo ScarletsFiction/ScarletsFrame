@@ -272,7 +272,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			useItem = false;
 		}
 
-		const newObj = element.model || (asScope && useItem ? $item : (
+		let newObj = element.model || (asScope && useItem ? $item : (
 			inherit !== void 0 ? new inherit() : {}
 		));
 
@@ -281,14 +281,36 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			newObj.$el = $();
 		else index = newObj.$el.length;
 
-		if(index === 0){
+		let reusing = void 0;
+		if(index === 0 && newObj.destroy !== false){
 			const func = registrar[0];
 			if(func.constructor === Function){
 				if(inherit !== void 0 && asScope)
 					Object.setPrototypeOf(newObj, inherit.prototype);
 
 				// Call function that handle scope
-				func(newObj, (namespace || sf.model), $item);
+				reusing = func(newObj, (namespace || sf.model), $item);
+				if(reusing !== void 0){
+					newObj = reusing;
+
+					let els = newObj.$el;
+					if(els[0] === void 0)
+						els[0] = element;
+					else {
+						if(els.length === 1 && els[0].isConnected === false)
+							els[0] = element;
+						else{
+							for (var i = els.length-1; i > 0; i--) {
+								if(els[i].isConnected === false)
+									els = newObj.$el = els.splice(i, 1);
+							}
+
+							if(i === 0)
+								els[0] = element;
+							else newObj.$el = newObj.$el.push(element);
+						}
+					}
+				}
 			}
 
 			if(newObj.constructor !== Object){
@@ -384,7 +406,11 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				internal.initPendingComponentScope(specialElement.scope, element);
 		}
 
-		newObj.$el = newObj.$el.push(element);
+		if(reusing === void 0){
+			if(newObj.$el.length === 1 && newObj.$el[0] === void 0)
+				newObj.$el[0] = element;
+			else newObj.$el = newObj.$el.push(element);
+		}
 
 		if(namespace === void 0){
 			registrar[2].push(newObj);
@@ -480,7 +506,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 					if(this.model.constructor !== Object)
 						this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || sf.model));
 
-					this.model.init();
+					this.model.init(this);
 				}
 				return;
 			}
@@ -493,8 +519,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if(virtualScrolling || this.sf$componentIgnore)
 				return;
 
-			// Skip if it's not initialized
-			if(this.model === void 0)
+			// Skip if it's not initialized or not destroyable
+			if(this.model === void 0 || this.model.destroy === false)
 				return;
 
 			const that = this;
@@ -502,37 +528,39 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				if(that.model === void 0)
 					return;
 
-				if(that.model.$el.length !== 1){
-					const i = that.model.$el.indexOf(that);
+				const model = that.model;
+
+				if(model.$el.length !== 1){
+					const i = model.$el.indexOf(that);
 					if(i !== -1){
-						const temp = that.model.$el[i];
-						that.model.$el = that.model.$el.splice(i, 1);
-						that.model.destroyClone && that.model.destroyClone(temp);
+						model.$el = model.$el.splice(i, 1);
+						model.destroyClone && model.destroyClone(that);
 					}
 
-					internal.model.removeModelBinding(that.model);
+					internal.model.removeModelBinding(model);
 					return;
 				}
 
-				that.model.destroy && that.model.destroy();
+				model.destroy && model.destroy(that);
 
 				if(that.sf$collection !== void 0)
-					that.sf$collection.splice(that.sf$collection.indexOf(that.model), 1);
+					that.sf$collection.splice(that.sf$collection.indexOf(model), 1);
 
 				if(hotReload)
 					hotComponentRemove(that);
 
-				if(that.sf$asScope){
-					const i = that.model.$el.indexOf(that);
+				if(model.$el.length !== 1){
+					const i = model.$el.indexOf(that);
 					if(i !== -1)
-						that.model.$el = that.model.$el.splice(i, 1);
+						model.$el = model.$el.splice(i, 1);
 				}
-				internal.model.removeModelBinding(that.model, void 0, true);
+				else if(model.$el[0].isConnected === false)
+					model.$el[0] = void 0;
+
+				internal.model.removeModelBinding(model, void 0, true);
 			}
 
-			if(window.destroying)
-				return destroy();
-
+			if(window.destroying) return destroy();
 			this.sf$detaching = setTimeout(destroy, 500);
 		}
 	}
