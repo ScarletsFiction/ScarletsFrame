@@ -298,15 +298,14 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 						els[0] = element;
 					else {
 						if(els.length === 1 && els[0].isConnected === false)
-							els[0] = element;
+							els[0].sf$destroyReplace(0, element);
 						else{
-							for (var i = els.length-1; i > 0; i--) {
+							for (var i = els.length-1; i >= 1; i--) {
 								if(els[i].isConnected === false)
 									els = newObj.$el = els.splice(i, 1);
 							}
 
-							if(i === 0)
-								els[0] = element;
+							if(i === 0) els[0].sf$destroyReplace(0, element);
 							else newObj.$el = newObj.$el.push(element);
 						}
 					}
@@ -523,45 +522,56 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if(this.model === void 0 || this.model.destroy === false)
 				return;
 
+			if(window.destroying) return this.sf$destroy();
+
 			const that = this;
-			const destroy = function(){
-				if(that.model === void 0)
-					return;
+			this.sf$detaching = setTimeout(function(){
+				that.sf$destroy();
+			}, 500);
+		}
 
-				const model = that.model;
+		sf$destroy(){
+			if(this.model === void 0) return;
+			const model = this.model;
 
-				if(model.$el.length !== 1){
-					const i = model.$el.indexOf(that);
-					if(i !== -1){
-						model.$el = model.$el.splice(i, 1);
-						model.destroyClone && model.destroyClone(that);
-					}
-
-					internal.model.removeModelBinding(model);
-					return;
+			if(model.$el.length !== 1){
+				const i = model.$el.indexOf(this);
+				if(i !== -1){
+					model.$el = model.$el.splice(i, 1);
+					model.destroyClone && model.destroyClone(this);
 				}
 
-				model.destroy && model.destroy(that);
-
-				if(that.sf$collection !== void 0)
-					that.sf$collection.splice(that.sf$collection.indexOf(model), 1);
-
-				if(hotReload)
-					hotComponentRemove(that);
-
-				if(model.$el.length !== 1){
-					const i = model.$el.indexOf(that);
-					if(i !== -1)
-						model.$el = model.$el.splice(i, 1);
-				}
-				else if(model.$el[0].isConnected === false)
-					model.$el[0] = void 0;
-
-				internal.model.removeModelBinding(model, void 0, true);
+				internal.model.removeModelBinding(model);
+				return;
 			}
 
-			if(window.destroying) return destroy();
-			this.sf$detaching = setTimeout(destroy, 500);
+			model.destroy && model.destroy(this);
+
+			if(this.sf$collection !== void 0)
+				this.sf$collection.splice(this.sf$collection.indexOf(model), 1);
+
+			if(hotReload)
+				hotComponentRemove(this);
+
+			if(model.$el.length !== 1){
+				const i = model.$el.indexOf(this);
+				if(i !== -1)
+					model.$el = model.$el.splice(i, 1);
+			}
+			else if(model.$el[0].isConnected === false)
+				model.$el[0] = void 0;
+
+			internal.model.removeModelBinding(model, void 0, true);
+		}
+
+		sf$destroyReplace(i, element){
+			if(this.sf$detaching){
+				clearTimeout(this.sf$detaching);
+				this.sf$destroy();
+			}
+
+			const model = this.model;
+			model.$el[i] = element;
 		}
 	}
 
