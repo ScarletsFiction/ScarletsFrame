@@ -127,9 +127,10 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 
 		// Model/Component
 		var modelEl = e.target;
+		var i = 1;
 		while(modelEl = sf(modelEl, true)){
 			(modelEl.sf$collection ? componentList : modelList).push({
-				name: modelEl.sf$controlled || '{embedded template}',
+				name: (i++)+'. '+(modelEl.sf$controlled || '{embedded template}'),
 				nested,
 				model: modelEl.model,
 				modelEl,
@@ -156,6 +157,7 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 				space:current.sf$space,
 				name:current.sf$spaceName,
 				id:current.sf$spaceID,
+				element: current
 			};
 		}
 
@@ -210,51 +212,97 @@ sf.dom(function(){
 </sf-space>`);
 });
 
+SFDevSpace.modelListHover = function($dom){
+	if($dom[0] === void 0) return;
+	$dom.addClass('sf-model-list-hover');
+}
+
+SFDevSpace.modelListHoverLeave = function($dom){
+	if($dom[0] === void 0) return;
+	$dom.removeClass('sf-model-list-hover');
+}
+
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-model-info', {
-	html:`<div @click="clicked">{{ name }}</div>`
+	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }}</div>`
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(e){
 		SFDevSpace.addDynamicView(My.name, My.model, e);
+	}
+
+	My.enter = function(){
+		SFDevSpace.modelListHover(My.model.$el || $(My.modelEl));
+	}
+
+	My.leave = function(){
+		SFDevSpace.modelListHoverLeave(My.model.$el || $(My.modelEl));
 	}
 });
 
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-component-info', {
-	html:`
-	<div @click="clicked">{{ name }}</div>
-`
+	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }}</div>`
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(e){
 		SFDevSpace.addDynamicView(My.name, My.model, e);
 	}
+
+	My.enter = function(){
+		SFDevSpace.modelListHover(My.model.$el);
+	}
+
+	My.leave = function(){
+		SFDevSpace.modelListHoverLeave(My.model.$el);
+	}
 });
 
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-space-info', {
-	html:`
-	<div @click="clicked">{{ name }}</div>
-`
+	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }}</div>`
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(){
 		alert("SF.Space inspector haven't finished yet");
+	}
+
+	My.enter = function(){
+		SFDevSpace.modelListHover($(My.element));
+	}
+
+	My.leave = function(){
+		SFDevSpace.modelListHoverLeave($(My.element));
 	}
 });
 
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-view-info', {
 	html:`
-	<div @click="clicked">Name: {{ name }}</div>
-	<div>URL: {{ path }}</div>
-	<div>Data: {{ data }}</div>
+	<div @pointerenter="enter" @pointerleave="leave">
+		<div @click="clicked">Name: {{ name }}</div>
+		<div>URL: {{ path }}</div>
+		<div>Data: {{ data }}</div>
+	</div>
 `
 }, function(My, root){
 	// My.path = $item.path;
 	My.clicked = function(){
 		alert("SF.Views inspector haven't finished yet");
+	}
+
+	function findCurrentPage(){
+		for (var i = 0; i < My.pages.length; i++)
+			if(My.pages[i].matches('.page-current'))
+				return $(My.pages[i]);
+	}
+
+	My.enter = function(item){
+		SFDevSpace.modelListHover(findCurrentPage());
+	}
+
+	My.leave = function(item){
+		SFDevSpace.modelListHoverLeave(findCurrentPage());
 	}
 });
 
