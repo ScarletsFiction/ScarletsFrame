@@ -553,13 +553,9 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 			if(hotReload)
 				hotComponentRemove(this);
 
-			if(model.$el.length !== 1){
-				const i = model.$el.indexOf(this);
-				if(i !== -1)
-					model.$el = model.$el.splice(i, 1);
-			}
-			else if(model.$el[0].isConnected === false)
-				model.$el[0] = void 0;
+			const $el = model.$el;
+			if($el[0] !== void 0 && $el[0].isConnected === false)
+				$el[0] = void 0;
 
 			internal.model.removeModelBinding(model, void 0, true);
 		}
