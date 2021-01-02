@@ -765,11 +765,11 @@ const self = sf.views = function View(selector, name){
 			if(window.templates === void 0)
 				return console.error("`window.templates` was not found");
 
-			// Create new element
-			url.html = sf.dom.parseElement(`<template>${window.templates[url.template+'.html']}</template>`, true)[0];
+			const htmlTemp = window.templates[url.template];
+			if(htmlTemp === void 0) return console.error("Template not found: '"+url.template+"', does the file extension was match?");
 
-			if(hotReload)
-				url.template = url.template+'.html';
+			// Create new element
+			url.html = sf.dom.parseElement(`<template>${htmlTemp}</template>`, true)[0];
 		}
 
 		if(url.html){
