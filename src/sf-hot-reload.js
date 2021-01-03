@@ -37,8 +37,10 @@ sf.hotReload = function(mode){
 
 	internalProp = {
 		init:true,
+		initClone:true,
 		reinit:true,
 		destroy:true,
+		destroyClone:true,
 		$el:true,
 	};
 
@@ -91,7 +93,8 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 			if(internalProp[prop] === true) // Skip function that related with framework
 				continue;
 
-			if(scope[prop] && scope[prop].constructor === Function)
+			const temp = scope[prop];
+			if(temp != null && temp.constructor === Function)
 				refunction(prop);
 		}
 		return;
@@ -191,9 +194,9 @@ function hotComponentRefresh(space, name, func){
 		if(proxy === void 0){
 			proxy = {};
 			proxyComponent.set(list[i], proxy);
+			reapplyScope(proxy, space, list[i], func, true);
 		}
-
-		reapplyScope(proxy, space, list[i], func, true);
+		else reapplyScope(proxy, space, list[i], func);
 	}
 }
 
