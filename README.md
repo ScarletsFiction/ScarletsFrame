@@ -7,56 +7,10 @@ A frontend framework that can help you write a simple web structure with complex
 
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
-### Some changes since 0.32.0
-There are some changes if you're using sf.url. Actually this feature haven't documented before 0.32.0 on the Wiki, so it was already expected to breaking xD. If you see some undocumented feature feel free to make an issue/question to make sure if it was stable for the next version.
+This framework haven't reach v1.0.0. Every increment of (v0.\*.0) may have a breaking changes. Please see the `CHANGELOG.md` if you want to check the breaking changes. Make sure to specify the version instead of **latest** when using CDN link or the package like below.
 
-```js
-// Old
-sf.url.paths = ''; // Main URL path
-sf.url.hashes = {}; // Hash routes
-sf.url.data = []; // Custom URL data
-
-// Changed into
-sf.url.path = ''; // Main URL path
-sf.url.routes = {}; // Hash routes
-sf.url.data = {}; // Custom URL data
-
-// New
-sf.url.query = {}; // URL GET query
-
-// Example: https://domain.com/my/path?search=myself#;hello:from,world
-path == '/my/path';
-query == {search:'myself'};
-data == {hello:['from', 'world']}
-```
-
-If you're not using sf.views for routing you will need to manually call `sf.url.parse(true)` to parse current URL from the address bar. You can pass it with String parameter instead if you want to parse your URL without affecting sf.url's data. More information please go to the Wiki.
-
-sf-each now support Map and Set data type, you may need to call `.refresh()` if you have some changes on Map's key or Array's index.
-
-### Breaking changes since 0.31.0
-```xml
-<!-- Old -->
-<div sf-repeat-this="..."></div>
-
-<!-- Changed into -->
-<div sf-each="..."></div>
-```
-
-### Breaking changes since 0.30.0
-```js
-sf.model('stuff', function(self){
-  self.binded = 'still old value';
-
-  // Parameter changes for 'm2v', 'v2m', and 'on'
-  self.m2v$binded = function(newValue){
-    self.binded === 'still old value';
-    return "replace the new value";
-  }
-})
-
-var space = sf.space(name, options); // Old
-var space = new sf.space(name, options); // Now
+```html
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.32.x/dist/scarletsframe.min.js"></script>
 ```
 
 ## Try it online like a project
@@ -90,15 +44,20 @@ Example with file and folder structure
 You can download minified js from this repository or use this CDN link.<br>
 For supporting older browser you need to add [core-js and webcomponentsjs](#polyfill-for-older-browser) polyfill.<br>
 ```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.32.x/dist/scarletsframe.min.js'></script>
 ```
 
 But if you develop only for modern browser and focus for performance it's recommended for using below, you may still to polyfill PointerEvent for Safari/Firefox desktop browser.
 ```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.es6.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.32.x/dist/scarletsframe.es6.js'></script>
 ```
 
-## Install from template
+## Install with with NPM
+```sh
+$ npm i scarletsframe@0.32.x
+```
+
+## Using the template
 For starting the development environment, let's use the [default template](https://github.com/StefansArya/scarletsframe-default).
 
 ```sh
@@ -122,11 +81,6 @@ $ npm start
 $ gulp
 ```
 
-## Bundle with NPM
-```sh
-$ npm i scarletsframe
-```
-
 And include it on your project with webpack ([example](https://github.com/krausest/js-framework-benchmark/tree/master/frameworks/keyed/scarletsframe)) or browserify.
 ```js
 const sf = require('scarletsframe');
@@ -147,15 +101,15 @@ Some feature not work on IE11.
   <script type="text/javascript">
     // Polyfill for Old Browser
     (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
-      if(!window.PointerEvent)
+      if(!window.PointerEvent) // Chrome < 55, Firefox 42
         z('https://code.jquery.com/pep/0.4.3/pep.js');
-      if(!window.MutationObserver)
+      if(!window.MutationObserver) // Chrome 26
         window.MutationObserver = window.WebKitMutationObserver;
-      if(!window.Reflect)
+      if(!window.Reflect) // Chrome < 49
         z('https://unpkg.com/core-js-bundle@latest/minified.js');
-      if(!window.customElements)
+      if(!window.customElements) // Chrome < 54, Firefox 63
         z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
-      if(!window.ResizeObserver)
+      if(!window.ResizeObserver) // Chrome < 64, Firefox 69
         z('https://polyfill.io/v3/polyfill.min.js?features=ResizeObserver%2CIntersectionObserver%2CIntersectionObserverEntry');
     })();
   </script>
@@ -167,5 +121,3 @@ If you want to help in ScarletsFrame please fork this project and edit on your r
 
 ## License
 ScarletsFrame is under the MIT license.
-
-But don't forget to put a link to this repository, or share it maybe.
