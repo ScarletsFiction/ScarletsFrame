@@ -257,6 +257,8 @@ const self = sf.views = function View(selector, name){
 
 		DOM.sf$viewInitialized = true;
 
+		if(devMode) DOM.scope = self;
+
 		if(!isChild){
 			self.currentDOM = temp;
 			rootDOM = self.rootDOM = DOM;
