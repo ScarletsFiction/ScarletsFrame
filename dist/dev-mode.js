@@ -323,15 +323,15 @@ SFDevSpace.component('sf-space-info', {
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-view-info', {
 	html:`
-	<div @pointerenter="enter" @pointerleave="leave">
-		<div @click="clicked">Name: {{ name }}</div>
+	<div @pointerenter="enter" @pointerleave="leave" @click="clicked">
+		<div>Name: {{ name }}</div>
 		<div>URL: {{ path }}</div>
 		<div>Data: {{ data }}</div>
 	</div>
 `
 }, function(My, root){
 	// My.path = $item.path;
-	My.clicked = function(){
+	My.clicked = function(e){
 		My.leave();
 		setTimeout(()=> {
 			if(e.ctrlKey) return My.openEditor();
@@ -358,7 +358,7 @@ SFDevSpace.component('sf-view-info', {
 		if(devData === void 0)
 			return console.error("Source path couldn't be found");
 
-		___browserSync___.socket.emit('sf-open-source', devData.path[0]);
+		___browserSync___.socket.emit('sf-open-source', [devData.path[0], void 0, My.name]);
 	}
 });
 
