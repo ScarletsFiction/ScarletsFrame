@@ -233,7 +233,18 @@ SFDevSpace.openEditor = function(model, propName){
 	if(model.$el === void 0){
 		if(model.sf$filePath === void 0)
 			return SFDevSpace.openEditor_.err();
-		return SFDevSpace.openEditor_.go('>'+model.sf$filePath, propName);
+
+		function propOwnerPath(clas){
+			var keys = Object.getOwnPropertyNames(clas.prototype);
+			if(keys.includes(propName)) return clas.prototype.sf$filePath;
+
+			var deep = Object.getPrototypeOf(clas);
+			if(deep.prototype !== void 0)
+				return propOwnerPath(deep);
+			return model.sf$filePath;
+		}
+
+		return SFDevSpace.openEditor_.go('>'+propOwnerPath(model.constructor), propName);
 	}
 
 	var devData = model.$el.$devData;
@@ -427,11 +438,15 @@ SFDevSpace.swallowObject = function(obj){
 }
 
 SFDevSpace.currentActive = {panel:null};
+SFDevSpace.reusableShells = new Map();
 
 // Dynamic HTML Template
 SFDevSpace.component('sf-model-viewer', function(My, include){
 	// My.titles;
 	// My.model;
+
+	if(SFDevSpace.reusableShells.has(My.model))
+		return SFDevSpace.reusableShells.get(My.model);
 
 	const Shadows = include('sf.shadows');
 	var $ = sf.dom;
@@ -456,10 +471,73 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	My.init = function(){
 		My.currentActive.panel = My.isEmpty; // This will trigger z-index: 1
 
+		My.deepRegister();
 		setTimeout(function(){
 			My.refreshObject();
 			My.refreshTypes();
 		}, 1000);
+	}
+
+	My.initClone = function(zx){
+		My.$el[0].remove();
+	}
+
+	My.recreate = function(){
+		SFDevSpace.reusableShells.set(My.model, My);
+		SFDevSpace.addDynamicView(My.titles, My.model, {x:My.x, y:My.y});
+		SFDevSpace.reusableShells.delete(My.model);
+	}
+
+	My.registered = false;
+	My.deepRegister = function(){
+		if(My.registered) return;
+
+		My.registered = true;
+		var model = My.model;
+
+		deepRegister(model.constructor);
+		function deepRegister(clas){
+			if(Object.getOwnPropertyNames(clas.prototype).includes('isPrototypeOf'))
+				return;
+
+			if(clas.sf$refresh === void 0)
+				Object.defineProperty(clas, 'sf$refresh', {value:[]});
+
+			clas.sf$refresh.push(My.recreate);
+
+			var deep = Object.getPrototypeOf(clas);
+			if(deep.prototype !== void 0)
+				return deepRegister(deep);
+		}
+
+		if(model.sf$refresh === void 0)
+			Object.defineProperty(model, 'sf$refresh', {value:[]});
+
+		model.sf$refresh.push(My.recreate);
+	}
+
+	My.destroy = function(arg){
+		if(My.$el.length > 1 || (My.$el[0] && My.$el[0].isConnected))
+			return;
+
+		My.registered = false;
+		var model = My.model;
+
+		deepUnregister(model.constructor);
+		function deepUnregister(clas){
+			if(Object.getOwnPropertyNames(clas.prototype).includes('isPrototypeOf'))
+				return;
+
+			if(clas.sf$refresh !== void 0)
+				clas.sf$refresh.splice(clas.sf$refresh.indexOf(My.recreate), 1);
+
+			var deep = Object.getPrototypeOf(clas);
+			if(deep.prototype !== void 0)
+				return deepUnregister(deep);
+		}
+
+		if(model.sf$refresh !== void 0)
+			model.sf$refresh.splice(model.sf$refresh.indexOf(My.recreate), 1);
 	}
 
 	My.refreshObject = function(){
@@ -666,8 +744,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 /* Warning!
 	If you just found this technique and want to implement it
 	for your production website, always make sure that the template
-	can't be created by your user. (You must sanitize any user input!)
-	Be careful when creating the template dynamically.
+	can't be created by your user. You must sanitize any user input!
 */
 SFDevSpace.addDynamicView = function(titles, model, ev){
 	var $ = sf.dom;
@@ -691,16 +768,18 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 		<div class="list-{{ state }}">`; // We will close <sf-model-viewer> later
 
 	var reactive = [];
-	var passive = [];
+	var passive = new Set() // use Set to get the prototype too;
 	var statelists = []; // RepeatedList
 	var objects = [];
-	var functions = [];
+	var functions = new Set(); // use Set to get the prototype too;
 
 	var bindedKey = model.sf$bindedKey || {};
 	if(!bindedKey.sf$passive)
 		bindedKey.sf$passive = {};
 
 	for(var key in model){
+		if(key.includes('sf$')) continue;
+
 		const type = typeof model[key];
 		if(bindedKey[key] === true){
 			statelists.push(key);
@@ -710,16 +789,45 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 		const temp = isNaN(key[0]) ? '.'+key : `['${key.split("'").join("\\'")}']`;
 
 		if(type === 'function')
-			functions.push(temp);
+			functions.add(temp);
 		else if(type === 'object')
 			objects.push(temp);
 		else if(bindedKey[key] !== void 0 && !bindedKey.sf$passive[key])
 			reactive.push(temp);
 		else{
 			bindedKey.sf$passive[key] = true;
-			passive.push(temp);
+			passive.add(temp);
 		}
 	}
+
+	function getDeepPrototype(clas){
+		if(clas.prototype === void 0)
+			return;
+
+		var keys2 = Object.getOwnPropertyNames(clas.prototype);
+		if(keys2.includes('isPrototypeOf')) return;
+
+		for (var i = keys2.length - 1; i >= 0; i--) {
+			const key = keys2[i];
+			if(key.includes('sf$') || key === 'constructor') continue;
+
+			const temp = isNaN(key[0]) ? '.'+key : `['${key.split("'").join("\\'")}']`;
+
+			if(typeof model[key] === 'function')
+				functions.add(temp);
+			else
+				passive.add(temp);
+		}
+
+		var deep = Object.getPrototypeOf(clas);
+		if(deep.prototype !== void 0)
+			getDeepPrototype(deep);
+	}
+
+	getDeepPrototype(model.constructor);
+
+	passive = [...passive];
+	functions = [...functions];
 
 	function cleanPropName(key){
 		if(key[0] === '.')
@@ -740,13 +848,13 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 	template += '</div><div class="statelist-list list">';
 
 	for (var i = 0; i < statelists.length; i++)
-		template += `<div class="statelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${statelists[i]}</span> : <div class="value" @click="clickStatelist">[...{{ model.${statelists[i]}.length }}]</div></div>`;
+		template += `<div class="statelist" @click="clickStatelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${statelists[i]}</span> : <div class="value">[...{{ model.${statelists[i]}.length }}]</div></div>`;
 
 	template += '</div><div class="object-list list"><div class="info" @click="refreshObject">Click here to refresh</div>';
 
 	for (var i = 0; i < objects.length; i++){
 		if(objects[i].includes('(')) continue;
-		template += `<div class="object"><span>${cleanPropName(objects[i])}</span> : <div class="value" @click="clickObject">{{ objects${objects[i]} }}</div></div>`;
+		template += `<div class="object" @click="clickObject"><span>${cleanPropName(objects[i])}</span> : <div class="value">{{ objects${objects[i]} }}</div></div>`;
 	}
 
 	template += '</div><div class="function-list list"><div class="info" title="Ctrl + Click to open your editor">Shift+Click to execute</div>';
@@ -778,11 +886,13 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 	model = el.model;
 
-	if(reactive.length !== 0) model.state = 'reactive';
-	else if(passive.length !== 0) model.state = 'passive';
-	else if(statelists.length !== 0) model.state = 'statelist';
-	else if(objects.length !== 0) model.state = 'object';
-	else if(functions.length !== 0) model.state = 'function';
+	if(!model.registered){
+		if(reactive.length !== 0) model.state = 'reactive';
+		else if(passive.length !== 0) model.state = 'passive';
+		else if(statelists.length !== 0) model.state = 'statelist';
+		else if(objects.length !== 0) model.state = 'object';
+		else if(functions.length !== 0) model.state = 'function';
+	}
 
 	if(reactive.length === 0) model.isEmpty.reactive = 'empty';
 	if(passive.length === 0) model.isEmpty.passive = 'empty';
