@@ -37,6 +37,10 @@ sf-dev-mode{
 	transform: translate(0%, -50%);
 }
 
+.sf-side-info .title, .sf-side-info .list-title{
+	cursor: default;
+}
+
 .sf-side-info .title{
 	padding: 8px 25px 8px 8px;
 }
@@ -114,13 +118,13 @@ sf-model-viewer .list .value{
 
 sf-model-viewer .reactive{
 	display: flex;
-    white-space: pre-wrap;
+	white-space: pre-wrap;
 }
 
 sf-model-viewer span{
 	cursor: default;
 	font-weight: 400;
-    font-size: 16px;
+	font-size: 16px;
 }
 
 sf-model-viewer .statelist .value,
@@ -129,6 +133,7 @@ sf-model-viewer .object .value{
 }
 
 sf-model-viewer .list textarea{
+	position: relative;
 	background: none;
 	outline: none;
 	font-size: 16px;
@@ -136,9 +141,9 @@ sf-model-viewer .list textarea{
 	color: #b3b3b3;
 	vertical-align: middle;
 	width: -webkit-fill-available;
-	padding-left: 5px;
-	padding-top: 0;
-	padding-bottom: 0;
+	padding: 0 0 0 5px;
+	top: 0;
+	left: 0;
 	height: 22px;
 	font-weight: 400;
 }
@@ -232,9 +237,33 @@ sf-model-viewer .function-list .function > span{
 	color: gray;
 }
 
+sf-model-viewer .val-type{
+	display: inline-block;
+	position: relative;
+	width: 3px;
+	height: 3px;
+	margin: auto 0 auto 5px;
+	box-shadow: 0 0 7px 2px #ffffff;
+	background: #ffffff91;
+	border-radius: 100%;
+	vertical-align: middle;
+}
+sf-model-viewer .val-Number{
+	box-shadow: 0 0 7px 2px #00ddff;
+	background: #00ddff91;
+}
+sf-model-viewer .val-String{
+	box-shadow: 0 0 7px 2px #ffde00;
+	background: #ffde0091;
+}
+sf-model-viewer .val-Boolean{
+	box-shadow: 0 0 7px 2px #00ff65;
+	background: #29ff0091;
+}
+
 .sf-model-list-hover{
 	filter: drop-shadow(0 0 17px #00d1ff);
-    animation: sf-model-list-anim 1s ease-in-out infinite;
+	animation: sf-model-list-anim 1s ease-in-out infinite;
 }
 
 @keyframes sf-model-list-anim{

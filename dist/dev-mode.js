@@ -23,26 +23,26 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		<div class="sf-close" @click="close" style="
 			display: {{ haveList ? '' : 'none'}}
 		">x</div>
-		<div class="title">{{ message }}</div>
-		<div class="list-title {{ spaceList }}">Space List</div>
+		<div class="title" title="Ctrl + Click on the list to open the source on your editor">{{ message }}</div>
+		<div class="list-title {{ spaceList }}" title="Registered model and component in this space will be different from global or other space">Space List 🍱</div>
 		<div class="space-list list {{ spaceList }}">
 			<sf-space-info sf-each="val in spaces" sf-as-scope/>
 		</div>
-		<div class="list-title {{ modelList }}">Model List</div>
+		<div class="list-title {{ modelList }}" title="Shared model that can be used in multiple template">Model List ☘️🍀🌿</div>
 		<div class="model-list list {{ modelList }}">
 			<sf-model-info sf-each="val in models" sf-as-scope/>
 		</div>
-		<div class="list-title {{ componentList }}">Component List</div>
+		<div class="list-title {{ componentList }}" title="Similar like model, instead of shared this will create new model scope for each component element. This can act like an empty shell, can be disposed or reused if being saved somewhere.">Component List 🌳💐🎄</div>
 		<div class="component-list list {{ componentList }}">
 			<sf-component-info sf-each="val in components" sf-as-scope/>
 		</div>
-		<div class="list-title {{ viewList }}">Views Info</div>
+		<div class="list-title {{ viewList }}" title="An element that have a router, this can be routed from the URL or script. Can be nested or created on any possible element.">Views Info 🍱⛺️🍂</div>
 		<div class="view-list list {{ viewList }}">
 			<sf-view-info sf-each="val in views" sf-as-scope/>
 		</div>
 	</div>`
 }, function(My){
-	var $ = sf.dom;
+	var $ = sf.dom; // 💠
 
 	My.hasShadow = false;
 	My.x = My.y = 0;
@@ -171,7 +171,7 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 			const current = views[i];
 			const parent = current.parentNode;
 			viewList[i] = {
-				pages:parent.sf$cachedDOM,
+				pages:parent.sf$cachedDOM || parent.children,
 				name:parent.tagName.toLowerCase(),
 				path:current.routePath,
 				ref:current.routeCached,
@@ -222,13 +222,45 @@ SFDevSpace.modelListHoverLeave = function($dom){
 	$dom.removeClass('sf-model-list-hover');
 }
 
+// For model & component only
+SFDevSpace.openEditor_ = {err(){
+	console.error("Source path couldn't be found");
+}, go(devPath, propName){
+	___browserSync___.socket.emit('sf-open-source', [devPath, propName]);
+}};
+
+SFDevSpace.openEditor = function(model, propName){
+	if(model.$el === void 0){
+		if(model.sf$filePath === void 0)
+			return SFDevSpace.openEditor_.err();
+		return SFDevSpace.openEditor_.go('>'+model.sf$filePath, propName);
+	}
+
+	var devData = model.$el.$devData;
+	if(devData !== void 0)
+		return SFDevSpace.openEditor_.go(devData.filePath, propName);
+
+	if(model.$el[0].sf$collection === void 0)
+		return SFDevSpace.openEditor_.err();
+
+	var devData = model.$el[0].sf$collection.$devData;
+	if(devData !== void 0)
+		return SFDevSpace.openEditor_.go(devData.filePath, propName);
+
+	SFDevSpace.openEditor_.err();
+}
+
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-model-info', {
 	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }}</div>`
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(e){
-		SFDevSpace.addDynamicView(My.name, My.model, e);
+		My.leave();
+		setTimeout(()=> {
+			if(e.ctrlKey) return My.openEditor();
+			SFDevSpace.addDynamicView(My.name, My.model, e);
+		}, 20);
 	}
 
 	My.enter = function(){
@@ -238,6 +270,10 @@ SFDevSpace.component('sf-model-info', {
 	My.leave = function(){
 		SFDevSpace.modelListHoverLeave(My.model.$el || $(My.modelEl));
 	}
+
+	My.openEditor = function(){
+		SFDevSpace.openEditor(My.model);
+	}
 });
 
 // sf-each-> sf-as-scope enabled
@@ -246,7 +282,11 @@ SFDevSpace.component('sf-component-info', {
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(e){
-		SFDevSpace.addDynamicView(My.name, My.model, e);
+		My.leave();
+		setTimeout(()=> {
+			if(e.ctrlKey) return My.openEditor();
+			SFDevSpace.addDynamicView(My.name, My.model, e);
+		}, 20);
 	}
 
 	My.enter = function(){
@@ -255,6 +295,10 @@ SFDevSpace.component('sf-component-info', {
 
 	My.leave = function(){
 		SFDevSpace.modelListHoverLeave(My.model.$el);
+	}
+
+	My.openEditor = function(){
+		SFDevSpace.openEditor(My.model);
 	}
 });
 
@@ -288,7 +332,11 @@ SFDevSpace.component('sf-view-info', {
 }, function(My, root){
 	// My.path = $item.path;
 	My.clicked = function(){
-		alert("SF.Views inspector haven't finished yet");
+		My.leave();
+		setTimeout(()=> {
+			if(e.ctrlKey) return My.openEditor();
+			alert("SF.Views inspector haven't finished yet");
+		}, 20);
 	}
 
 	function findCurrentPage(){
@@ -304,6 +352,14 @@ SFDevSpace.component('sf-view-info', {
 	My.leave = function(item){
 		SFDevSpace.modelListHoverLeave(findCurrentPage());
 	}
+
+	My.openEditor = function(){
+		var devData = My.pages[0].parentElement.scope.$devData;
+		if(devData === void 0)
+			return console.error("Source path couldn't be found");
+
+		___browserSync___.socket.emit('sf-open-source', devData.path[0]);
+	}
 });
 
 SFDevSpace.model('sf.shadows', function(My){
@@ -317,6 +373,9 @@ SFDevSpace.model('sf.shadows', function(My){
 		}
 
 		for (var i = 0; i < elList.length; i++) {
+			if(elList[i] === null)
+				continue;
+
 			const Rect = elList[i].getBoundingClientRect();
 			elList[i] = {
 				x:Rect.x,
@@ -386,6 +445,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	My.y = 100;
 
 	My.objects = {};
+	My.types = {};
 
 	My.dragmove = function(e){
 		My.x += e.movementX;
@@ -398,6 +458,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 		setTimeout(function(){
 			My.refreshObject();
+			My.refreshTypes();
 		}, 1000);
 	}
 
@@ -409,6 +470,38 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 	My.hoverLeaving = function(e){
 		Shadows.shadows.length && Shadows.shadows.splice(0);
+	}
+
+	My.refreshTypes = function(){
+		const list = My.types;
+		for(var key in list){
+			const val = My.model[key];
+			if(val == null){
+				list[key] = '';
+				continue;
+			}
+
+			list[key] = val.constructor.name;
+		}
+	}
+
+	My.refreshInput = function(ev){
+		const el = ev.target;
+		if(el.typeData === String || el.typeData === Number) return;
+
+		if(el.value === 'true')
+			el.sfModel[el.sfBounded] = true;
+		else if(el.value === 'false')
+			el.sfModel[el.sfBounded] = false;
+		else if(el.value === 'null')
+			el.sfModel[el.sfBounded] = null;
+		else if(el.value.length !== 0){
+			const num = +el.value;
+			if(!Number.isNaN(num))
+				el.sfModel[el.sfBounded] = num;
+		}
+
+		My.refreshTypes();
 	}
 
 	My.transferToConsole = function(){
@@ -430,14 +523,24 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	}
 
 	function getTheElement(elList, ref){
-		if(ref.textContent !== void 0)
-			elList.push(ref.textContent.parentNode);
+		if(ref.textContent !== void 0){
+			const got = ref.textContent.parentNode;
+			if(got === null)
+				return console.error("Looks like an element was modified with DOM manipulation and framework element reference was detached.", {content: ref.textContent.textContent});
+
+			elList.push(got);
+		}
 		else if(ref.element !== void 0)
 			elList.push(ref.element);
 		else if(ref.attribute !== void 0)
 			elList.push(ref.attribute.ownerElement);
 		else if(ref.parentNode !== void 0)
 			elList.push(ref.parentNode);
+	}
+
+	My.clickToEditor = function(e){
+		var propName = e.target.innerHTML;
+		if(e.ctrlKey) return SFDevSpace.openEditor(My.model, propName);
 	}
 
 	My.hoverReactive = function(e){
@@ -513,6 +616,10 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 	My.clickStatelist = function(e){
 		var propName = $(e.target).prev('span').html();
+
+		if(e.ctrlKey)
+			return SFDevSpace.openEditor(My.model, propName);
+
 		window.Q = My.model[propName];
 		console.log('%cwindow.Q >>', 'color:yellow', My.model[propName]);
 		SFDevSpace.addDynamicView(My.titles.concat(propName), window.Q, e);
@@ -526,6 +633,9 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 			console.log('%cwindow.Q >>', 'color:yellow', that);
 			return;
 		}
+
+		if(e.ctrlKey)
+			return SFDevSpace.openEditor(My.model, propName);
 
 		SFDevSpace.addDynamicView(My.titles.concat(propName), that, e);
 	}
@@ -542,10 +652,11 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		if(func.ref !== void 0)
 			func = func.ref;
 
-		if(e.shiftKey){
-			console.log(func());
-			return;
-		}
+		if(e.shiftKey)
+			return console.log(func());
+
+		if(e.ctrlKey)
+			return SFDevSpace.openEditor(My.model, propName);
 
 		window.Q = func;
 		console.log('%cwindow.Q >>', 'color:yellow', propName);
@@ -564,7 +675,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 	var template = `<sf-model-viewer sf-as-scope style="
 		transform: translate({{ x }}px, {{ y }}px);
 		z-index: {{ isEmpty === currentActive.panel ? 1 : 0 }};
-	">
+	" @pointerenter="refreshTypes" @pointerleave="refreshTypes" @input="refreshInput">
 		<div class="title" @dragmove="dragmove">
 			<span sf-each="val in titles">{{ val }}</span>
 		</div>
@@ -619,17 +730,17 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 	template += '<div class="reactive-list list">';
 
 	for (var i = 0; i < reactive.length; i++)
-		template += `<div class="reactive"><span @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span> : <textarea sf-bind="model${reactive[i]}"></textarea></div>`;
+		template += `<div class="reactive" @click="clickToEditor" title="Type: {{ types${reactive[i]} }}"><span @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span> : <textarea sf-bind="model${reactive[i]}"></textarea><div class="val-type val-{{ types${reactive[i]} }}"></div></div>`;
 
 	template += '</div><div class="passive-list list">';
 
 	for (var i = 0; i < passive.length; i++)
-		template += `<div class="passive"><span>${cleanPropName(passive[i])}</span> : <div class="value">{{ model${passive[i]} }}</div></div>`;
+		template += `<div class="passive" @click="clickToEditor" title="Type: {{ types${passive[i]} }}"><span>${cleanPropName(passive[i])}</span> : <div class="value">{{ model${passive[i]} }}</div><div class="val-type val-{{ types${passive[i]} }}"></div></div>`;
 
 	template += '</div><div class="statelist-list list">';
 
 	for (var i = 0; i < statelists.length; i++)
-		template += `<div class="statelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${statelists[i]}</span> : <div class="value" @click="clickStatelist">{ ... }</div></div>`;
+		template += `<div class="statelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${statelists[i]}</span> : <div class="value" @click="clickStatelist">[...{{ model.${statelists[i]}.length }}]</div></div>`;
 
 	template += '</div><div class="object-list list"><div class="info" @click="refreshObject">Click here to refresh</div>';
 
@@ -638,7 +749,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 		template += `<div class="object"><span>${cleanPropName(objects[i])}</span> : <div class="value" @click="clickObject">{{ objects${objects[i]} }}</div></div>`;
 	}
 
-	template += '</div><div class="function-list list"><div class="info">Shift+Click to execute</div>';
+	template += '</div><div class="function-list list"><div class="info" title="Ctrl + Click to open your editor">Shift+Click to execute</div>';
 
 	for (var i = 0; i < functions.length; i++){
 		var args = model[cleanPropName(functions[i])];
