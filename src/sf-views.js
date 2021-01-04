@@ -327,10 +327,11 @@ const self = sf.views = function View(selector, name){
 		return self;
 	}
 
+	var devAddLocked = 0;
 	self.addRoute = function(obj){
 		routes.push(...internal.router.parseRoutes(obj, selectorList));
 
-		if(devMode){
+		if(devMode && devAddLocked !== true){
 			if(self.$devData === void 0)
 				Object.defineProperty(self, '$devData', {
 					configurable: true,
@@ -339,6 +340,8 @@ const self = sf.views = function View(selector, name){
 					}
 				});
 
+			clearTimeout(devAddLocked);
+			devAddLocked = setTimeout(function(){devAddLocked = true}, 1000);
 			self.$devData.path.push(getCallerFile(1));
 		}
 

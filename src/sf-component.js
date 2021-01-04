@@ -117,7 +117,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 		else if(hotReload)
 			hotComponentRefresh(scope, name, func);
 
-		if(devMode){
+		if(devMode && registrar[2].$devData === void 0){
 			Object.defineProperty(registrar[2], '$devData', {
 				configurable: true,
 				value: {
@@ -297,8 +297,12 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 					if(els[0] === void 0)
 						els[0] = element;
 					else {
-						if(els.length === 1 && els[0].isConnected === false)
-							els[0].sf$destroyReplace(0, element);
+						if(els.length === 1){
+							if(els[0].isConnected === false)
+								els[0].sf$destroyReplace(0, element);
+							else
+								newObj.$el = newObj.$el.push(element);
+						}
 						else{
 							for (var i = els.length-1; i >= 1; i--) {
 								if(els[i].isConnected === false)
@@ -405,11 +409,8 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 				internal.initPendingComponentScope(specialElement.scope, element);
 		}
 
-		if(reusing === void 0){
-			if(newObj.$el.length === 1 && newObj.$el[0] === void 0)
-				newObj.$el[0] = element;
-			else newObj.$el = newObj.$el.push(element);
-		}
+		if(reusing === void 0)
+			newObj.$el = newObj.$el.push(element);
 
 		if(namespace === void 0){
 			registrar[2].push(newObj);
