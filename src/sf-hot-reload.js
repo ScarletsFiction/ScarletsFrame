@@ -107,33 +107,44 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	if(firstTime)
 		Object.defineProperty(scope.$el, '_hotReload', {value: true});
 
-	!firstTime && scope.hotReloading && scope.hotReloading(scope);
+	!firstTime && scope.hotReload && scope.hotReload(scope);
 
 	if(func.constructor === Function){
-		let enabled = true;
-		func(new Proxy(scope, {set(obj, prop, val){
-			// Skip function that related with framework
-			// And skip if proxy is not enabled
-			if(enabled === false || internalProp[prop] === true){
-				obj[prop] = val;
+		if(scope.sf$internalData === void 0)
+			Object.defineProperty(scope, 'sf$internalData', {value:{}});
+
+		const internal = scope.sf$internalData;
+		if(internal.proxy === void 0){
+			internal.proxy = new Proxy(scope, {set(obj, prop, val){
+				// Skip function that related with framework
+				// And skip if proxy is not enabled
+				if(obj.hotReloading === false || internalProp[prop] === true){
+					obj[prop] = val;
+					return true;
+				}
+
+				if(val && val.constructor === Function)
+					refunction(prop, val);
+				else if(obj[prop] === void 0 || hotReloadAll === true)
+					obj[prop] = val; // Reassign non-function value
+
 				return true;
-			}
+			}});
+		}
 
-			if(val && val.constructor === Function)
-				refunction(prop, val);
-			else if(obj[prop] === void 0 || hotReloadAll === true)
-				obj[prop] = val; // Reassign non-function value
-
-			return true;
-		}}), space, (scope.$el && scope.$el.$item) || {});
-		enabled = false;
+		scope.hotReloading = true;
+		func(internal.proxy, space, (scope.$el && scope.$el.$item) || {});
+		scope.hotReloading = false;
 	}
 	else Object.setPrototypeOf(scope, func.class.prototype);
 
-	if(haveLoaded.has(scope) || forceHaveLoaded)
-		(!firstTime || forceHaveLoaded) && scope.hotReloaded && scope.hotReloaded(scope);
-	else
-		haveLoaded.add(scope);
+	if(haveLoaded.has(scope) || forceHaveLoaded){
+		if(!firstTime || forceHaveLoaded){
+			scope.sf$refresh && scope.sf$refresh.forEach(v=>v());
+			scope.hotReloaded && scope.hotReloaded(scope);
+		}
+	}
+	else haveLoaded.add(scope);
 }
 
 // On model scope reregistered
