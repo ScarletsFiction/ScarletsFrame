@@ -347,14 +347,22 @@ function hotComponentTemplate(scope, name){
 	backupCompTempl.set(registrar, registrar[3]);
 }
 
-setTimeout(function(){
-	if(window.SFDevSpace !== void 0) return;
+$(function(){
+	setTimeout(function(){
+		if(window.SFDevSpace !== void 0) return;
 
-	var path = $('script[src*="scarletsframe."]')[0].src;
-	path = path.split('scarletsframe.')[0];
-	sf.loader.js([path+'dev-mode.js']);
-	sf.loader.css([path+'dev-mode.css']);
-}, 1);
+		var path = $('script[src*="scarletsframe."]')[0];
+		if(path === void 0){
+			sf.loader.js(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js']);
+			sf.loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css']);
+			return;
+		}
+
+		path = path.src.split('scarletsframe.')[0];
+		sf.loader.js([path+'dev-mode.js']);
+		sf.loader.css([path+'dev-mode.css']);
+	}, 1);
+});
 
 if(devMode) console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 
