@@ -26,19 +26,19 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		<div class="title" title="Ctrl + Click on the list to open the source on your editor">{{ message }}</div>
 		<div class="list-title {{ spaceList }}" title="Registered model and component in this space will be different from global or other space">Space List 🍱</div>
 		<div class="space-list list {{ spaceList }}">
-			<sf-space-info sf-each="val in spaces" sf-as-scope/>
+			<sf-space-info sf-each="val in spaces" sf-as-scope></sf-space-info>
 		</div>
 		<div class="list-title {{ modelList }}" title="Shared model that can be used in multiple template">Model List ☘️🍀🌿</div>
 		<div class="model-list list {{ modelList }}">
-			<sf-model-info sf-each="val in models" sf-as-scope/>
+			<sf-model-info sf-each="val in models" sf-as-scope></sf-model-info>
 		</div>
 		<div class="list-title {{ componentList }}" title="Similar like model, instead of shared this will create new model scope for each component element. This can act like an empty shell, can be disposed or reused if being saved somewhere.">Component List 🌳💐🎄</div>
 		<div class="component-list list {{ componentList }}">
-			<sf-component-info sf-each="val in components" sf-as-scope/>
+			<sf-component-info sf-each="val in components" sf-as-scope></sf-component-info>
 		</div>
 		<div class="list-title {{ viewList }}" title="An element that have a router, this can be routed from the URL or script. Can be nested or created on any possible element.">Views Info 🍱⛺️🍂</div>
 		<div class="view-list list {{ viewList }}">
-			<sf-view-info sf-each="val in views" sf-as-scope/>
+			<sf-view-info sf-each="val in views" sf-as-scope></sf-view-info>
 		</div>
 	</div>`
 }, function(My){
@@ -202,15 +202,17 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 });
 
 // Add to body when DOM was finished loading
-sf.dom(function(){
-	// Create sf-dev-mode component inside of sf_devmode space
-	// Then append it in the body
-	sf.dom('body').append(`
-<sf-space sf_devmode>
-	<sf-dev-mode></sf-dev-mode>
-	<div class="sf-viewer"></div>
-</sf-space>`);
-});
+setTimeout(()=> {
+	sf.dom(function(){
+		// Create sf-dev-mode component inside of sf_devmode space
+		// Then append it in the body
+		sf.dom('body').append(`
+	<sf-space sf_devmode>
+		<sf-dev-mode></sf-dev-mode>
+		<div class="sf-viewer"></div>
+	</sf-space>`);
+	});
+}, 1);
 
 SFDevSpace.modelListHover = function($dom){
 	if($dom[0] === void 0) return;
@@ -471,10 +473,10 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	My.init = function(){
 		My.currentActive.panel = My.isEmpty; // This will trigger z-index: 1
 
-		My.deepRegister();
 		setTimeout(function(){
 			My.refreshObject();
 			My.refreshTypes();
+			My.deepRegister();
 		}, 1000);
 	}
 

@@ -28,7 +28,7 @@ if(typeof document === void 0)
 var HTMLTemplates = window.templates || {};
 var TemplatePending = [];
 Object.defineProperty(window, 'templates', {
-	set: (val)=>{
+	set: val=> {
 		HTMLTemplates = val;
 		hotReload && internal.hotTemplate(val);
 
