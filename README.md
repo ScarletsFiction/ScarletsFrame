@@ -7,10 +7,10 @@ A frontend framework that can help you write a simple web structure with complex
 
 The documentation located on [Github Wiki](https://github.com/ScarletsFiction/ScarletsFrame/wiki).
 
-This framework haven't reach v1.0.0. Every increment of (v0.\*.0) may have a breaking changes. Please see the `CHANGELOG.md` if you want to check the breaking changes. Make sure to specify the version instead of **latest** when using CDN link or the package like below.
+This framework haven't reach v1.0.0. Every increment of `(v0.*.0)` may have a breaking changes. Please see the **CHANGELOG.md** if you want to check the breaking changes. Make sure to specify the version instead of **latest** when using CDN link or the package like below.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.32.x/dist/scarletsframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.33.x/dist/scarletsframe.min.js"></script>
 ```
 
 ## Try it online like a project
@@ -44,17 +44,17 @@ Example with file and folder structure
 You can download minified js from this repository or use this CDN link.<br>
 For supporting older browser you need to add [core-js and webcomponentsjs](#polyfill-for-older-browser) polyfill.<br>
 ```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.32.x/dist/scarletsframe.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.33.x/dist/scarletsframe.min.js'></script>
 ```
 
 But if you develop only for modern browser and focus for performance it's recommended for using below, you may still to polyfill PointerEvent for Safari/Firefox desktop browser.
 ```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.32.x/dist/scarletsframe.es6.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.33.x/dist/scarletsframe.es6.js'></script>
 ```
 
 ## Install with with NPM
 ```sh
-$ npm i scarletsframe@0.32.x
+$ npm i scarletsframe@0.33.x
 ```
 
 ## Using the template
