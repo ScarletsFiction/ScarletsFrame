@@ -41,20 +41,10 @@ Example with file and folder structure
  - [NekoNyaan](https://nekonyaan.com)
 
 ## Install with CDN link
-You can download minified js from this repository or use this CDN link.<br>
-For supporting older browser you need to add [core-js and webcomponentsjs](#polyfill-for-older-browser) polyfill.<br>
+This is optional if you prefer using CDN link.
+But I recommend to use the default template that have Hot Reload enabled.
 ```html
 <script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.33.x/dist/scarletsframe.min.js'></script>
-```
-
-But if you develop only for modern browser and focus for performance it's recommended for using below, you may still to polyfill PointerEvent for Safari/Firefox desktop browser.
-```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.33.x/dist/scarletsframe.es6.js'></script>
-```
-
-## Install with with NPM
-```sh
-$ npm i scarletsframe@0.33.x
 ```
 
 ## Using the template
@@ -66,19 +56,17 @@ $ npm i -g scarletsframe-cli
 # Download template to current directory
 $ scarletsframe init default
 
-# Compile the default template
-$ npm run compile
+# Install the needed package
+$ npm i
 
-# Or use gulp if already installed globally
-$ gulp compile
+# Start the development server
+$ npm start
 ```
 
-## Starting the server
+## Install with with NPM
+This is optional if you prefer for using webpack, parcel, rollup, etc.
 ```sh
-$ npm start
-
-# Or use gulp
-$ gulp
+$ npm i scarletsframe@0.33.x
 ```
 
 And include it on your project with webpack ([example](https://github.com/krausest/js-framework-benchmark/tree/master/frameworks/keyed/scarletsframe)) or browserify.
@@ -86,8 +74,9 @@ And include it on your project with webpack ([example](https://github.com/krause
 const sf = require('scarletsframe');
 // import sf from "scarletsframe";
 
-sf.model('things', function(self, root) {
-  self.something = 123;
+// You can use require to reference another model
+sf.model('things', function(My, require) {
+  My.something = 123;
 });
 ```
 
