@@ -6,8 +6,6 @@ else forProxying.SFPageView = SFPageView._ref = SFPageView;
 customElements.define('sf-page-view', SFPageView);
 
 ;(function(){
-hotReloadEval = void 0; // Avoid this function being invoked out of scope
-
 const rejectResponse = /<html/;
 
 // Save reference

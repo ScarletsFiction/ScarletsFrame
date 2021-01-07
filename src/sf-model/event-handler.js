@@ -1,6 +1,14 @@
 if(!window.TouchEvent)
 	window.TouchEvent = void 0;
 
+function getDirectReference(_modelScope, script){
+	script = parsePropertyPath(script.trim());
+
+	if(script.includes('_modelScope.'))
+		return deepProperty(_modelScope, script.slice(12));
+	return deepProperty(window, script);
+}
+
 function eventHandler(that, data, _modelScope, rootHandler, template){
 	const modelKeys = sf.model.modelKeys(_modelScope, true);
 
@@ -35,7 +43,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 		// ToDo today: $0.parentElement.sf$listListener
 
 		if(direct)
-			var func = eval(script);
+			var func = getDirectReference(_modelScope, script);
 		else{
 			if(withKey)
 				var func = new Function('event', '_model_', '_modelScope', template.uniqPattern, script);
@@ -113,7 +121,7 @@ function eventHandler(that, data, _modelScope, rootHandler, template){
 
 	// Get function reference
 	else if(direct){
-		script = eval(script);
+		script = getDirectReference(_modelScope, script);
 
 		if(rejectUntrusted || name_.includes('.trusted')){
 			let original = script;

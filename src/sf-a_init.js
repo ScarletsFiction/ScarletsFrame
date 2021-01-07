@@ -12,13 +12,9 @@
 	alert("This browser was not supported");
   }
 
-  // Dynamic script when using hot reload feature
-  // Feature is disabled if not using hot reload
-  function hotReloadEval(code){eval(code)}
-
-  if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global, hotReloadEval);
-  else global.sf = factory(global, hotReloadEval);
-}(typeof window !== "undefined" ? window : this, (function(window, hotReloadEval){
+  if(typeof exports === 'object' && typeof module !== 'undefined') module.exports = factory(global);
+  else global.sf = factory(global);
+}(typeof window !== "undefined" ? window : this, (function(window){
 
 'use strict';
 

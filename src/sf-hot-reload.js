@@ -9,7 +9,6 @@ let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 let backupTemplate, backupCompTempl;
 
 ;(function(){
-const gEval = hotReloadEval;
 
 $(function(){
 	setTimeout(()=> {
@@ -51,8 +50,10 @@ sf.hotReload = function(mode){
 		setTimeout(function(){
 			if(window.___browserSync___ !== void 0){
 				const { socket } = window.___browserSync___;
-				socket.on('sf-hot-js', gEval);
-				socket.on('sf-hot-html', gEval);
+
+				function runScript(code){new Function(code)()}
+				socket.on('sf-hot-js', runScript);
+				socket.on('sf-hot-html', runScript);
 			}
 			else console.error("HotReload: Failed to listen to browserSync");
 		}, 1000);
