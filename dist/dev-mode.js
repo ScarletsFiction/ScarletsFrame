@@ -749,6 +749,8 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	can't be created by your user. You must sanitize any user input!
 */
 SFDevSpace.addDynamicView = function(titles, model, ev){
+	if(model === void 0) return;
+
 	var $ = sf.dom;
 	const parent = $('sf-space .sf-viewer');
 	var template = `<sf-model-viewer sf-as-scope style="

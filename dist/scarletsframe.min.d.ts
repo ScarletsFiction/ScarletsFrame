@@ -3,18 +3,21 @@
 // Definitions by: StefansArya <https://github.com/stefansarya>
 
 /**
- * If got a function then the function will be called when all resource was ready.
  * If got element then the model object will be returned.
- * @param obj HTMLElement or function callback
+ * @param elem HTMLElement
  */
-export declare function sf(obj: Function | HTMLElement): HTMLElement | object | null | void;
+export declare function sf(elem:HTMLElement): HTMLElement | null | void;
+
+declare type ModelScope = (state: SFModel, root:(name: String) => SFModel) => void;
+declare type ComponentScope = (state: SFModel, root:(name: String) => SFModel, $item: any) => SFModel | void;
+
 export declare namespace sf {
 	/**
-	 * Define new <sf-m name=""> element handler
-	 * @param name <sf-m name="name.here"></sf-m>
+	 * Define new < sf-m name="" > element handler, the model scope can be shared with every < sf-m name="" >
+	 * @param name < sf-m name="name.here" >< /sf-m >
 	 * @param options Model configuration, this can be the 3rd parameter
 	 * @param scope Your extendable class or callable function
-	 */ export function model(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SFModel;
+	 */ export function model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
 	export namespace model {
 		/**
 		 * Find the index of RepeatedElement on DOM
@@ -22,11 +25,11 @@ export declare namespace sf {
 		 */ function index(element: HTMLElement): number;
 	}
 	/**
-	 * Define new <component-name> element handler
-	 * @param name <name-here></name-here>
+	 * Define new < component-name > element handler, if the component scope is returning a model scope it would be used as current scope instead
+	 * @param name < name-here >< /name-here >
 	 * @param options Model configuration, this can be the 3rd parameter
 	 * @param scope Your extendable class or callable function
-	 */ export function component(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): ComponentList;
+	 */ export function component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
 	export namespace component {
 		/**
 		 * Define new template for a component, this is optional
@@ -102,6 +105,8 @@ export declare namespace sf {
 	export namespace dom {
 		const fn: DOMList;
 	}
+
+	export function request(method:HTTPMethod, url:string, data?:object, options?:RequestOptions): XHRPromise;
 }
 declare class DOMList extends Array<HTMLElement> {
 	constructor(arrayLength?: number);
@@ -161,13 +166,20 @@ declare class DOMList extends Array<HTMLElement> {
 	touchmove(data: any): DOMList;
 	resize(data: any): DOMList;
 	scroll(data: any): DOMList;
+	get(url: String, data?:object, options?:RequestOptions): XHRPromise;
+	post(url: String, data?:object, options?:RequestOptions): XHRPromise;
+	getJSON(url: String, data?:object, options?:RequestOptions): XHRPromise;
+	postJSON(url: String, data?:object, options?:RequestOptions): XHRPromise;
 }
 declare class SFModel {
-	/** Component or Model's container element list */
+	/** 
+	 * Component or Model's container element list
+	 * $el: DOMList | ((selector:string) => DOMList);
+	 */
     $el: any;
 
     // TypeScript issues: https://github.com/microsoft/TypeScript/issues/37663
-    // $el: DOMList[]|((selector:string)=>DOMList[]);
+    // $el: DOMList | ((selector:string) => DOMList);
 
 	[key: string]: any;
 }
@@ -223,12 +235,12 @@ interface SpaceComponent {
 declare class SFSpace {
 	/** Similar like sf.model */
 	model: {
-		(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SFModel;
+		(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
 		index(element: HTMLElement): number;
 	};
 	/** Similar like sf.component */
 	component: {
-		(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): ComponentList;
+		(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
 		html(name: String, template: HTMLElement | String | TemplateOptions): void;
 	};
 	/** Destroy sf-space */
@@ -250,6 +262,22 @@ interface WindowOptions {
 	templatePath?: string;
 	templateURL?: string;
 }
+interface RequestOptions{
+	receiveType?: String,
+	responseType?: String,
+	sendType?: String,
+	beforeOpen?: Function,
+	mimeType?: String,
+	timeout?: Number,
+	headers?: Object
+}
+declare interface XHRPromise extends XMLHttpRequest, Promise<any>{
+    done(func:(data?:any) => void): XHRPromise;
+    fail(func:(status?:any, data?:any) => void): XHRPromise;
+    always(func:(status?:any) => void): XHRPromise;
+    progress(func:(status?:ProgressEvent) => void): XHRPromise;
+    uploadProgress(func:(status?:ProgressEvent) => void): XHRPromise;
+}
 declare class API {
 	/** @param url API Root url, ex: https://example.com/api/v2 */
 	constructor(url: string);
@@ -262,12 +290,12 @@ declare class API {
 	 * @param url API Path url, ex: /create/post
 	 * @param data Data to be send
 	 */
-	get(url: string, data?: object): void;
-	post(url: string, data?: object): void;
-	delete(url: string, data?: object): void;
-	put(url: string, data?: object): void;
-	upload(url: string, data: FormData): void;
-	request(method: HTTPMethod, url: string, data?: object, beforeSend?: Function): void;
+	get(url: string, data?: object): XHRPromise;
+	post(url: string, data?: object): XHRPromise;
+	delete(url: string, data?: object): XHRPromise;
+	put(url: string, data?: object): XHRPromise;
+	upload(url: string, data: FormData): XHRPromise;
+	request(method: HTTPMethod, url: string, data?: object, options?: RequestOptions): XHRPromise;
 }
 declare class Space {
 	/**
@@ -292,13 +320,13 @@ declare class Space {
 	 * @param name <sf-m name="name-here"></sf-m>
 	 * @param options Model configuration, this can be the 3rd parameter
 	 * @param scope Your extendable class or callable function
-	 */ model(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SpaceModels;
+	 */ model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SpaceModels;
 	/**
 	 * Define new <component-name> element handler in the element space
 	 * @param name <name-here></name-here>
 	 * @param options Model configuration, this can be the 3rd parameter
 	 * @param scope Your extendable class or callable function
-	 */ component(name: String, options?: Function | ModelOptions | ((self: SFModel) => void), scope?: Function | ((self: SFModel) => void)): SpaceComponents;
+	 */ component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): SpaceComponents;
 	/** Destroy sf-space */
 	destroy(): void;
 }
@@ -332,11 +360,11 @@ interface Router {
 	beforeRoute?: (data: object) => boolean | void;
 }
 declare enum RouteEvent {
-	"start" = 0,
-	"finish" = 1,
-	"loading" = 2,
-	"loaded" = 3,
-	"error" = 4
+	"start" = "start",
+	"finish" = "finish",
+	"loading" = "loading",
+	"loaded" = "loaded",
+	"error" = "error"
 }
 declare type RouteEventStart = (currentPath?: string, targetPath?: string) => boolean | void;
 declare type RouteEventFinish = (previousPath?: string, currentPath?: string) => boolean | void;
@@ -388,17 +416,17 @@ export class RepeatedProperty {
 	 * Select related elements from this list with query selector
 	 * @param selector Query selector
 	 */
-	$el(selector: string): void;
+	$el(selector: string): Array<HTMLElement>;
 	/**
 	 * Get an element from this list
 	 * @param  index This can be an index/property name, or object value from this list
 	 */
-	getElement(index: object | number): void;
+	getElement(index: object | number): HTMLElement;
 	/**
 	 * Get related elements from this list
 	 * @param  index This can be an index/property name, or object value from this list
 	 */
-	getElements(index: object | number): void;
+	getElements(index: object | number): Array<HTMLElement>;
 	/** Refresh whole list if something was dynamically added no by calling a function */
 	refresh(): any;
 }
