@@ -1827,7 +1827,7 @@ function RE_getBindedList(modelRoot, binded){
 	const RE_Prototype = {
 		// For RepeatedProperty, RepeatedList, RepeatedMap, RepeatedSet
 		$el:{
-			value:(selector)=> {
+			value(selector){
 				const { $EM } = this;
 				if($EM.constructor === ElementManipulatorProxy)
 					return $EM.$el(selector)
