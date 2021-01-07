@@ -1,3 +1,5 @@
+import $ from "./sf-dom.js";
+
 $.get = (url, data, options, callback) => custom('GET', url, data, options, callback)
 $.post = (url, data, options, callback) => custom('POST', url, data, options, callback)
 $.getJSON = (url, data, options, callback) => custom('getJSON', url, data, options, callback)

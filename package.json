@@ -12,39 +12,32 @@
     "url": "https://github.com/ScarletsFiction/ScarletsFrame/issues"
   },
   "browserslist": [
-    "> 1%",
-    "Chrome >= 26",
-    "Firefox >= 26"
+    "Chrome >= 55",
+    "Firefox >= 42"
   ],
   "scripts": {
-    "start": "gulp",
-    "prepublishOnly": "gulp compile"
+    "start": "snowpack dev",
+    "prepublishOnly": "snowpack build"
   },
   "devDependencies": {
-    "@babel/core": "^7.10.4",
-    "@babel/preset-env": "^7.10.4",
-    "gulp": "^4.0.2",
-    "gulp-babel": "^8.0.0",
-    "gulp-concat": "^2.6.1",
-    "gulp-header": "^2.0.9",
-    "gulp-terser": "^2.0.0",
-    "gulp-rename": "^1.4.0",
-    "gulp-sourcemaps": "^2.6.5",
-    "node-notifier": "^8.0.1",
-    "serberries": "^1.4.7"
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@snowpack/plugin-babel": "^2.1.5",
+    "@snowpack/plugin-dotenv": "^2.0.5",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/plugin-proposal-optional-chaining": "^7.12.7",
+    "snowpack": "^3.0.0-rc.2"
   },
-  "main": "dist/scarletsframe.min.js",
+  "main": "src/index.js",
   "types": "dist/scarletsframe.min.d.ts",
   "keywords": [
     "dom-binding",
     "data-binding",
-    "two-way",
     "two-way-databinding",
     "framework",
     "html",
     "frontend",
     "router",
-    "mvw-framework",
     "assetloader"
   ]
 }

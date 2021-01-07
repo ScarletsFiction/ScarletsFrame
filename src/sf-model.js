@@ -1,5 +1,5 @@
 // Data save and HTML content binding
-sf.model = function(name, options, func, namespace){
+export default function Self(name, options, func, namespace){
 	if(options !== void 0)
 		return sf.model.for(name, options, func, namespace);
 
@@ -31,152 +31,149 @@ function findBindListElement(el, includeComponent){
 	return null;
 }
 
-;(function(){
-	const self = sf.model;
-	self.root = {};
-	internal.modelPending = {};
-	internal.modelInherit = {};
+Self.root = {};
+internal.modelPending = {};
+internal.modelInherit = {};
 
-	// Find an index for the element on the list
-	self.index = function(element, getProp){
-		if(!element.sf$elementReferences || !element.sf$elementReferences.template.bindList)
-			element = findBindListElement(element);
+// Find an index for the element on the list
+Self.index = function(element, getProp){
+	if(!element.sf$elementReferences || !element.sf$elementReferences.template.bindList)
+		element = findBindListElement(element);
 
-		if(element === null)
-			return -1;
+	if(element === null)
+		return -1;
 
-		if(getProp)
-			return element.sf$repeatListIndex;
+	if(getProp)
+		return element.sf$repeatListIndex;
 
-		let i = -1;
-		const tagName = element.tagName;
-		const currentElement = element;
+	let i = -1;
+	const tagName = element.tagName;
+	const currentElement = element;
 
-		while(element !== null) {
-			if(element.tagName === tagName)
-				i++;
-			else if(element.nodeType !== 8) break;
+	while(element !== null) {
+		if(element.tagName === tagName)
+			i++;
+		else if(element.nodeType !== 8) break;
 
-			element = element.previousSibling;
-		}
-
-		const ref = currentElement.sf$elementReferences && currentElement.sf$elementReferences.template.bindList;
-
-		const VSM = currentElement.parentNode.$VSM;
-		if(VSM !== void 0) return i - 1 + VSM.firstCursor; // -1 for virtual spacer
-		return i;
+		element = element.previousSibling;
 	}
 
-	// Declare model for the name with a function
-	self.for = function(name, options, func, namespace){
-		if(options.constructor === Function){
-			func = options;
+	const ref = currentElement.sf$elementReferences && currentElement.sf$elementReferences.template.bindList;
 
-			// It's a class
-			if(func.prototype.init !== void 0){
-				internal.modelInherit[name] = func;
-				func = {class:func};
+	const VSM = currentElement.parentNode.$VSM;
+	if(VSM !== void 0) return i - 1 + VSM.firstCursor; // -1 for virtual spacer
+	return i;
+}
+
+// Declare model for the name with a function
+Self.for = function(name, options, func, namespace){
+	if(options.constructor === Function){
+		func = options;
+
+		// It's a class
+		if(func.prototype.init !== void 0){
+			internal.modelInherit[name] = func;
+			func = {class:func};
+		}
+	}
+	else{
+		if(func === void 0){
+			let root = (namespace || sf.model).root;
+
+			if(root[name] === void 0){
+				options.$el = $();
+				root[name] = options;
 			}
-		}
-		else{
-			if(func === void 0){
-				let root = (namespace || sf.model).root;
+			else Object.assign(root[name], options);
 
-				if(root[name] === void 0){
-					options.$el = $();
-					root[name] = options;
-				}
-				else Object.assign(root[name], options);
-
-				return root[name];
-			}
-
-			internal.modelInherit[name] = options.extend;
+			return root[name];
 		}
 
-		const scope = namespace || self;
-		if(hotReload)
-			hotModel(scope, name, func);
-
-		let scopeTemp = scope(name);
-
-		// Call it it's a function
-		if(!hotReload && func.constructor === Function)
-			func(scopeTemp, scope);
-
-		if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
-			const temp = internal.modelPending[name];
-			for (let i = 0; i < temp.length; i++) {
-				sf.model.init(temp[i], temp[i].getAttribute('name'));
-			}
-
-			delete internal.modelPending[name];
-		}
-
-		if(devMode){
-			if(scopeTemp.$el === void 0)
-				scopeTemp.$el = $();
-
-			if(scopeTemp.$el.$devData === void 0)
-				Object.defineProperty(scopeTemp.$el, '$devData', {
-					configurable: true,
-					value: {
-						func,
-						filePath: getCallerFile(namespace ? 2 : 2)
-					}
-				});
-		}
-
-		// Return model scope
-		return scopeTemp;
+		internal.modelInherit[name] = options.extend;
 	}
 
-	// Get property of the model
-	self.modelKeys = function(modelRef, toString){
-		// it maybe custom class
-		if(modelRef.constructor !== Object && modelRef.constructor !== Array){
-			var keys = new Set();
-			for(var key in modelRef){
-				if(key.includes('$'))
-					continue;
+	const scope = namespace || Self;
+	if(hotReload)
+		hotModel(scope, name, func);
 
-				keys.add(key);
-			}
+	let scopeTemp = scope(name);
 
-			getStaticMethods(keys, modelRef.constructor);
-			getPrototypeMethods(keys, modelRef.constructor);
+	// Call it it's a function
+	if(!hotReload && func.constructor === Function)
+		func(scopeTemp, scope);
 
-			if(toString){
-				let temp = '';
-				for(var key of keys){
-					if(temp.length === 0){
-						temp += key;
-						continue;
-					}
-
-					temp += `|${key}`;
-				}
-
-				return temp;
-			}
-
-			return [...keys];
+	if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
+		const temp = internal.modelPending[name];
+		for (let i = 0; i < temp.length; i++) {
+			sf.model.init(temp[i], temp[i].getAttribute('name'));
 		}
 
-		var keys = [];
+		delete internal.modelPending[name];
+	}
+
+	if(devMode){
+		if(scopeTemp.$el === void 0)
+			scopeTemp.$el = $();
+
+		if(scopeTemp.$el.$devData === void 0)
+			Object.defineProperty(scopeTemp.$el, '$devData', {
+				configurable: true,
+				value: {
+					func,
+					filePath: getCallerFile(namespace ? 2 : 2)
+				}
+			});
+	}
+
+	// Return model scope
+	return scopeTemp;
+}
+
+// Get property of the model
+Self.modelKeys = function(modelRef, toString){
+	// it maybe custom class
+	if(modelRef.constructor !== Object && modelRef.constructor !== Array){
+		var keys = new Set();
 		for(var key in modelRef){
 			if(key.includes('$'))
 				continue;
 
-			keys.push(key);
+			keys.add(key);
 		}
 
-		if(toString)
-			return keys.join('|');
+		getStaticMethods(keys, modelRef.constructor);
+		getPrototypeMethods(keys, modelRef.constructor);
 
-		return keys;
+		if(toString){
+			let temp = '';
+			for(var key of keys){
+				if(temp.length === 0){
+					temp += key;
+					continue;
+				}
+
+				temp += `|${key}`;
+			}
+
+			return temp;
+		}
+
+		return [...keys];
 	}
-})();
+
+	var keys = [];
+	for(var key in modelRef){
+		if(key.includes('$'))
+			continue;
+
+		keys.push(key);
+	}
+
+	if(toString)
+		return keys.join('|');
+
+	return keys;
+}
 
 // Define sf-model element
 class SFModel extends HTMLElement {
