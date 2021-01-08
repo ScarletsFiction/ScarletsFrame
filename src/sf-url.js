@@ -1,7 +1,7 @@
-const self = function(){
+export default function Self(){
 	// Hash
 	let _hash = '';
-	let hash = self.routes;
+	let hash = Self.routes;
 	for(let key in hash){
 		if(hash[key] === '/') continue;
 		_hash += `#${key}${hash[key]}`;
@@ -9,13 +9,13 @@ const self = function(){
 
 	// Query
 	let _query = '';
-	let query = self.query;
+	let query = Self.query;
 	for(let key in query)
 		_query += `${(_query.length === 0 ? '?' : '&')}${key}=${encodeURI(query[key])}`;
 
 	// Data
 	let _data = '';
-	let data = self.data;
+	let data = Self.data;
 	for(let key in data){
 		var dat = data[key];
 
@@ -30,53 +30,51 @@ const self = function(){
 		else _data += `;${key}`;
 	}
 
-	return `${self.path}${_query}${_hash}${
+	return `${Self.path}${_query}${_hash}${
 		(_data.length === 0 ? '' : `#${encodeURI(_data)}`)
 	}`;
 };
 
-export default self;
-
-self.path = '/'; // Main URL path without hash/query/data
-self.routes = {}; // Used for sf-views for multiple hash routes
-self.query = {}; // GET query parameter on the URL
-self.data = {}; // {UniqID: [String, ...], UniqID: String}
+Self.path = '/'; // Main URL path without hash/query/data
+Self.routes = {}; // Used for sf-views for multiple hash routes
+Self.query = {}; // GET query parameter on the URL
+Self.data = {}; // {UniqID: [String, ...], UniqID: String}
 
 // Shortcut
 const history = window.history;
 const location = window.location;
 
 function isURLSimilar(){
-	const now = self();
+	const now = Self();
 	if(now === location.origin + location.href) return;
 	return now;
 }
 
 // Push into latest history
-self.push = function(){
+Self.push = function(){
 	const now = isURLSimilar();
 	if(now === void 0) return;
 
 	history.pushState((history.state || 0) + 1, '', now);
-	self.trigger();
+	Self.trigger();
 }
 
 // Remove next history and change current history
-self.replace = function(){
+Self.replace = function(){
 	const now = isURLSimilar();
 	if(now === void 0) return;
 
-	history.replaceState(history.state, '', self());
-	self.trigger();
+	history.replaceState(history.state, '', Self());
+	Self.trigger();
 }
 
 // If url === undefined, it will parse current URL save the data into sf.url
 // If url is String, it will parse the String and create new object to save the data
-self.parse = function(url){
+Self.parse = function(url){
 	let obj, URLQuery, URLHash, URLData;
 
 	if(url === void 0){
-		obj = self;
+		obj = Self;
 		obj.path = location.pathname;
 
 		obj.query = {};
@@ -177,7 +175,7 @@ function validateURLData(dat){
 }
 
 let listener = {query:[], hash:[], path:[], data:[]};
-self.on = function(name, options, callback){
+Self.on = function(name, options, callback){
 	if(options.constructor === Function)
 		callback = options;
 	else callback.path = options.path;
@@ -185,12 +183,12 @@ self.on = function(name, options, callback){
 	listener[name].push(callback);
 }
 
-self.once = function(name, options, callback){
+Self.once = function(name, options, callback){
 	(options.constructor === Function ? options : callback).once = true;
-	self.on(name, options, callback);
+	Self.on(name, options, callback);
 }
 
-self.off = function(name, callback){
+Self.off = function(name, callback){
 	const list = listener[name];
 
 	if(callback === void 0){
@@ -201,17 +199,17 @@ self.off = function(name, callback){
 	list.splice(list.indexOf(callback), 1);
 }
 
-self.trigger = function(){
+Self.trigger = function(){
 	for(var key in listener){
 		const list = listener[key];
 		if(list.length === 0) continue;
 
 		for (var i = 0; i < list.length; i++) {
 			const callback = list[i];
-			if(callback.path !== void 0 && callback.path !== self.path)
+			if(callback.path !== void 0 && callback.path !== Self.path)
 				continue;
 
-			callback(self[key]);
+			callback(Self[key]);
 
 			if(callback.once)
 				list.splice(i--, 1);
@@ -219,4 +217,4 @@ self.trigger = function(){
 	}
 }
 
-self.parse();
+Self.parse();

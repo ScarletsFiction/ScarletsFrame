@@ -33,6 +33,24 @@ export function findBindListElement(el, includeComponent){
 	return null;
 }
 
+export function GetModelScope(el, returnNode){
+	if(el === void 0)
+		el = $0;
+
+	// If it's Node type
+	if(el.tagName !== void 0){
+		if(el.sf$controlled === void 0 && !(el.sf$elementReferences && el.sf$elementReferences.template.bindList))
+			el = findBindListElement(el, true);
+
+		if(el === null)
+			return el;
+
+		if(returnNode)
+			return el;
+		return el.model;
+	}
+};
+
 Self.root = {};
 internal.modelPending = {};
 internal.modelInherit = {};

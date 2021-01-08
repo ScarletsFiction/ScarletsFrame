@@ -1,5 +1,5 @@
-import {internal} from "./shared.js";
-import {$} from "./sf-dom.js";
+import {internal, TemplatePending} from "./shared.js";
+import $ from "./sf-dom.js";
 import Model from "./sf-model.js";
 
 export default function Self(name, options, func, namespace){

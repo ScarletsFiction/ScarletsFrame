@@ -1,8 +1,12 @@
+import Model from "./sf-model.js";
+import Component from "./sf-component.js";
+import {internal, forProxying} from "./shared.js";
+
 // ToDo: Tidy up, the implementation seems dirty
 function getNamespace(name, id){
-	let scope = sf.space.list[name];
+	let scope = Space.list[name];
 	if(scope === void 0)
-		scope = sf.space.list[name] = {_waiting:[]};
+		scope = Space.list[name] = {_waiting:[]};
 
 	if(scope[id] === void 0){
 		let ref = scope.default;
@@ -64,7 +68,7 @@ else
 	internal.space = {
 		empty:true,
 		initComponent(root, tagName, elem, $item, asScope){
-			sf.component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
+			Component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
 		},
 		initModel(root, elem){
 			const name = elem.getAttribute('name');
@@ -77,7 +81,7 @@ else
 			if(space.modelFunc[name].constructor === Array)
 				return space.modelFunc[name].push([elem, name, root.sf$space]);
 
-			sf.model.init(elem, name, root.sf$space);
+			Model.init(elem, name, root.sf$space);
 		},
 	};
 
@@ -85,7 +89,10 @@ if(window.sf$proxy === void 0)
 	forProxying.internalSpace = internal.space;
 
 export default class Space{
+	// { name:{ default:{}, id:{}, ... } }
+	static list = {};
 	inherit = {};
+
 	// modelList = {default:{model-name:{ model here }}};
 	// modelFunc = {};
 	// componentList = {default:{comp-name:[ comp list here ]}};
@@ -99,9 +106,9 @@ export default class Space{
 
 		this.namespace = namespace;
 
-		let scope = sf.space.list[namespace];
+		let scope = Space.list[namespace];
 		if(scope === void 0)
-			scope = sf.space.list[namespace] = {};
+			scope = Space.list[namespace] = {};
 
 		if(scope._pendingInit){
 			let temp = scope._pendingInit;
@@ -131,7 +138,7 @@ export default class Space{
 		}
 
 		this.default = getNamespace(namespace, 'default');
-		this.list = sf.space.list[namespace];
+		this.list = Space.list[namespace];
 
 		if(options)
 			this.templatePath = options.templatePath;
@@ -170,23 +177,23 @@ export default class Space{
 				this.modelList.default[name] = {};
 
 			if(old !== void 0 && old.constructor === Array){
-				sf.model.for(name, options, func, this.default);
+				Model.for(name, options, func, this.default);
 
 				for (let i = 0; i < old.length; i++){
 					const arg = old[i];
-					sf.model.init(arg[0], arg[1], arg[2], this.default);
+					Model.init(arg[0], arg[1], arg[2], this.default);
 				}
 				return this.modelList.default[name];
 			}
 		}
 
-		sf.model.for(name, options, func, this.default);
+		Model.for(name, options, func, this.default);
 		return this.modelList.default[name];
 	}
 
 	component(name, options, func){
 		const temp = this.componentList.default;
-		temp[name] = sf.component(name, options, func, this.default);
+		temp[name] = Component(name, options, func, this.default);
 		return temp[name];
 	}
 
@@ -209,11 +216,6 @@ export default class Space{
 		}
 	}
 }
-
-sf.space = Space;
-
-// { name:{ default:{}, id:{}, ... } }
-sf.space.list = {};
 
 // Define sf-model element
 class SFSpace extends HTMLElement {

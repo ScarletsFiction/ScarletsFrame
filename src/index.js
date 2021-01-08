@@ -1,41 +1,59 @@
 console.log('hello');
 
 import "./shared.js";
-import "./sf.js";
-import "./sf-api.js";
-import "./sf-component.js";
-import "./sf-dom.js";
-import "./sf-events.js";
-import "./sf-hot-reload.js";
-import "./sf-language.js";
-import "./sf-link.js";
-import "./sf-loader.js";
-import "./sf-model.js";
-import "./sf-request.js";
-import "./sf-security.js";
-import "./sf-space.js";
-import "./sf-url.js";
-import "./sf-views.js";
-import "./sf-window.js";
+import API from "./sf-api.js";
+import Component from "./sf-component.js";
+import $ from "./sf-dom.js";
+import Events from "./sf-events.js";
+import HotReload from "./sf-hot-reload.js";
+import Language from "./sf-language.js";
+import Link from "./sf-link.js";
+import Loader from "./sf-loader.js";
+import Model from "./sf-model.js";
+import Request from "./sf-request.js";
+import Security from "./sf-security.js";
+import Space from "./sf-space.js";
+import URL from "./sf-url.js";
+import Views from "./sf-views.js";
+import Window from "./sf-window.js";
 
+if(window.sf$ === void 0)
+	window.sf$ = {};
 
-export var HTMLTemplates = window.templates || {};
+window.sf = {
+	API,
+	Component,
+	$,
+	Events,
+	HotReload,
+	Language,
+	Link,
+	Loader,
+	Model,
+	Request,
+	Security,
+	Space,
+	URL,
+	Views,
+	Window,
+};
 
-var TemplatePending = [];
-Object.defineProperty(window, 'templates', {
-	set: val=> {
-		HTMLTemplates = val;
-		hotReload && internal.hotTemplate(val);
-
-		if(TemplatePending.length !== 0){
-			var temp = TemplatePending;
-			TemplatePending = [];
-
-			for (var i = 0; i < temp.length; i++)
-				temp[i]();
-		}
-	},
-	get:()=> HTMLTemplates
-});
+export {
+	API,
+	Component,
+	$,
+	Events,
+	HotReload,
+	Language,
+	Link,
+	Loader,
+	Model,
+	Request,
+	Security,
+	Space,
+	URL,
+	Views,
+	Window,
+};
 
 // import.meta.hot?.accept();

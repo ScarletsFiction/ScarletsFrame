@@ -1,4 +1,4 @@
-import {sf} from "./sf.js";
+import sf from "./internal.js";
 
 const Self = {};
 export default Self;

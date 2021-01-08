@@ -3,7 +3,7 @@ import Window from "./sf-window.js";
 
 const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
 
-export function $(selector, context){
+export default function $(selector, context){
 	if(!selector){
 		if(selector === void 0){
 			const temp = sel=> temp.find(sel);

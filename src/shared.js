@@ -31,3 +31,21 @@ export var sfRegex = {
 	allTemplateBracket:/{\[([\s\S]*?)\]}/g,
 	anyOperation:/[ =(+-]/,
 };
+
+export var HTMLTemplates = window.templates || {};
+export var TemplatePending = [];
+Object.defineProperty(window, 'templates', {
+	set: val=> {
+		HTMLTemplates = val;
+		hotReload && internal.hotTemplate(val);
+
+		if(TemplatePending.length !== 0){
+			var temp = TemplatePending;
+			TemplatePending = [];
+
+			for (var i = 0; i < temp.length; i++)
+				temp[i]();
+		}
+	},
+	get:()=> HTMLTemplates
+});

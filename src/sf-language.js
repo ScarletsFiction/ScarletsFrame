@@ -1,11 +1,9 @@
-import {sf} from "./sf.js";
+import SFWindow from "./sf-window.js";
 import {internal} from "./shared.js";
 
-const Self = function(el){
-	sf.lang.init(el);
+export default function Self(el){
+	Self.init(el);
 }
-
-export default Self;
 
 Self.list = {};
 Self.default = 'en_US';
@@ -39,8 +37,8 @@ Self.changeDefault = function(defaultLang){
 	Self.default = defaultLang;
 
 	// Maybe have create other window?
-	if(windowDestroyListener !== false && sf.window.list.length !== 0){
-		const windows = sf.window.list;
+	if(windowDestroyListener !== false && SFWindow.list.length !== 0){
+		const windows = SFWindow.list;
 
 		for (let i = 0; i < windows.length; i++)
 			windows[i].sf.lang.changeDefault(defaultLang);
@@ -75,7 +73,7 @@ Self.changeDefault = function(defaultLang){
 
 	Self.init(document.body);
 
-	const wList = sf.window.list;
+	const wList = SFWindow.list;
 	for(let key in wList)
 		Self.init(wList[key].document.body);
 }

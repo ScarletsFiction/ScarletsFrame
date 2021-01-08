@@ -4,16 +4,15 @@
 // ToDo: Make the implementation more efficient
 import {SFOptions, internal} from "./shared.js";
 import Loader from "./sf-loader.js";
-import {$} from "./sf-dom.js";
-import {sf} from "./sf.js";
+import Component from "./sf-component.js";
+import Model from "./sf-model.js";
+import $ from "./sf-dom.js";
 
 let hotReloadAll = false; // All model property
 SFOptions.devMode = true;
 
 let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 let backupTemplate, backupCompTempl;
-
-;(function(){
 
 $(function(){
 	setTimeout(()=> {
@@ -22,7 +21,7 @@ $(function(){
 	}, 5000);
 })
 
-sf.hotReload = function(mode){
+export default function HotReload(mode){
 	if(mode === 1)
 		SFOptions.hotReload = true;
 	else if(mode === 2)
@@ -64,8 +63,6 @@ sf.hotReload = function(mode){
 		}, 1000);
 	});
 }
-
-})();
 
 const haveLoaded = new WeakSet();
 function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
@@ -223,7 +220,7 @@ function hotComponentRefresh(space, name, func){
 
 // Refresh views html and component
 function hotTemplate(templates){
-	const vList = sf.views.list;
+	const vList = View.list;
 	const changes = {};
 
 	for(let path in templates){
@@ -238,7 +235,7 @@ function hotTemplate(templates){
 
 			if(registrar !== void 0 && registrar[3] !== void 0){
 				const old = registrar[3].outerHTML;
-				sf.component.html(_name, {template:path}, _space);
+				Component.html(_name, {template:path}, _space);
 				const now = registrar[3].outerHTML;
 
 				if(now !== old
@@ -267,7 +264,7 @@ function hotTemplate(templates){
 
 			page.innerHTML = templates[pageTemplate];
 
-			page.routeCached.html = sf.dom.parseElement(`<template>${templates[pageTemplate]}</template>`, true)[0];
+			page.routeCached.html = $.parseElement(`<template>${templates[pageTemplate]}</template>`, true)[0];
 
 			// Replace with the old nested view
 			const nesteds = page.sf$viewSelector;
@@ -340,7 +337,7 @@ function hotComponentTemplate(scope, name){
 			}
 
 			element.sf$elementReferences = parsed.sf$elementReferences;
-			sf.model.bindElement(element, model, copy);
+			Model.bindElement(element, model, copy);
 
 			// Put it back after children was ready
 			if(parentNode !== null)
@@ -355,7 +352,7 @@ function hotComponentTemplate(scope, name){
 
 $(function(){
 	setTimeout(function(){
-		if(window.SFDevSpace !== void 0) return;
+		if(window.SFDevSpace !== void 0 || window.sf$.hasInspector) return;
 
 		var path = $('script[src*="scarletsframe."]')[0];
 		if(path === void 0){
