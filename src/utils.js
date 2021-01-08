@@ -1,3 +1,4 @@
+import {sfRegex} from "./shared.js";
 export function parsePropertyPath(str){
 	var temp = [];
 	temp.unshift(str.replace(sfRegex.parsePropertyPath, function(full, g1, g2){

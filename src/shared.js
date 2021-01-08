@@ -1,7 +1,9 @@
 export function NOOP(){}
 export const isTouchDevice = ()=> navigator.maxTouchPoints !== 0;
 
-export var internal = {};
+export var internal = {
+	virtualScrolling: false,
+};
 export var privateRoot = {};
 export var forProxying = {};
 export var emptyArray = Object.freeze({length:0});
@@ -37,7 +39,7 @@ export var TemplatePending = [];
 Object.defineProperty(window, 'templates', {
 	set: val=> {
 		HTMLTemplates = val;
-		hotReload && internal.hotTemplate(val);
+		SFOptions.hotReload && internal.hotTemplate(val);
 
 		if(TemplatePending.length !== 0){
 			var temp = TemplatePending;

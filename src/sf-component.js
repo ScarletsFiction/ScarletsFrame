@@ -4,10 +4,10 @@ import $ from "./sf-dom.js";
 import Model from "./sf-model.js";
 import Space from "./sf-space.js";
 import {templateParser} from "./sf-model/template.js";
-import {templateInjector, createModelKeysRegex} from "./sf-model/parser.js";
+import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreprocess, queuePreprocess} from "./sf-model/parser.js";
 import {bindInput} from "./sf-model/input-bind.js";
 import {repeatedListBinding} from "./sf-model/repeated-list.js";
-import {removeModelBinding} from "./sf-model/element-bind.js";
+import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd} from "./sf-hot-reload.js";
 
 export default function Self(name, options, func, namespace){
@@ -33,7 +33,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 
 	const isDynamic = templateInjector(temp, newObj, true);
-	temp = Model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
+	temp = extractPreprocess(temp, null, newObj, void 0, registrar[4]);
 
 	if(isDynamic === false)
 		registrar[3] = temp;
@@ -374,7 +374,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		}
 
 		element.sf$elementReferences = parsed.sf$elementReferences;
-		Model.bindElement(element, newObj, copy);
+		bindElement(element, newObj, copy);
 
 		element.model = newObj;
 	}
@@ -393,7 +393,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		};
 
 		templateInjector(element, newObj, false);
-		Model.parsePreprocess(Model.queuePreprocess(element, true, specialElement), newObj, registrar[4]);
+		parsePreprocess(queuePreprocess(element, true, specialElement), newObj, registrar[4]);
 
 		if(specialElement.input !== void 0)
 			bindInput(specialElement.input, newObj);
@@ -495,7 +495,7 @@ class SFComponent extends HTMLElement{
 
 	connectedCallback(which){
 		// Maybe it's not the time
-		if(virtualScrolling || this.model === void 0 || this.sf$componentIgnore === true)
+		if(internal.virtualScrolling || this.model === void 0 || this.sf$componentIgnore === true)
 			return;
 
 		if(this.sf$detaching !== void 0){
@@ -526,7 +526,7 @@ class SFComponent extends HTMLElement{
 	}
 
 	disconnectedCallback(){
-		if(virtualScrolling || this.sf$componentIgnore)
+		if(internal.virtualScrolling || this.sf$componentIgnore)
 			return;
 
 		// Skip if it's not initialized or not destroyable

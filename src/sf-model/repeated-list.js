@@ -3,9 +3,16 @@
 //
 // Note: using .apply can be more faster than ...spread
 
+import {GetModelScope} from "../sf-model.js";
 import Component from "../sf-component.js";
 import Internal from "../internal.js";
+import $ from "../sf-dom.js";
 import {findScrollerElement, addScrollerStyle} from "../sf-virtual_scroll.js";
+import {internal, SFOptions, sfRegex} from "../shared.js";
+import {initBindingInformation, extractPreprocess} from "./parser.js";
+import {hiddenProperty} from "../utils.js";
+import {repeatedListBindRoot, bindElement} from "./element-bind.js";
+import {syntheticTemplate} from "./template.js";
 
 var RE_Assign = false;
 var RE_ProcessIndex;
@@ -154,7 +161,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	let template, originalAddr;
 	if(!isComponent){
 		// Get reference for debugging
-		processingElement = element;
+		internal.processingElement = element;
 
 		if(modelKeysRegex.specialElement !== void 0)
 			originalAddr = modelKeysRegex.specialElement.repeat[RE_ProcessIndex];
@@ -164,7 +171,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			if(element.namespaceURI === 'http://www.w3.org/2000/svg' && (element.constructor._ref || element.constructor) !== SVGSVGElement)
 				container = 'svg';
 
-			template = self.extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
+			template = extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
 
 			if(originalAddr !== void 0 && originalAddr.rule !== void 0){
 				originalAddr.template = Object.assign({}, template);
@@ -186,12 +193,12 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 
 		template.bindList = this;
 
-		if(devMode === true)
-			template.rootIndex = $.getSelector(parentNode, true, sf(parentNode, true));
+		if(SFOptions.devMode === true)
+			template.rootIndex = $.getSelector(parentNode, true, GetModelScope(parentNode, true));
 
 		if(this.constructor === RepeatedList){
 			template.repeatedList = true;
-			self.repeatedListBindRoot(template, modelRef);
+			repeatedListBindRoot(template, modelRef);
 		}
 	}
 	else if(element.hasAttribute('sf-as-scope'))
@@ -609,7 +616,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 
 			if(typeof item === "object"){
 				if(isComponent === false)
-					self.bindElement(elem, modelRef, template, item);
+					bindElement(elem, modelRef, template, item);
 
 				EM.elementRef.set(item, elem);
 			}
@@ -648,7 +655,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 
 		if(typeof item === "object"){
 			if(isComponent === false)
-				self.bindElement(elem, modelRef, template, item);
+				bindElement(elem, modelRef, template, item);
 
 			EM.elementRef.set(item, elem);
 		}
@@ -1163,7 +1170,7 @@ export class ElementManipulator{
 
 					if(typeof item === "object"){
 						if(this.isComponent === false)
-							self.bindElement(temp, this.modelRef, template, item);
+							bindElement(temp, this.modelRef, template, item);
 
 						if(this.elementRef !== void 0)
 							this.elementRef.set(item, temp);
@@ -1190,7 +1197,7 @@ export class ElementManipulator{
 
 		if(typeof item === "object"){
 			if(this.isComponent === false)
-				self.bindElement(temp, this.modelRef, template, item);
+				bindElement(temp, this.modelRef, template, item);
 
 			if(this.elementRef !== void 0)
 				this.elementRef.set(item, temp);
@@ -1240,7 +1247,7 @@ export class ElementManipulator{
 
 				if(typeof ref === "object"){
 					if(this.isComponent === false)
-						self.bindElement(temp, this.modelRef, this.template, ref);
+						bindElement(temp, this.modelRef, this.template, ref);
 
 					this.elementRef.set(ref, temp);
 
@@ -1255,7 +1262,7 @@ export class ElementManipulator{
 
 					if(typeof ref === "object"){
 						if(this.isComponent === false)
-							self.bindElement(temp, this.modelRef, this.template, ref);
+							bindElement(temp, this.modelRef, this.template, ref);
 
 						this.elementRef.set(ref, temp);
 
@@ -1321,7 +1328,7 @@ export class ElementManipulator{
 
 				if(typeof ref === "object"){
 					if(this.isComponent === false)
-						self.bindElement(temp, this.modelRef, template, ref);
+						bindElement(temp, this.modelRef, template, ref);
 
 					this.elementRef.set(ref, temp);
 
@@ -1336,7 +1343,7 @@ export class ElementManipulator{
 
 					if(typeof ref === "object"){
 						if(this.isComponent === false)
-							self.bindElement(temp, this.modelRef, template, ref);
+							bindElement(temp, this.modelRef, template, ref);
 
 						this.elementRef.set(ref, temp);
 

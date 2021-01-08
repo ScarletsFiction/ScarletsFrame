@@ -1,5 +1,7 @@
 import {customEvent} from "./custom-event.js";
+import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
 import Model from "../sf-model.js";
+import {internal, sfRegex} from "../shared.js";
 
 if(!window.TouchEvent)
 	window.TouchEvent = void 0;
@@ -26,7 +28,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 	});
 
 	const name_ = data.name.slice(1);
-	let wantTrusted = name_.includes('.trusted') || rejectUntrusted;
+	let wantTrusted = name_.includes('.trusted') || internal.rejectUntrusted;
 
 	// Create custom listener for repeated element
 	if(rootHandler){
@@ -126,7 +128,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 	else if(direct){
 		script = getDirectReference(_modelScope, script);
 
-		if(rejectUntrusted || name_.includes('.trusted')){
+		if(internal.rejectUntrusted || name_.includes('.trusted')){
 			let original = script;
 			script = function(ev){
 				if(ev.isTrusted === false){

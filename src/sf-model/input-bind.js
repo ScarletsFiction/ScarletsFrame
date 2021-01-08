@@ -1,6 +1,7 @@
 import Internal from "../internal.js";
+import {internal} from "../shared.js";
 
-let inputBoundRunning = false;
+internal.inputBoundRunning = false;
 function callInputListener(ref, value){
 	const v2m = ref.sfModel[`v2m$${ref.sfBounded}`];
 	const on = ref.sfModel[`on$${ref.sfBounded}`];
@@ -29,7 +30,7 @@ function callInputListener(ref, value){
 function inputTextBound(e){
 	if(e.fromSFFramework === true) return;
 
-	const ref = inputBoundRunning = e.target;
+	const ref = internal.inputBoundRunning = e.target;
 	ref.viewInputted = true;
 	const value = ref.typeData === Number ? Number(ref.value) : ref.value;
 	const newValue = callInputListener(ref, value);
@@ -68,7 +69,7 @@ function inputFilesBound(e){
 function inputCheckBoxBound(e){
 	if(e.fromSFFramework === true) return;
 
-	const ref = inputBoundRunning = e.target;
+	const ref = internal.inputBoundRunning = e.target;
 	ref.viewInputted = true;
 
 	const model = ref.sfModel;
@@ -106,7 +107,7 @@ function inputCheckBoxBound(e){
 function inputSelectBound(e){
 	if(e.fromSFFramework === true) return;
 
-	const ref = inputBoundRunning = e.target;
+	const ref = internal.inputBoundRunning = e.target;
 	ref.viewInputted = true;
 	const { typeData } = ref;
 
@@ -175,7 +176,7 @@ function inputBoundRun(val, elements){
 	if(val == null) val = '';
 
 	for (let i = 0; i < elements.length; i++) {
-		if(inputBoundRunning === elements[i])
+		if(internal.inputBoundRunning === elements[i])
 			continue; // Avoid multiple assigment
 
 		const el = elements[i];

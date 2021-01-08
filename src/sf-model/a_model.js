@@ -1,8 +1,10 @@
-import {internal} from "../shared.js";
+import {internal, SFOptions} from "../shared.js";
 import Internal from "../internal.js";
 import Model from "../sf-model.js";
 import $ from "../sf-dom.js";
-import {parsePreprocess, queuePreprocess} from "./parser.js";
+import {avoidQuotes} from "../utils.js";
+import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.js";
+import {repeatedListBinding} from "./repeated-list.js";
 
 export function ModelInit(el, modelName, namespace){
 	if(el.model !== void 0)
@@ -230,7 +232,6 @@ export function findErrorLocation(text, error, slicedX, msg, slicedY){
 	console.log(msg+'%c'+text, 'color:orange', '', 'color:#ffa666;font-weight:bold', '');
 }
 
-var processingElement = null;
 export function templateErrorInfo(e, element, item, modelRef, template){
 	if(e.sf$throwed){
 		var el, isSingle = 'From element:';
@@ -251,7 +252,7 @@ export function templateErrorInfo(e, element, item, modelRef, template){
 		}
 
 		var sfeach;
-		if(devMode && template.rootIndex)
+		if(SFOptions.devMode && template.rootIndex)
 			sfeach = $.childIndexes(template.rootIndex, el) || void 0;
 
 		console.log("%cTemplate's data:%c", 'color:orange', '',

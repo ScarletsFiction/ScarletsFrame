@@ -203,13 +203,13 @@ export function modelKeys(modelRef, toString){
 Self.modelKeys = modelKeys;
 
 // Define sf-model element
-class SFModel extends HTMLElement {
+export class SFModel extends HTMLElement {
 	constructor(){
 		super();
 		this.sf$firstInit = true;
 	}
 	connectedCallback(){
-		if(virtualScrolling) return;
+		if(internal.virtualScrolling) return;
 
 		if(this.sf$destroying !== void 0){
 			clearTimeout(this.sf$destroying);
@@ -253,7 +253,7 @@ class SFModel extends HTMLElement {
 		internal.modelPending[name].push(this);
 	}
 	disconnectedCallback(){
-		if(virtualScrolling) return;
+		if(internal.virtualScrolling) return;
 
 		const that = this;
 		const destroy = function(){

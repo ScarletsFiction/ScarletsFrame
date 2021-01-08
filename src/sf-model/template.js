@@ -1,4 +1,9 @@
 import Internal from "../internal.js";
+import {internal, SFOptions} from "../shared.js";
+import {templateErrorInfo, findErrorLocation, _eP, applyParseIndex} from "./a_model.js";
+import $ from "../sf-dom.js";
+import {eventHandler} from "./event-handler.js";
+import {repeatedListBinding} from "./repeated-list.js";
 
 function elseIfHandle(else_, item, modelScope){
 	const { elseIf } = else_;
@@ -21,9 +26,10 @@ function elseIfHandle(else_, item, modelScope){
 }
 
 // ==== Template parser ====
-const templateParser_regex = /{{%=([0-9]+)%/g;
-const templateParser_regex_split = /{{%=[0-9]+%/g;
-const REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
+export const templateParser_regex = /{{%=([0-9]+)%/g;
+export const templateParser_regex_split = /{{%=[0-9]+%/g;
+export const REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
+
 export function templateExec(parse, item, atIndex, parsed, repeatListIndex){
 	var temp, changed = false;
 
@@ -155,7 +161,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 
 		var temp = {ref:refB};
 
-		if(hotReload)
+		if(SFOptions.hotReload)
 			temp.element = current;
 
 		if(refB.name === 'style')
@@ -194,7 +200,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 }
 
 export function templateParser(template, item, original, modelRef, rootHandler, copy, repeatListIndex, namespace){
-	processingElement = template.html;
+	internal.processingElement = template.html;
 
 	let html = original === true ? template.html : template.html.cloneNode(true);
 	const { addresses } = template;
@@ -402,7 +408,7 @@ function runFrameStack(){
 }
 
 const C_zero = [0];
-function syntheticTemplate(element, template, property, item, asyncing){
+export function syntheticTemplate(element, template, property, item, asyncing){
 	var changes;
 	if(property !== void 0){
 		changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];

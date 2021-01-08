@@ -1,8 +1,8 @@
-import {internal, forProxying} from "./shared.js";
+import {internal, forProxying, SFOptions} from "./shared.js";
 import $ from "./sf-dom.js";
 import SFURL from "./sf-url.js";
 
-class SFPageView extends HTMLElement{}
+export class SFPageView extends HTMLElement{}
 if(window.sf$proxy)
 	SFPageView._ref = window.sf$proxy.SFPageView;
 else forProxying.SFPageView = SFPageView._ref = SFPageView;
@@ -256,7 +256,7 @@ export default function Self(selector, name){
 
 		DOM.sf$viewInitialized = true;
 
-		if(devMode) DOM.scope = Self;
+		if(SFOptions.devMode) DOM.scope = Self;
 
 		if(!isChild){
 			Self.currentDOM = temp;
@@ -330,7 +330,7 @@ export default function Self(selector, name){
 	Self.addRoute = function(obj){
 		routes.push(...internal.router.parseRoutes(obj, selectorList));
 
-		if(devMode && devAddLocked !== true){
+		if(SFOptions.devMode && devAddLocked !== true){
 			if(Self.$devData === void 0)
 				Object.defineProperty(Self, '$devData', {
 					configurable: true,
@@ -664,7 +664,7 @@ export default function Self(selector, name){
 					selectorElement = dom.sf$viewSelector = {};
 			}
 
-			if(hotReload && url.template !== void 0)
+			if(SFOptions.hotReload && url.template !== void 0)
 				dom.sf$templatePath = url.template;
 
 			if(url.hasChild){
@@ -971,7 +971,7 @@ $(function(){
 	$.on(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
-		if(ev.isTrusted === false && rejectUntrusted)
+		if(ev.isTrusted === false && internal.rejectUntrusted)
 			return sf.security.report && sf.security.report(1,ev);
 
 		const attr = this.getAttribute('href');

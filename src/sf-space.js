@@ -1,6 +1,7 @@
 import Model from "./sf-model.js";
 import Component from "./sf-component.js";
 import {internal, forProxying} from "./shared.js";
+import {ModelInit} from "./sf-model/a_model.js";
 
 // ToDo: Tidy up, the implementation seems dirty
 function getNamespace(name, id){
@@ -81,7 +82,7 @@ else
 			if(space.modelFunc[name].constructor === Array)
 				return space.modelFunc[name].push([elem, name, root.sf$space]);
 
-			Model.init(elem, name, root.sf$space);
+			ModelInit(elem, name, root.sf$space);
 		},
 	};
 
@@ -181,7 +182,7 @@ export default class Space{
 
 				for (let i = 0; i < old.length; i++){
 					const arg = old[i];
-					Model.init(arg[0], arg[1], arg[2], this.default);
+					ModelInit(arg[0], arg[1], arg[2], this.default);
 				}
 				return this.modelList.default[name];
 			}

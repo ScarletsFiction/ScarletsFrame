@@ -1,8 +1,10 @@
+import {GetModelScope} from "./sf-model.js";
 import SFWindow from "./sf-window.js";
 import Component from "./sf-component.js";
 import Request from "./sf-request.js";
 import Space from "./sf-space.js";
 import {internal} from "./shared.js";
+import {syntheticTemplate} from "./sf-model/template.js";
 
 export default function Self(el){
 	Self.init(el);
@@ -347,7 +349,7 @@ function refreshLang(list, noPending, callback){
 				continue;
 			}
 			else{
-				const modelElement = sf(elem, true);
+				const modelElement = GetModelScope(elem, true);
 				if(modelElement !== null){
 					if(parentElement.has(modelElement))
 						continue;
@@ -404,7 +406,7 @@ function refreshLang(list, noPending, callback){
 
 			let { model } = elem;
 			if(model === void 0)
-				model = sf(elem);
+				model = GetModelScope(elem);
 
 			// Avoid model that doesn't have binding
 			if(model.sf$bindedKey === void 0)
@@ -415,7 +417,7 @@ function refreshLang(list, noPending, callback){
 
 			appliedElement.add(elem);
 
-			if(internal.model.syntheticTemplate(elem, elem.sf$elementReferences.template, void 0, model, true) !== false)
+			if(syntheticTemplate(elem, elem.sf$elementReferences.template, void 0, model, true) !== false)
 				continue; // updated
 
 			elem.sf_lang = void 0;

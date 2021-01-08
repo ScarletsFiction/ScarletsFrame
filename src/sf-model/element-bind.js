@@ -1,4 +1,6 @@
-import {forProxying} from "../shared.js";
+import {internal, forProxying} from "../shared.js";
+import {stringifyPropertyPath} from "../utils.js";
+import {syntheticTemplate} from "./template.js";
 
 export function removeModelBinding(ref, isDeep, isLazy){
 	if(ref === void 0)
@@ -338,7 +340,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		set:(val)=> {
 			if(objValue !== val){
 				let newValue, noFeedback, temp;
-				if(inputBoundRunning === false){
+				if(internal.inputBoundRunning === false){
 					if(_m2v !== void 0){
 						newValue = _m2v.call(model, val);
 
@@ -370,7 +372,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 				if(noFeedback) objValue = val;
 			}
 
-			inputBoundRunning = false;
+			internal.inputBoundRunning = false;
 		}
 	});
 }

@@ -5,9 +5,15 @@
 // .apply() or spread ...array is slower than direct function call
 // object[0] is slower than array[0]
 
-import {sfRegex} from "../shared.js";
-import {modelKeys} from "../sf-model.js";
+import {sfRegex, internal} from "../shared.js";
+import {modelKeys as getModelKeys, SFModel} from "../sf-model.js";
+import $ from "../sf-dom.js";
+import {SFPageView} from "../sf-views.js";
 import {bindElement} from "./element-bind.js";
+import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
+import {REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./template.js";
+import {parseIndexAllocate, modelScript} from "./a_model.js";
+
 
 // ToDo: directly create parse_index from here
 function dataParser(html, _model_, template, _modelScoped, preParsedReference, justName){
@@ -316,7 +322,7 @@ export function templateInjector(targetNode, modelScope, cloneDynamic){
 }
 
 export function createModelKeysRegex(targetNode, modelScope, mask){
-	const modelKeys = modelKeys(modelScope, true);
+	const modelKeys = getModelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
 		throw new Error("Model has no property instead of '$el', maybe some script haven't been loaded");
@@ -809,7 +815,7 @@ export function parsePreprocess(nodes, modelRef, modelKeysRegex){
 	try{
 		for(current of nodes){
 			// Get reference for debugging
-			processingElement = current;
+			internal.processingElement = current;
 
 			if(current.nodeType === 3 && binded.has(current.parentNode) === false){
 				if(current.parentNode.constructor._ref === SFModel._ref){
@@ -899,7 +905,7 @@ export function parsePreprocess(nodes, modelRef, modelKeysRegex){
 	}
 }
 
-function initBindingInformation(modelRef){
+export function initBindingInformation(modelRef){
 	if(modelRef.sf$bindedKey !== void 0)
 		return;
 
