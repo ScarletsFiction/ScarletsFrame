@@ -1,14 +1,17 @@
-import $ from "./sf-dom.js";
+import {$} from "./sf-dom.js";
 
 $.get = (url, data, options, callback) => custom('GET', url, data, options, callback)
 $.post = (url, data, options, callback) => custom('POST', url, data, options, callback)
 $.getJSON = (url, data, options, callback) => custom('getJSON', url, data, options, callback)
 $.postJSON = (url, data, options, callback) => custom('postJSON', url, data, options, callback)
 
-sf.request = custom;
-const statusCode = sf.request.statusCode = {};
-sf.request.onerror = null;
-sf.request.onsuccess = null;
+let Self = {};
+export default Self;
+
+Self = custom;
+const statusCode = Self.statusCode = {};
+Self.onerror = null;
+Self.onsuccess = null;
 
 function custom(method, url, data, options, callback){
 	if(data && data.constructor === Function){
@@ -142,12 +145,12 @@ class ReqEventRegister extends XMLHttpRequest{
 		return this;
 	}
 	static ontimeout(){
-		sf.request.onerror && sf.request.onerror(this);
+		Self.onerror && Self.onerror(this);
 		this._cb.fail && this._cb.fail('timeout');
 		this._cb.always && this._cb.always('timeout');
 	}
 	static onerror(){
-		sf.request.onerror && sf.request.onerror(this);
+		Self.onerror && Self.onerror(this);
 		this._cb.fail && this._cb.fail(this.status);
 		this._cb.always && this._cb.always('error');
 	}
@@ -167,12 +170,12 @@ class ReqEventRegister extends XMLHttpRequest{
 
 				if(parsed !== void 0){
 					callback.done && callback.done(JSON.parse(xhr.responseText), xhr.status);
-					sf.request.onsuccess && sf.request.onsuccess(xhr);
+					Self.onsuccess && Self.onsuccess(xhr);
 				}
 			}
 			else{
 				callback.done && callback.done(xhr.response, xhr.status);
-				sf.request.onsuccess && sf.request.onsuccess(xhr);
+				Self.onsuccess && Self.onsuccess(xhr);
 			}
 		}
 		else if(callback.fail){

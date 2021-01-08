@@ -2,8 +2,13 @@
 // Note: This feature will allocate more small memory and small slow down
 // ToDo: Fix memory leak on RepeatedElement when using this feature
 // ToDo: Make the implementation more efficient
+import {SFOptions, internal} from "./shared.js";
+import Loader from "./sf-loader.js";
+import {$} from "./sf-dom.js";
+import {sf} from "./sf.js";
+
 let hotReloadAll = false; // All model property
-devMode = true;
+SFOptions.devMode = true;
 
 let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 let backupTemplate, backupCompTempl;
@@ -12,16 +17,16 @@ let backupTemplate, backupCompTempl;
 
 $(function(){
 	setTimeout(()=> {
-		if(!hotReload)
+		if(!SFOptions.hotReload)
 			console.log('[ScarletsFrame] %cHot reload was inactive', 'color:yellow');
 	}, 5000);
 })
 
 sf.hotReload = function(mode){
 	if(mode === 1)
-		hotReload = true;
+		SFOptions.hotReload = true;
 	else if(mode === 2)
-		hotReloadAll = hotReload = true;
+		hotReloadAll = SFOptions.hotReload = true;
 
 	if(proxyModel !== void 0) return;
 
@@ -354,18 +359,18 @@ $(function(){
 
 		var path = $('script[src*="scarletsframe."]')[0];
 		if(path === void 0){
-			sf.loader.js(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js']);
-			sf.loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css']);
+			Loader.js(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js']);
+			Loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css']);
 			return;
 		}
 
 		path = path.src.split('scarletsframe.')[0];
-		sf.loader.js([path+'dev-mode.js']);
-		sf.loader.css([path+'dev-mode.css']);
+		Loader.js([path+'dev-mode.js']);
+		Loader.css([path+'dev-mode.css']);
 	}, 1);
 });
 
-if(devMode) console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
+console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 
 function getCallerFile(step){
 	try{throw new Error()}catch(e){

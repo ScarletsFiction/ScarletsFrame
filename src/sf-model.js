@@ -1,3 +1,5 @@
+import {internal, forProxying} from "./shared.js";
+
 // Data save and HTML content binding
 export default function Self(name, options, func, namespace){
 	if(options !== void 0)
@@ -20,7 +22,7 @@ export default function Self(name, options, func, namespace){
 	return scope.root[name];
 };
 
-function findBindListElement(el, includeComponent){
+export function findBindListElement(el, includeComponent){
 	el = el.parentNode;
 	while(el !== null){
 		if((el.sf$elementReferences && el.sf$elementReferences.template.bindList) || (includeComponent && el.sf$controlled !== void 0))

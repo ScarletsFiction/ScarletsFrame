@@ -1,13 +1,15 @@
 export function NOOP(){}
 export const isTouchDevice = ()=> navigator.maxTouchPoints !== 0;
 
+export var internal = {};
+export var privateRoot = {};
+export var forProxying = {};
+export var emptyArray = Object.freeze({length:0});
 
-var internal = {};
-var privateRoot = {};
-var forProxying = {};
-var emptyArray = Object.freeze({length:0});
-var devMode = false;
-var hotReload = false;
+export var SFOptions = {
+	devMode: false,
+	hotReload: false,
+};
 
 export var sfRegex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,

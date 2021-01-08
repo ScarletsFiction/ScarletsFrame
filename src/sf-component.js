@@ -1,3 +1,7 @@
+import {internal} from "./shared.js";
+import {$} from "./sf-dom.js";
+import Model from "./sf-model.js";
+
 export default function Self(name, options, func, namespace){
 	if(options !== void 0){
 		if(options.constructor === Function)
@@ -21,7 +25,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 
 	const isDynamic = internal.model.templateInjector(temp, newObj, true);
-	temp = sf.model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
+	temp = Model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
 
 	if(isDynamic === false)
 		registrar[3] = temp;
@@ -287,7 +291,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 				Object.setPrototypeOf(newObj, inherit.prototype);
 
 			// Call function that handle scope
-			reusing = func(newObj, (namespace || sf.model), $item);
+			reusing = func(newObj, (namespace || Model), $item);
 			if(reusing !== void 0){
 				newObj = reusing;
 
@@ -316,7 +320,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 		if(newObj.constructor !== Object){
 			proxyClass(newObj);
-			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || sf.model), $item);
+			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || Model), $item);
 		}
 
 		// Save the item for hot reloading
@@ -362,7 +366,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		}
 
 		element.sf$elementReferences = parsed.sf$elementReferences;
-		sf.model.bindElement(element, newObj, copy);
+		Model.bindElement(element, newObj, copy);
 
 		element.model = newObj;
 	}
@@ -381,7 +385,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		};
 
 		internal.model.templateInjector(element, newObj, false);
-		sf.model.parsePreprocess(sf.model.queuePreprocess(element, true, specialElement), newObj, registrar[4]);
+		Model.parsePreprocess(Model.queuePreprocess(element, true, specialElement), newObj, registrar[4]);
 
 		if(specialElement.input !== void 0)
 			internal.model.bindInput(specialElement.input, newObj);
@@ -502,7 +506,7 @@ class SFComponent extends HTMLElement{
 				}
 
 				if(this.model.constructor !== Object)
-					this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || sf.model));
+					this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || Model));
 
 				this.model.init(this);
 			}

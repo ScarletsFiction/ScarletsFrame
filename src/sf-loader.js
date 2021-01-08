@@ -1,52 +1,54 @@
-const self = {};
-export default self;
+import {sf} from "./sf.js";
 
-self.loadedContent = 0;
-self.totalContent = 0;
-self.DOMWasLoaded = false;
-self.DOMReady = false;
-self.turnedOff = true;
+const Self = {};
+export default Self;
+
+Self.loadedContent = 0;
+Self.totalContent = 0;
+Self.DOMWasLoaded = false;
+Self.DOMReady = false;
+Self.turnedOff = true;
 
 let whenDOMReady = [];
 let whenDOMLoaded = [];
 let whenProgress = [];
 
 // Make event listener
-self.onFinish = function(func){
-	if(self.DOMWasLoaded) return func();
+Self.onFinish = function(func){
+	if(Self.DOMWasLoaded) return func();
 	if(whenDOMLoaded.includes(func)) return;
 	whenDOMLoaded.push(func);
 }
-self.domReady = function(func){
-	if(self.DOMReady) return func();
+Self.domReady = function(func){
+	if(Self.DOMReady) return func();
 	if(whenDOMReady.includes(func)) return;
 	whenDOMReady.push(func);
 }
-self.onProgress = function(func){
-	if(self.DOMWasLoaded) return func(self.loadedContent, self.totalContent);
+Self.onProgress = function(func){
+	if(Self.DOMWasLoaded) return func(Self.loadedContent, Self.totalContent);
 	if(whenProgress.includes(func)) return;
 	whenProgress.push(func);
 }
 
-self.f = function(ev){
-	self.loadedContent++;
+Self.f = function(ev){
+	Self.loadedContent++;
 
-    ev.target.removeEventListener('load', self.f, {once:true});
-    ev.target.removeEventListener('error', self.f, {once:true});
+    ev.target.removeEventListener('load', Self.f, {once:true});
+    ev.target.removeEventListener('error', Self.f, {once:true});
 
     if(pendingOrderedJS.length !== 0){
-    	if(pendingOrderedJS.length + self.loadedContent === self.totalContent)
+    	if(pendingOrderedJS.length + Self.loadedContent === Self.totalContent)
     		document.head.appendChild(pendingOrderedJS.shift());
     }
 
     if(whenProgress === null) return;
 
 	for (let i = 0; i < whenProgress.length; i++)
-		whenProgress[i](self.loadedContent, self.totalContent);
+		whenProgress[i](Self.loadedContent, Self.totalContent);
 }
 
-self.css = function(list){
-	if(self.DOMWasLoaded){
+Self.css = function(list){
+	if(Self.DOMWasLoaded){
 		// check if some list was loaded
 		for (var i = list.length - 1; i >= 0; i--) {
 			if(document.querySelectorAll(`link[href*="${list[i]}"]`).length !== 0)
@@ -54,21 +56,21 @@ self.css = function(list){
 		}
 		if(list.length === 0) return;
 	}
-	self.turnedOff = false;
+	Self.turnedOff = false;
 
-	self.totalContent = self.totalContent + list.length;
+	Self.totalContent = Self.totalContent + list.length;
 	for(var i = 0; i < list.length; i++){
 		const s = document.createElement('link');
         s.rel = 'stylesheet';
         s.href = list[i];
-        s.addEventListener('load', self.f, {once:true});
-        s.addEventListener('error', self.f, {once:true});
+        s.addEventListener('load', Self.f, {once:true});
+        s.addEventListener('error', Self.f, {once:true});
         document.head.appendChild(s);
 	}
 }
 
-self.js = function(list, async){
-	if(self.DOMWasLoaded){
+Self.js = function(list, async){
+	if(Self.DOMWasLoaded){
 		// check if some list was loaded
 		for (var i = list.length - 1; i >= 0; i--) {
 			if(document.querySelectorAll(`script[src*="${list[i]}"]`).length !== 0)
@@ -76,7 +78,7 @@ self.js = function(list, async){
 		}
 		if(list.length === 0) return;
 	}
-	self.turnedOff = false;
+	Self.turnedOff = false;
 
 	var ordered;
 	if(async && async.constructor === Object){
@@ -84,14 +86,14 @@ self.js = function(list, async){
 		async = async.async;
 	}
 
-	self.totalContent = self.totalContent + list.length;
+	Self.totalContent = Self.totalContent + list.length;
 	for(var i = 0; i < list.length; i++){
 		const s = document.createElement('script');
         s.type = "text/javascript";
         if(async) s.async = true;
         s.src = list[i];
-        s.addEventListener('load', self.f, {once:true});
-        s.addEventListener('error', self.f, {once:true});
+        s.addEventListener('load', Self.f, {once:true});
+        s.addEventListener('error', Self.f, {once:true});
 
         if(!ordered)
         	document.head.appendChild(s);
@@ -102,7 +104,7 @@ self.js = function(list, async){
 var pendingOrderedJS = [];
 
 let lastState = '';
-self.waitImages = function(){
+Self.waitImages = function(){
 	lastState = 'loading';
 }
 
@@ -114,9 +116,9 @@ function domLoadEvent(event){
 		if(lastState === 'loading'){ // Find images
 			const temp = document.body.querySelectorAll('img:not(onload)[src]');
 			for (let i = 0; i < temp.length; i++) {
-				self.totalContent++;
-				temp[i].addEventListener('load', self.f, {once:true});
-				temp[i].addEventListener('error', self.f, {once:true});
+				Self.totalContent++;
+				temp[i].addEventListener('load', Self.f, {once:true});
+				temp[i].addEventListener('error', Self.f, {once:true});
 			}
 		}
 	}
@@ -126,8 +128,8 @@ document.addEventListener("load", domLoadEvent, true);
 
 function domStateEvent(){
 	if(document.readyState === 'interactive' || document.readyState === 'complete'){
-		if(self.DOMReady === false){
-			self.DOMReady = true;
+		if(Self.DOMReady === false){
+			Self.DOMReady = true;
 			for (let i = 0; i < whenDOMReady.length; i++) {
 				try{
 					whenDOMReady[i]();
@@ -138,7 +140,7 @@ function domStateEvent(){
 			}
 		}
 
-		if(self.turnedOff === false)
+		if(Self.turnedOff === false)
 			resourceWaitTimer = setInterval(waitResources, 100);
 		else waitResources();
 
@@ -156,19 +158,19 @@ else document.addEventListener('readystatechange', domStateEvent, true);
 
 var resourceWaitTimer = -1;
 function waitResources(){
-	if(self.turnedOff === false && self.loadedContent < self.totalContent)
+	if(Self.turnedOff === false && Self.loadedContent < Self.totalContent)
 		return;
 
 	clearInterval(resourceWaitTimer);
 
 	const listener = document.querySelectorAll('script, link, img');
 	for (var i = 0; i < listener.length; i++) {
-		listener[i].removeEventListener('error', self.f);
-		listener[i].removeEventListener('load', self.f);
+		listener[i].removeEventListener('error', Self.f);
+		listener[i].removeEventListener('load', Self.f);
 	}
 
-	self.DOMWasLoaded = true;
-	self.turnedOff = true;
+	Self.DOMWasLoaded = true;
+	Self.turnedOff = true;
 
 	for (var i = 0; i < whenDOMLoaded.length; i++) {
 		try{

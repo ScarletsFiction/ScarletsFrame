@@ -1,4 +1,4 @@
-function parsePropertyPath(str){
+export function parsePropertyPath(str){
 	var temp = [];
 	temp.unshift(str.replace(sfRegex.parsePropertyPath, function(full, g1, g2){
 		if(g1 !== void 0){
@@ -18,7 +18,7 @@ function parsePropertyPath(str){
 	return temp;
 }
 
-function stringifyPropertyPath(properties){
+export function stringifyPropertyPath(properties){
 	var remake = properties[0];
 	for (var i = 1; i < properties.length; i++) {
 		if(properties[i].constructor === Number)
@@ -31,7 +31,7 @@ function stringifyPropertyPath(properties){
 }
 
 var _es = '%@~';
-function avoidQuotes(str, func, onQuotes, isAttr){
+export function avoidQuotes(str, func, onQuotes, isAttr){
 	str = str.split(_es).join('-');
 
 	var temp = [];
@@ -57,14 +57,14 @@ function avoidQuotes(str, func, onQuotes, isAttr){
 	return str;
 }
 
-function isEmptyObject(obj){
+export function isEmptyObject(obj){
 	for(var key in obj){
 		return false;
 	}
 	return true
 }
 
-function compareObject(obj1, obj2){
+export function compareObject(obj1, obj2){
 	if(obj1 === obj2)
 		return true;
 
@@ -98,7 +98,7 @@ function compareObject(obj1, obj2){
 	return true;
 }
 
-function hiddenProperty(obj, property, value, isWritable){
+export function hiddenProperty(obj, property, value, isWritable){
 	Object.defineProperty(obj, property, {
 		enumerable: false,
 		configurable: true,
@@ -107,7 +107,7 @@ function hiddenProperty(obj, property, value, isWritable){
 	});
 }
 
-function deepProperty(obj, path){
+export function deepProperty(obj, path){
   for(var i = 0; i < path.length; i++){
 	obj = obj[path[i]];
 	if(obj === void 0) return;
@@ -115,14 +115,14 @@ function deepProperty(obj, path){
   return obj;
 }
 
-function capitalizeLetters(name){
+export function capitalizeLetters(name){
 	for (var i = 0; i < name.length; i++)
 		name[i] = name[i].slice(0, 1).toUpperCase() + name[i].slice(1);
 
 	return name.join('');
 }
 
-function getStaticMethods(keys, clas){
+export function getStaticMethods(keys, clas){
 	var keys2 = Object.getOwnPropertyNames(clas);
 
 	for(var i = 0; i < keys2.length; i++){
@@ -131,7 +131,7 @@ function getStaticMethods(keys, clas){
 	}
 }
 
-function getPrototypeMethods(keys, clas){
+export function getPrototypeMethods(keys, clas){
 	if(clas.prototype === void 0)
 		return;
 
@@ -146,7 +146,7 @@ function getPrototypeMethods(keys, clas){
 		getPrototypeMethods(keys, deep);
 }
 
-function proxyClass(scope){
+export function proxyClass(scope){
 	var parent = scope.constructor;
 	var proto = parent.prototype;
 
@@ -170,7 +170,7 @@ function proxyClass(scope){
 }
 
 // Faster than Array.from on some condition
-function toArray(b){
+export function toArray(b){
 	var c = new Array(b.length);
 	for(var i=0; i<c.length; i++)
 		c[i] = b[i];

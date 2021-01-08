@@ -1,6 +1,7 @@
 console.log('hello');
 
 import "./shared.js";
+import "./sf.js";
 import "./sf-api.js";
 import "./sf-component.js";
 import "./sf-dom.js";
@@ -36,23 +37,5 @@ Object.defineProperty(window, 'templates', {
 	},
 	get:()=> HTMLTemplates
 });
-
-export default function(el, returnNode){
-	if(el === void 0)
-		el = $0;
-
-	// If it's Node type
-	if(el.tagName !== void 0){
-		if(el.sf$controlled === void 0 && !(el.sf$elementReferences && el.sf$elementReferences.template.bindList))
-			el = findBindListElement(el, true);
-
-		if(el === null)
-			return el;
-
-		if(returnNode)
-			return el;
-		return el.model;
-	}
-};
 
 // import.meta.hot?.accept();
