@@ -1,15 +1,21 @@
-import {internal, forProxying} from "./shared.js";
+import {internal, forProxying, SFOptions} from "./shared.js";
+import {getCallerFile, hotModel} from "./sf-hot-reload.js";
+import $ from "./sf-dom.js";
+import Loader from "./sf-loader.js";
+import Component from "./sf-component.js";
+
+import "./sf-model/a_model.js";
 
 // Data save and HTML content binding
 export default function Self(name, options, func, namespace){
 	if(options !== void 0)
-		return sf.model.for(name, options, func, namespace);
+		return Self.for(name, options, func, namespace);
 
 	// If it's component tag
-	if((namespace || sf.component).registered[name] !== void 0)
+	if((namespace || Component).registered[name] !== void 0)
 		return (namespace || root_)(name);
 
-	const scope = namespace || sf.model;
+	const scope = namespace || Self;
 	if(scope.root[name] === void 0){
 		if(internal.modelInherit[name] !== void 0)
 			scope.root[name] = new internal.modelInherit[name]();
@@ -98,7 +104,7 @@ Self.for = function(name, options, func, namespace){
 	}
 	else{
 		if(func === void 0){
-			let root = (namespace || sf.model).root;
+			let root = (namespace || Self).root;
 
 			if(root[name] === void 0){
 				options.$el = $();
@@ -113,25 +119,25 @@ Self.for = function(name, options, func, namespace){
 	}
 
 	const scope = namespace || Self;
-	if(hotReload)
+	if(SFOptions.hotReload)
 		hotModel(scope, name, func);
 
 	let scopeTemp = scope(name);
 
 	// Call it it's a function
-	if(!hotReload && func.constructor === Function)
+	if(!SFOptions.hotReload && func.constructor === Function)
 		func(scopeTemp, scope);
 
-	if(sf.loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
+	if(Loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
 		const temp = internal.modelPending[name];
 		for (let i = 0; i < temp.length; i++) {
-			sf.model.init(temp[i], temp[i].getAttribute('name'));
+			Self.init(temp[i], temp[i].getAttribute('name'));
 		}
 
 		delete internal.modelPending[name];
 	}
 
-	if(devMode){
+	if(SFOptions.devMode){
 		if(scopeTemp.$el === void 0)
 			scopeTemp.$el = $();
 
@@ -150,7 +156,7 @@ Self.for = function(name, options, func, namespace){
 }
 
 // Get property of the model
-Self.modelKeys = function(modelRef, toString){
+export function modelKeys(modelRef, toString){
 	// it maybe custom class
 	if(modelRef.constructor !== Object && modelRef.constructor !== Array){
 		var keys = new Set();
@@ -194,6 +200,7 @@ Self.modelKeys = function(modelRef, toString){
 
 	return keys;
 }
+Self.modelKeys = modelKeys;
 
 // Define sf-model element
 class SFModel extends HTMLElement {
@@ -224,17 +231,17 @@ class SFModel extends HTMLElement {
 		const name = this.getAttribute('name');
 
 		// Instant run when model scope was found or have loaded
-		if(sf.model.root[name] !== void 0 && internal.modelPending[name] === void 0){
+		if(Self.root[name] !== void 0 && internal.modelPending[name] === void 0){
 			// Run init when all assets have loaded
-			if(sf.loader.DOMWasLoaded){
+			if(Loader.DOMWasLoaded){
 				internal.language.refreshLang(this);
-				return sf.model.init(this, name);
+				return Self.init(this, name);
 			}
 
 			const that = this;
-			sf.loader.onFinish(function(){
+			Loader.onFinish(function(){
 				internal.language.refreshLang(that);
-				sf.model.init(that, name);
+				Self.init(that, name);
 			});
 			return;
 		}
@@ -281,12 +288,22 @@ else forProxying.SFModel = SFModel._ref = SFModel;
 customElements.define('sf-m', SFModel);
 
 var root_ = function(scope){
-	if(sf.component.registered[scope])
-		return sf.component(scope);
+	if(Component.registered[scope])
+		return Component(scope);
 
-	if(sf.model.root[scope] === void 0) {
-		sf.model.root[scope] = {};
-	}
+	if(Self.root[scope] === void 0)
+		Self.root[scope] = {};
 
-	return sf.model.root[scope];
+	return Self.root[scope];
 }
+
+// Let's check all pending model
+$(function(){
+	for(var keys in internal.modelPending){
+		var ref = internal.modelPending[keys];
+		for (var z = 0; z < ref.length; z++)
+			sf.model.init(ref[z], ref[z].getAttribute('name'));
+
+		delete internal.modelPending[keys];
+	}
+});

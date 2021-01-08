@@ -1,3 +1,5 @@
+import Request from "./sf-request.js";
+
 export default class API{
 	constructor(url){
 		this.url = url;
@@ -49,7 +51,7 @@ export default class API{
 			options.beforeSend = beforeSend;
 
 		if(this.mask)
-			return sf.request('POST', url, data, options);
-		return sf.request(method, url, data, options);
+			return Request('POST', url, data, options);
+		return Request(method, url, data, options);
 	}
 };

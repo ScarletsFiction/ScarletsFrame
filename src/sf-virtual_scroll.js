@@ -4,10 +4,11 @@
 
 // sf$scrollPos need to start from 1 (iTop's height)
 
-const ElementManipulatorProxy = internal.EMP;
-// const ElementManipulator = internal.EM;
+import {internal} from "./shared.js";
+import {ElementManipulatorProxy, ElementManipulator} from "./sf-model/repeated-list.js";
+
 const VSM_Threshold = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
-var virtualScrolling = false;
+internal.virtualScrolling = false;
 
 class VirtualScrollManipulator {
 	waitMap = new Set();
@@ -61,7 +62,7 @@ class VirtualScrollManipulator {
 			setTimeout(()=> {
 				if(!root.isConnected) return; // Somewhat it's detached
 
-				let scroller = internal.findScrollerElement(root);
+				let scroller = findScrollerElement(root);
 				if(scroller === null){
 					scroller = root;
 					console.warn("Virtual List need scrollable container", root);
@@ -322,7 +323,7 @@ class VirtualScrollManipulator {
 		this.firstCursor = i;
 
 		if(appendPos === void 0)
-			virtualScrolling = true;
+			internal.virtualScrolling = true;
 
 		const expect = elList[i] || this.iBottom;
 		let next = this.iTop.nextElementSibling;
@@ -402,7 +403,7 @@ class VirtualScrollManipulator {
 		this.iTop.style.height = `${this.topHeight}px`;
 		this.iBottom.style.height = `${this.bottomHeight}px`;
 
-		virtualScrolling = false;
+		internal.virtualScrolling = false;
 		if(this.topHeight === 1 && this.bottomHeight === 1)
 			return;
 
@@ -615,19 +616,18 @@ class VirtualScroll{
 	}
 }
 
-;(function(){
-	let styleInitialized = false;
-	internal.addScrollerStyle = ()=> {
-		if(styleInitialized === false){
-			let style = document.getElementById('sf-styles');
+let styleInitialized = false;
+export function addScrollerStyle(){
+	if(styleInitialized === false){
+		let style = document.getElementById('sf-styles');
 
-			if(!style){
-				style = document.createElement('style');
-				style.id = 'sf-styles';
-				document.head.appendChild(style);
-			}
+		if(!style){
+			style = document.createElement('style');
+			style.id = 'sf-styles';
+			document.head.appendChild(style);
+		}
 
-			style.sheet.insertRule(
+		style.sheet.insertRule(
 `.sf-virtual-list .virtual-spacer{\
 visibility:hidden!important;\
 position:relative!important;\
@@ -642,24 +642,23 @@ transition:none!important;\
 pointer-events:none;\
 }`, style.sheet.cssRules.length);
 
-			style.sheet.insertRule(
-			'.sf-scroll-element,textarea{backface-visibility:hidden}', style.sheet.cssRules.length);
-			styleInitialized = true;
-		}
+		style.sheet.insertRule(
+		'.sf-scroll-element,textarea{backface-visibility:hidden}', style.sheet.cssRules.length);
+		styleInitialized = true;
 	}
+}
 
-	const isScroller = /auto|scroll|overlay|hidden/;
-	internal.findScrollerElement = (el)=> {
-		const doc = el.ownerDocument;
-		const win = doc.defaultView;
-		if(!win) return null;
+const isScroller = /auto|scroll|overlay|hidden/;
+export function findScrollerElement(el){
+	const doc = el.ownerDocument;
+	const win = doc.defaultView;
+	if(!win) return null;
 
-		while(el !== null && isScroller.test(win.getComputedStyle(el).overflow) === false){
-			el = el.parentNode;
-			if(el === doc.body)
-				return null;
-		};
+	while(el !== null && isScroller.test(win.getComputedStyle(el).overflow) === false){
+		el = el.parentNode;
+		if(el === doc.body)
+			return null;
+	};
 
-		return el;
-	}
-})();
+	return el;
+}

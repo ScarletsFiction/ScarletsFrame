@@ -1,5 +1,7 @@
+import {internal} from "./shared.js";
 import Loader from "./sf-loader.js";
 import Window from "./sf-window.js";
+import {customEvent} from "./sf-model/custom-event.js";
 
 const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
 
@@ -310,8 +312,8 @@ class DOMList{
 	}
 	on(event, selector, callback, options){
 		for (let i = 0; i < this.length; i++){
-			if(internal.model.specialEvent[event] !== void 0){
-				internal.model.specialEvent[event](this[i], null, callback);
+			if(customEvent[event] !== void 0){
+				customEvent[event](this[i], null, callback);
 				continue;
 			}
 
@@ -327,7 +329,7 @@ class DOMList{
 				continue;
 			}
 
-			if(internal.model.specialEvent[event] !== void 0){
+			if(customEvent[event] !== void 0){
 				if(this[i][`sf$eventDestroy_${event}`] !== void 0)
 					this[i][`sf$eventDestroy_${event}`]();
 

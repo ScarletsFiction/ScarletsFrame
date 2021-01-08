@@ -1,5 +1,7 @@
+import Internal from "../internal.js";
+
 let inputBoundRunning = false;
-const callInputListener = function(ref, value){
+function callInputListener(ref, value){
 	const v2m = ref.sfModel[`v2m$${ref.sfBounded}`];
 	const on = ref.sfModel[`on$${ref.sfBounded}`];
 
@@ -17,14 +19,14 @@ const callInputListener = function(ref, value){
 			}
 		}catch(e){
 			console.error(e);
-			sf.onerror && sf.onerror(e);
+			Internal.onerror && Internal.onerror(e);
 		}
 
 		return newValue || v2mValue;
 	}
 }
 
-const inputTextBound = function(e){
+function inputTextBound(e){
 	if(e.fromSFFramework === true) return;
 
 	const ref = inputBoundRunning = e.target;
@@ -40,7 +42,7 @@ const inputTextBound = function(e){
 	ref.sfModel[ref.sfBounded] = newValue !== void 0 ? newValue : value;
 }
 
-const inputFilesBound = function(e){
+function inputFilesBound(e){
 	if(e.fromSFFramework === true) return;
 
 	const ref = e.target;
@@ -63,7 +65,7 @@ const inputFilesBound = function(e){
 	else ref.sfModel[ref.sfBounded] = ref.files;
 }
 
-const inputCheckBoxBound = function(e){
+function inputCheckBoxBound(e){
 	if(e.fromSFFramework === true) return;
 
 	const ref = inputBoundRunning = e.target;
@@ -101,7 +103,7 @@ const inputCheckBoxBound = function(e){
 	else model[ref.sfBounded] = value;
 }
 
-const inputSelectBound = function(e){
+function inputSelectBound(e){
 	if(e.fromSFFramework === true) return;
 
 	const ref = inputBoundRunning = e.target;
@@ -169,7 +171,7 @@ var assignElementData = {
 	}
 }
 
-const inputBoundRun = function(val, elements){
+function inputBoundRun(val, elements){
 	if(val == null) val = '';
 
 	for (let i = 0; i < elements.length; i++) {
@@ -200,7 +202,7 @@ const inputBoundRun = function(val, elements){
 // For dynamic reference checking
 inputBoundRun.inputBoundRun = true;
 
-const triggerInputEvent = function(e){
+function triggerInputEvent(e){
 	if(e.fromSFFramework === true) return;
 	if(e.target.viewInputted === true){
 		e.target.viewInputted = false;
@@ -209,7 +211,7 @@ const triggerInputEvent = function(e){
 	e.target.dispatchEvent(new Event('input'));
 }
 
-const elementBoundChanges = function(model, property, element, oneWay, modelLocal, propertyNameLocal){
+function elementBoundChanges(model, property, element, oneWay, modelLocal, propertyNameLocal){
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
 		initBindingInformation(model);
@@ -275,7 +277,7 @@ const elementBoundChanges = function(model, property, element, oneWay, modelLoca
 	modelToViewBinding(modelLocal, propertyNameLocal || property, inputBoundRun, element, type);
 }
 
-const bindInput = internal.model.bindInput = function(temp, modelLocal, mask, modelScope){
+export function bindInput(temp, modelLocal, mask, modelScope){
 	let element, oneWay, propertyName;
 
 	for (let i = 0; i < temp.length; i++) {

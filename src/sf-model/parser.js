@@ -5,8 +5,12 @@
 // .apply() or spread ...array is slower than direct function call
 // object[0] is slower than array[0]
 
+import {sfRegex} from "../shared.js";
+import {modelKeys} from "../sf-model.js";
+import {bindElement} from "./element-bind.js";
+
 // ToDo: directly create parse_index from here
-const dataParser = function(html, _model_, template, _modelScoped, preParsedReference, justName){
+function dataParser(html, _model_, template, _modelScoped, preParsedReference, justName){
 	const preParsed = [];
 	const lastParsedIndex = preParsedReference.length;
 
@@ -43,7 +47,7 @@ const dataParser = function(html, _model_, template, _modelScoped, preParsedRefe
 }
 
 // Dynamic data parser
-const uniqueDataParser = function(html, template, _modelScoped){
+function uniqueDataParser(html, template, _modelScoped){
 	// Build script preparation
 	html = html.replace(sfRegex.allTemplateBracket, function(full, matched){ // {[ ... ]}
 		if(sfRegex.anyCurlyBracket.test(matched) === false) // {{ ... }}
@@ -112,7 +116,7 @@ const uniqueDataParser = function(html, template, _modelScoped){
 }
 
 // {ifCond, elseIf:({ifCond, val}, ...), elseValue}
-var findElse = function(text){
+function findElse(text){
 	text = text.join(':');
 	var else_ = null;
 
@@ -228,7 +232,7 @@ function toObserve(full, model, properties){
 }
 
 // Return element or
-internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic){
+export function templateInjector(targetNode, modelScope, cloneDynamic){
 	const reservedTemplate = targetNode.getElementsByTagName('sf-reserved');
 	const injectTemplate = targetNode.getElementsByTagName('sf-template');
 
@@ -311,8 +315,8 @@ internal.model.templateInjector = function(targetNode, modelScope, cloneDynamic)
 	return isDynamic;
 }
 
-const createModelKeysRegex = internal.model.createModelKeysRegex = function(targetNode, modelScope, mask){
-	const modelKeys = self.modelKeys(modelScope, true);
+export function createModelKeysRegex(targetNode, modelScope, mask){
+	const modelKeys = modelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
 		throw new Error("Model has no property instead of '$el', maybe some script haven't been loaded");
@@ -330,7 +334,7 @@ const createModelKeysRegex = internal.model.createModelKeysRegex = function(targ
 }
 
 // ToDo: need performance optimization
-self.extractPreprocess = function(targetNode, mask, modelScope, container, modelRegex, preserveRegex, repeatedListKey){
+export function extractPreprocess(targetNode, mask, modelScope, container, modelRegex, preserveRegex, repeatedListKey){
 	if(targetNode.model !== void 0)
 		return console.error('Element already has a model, template extraction was aborted', targetNode, targetNode.model, mask, modelScope);
 
@@ -460,7 +464,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 	// It seems we can't use for.. of because need to do from backward
 	// Start addressing
-	const nodes = [...self.queuePreprocess(copy, true, template.specialElement)];
+	const nodes = [...queuePreprocess(copy, true, template.specialElement)];
 	const addressed = [];
 
 	for (var i = nodes.length - 1; i >= 0; i--) {
@@ -669,7 +673,7 @@ self.extractPreprocess = function(targetNode, mask, modelScope, container, model
 
 let enclosedHTMLParse = false;
 const excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1};
-self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
+export function queuePreprocess(targetNode, extracting, collectOther, temp){
 	const { childNodes } = targetNode;
 
 	if(temp === void 0){
@@ -741,7 +745,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 			}
 
 			if(currentNode.childNodes.length !== 0)
-				self.queuePreprocess(currentNode, extracting, collectOther, temp);
+				queuePreprocess(currentNode, extracting, collectOther, temp);
 		}
 
 		else if((currentNode.constructor._ref || currentNode.constructor) === Text){ // Text
@@ -797,7 +801,7 @@ self.queuePreprocess = function(targetNode, extracting, collectOther, temp){
 	return temp;
 }
 
-self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
+export function parsePreprocess(nodes, modelRef, modelKeysRegex){
 	const binded = new Set();
 	var _modelScoped = modelKeysRegex && modelKeysRegex.bindList !== void 0 ? modelKeysRegex.scopes : void 0;
 
@@ -815,7 +819,7 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 					replace.appendChild(current);
 				}
 
-				self.bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
+				bindElement(current.parentNode, modelRef, void 0, void 0, modelKeysRegex);
 				binded.add(current.parentNode);
 				continue;
 			}
@@ -880,14 +884,14 @@ self.parsePreprocess = function(nodes, modelRef, modelKeysRegex){
 					current.sf$elementReferences = currentRef;
 				}
 
-				self.bindElement(current, modelRef, template);
+				bindElement(current, modelRef, template);
 
 				delete current.sf$onlyAttribute;
 				continue;
 			}
 
 			if(current.nodeType !== 3)
-				self.bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
+				bindElement(current, modelRef, void 0, void 0, modelKeysRegex);
 		}
 	} catch(e) {
 		templateErrorInfo(e, current, "(Not from sf-each)", modelRef, template);

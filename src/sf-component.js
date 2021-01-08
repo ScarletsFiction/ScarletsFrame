@@ -1,6 +1,14 @@
-import {internal, TemplatePending} from "./shared.js";
+import {internal, TemplatePending, SFOptions} from "./shared.js";
+import {capitalizeLetters} from "./utils.js";
 import $ from "./sf-dom.js";
 import Model from "./sf-model.js";
+import Space from "./sf-space.js";
+import {templateParser} from "./sf-model/template.js";
+import {templateInjector, createModelKeysRegex} from "./sf-model/parser.js";
+import {bindInput} from "./sf-model/input-bind.js";
+import {repeatedListBinding} from "./sf-model/repeated-list.js";
+import {removeModelBinding} from "./sf-model/element-bind.js";
+import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd} from "./sf-hot-reload.js";
 
 export default function Self(name, options, func, namespace){
 	if(options !== void 0){
@@ -24,7 +32,7 @@ function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 
 	tempDOM = temp.tempDOM || temp.tagName.toLowerCase() === name;
 
-	const isDynamic = internal.model.templateInjector(temp, newObj, true);
+	const isDynamic = templateInjector(temp, newObj, true);
 	temp = Model.extractPreprocess(temp, null, newObj, void 0, registrar[4]);
 
 	if(isDynamic === false)
@@ -116,10 +124,10 @@ Self.for = function(name, options, func, namespace){
 
 	if(waitingHTML[name] !== void 0)
 		checkWaiting(name, namespace);
-	else if(hotReload)
+	else if(SFOptions.hotReload)
 		hotComponentRefresh(scope, name, func);
 
-	if(devMode && registrar[2].$devData === void 0){
+	if(SFOptions.devMode && registrar[2].$devData === void 0){
 		Object.defineProperty(registrar[2], '$devData', {
 			configurable: true,
 			value: {
@@ -146,10 +154,10 @@ Self.html = function(name, outerHTML, namespace){
 				if(window.templates[outerHTML.template] !== void 0){
 					template = window.templates[outerHTML.template];
 
-					if(hotReload && proxyTemplate[outerHTML.template] === void 0)
+					if(SFOptions.hotReload && proxyTemplate[outerHTML.template] === void 0)
 						proxyTemplate[outerHTML.template] = [scope, name];
 
-					if(!outerHTML.keepTemplate && hotReload === false)
+					if(!outerHTML.keepTemplate && SFOptions.hotReload === false)
 						delete window.templates[outerHTML.template];
 				}
 				else{
@@ -210,7 +218,7 @@ Self.html = function(name, outerHTML, namespace){
 	if(waitingHTML[name] !== void 0)
 		checkWaiting(name, namespace);
 
-	if(hotReload){
+	if(SFOptions.hotReload){
 		if(templatePath === false)
 			hotComponentTemplate(scope, name);
 		else if(backupCompTempl.has(registrar) === false)
@@ -324,14 +332,14 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		}
 
 		// Save the item for hot reloading
-		if(hotReload){
+		if(SFOptions.hotReload){
 			newObj.$el.$item = $item;
 			hotComponentAdd(scope, name, newObj);
 		}
 	}
 
 	if(registrar[4] === void 0)
-		registrar[4] = internal.model.createModelKeysRegex(element, newObj, null);
+		registrar[4] = createModelKeysRegex(element, newObj, null);
 
 	let forceConnectCall = false;
 	if(element.childNodes.length === 0){
@@ -359,9 +367,9 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		}
 
 		if(tempDOM === true)
-			var parsed = internal.model.templateParser(copy, newObj, void 0, void 0, void 0, element, void 0, namespace);
+			var parsed = templateParser(copy, newObj, void 0, void 0, void 0, element, void 0, namespace);
 		else{
-			var parsed = internal.model.templateParser(copy, newObj);
+			var parsed = templateParser(copy, newObj);
 			element.appendChild(parsed);
 		}
 
@@ -384,14 +392,14 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 			input:[]
 		};
 
-		internal.model.templateInjector(element, newObj, false);
+		templateInjector(element, newObj, false);
 		Model.parsePreprocess(Model.queuePreprocess(element, true, specialElement), newObj, registrar[4]);
 
 		if(specialElement.input !== void 0)
-			internal.model.bindInput(specialElement.input, newObj);
+			bindInput(specialElement.input, newObj);
 
 		if(specialElement.repeat !== void 0)
-			internal.model.repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
+			repeatedListBinding(specialElement.repeat, newObj, namespace, registrar[4]);
 
 		if(element.sf$componentIgnore === true){
 			element = newObj.$el[0];
@@ -544,7 +552,7 @@ class SFComponent extends HTMLElement{
 				model.destroyClone && model.destroyClone(this);
 			}
 
-			internal.model.removeModelBinding(model);
+			removeModelBinding(model);
 			return;
 		}
 
@@ -553,14 +561,14 @@ class SFComponent extends HTMLElement{
 		if(this.sf$collection !== void 0)
 			this.sf$collection.splice(this.sf$collection.indexOf(model), 1);
 
-		if(hotReload)
+		if(SFOptions.hotReload)
 			hotComponentRemove(this);
 
 		const $el = model.$el;
 		if($el[0] !== void 0 && $el[0].isConnected === false)
 			$el[0] = void 0;
 
-		internal.model.removeModelBinding(model, void 0, true);
+		removeModelBinding(model, void 0, true);
 	}
 
 	sf$destroyReplace(i, element){

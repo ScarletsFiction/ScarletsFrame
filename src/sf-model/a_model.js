@@ -1,7 +1,10 @@
-;(function(){
-var self = sf.model;
+import {internal} from "../shared.js";
+import Internal from "../internal.js";
+import Model from "../sf-model.js";
+import $ from "../sf-dom.js";
+import {parsePreprocess, queuePreprocess} from "./parser.js";
 
-self.init = function(el, modelName, namespace){
+export function ModelInit(el, modelName, namespace){
 	if(el.model !== void 0)
 		return;
 
@@ -13,7 +16,7 @@ self.init = function(el, modelName, namespace){
 		el.sf$namespace = namespace;
 		var model = el.model = namespace.root[modelName] || namespace(modelName);
 	}
-	else var model = el.model = sf.model.root[modelName] || sf.model(modelName);
+	else var model = el.model = Model.root[modelName] || Model(modelName);
 
 	var firstInit = false;
 	if(model._firstInit === true){
@@ -38,12 +41,12 @@ self.init = function(el, modelName, namespace){
 			model.sf$internal.proxied = true;
 		}
 
-		model.constructor.construct && model.constructor.construct.call(model, (namespace || sf.model), el);
+		model.constructor.construct && model.constructor.construct.call(model, (namespace || Model), el);
 	}
 
 	var specialElement = {};
 
-	sf.model.parsePreprocess(sf.model.queuePreprocess(el, void 0, specialElement), model, model.sf$internal.modelKeysRegex);
+	parsePreprocess(queuePreprocess(el, void 0, specialElement), model, model.sf$internal.modelKeysRegex);
 
 	if(specialElement.input !== void 0)
 		bindInput(specialElement.input, model);
@@ -57,13 +60,11 @@ self.init = function(el, modelName, namespace){
 	model.init && model.init(el, firstInit);
 
 	if(model.constructor !== Object)
-		model.constructor.init && model.constructor.init.call(model, (namespace || sf.model), el);
+		model.constructor.init && model.constructor.init.call(model, (namespace || Model), el);
 }
 
-var scope = internal.model = {};
-
 internal.initPendingComponentScope = initPendingComponentScope;
-function initPendingComponentScope(list, html){
+export function initPendingComponentScope(list, html){
 	for (var i = 0; i < list.length; i++) {
 		var el, ref = list[i];
 
@@ -101,7 +102,7 @@ function initPendingComponentScope(list, html){
 }
 
 // For debugging, normalize indentation
-function trimIndentation(text){
+export function trimIndentation(text){
 	var indent = text.split("\n", 3);
 	if(indent[0][0] !== ' ' || indent[0][0] !== "\t")
 		indent = indent[1];
@@ -113,15 +114,15 @@ function trimIndentation(text){
 	return text.replace(RegExp(`^([\\t ]{${indent}})`, 'gm'), '');
 }
 
-function _eP(val, type){
+export function _eP(val, type){
 	if(type === 0) // HTML
-		return sf.dom.escapeText(val);
+		return $.escapeText(val);
 
 	// Attr
 	return val != null ? val.toString().split('"').join('&quot;').split("'").join("&#39;") : val;
 }
 
-function escapeParse(html, vars){
+export function escapeParse(html, vars){
 	return avoidQuotes(html, function(noQuot){
 		// Escape for value in HTML
 		return noQuot.replace(templateParser_regex, function(full, match){
@@ -136,7 +137,7 @@ function escapeParse(html, vars){
 }
 
 var modelScript_ = /_result_|return/;
-function modelScript(mask, script, repeatedListKey, _list){
+export function modelScript(mask, script, repeatedListKey, _list){
 	var which = script.match(modelScript_);
 
 	if(repeatedListKey !== void 0 && !repeatedListKey.test(script))
@@ -173,11 +174,11 @@ function modelScript(mask, script, repeatedListKey, _list){
 	} catch(e){
 		console.log(script);
 		console.error(e);
-		sf.onerror && sf.onerror(e);
+		Internal.onerror && Internal.onerror(e);
 	}
 }
 
-var applyParseIndex = internal.model.applyParseIndex = function(templateValue, indexes, parsed, templateParse, item, repeatListIndex){
+export function applyParseIndex(templateValue, indexes, parsed, templateParse, item, repeatListIndex){
 	for (var i = 0; i < indexes.length; i++){
 		var a = indexes[i];
 		var temp = parsed[a];
@@ -195,7 +196,7 @@ var applyParseIndex = internal.model.applyParseIndex = function(templateValue, i
 	return templateValue.join('');
 }
 
-var parseIndexAllocate = internal.model.parseIndexAllocate = function(arr){
+export function parseIndexAllocate(arr){
 	for (var i = arr.length-1; i > 0; i--)
 		arr.splice(i, 0, void 0);
 
@@ -203,7 +204,7 @@ var parseIndexAllocate = internal.model.parseIndexAllocate = function(arr){
 		arr.pop();
 }
 
-function findErrorLocation(text, error, slicedX, msg, slicedY){
+export function findErrorLocation(text, error, slicedX, msg, slicedY){
 	var location = error.stack.match(/mous>:(.*?)\)/);
 	if(location === null){
 		console.log(msg, 'color:orange', text);
@@ -230,7 +231,7 @@ function findErrorLocation(text, error, slicedX, msg, slicedY){
 }
 
 var processingElement = null;
-function templateErrorInfo(e, element, item, modelRef, template){
+export function templateErrorInfo(e, element, item, modelRef, template){
 	if(e.sf$throwed){
 		var el, isSingle = 'From element:';
 
@@ -263,5 +264,5 @@ function templateErrorInfo(e, element, item, modelRef, template){
 
 		console.groupEnd();
 	}
-	else sf.onerror && sf.onerror(e);
+	else Internal.onerror && Internal.onerror(e);
 }

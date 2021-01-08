@@ -151,7 +151,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 }
 
 // On model scope reregistered
-function hotModel(space, name, func){
+export function hotModel(space, name, func){
 	const scope = space(name);
 	let proxy = proxyModel.get(scope);
 
@@ -165,7 +165,7 @@ function hotModel(space, name, func){
 }
 
 // On new component created
-function hotComponentAdd(space, name, scope){
+export function hotComponentAdd(space, name, scope){
 	let proxy = proxySpace.get(space);
 
 	// If new space
@@ -186,7 +186,7 @@ function hotComponentAdd(space, name, scope){
 	reapplyScope(proxy, scope, scope);
 }
 
-function hotComponentRemove(el){
+export function hotComponentRemove(el){
 	const proxy = proxySpace.get(el.sf$space);
 	if(proxy === void 0)
 		return;
@@ -196,7 +196,7 @@ function hotComponentRemove(el){
 }
 
 // On component scope reregistered
-function hotComponentRefresh(space, name, func){
+export function hotComponentRefresh(space, name, func){
 	let list = proxySpace.get(space);
 	if(list === void 0 || list[name] === void 0)
 		return;
@@ -219,7 +219,7 @@ function hotComponentRefresh(space, name, func){
 // The scope will remain same, and hotReloaded will be called
 
 // Refresh views html and component
-function hotTemplate(templates){
+export function hotTemplate(templates){
 	const vList = View.list;
 	const changes = {};
 
@@ -281,7 +281,7 @@ function hotTemplate(templates){
 internal.hotTemplate = hotTemplate;
 
 // Refresh component html
-function hotComponentTemplate(scope, name){
+export function hotComponentTemplate(scope, name){
 	const registrar = scope.registered[name];
 	const freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
 
@@ -369,7 +369,7 @@ $(function(){
 
 console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 
-function getCallerFile(step){
+export function getCallerFile(step){
 	try{throw new Error()}catch(e){
 		var temp = e.stack.split('\n')[step+2];
 		if(!temp) return '';

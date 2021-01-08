@@ -1,3 +1,5 @@
+import Internal from "./internal.js";
+
 var My = {};
 My._listener = {};
 My._statusTrigger = {};
@@ -25,7 +27,7 @@ export default function Events(name, defaultVal){
 						ref[i]();
 					} catch(e) {
 						console.error(e);
-						sf.onerror && sf.onerror(e);
+						Internal.onerror && Internal.onerror(e);
 					}
 				}
 
@@ -62,7 +64,7 @@ export default function Events(name, defaultVal){
 						callback.splice(i--, 1);
 				} catch(e) {
 					console.error(e);
-					sf.onerror && sf.onerror(e);
+					Internal.onerror && Internal.onerror(e);
 				}
 			}
 		}

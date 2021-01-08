@@ -1,3 +1,5 @@
+import Internal from "../internal.js";
+
 function elseIfHandle(else_, item, modelScope){
 	const { elseIf } = else_;
 
@@ -22,7 +24,7 @@ function elseIfHandle(else_, item, modelScope){
 const templateParser_regex = /{{%=([0-9]+)%/g;
 const templateParser_regex_split = /{{%=[0-9]+%/g;
 const REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
-const templateExec = function(parse, item, atIndex, parsed, repeatListIndex){
+export function templateExec(parse, item, atIndex, parsed, repeatListIndex){
 	var temp, changed = false;
 
 	// Get or evaluate static or dynamic data
@@ -191,7 +193,7 @@ function parserForAttribute(current, ref, item, modelRef, parsed, changesReferen
 	}
 }
 
-const templateParser = internal.model.templateParser = function(template, item, original, modelRef, rootHandler, copy, repeatListIndex, namespace){
+export function templateParser(template, item, original, modelRef, rootHandler, copy, repeatListIndex, namespace){
 	processingElement = template.html;
 
 	let html = original === true ? template.html : template.html.cloneNode(true);
@@ -351,7 +353,7 @@ const templateParser = internal.model.templateParser = function(template, item, 
 	return html;
 }
 
-sf.async = function(mode){
+Internal.async = function(mode){
 	if(mode)
 		animFrameMode = false; // Enable async
 	else animFrameMode = true; // Disable async
@@ -400,7 +402,7 @@ function runFrameStack(){
 }
 
 const C_zero = [0];
-const syntheticTemplate = internal.model.syntheticTemplate = function(element, template, property, item, asyncing){
+function syntheticTemplate(element, template, property, item, asyncing){
 	var changes;
 	if(property !== void 0){
 		changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];

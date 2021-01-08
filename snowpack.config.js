@@ -4,5 +4,8 @@ module.exports = {
     public: '/',
     src: '/dist',
   },
-  plugins: ['@snowpack/plugin-babel', '@snowpack/plugin-dotenv'],
+  plugins: [
+    // '@snowpack/plugin-babel',
+    '@snowpack/plugin-dotenv'
+  ],
 };

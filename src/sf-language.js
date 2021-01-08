@@ -1,4 +1,7 @@
 import SFWindow from "./sf-window.js";
+import Component from "./sf-component.js";
+import Request from "./sf-request.js";
+import Space from "./sf-space.js";
 import {internal} from "./shared.js";
 
 export default function Self(el){
@@ -45,7 +48,7 @@ Self.changeDefault = function(defaultLang){
 	}
 
 	function forComponents(){
-		const { registered } = sf.component;
+		const { registered } = Component;
 		for(let keys in registered){
 			if(registered[keys][3] !== void 0)
 				refreshTemplate(registered[keys]);
@@ -53,7 +56,7 @@ Self.changeDefault = function(defaultLang){
 	}
 
 	function forSpaceComponents(){
-		const { list } = sf.space;
+		const { list } = Space;
 
 		for(let name in list){
 			const { registered } = list[name].default;
@@ -126,7 +129,7 @@ function startRequest(){
 		if(activeRequest !== false)
 			activeRequest.abort();
 
-		activeRequest = sf.request('POST', Self.serverURL, {
+		activeRequest = Request('POST', Self.serverURL, {
 			lang:Self.default,
 			paths:JSON.stringify(pending)
 		}, {

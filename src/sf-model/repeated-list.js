@@ -3,9 +3,13 @@
 //
 // Note: using .apply can be more faster than ...spread
 
+import Component from "../sf-component.js";
+import Internal from "../internal.js";
+import {findScrollerElement, addScrollerStyle} from "../sf-virtual_scroll.js";
+
 var RE_Assign = false;
 var RE_ProcessIndex;
-const repeatedListBinding = internal.model.repeatedListBinding = function(elements, modelRef, namespace, modelKeysRegex){
+export function repeatedListBinding(elements, modelRef, namespace, modelKeysRegex){
 	// modelKeysRegex can be a template too
 	let element, script;
 
@@ -116,7 +120,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	const {target, prop, pattern} = rule;
 	let callback = target[`on$${prop}`] || {};
 
-	const compTemplate = (namespace || sf.component).registered[element.tagName.toLowerCase()];
+	const compTemplate = (namespace || Component).registered[element.tagName.toLowerCase()];
 	if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
 		compTemplate[3] = element;
 
@@ -328,10 +332,10 @@ class RepeatedProperty{ // extends Object
 						return;
 
 					for (var i = a; i < olds.length; i++)
-						sf.delete(that, olds[i]);
+						Internal.delete(that, olds[i]);
 
 					for (var i = a; i < news.length; i++)
-						sf.set(that, news[i], val[news[i]]);
+						Internal.set(that, news[i], val[news[i]]);
 
 					that._list = news;
 				}
@@ -519,7 +523,7 @@ class RepeatedSet extends Set{
 }
 
 // Only for Object or RepeatedProperty
-sf.set = function(obj, prop, val){
+Internal.set = function(obj, prop, val){
 	if(obj[prop] === val)
 		return;
 
@@ -537,7 +541,7 @@ sf.set = function(obj, prop, val){
 	}
 }
 
-sf.delete = function(obj, prop){
+Internal.delete = function(obj, prop){
 	if(obj.$EM === void 0){
 		delete obj[prop];
 		return;
@@ -715,10 +719,10 @@ class RepeatedList extends Array{
 
 		// Wait for scroll plugin initialization
 		setTimeout(function(){
-			const scroller = internal.findScrollerElement(parentNode);
+			const scroller = findScrollerElement(parentNode);
 			if(scroller === null) return;
 
-			internal.addScrollerStyle();
+			addScrollerStyle();
 
 			const computed = getComputedStyle(scroller);
 			if(computed.backfaceVisibility === 'hidden' || computed.overflow.includes('hidden'))
@@ -1141,7 +1145,7 @@ class RepeatedList extends Array{
 	}
 }
 
-class ElementManipulator{
+export class ElementManipulator{
 	createElement(index, item, isMap){
 		if(isMap === void 0) // array
 			item = this.list[index];
@@ -1654,7 +1658,7 @@ class ElementManipulator{
 	}
 }
 
-class ElementManipulatorProxy{
+export class ElementManipulatorProxy{
 	refresh_RP(instance){
 		const { list } = this;
 		const keys = instance._list;
@@ -1797,9 +1801,6 @@ class ElementManipulatorProxy{
 }
 
 var EM_Proto = ElementManipulator.prototype;
-internal.EM = ElementManipulator;
-internal.EMP = ElementManipulatorProxy;
-
 function RE_restoreBindedList(modelRoot, lists){
 	// lists [paths, backup]
 	for (let i = 0; i < lists.length; i++) {

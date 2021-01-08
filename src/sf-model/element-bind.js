@@ -1,4 +1,6 @@
-internal.model.removeModelBinding = function(ref, isDeep, isLazy){
+import {forProxying} from "../shared.js";
+
+export function removeModelBinding(ref, isDeep, isLazy){
 	if(ref === void 0)
 		return;
 
@@ -13,28 +15,28 @@ internal.model.removeModelBinding = function(ref, isDeep, isLazy){
 			if(obj.constructor === RepeatedList){
 				for (var i = 0; i < obj.length; i++){
 					if(typeof obj[i] === 'object')
-						internal.model.removeModelBinding(obj[i], false, isLazy);
+						removeModelBinding(obj[i], false, isLazy);
 					else break;
 				}
 			}
 			else if(obj.constructor === RepeatedMap){
 				for(const [k, v] of obj){
 					if(typeof v === 'object')
-						internal.model.removeModelBinding(v, false, isLazy);
+						removeModelBinding(v, false, isLazy);
 					else break;
 				}
 			}
 			else if(obj.constructor === RepeatedSet){
 				for(const v of obj){
 					if(typeof v === 'object')
-						internal.model.removeModelBinding(v, false, isLazy);
+						removeModelBinding(v, false, isLazy);
 					else break;
 				}
 			}
 			else{
 				for(const k in obj){
 					if(typeof obj[k] === 'object')
-						internal.model.removeModelBinding(obj[k], false, isLazy);
+						removeModelBinding(obj[k], false, isLazy);
 					else break;
 				}
 			}
@@ -145,13 +147,13 @@ internal.model.removeModelBinding = function(ref, isDeep, isLazy){
 	for(let path in deep){
 		const model = deepProperty(ref, path.split('%$'));
 		if(model !== void 0)
-			internal.model.removeModelBinding(model, true, isLazy);
+			removeModelBinding(model, true, isLazy);
 	}
 }
 
 
 if(window.sf$proxy === void 0)
-	forProxying.removeModelBinding = internal.model.removeModelBinding;
+	forProxying.removeModelBinding = removeModelBinding;
 
 function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 	if(refPaths.length === 0)
@@ -168,7 +170,7 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 				if(deep === void 0)
 					continue;
 
-				internal.model.removeModelBinding(deep, false, isLazy);
+				removeModelBinding(deep, false, isLazy);
 			}
 			continue that;
 		}
@@ -178,12 +180,12 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 			if(deep === void 0)
 				continue;
 
-			internal.model.removeModelBinding(deep, false, isLazy);
+			removeModelBinding(deep, false, isLazy);
 		}
 	}
 }
 
-function modelToViewBinding(model, propertyName, callback, elementBind, type){
+export function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	const originalModel = model;
 	let originalPropertyName = propertyName;
 
@@ -373,14 +375,14 @@ function modelToViewBinding(model, propertyName, callback, elementBind, type){
 	});
 }
 
-self.repeatedListBindRoot = function(template, modelScope){
+export function repeatedListBindRoot(template, modelScope){
 	let ref = {bindList:true, template};
 	let properties = template.modelRefRoot_path;
 	for (var i = 0; i < properties.length; i++)
 		modelToViewBinding(modelScope, properties[i], ref);
 }
 
-self.bindElement = function(element, modelScope, template, localModel, modelKeysRegex){
+export function bindElement(element, modelScope, template, localModel, modelKeysRegex){
 	if(template === void 0){
 		if(element.model !== void 0){
 			console.error('Unexpected rebinding', element, 'Try wrap the level one {{ mustache }} with an <element/>');
@@ -390,7 +392,7 @@ self.bindElement = function(element, modelScope, template, localModel, modelKeys
 		if(element.parentNode !== null && element.parentNode.hasAttribute('sf-lang'))
 			return;
 
-		template = self.extractPreprocess(element, null, modelScope, void 0, modelKeysRegex);
+		template = extractPreprocess(element, null, modelScope, void 0, modelKeysRegex);
 		templateParser(template, modelScope, true);
 		delete template.addresses;
 
