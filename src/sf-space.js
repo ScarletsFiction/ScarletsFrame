@@ -84,7 +84,7 @@ else
 if(window.sf$proxy === void 0)
 	forProxying.internalSpace = internal.space;
 
-export default class Space{
+class Space{
 	inherit = {};
 	// modelList = {default:{model-name:{ model here }}};
 	// modelFunc = {};

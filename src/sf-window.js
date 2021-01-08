@@ -27,7 +27,7 @@ function firstInitSFWindow(){
 	});
 }
 
-const SFWindow = {
+sf.window = {
 	list:{},
 	destroy(id){
 		if(id !== void 0)
@@ -227,5 +227,3 @@ function portComponentDefinition(linker, from, into){
 		ref[1] = linker.sf$defineComponent(name);
 	}
 }
-
-export default SFWindow;

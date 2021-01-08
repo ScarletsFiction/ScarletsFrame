@@ -5,6 +5,7 @@ else forProxying.SFPageView = SFPageView._ref = SFPageView;
 
 customElements.define('sf-page-view', SFPageView);
 
+;(function(){
 const rejectResponse = /<html/;
 
 // Save reference
@@ -163,7 +164,7 @@ internal.router.findRoute = function(url){
 	return false;
 }
 
-export default function View(selector, name){
+const self = sf.views = function View(selector, name){
 	if(this === sf)
 		return console.error('sf.views need to be constructed using "new sf.views"');
 
@@ -930,7 +931,6 @@ export default function View(selector, name){
 	return self;
 };
 
-const self = View;
 self.list = {};
 self.goto = function(url){
 	const parsed = sf.url.parse(url);
@@ -995,3 +995,5 @@ $(function(){
 		self.goto(attr);
 	}, true);
 });
+
+})();

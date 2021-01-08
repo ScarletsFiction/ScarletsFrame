@@ -1,9 +1,6 @@
-import Loader from "./sf-loader.js";
-import Window from "./sf-window.js";
-
 const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
 
-export default function $(selector, context){
+sf.dom = function(selector, context){
 	if(!selector){
 		if(selector === void 0){
 			const temp = sel=> temp.find(sel);
@@ -15,7 +12,7 @@ export default function $(selector, context){
 		else return _DOMList([]);
 	}
 	else if(selector.constructor === Function)
-		return Loader.onFinish(selector);
+		return sf.loader.onFinish(selector);
 	else if(selector.constructor === String && selector.slice(0,1) === '<' && selector.slice(-1) === '>')
 		return _DOMList($.parseElement(selector, true));
 	else if(context){
@@ -31,6 +28,8 @@ export default function $(selector, context){
 		return _DOMList(document.querySelectorAll(selector));
 	return _DOMList(selector);
 }
+
+var $ = sf.dom; // Shortcut
 
 const css_str = /\-([a-z0-9])/;
 const css_strRep = (f, m)=> m.toUpperCase();
@@ -574,25 +573,27 @@ function recreateDOMList($el, length){
 }
 
 ;(function(){
+	const self = sf.dom;
+
 	// ToDo: Optimize performance by using `length` check instead of `for` loop
-	$.fn = DOMList.prototype;
-	$.fn.add = $.fn.push;
+	self.fn = DOMList.prototype;
+	self.fn.add = self.fn.push;
 
 	// Bring array feature that not modifying current length
-	$.fn.indexOf = Array.prototype.indexOf;
-	$.fn.forEach = Array.prototype.forEach;
-	$.fn.concat = Array.prototype.concat;
-	$.fn.reverse = Array.prototype.reverse;
-	$.fn.slice = Array.prototype.slice;
-	$.fn.filter = Array.prototype.filter;
-	$.fn.includes = Array.prototype.includes;
+	self.fn.indexOf = Array.prototype.indexOf;
+	self.fn.forEach = Array.prototype.forEach;
+	self.fn.concat = Array.prototype.concat;
+	self.fn.reverse = Array.prototype.reverse;
+	self.fn.slice = Array.prototype.slice;
+	self.fn.filter = Array.prototype.filter;
+	self.fn.includes = Array.prototype.includes;
 
-	$.findOne = function(selector, context){
+	self.findOne = function(selector, context){
 		if(context !== void 0) return context.querySelector(selector);
 		return document.querySelector(selector);
 	}
 
-	$.isChildOf = function(child, parent) {
+	self.isChildOf = function(child, parent) {
 	     let node = child.parentNode;
 	     while (node !== null) {
 	         if(node === parent)
@@ -604,7 +605,7 @@ function recreateDOMList($el, length){
 	     return false;
 	}
 
-	$.parentHasProperty = function(element, propertyName){
+	self.parentHasProperty = function(element, propertyName){
 		do {
 			if(element[propertyName] !== void 0)
 				return element;
@@ -614,7 +615,7 @@ function recreateDOMList($el, length){
 		return null;
 	}
 
-	$.prevAll = function(element, selector, isNext, one){
+	self.prevAll = function(element, selector, isNext, one){
 		const result = [];
 		const findNodes = (!selector || selector.constructor !== String) ? true : false;
 
@@ -647,7 +648,7 @@ function recreateDOMList($el, length){
 	}
 
 	// Shorcut
-	$.nextAll = (element, selector, one)=> $.prevAll(element, selector, true, one)
+	self.nextAll = (element, selector, one)=> self.prevAll(element, selector, true, one)
 
 	/**
 	 * Listen to an event
@@ -658,11 +659,11 @@ function recreateDOMList($el, length){
 	 * @param  object			options     event options
 	 * @return null
 	 */
-	$.on = function(element, event, selector, callback, options){
+	self.on = function(element, event, selector, callback, options){
 		if(event.includes(' ')){
 			event = event.split(' ');
 			for (let i = 0; i < event.length; i++) {
-				$.on(element, event[i], selector, callback, options);
+				self.on(element, event[i], selector, callback, options);
 			}
 			return;
 		}
@@ -698,7 +699,7 @@ function recreateDOMList($el, length){
 		callback.selector = selector;
 		callback.options = options;
 
-		if(element === Window){
+		if(element === sf.window){
 			if(windowEv[event] === void 0)
 				windowEv[event] = [];
 
@@ -708,7 +709,7 @@ function recreateDOMList($el, length){
 
 			// Also listen for other window
 			windowEv[event].push(callback);
-			const winList = Window.list;
+			const winList = sf.window.list;
 			for(let key in winList){
 				winList[key].addEventListener(event, callback, callback.options);
 				saveEvent(winList[key], event, callback);
@@ -736,8 +737,8 @@ function recreateDOMList($el, length){
 	}
 
 	// Shorcut
-	$.once = function(element, event, selector, callback){
-		$.on(element, event, selector, callback, {once:true});
+	self.once = function(element, event, selector, callback){
+		self.on(element, event, selector, callback, {once:true});
 	}
 
 	/**
@@ -748,14 +749,14 @@ function recreateDOMList($el, length){
 	 * @param  function  	callback    callback
 	 * @return null
 	 */
-	$.off = function(element, event, selector, callback, options){
+	self.off = function(element, event, selector, callback, options){
 		// Remove all event
 		if(event === void 0){
 			if(element.sf$eventListener === void 0)
 				return;
 
 			for(var events in element.sf$eventListener) {
-				$.off(element, events);
+				self.off(element, events);
 			}
 			return;
 		}
@@ -763,7 +764,7 @@ function recreateDOMList($el, length){
 		var events = event.split(' ');
 		if(events.length !== 1){
 			for (var i = 0; i < events.length; i++) {
-				$.off(element, events[i]);
+				self.off(element, events[i]);
 			}
 			return;
 		}
@@ -773,7 +774,7 @@ function recreateDOMList($el, length){
 			selector = void 0;
 		}
 
-		if(element === Window){
+		if(element === sf.window){
 			if(windowEv[event] === void 0 || windowEv[event].length === 0)
 				return;
 
@@ -789,7 +790,7 @@ function recreateDOMList($el, length){
 			removeEvent(window, event, selector, callback, options);
 
 			// Remove from other window
-			const winList = Window.list;
+			const winList = sf.window.list;
 			for(let key in winList)
 				removeEvent(winList[key], event, selector, callback, options);
 
@@ -839,7 +840,7 @@ function recreateDOMList($el, length){
 		}
 	}
 
-	$.animateKey = function(element, animationName, duration, callback){
+	self.animateKey = function(element, animationName, duration, callback){
 		if(element === void 0)
 			return;
 
@@ -887,7 +888,7 @@ function recreateDOMList($el, length){
 				style.visibility = 'hidden';
 			}
 
-			$.once(element, animationStart, function(){
+			self.once(element, animationStart, function(){
 				if(element.isConnected === false)
 					return;
 
@@ -924,7 +925,7 @@ function recreateDOMList($el, length){
 				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
 			}
 
-			$.once(element, animationEnd, function(){
+			self.once(element, animationEnd, function(){
 				setTimeout(function(){
 					if(element.parentNode !== null){
 						style.visibility = '';
@@ -942,7 +943,7 @@ function recreateDOMList($el, length){
 	}
 
 	const emptyDOM = document.createElement('div');
-	$.parseElement = function(html, elementOnly){
+	self.parseElement = function(html, elementOnly){
 		emptyDOM.innerHTML = `<template>${html}</template>`;
 
 		if(elementOnly)
@@ -950,13 +951,13 @@ function recreateDOMList($el, length){
 		return emptyDOM.firstElementChild.content.childNodes || [];
 	}
 
-	$.escapeText = function(text){
+	self.escapeText = function(text){
 		const tempDOM = emptyDOM;
 		tempDOM.textContent = text;
 		return tempDOM.innerHTML;
 	}
 
-	$.remove = function(elements){
+	self.remove = function(elements){
 		if(elements.remove !== void 0)
 			return elements.remove();
 
@@ -966,12 +967,12 @@ function recreateDOMList($el, length){
 	}
 
 	let documentElement = null;
-	Loader.domReady(function(){
+	sf.loader.domReady(function(){
 		documentElement = document.body.parentNode;
 	});
 
 	const haveSymbol = /[~`!@#$%^&*()+={}|[\]\\:";'<>?,./ ]/;
-	$.getSelector = function(element, childIndexes, untilElement){
+	self.getSelector = function(element, childIndexes, untilElement){
 		if(untilElement === void 0) untilElement = documentElement;
 		else if(element === untilElement){
 			if(childIndexes)
@@ -1016,7 +1017,7 @@ function recreateDOMList($el, length){
 		return names.join(" > ");
 	}
 
-	$.childIndexes = function(array, context){
+	self.childIndexes = function(array, context){
 		if(array.length === 0) // 2ms
 			return context;
 

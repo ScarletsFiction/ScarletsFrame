@@ -1,8 +1,8 @@
-const self = function(el){
+;(function(){
+
+const self = sf.lang = function(el){
 	sf.lang.init(el);
 }
-
-export default self;
 
 self.list = {};
 self.default = 'en_US';
@@ -654,3 +654,5 @@ function refreshTemplate(elemRef){
 	if(found === false)
 		template.skipSFLang = true; // skip because not found
 }
+
+})();

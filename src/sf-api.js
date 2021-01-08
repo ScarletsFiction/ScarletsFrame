@@ -1,4 +1,4 @@
-export default class API{
+class API{
 	constructor(url){
 		this.url = url;
 		this.accessToken = false;
@@ -53,3 +53,5 @@ export default class API{
 		return sf.request(method, url, data, options);
 	}
 };
+
+sf.API = API;

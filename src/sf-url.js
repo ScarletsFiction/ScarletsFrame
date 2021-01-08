@@ -1,4 +1,5 @@
-const self = function(){
+;(function(){
+const self = sf.url = function(){
 	// Hash
 	let _hash = '';
 	let hash = self.routes;
@@ -34,8 +35,6 @@ const self = function(){
 		(_data.length === 0 ? '' : `#${encodeURI(_data)}`)
 	}`;
 };
-
-export default self;
 
 self.path = '/'; // Main URL path without hash/query/data
 self.routes = {}; // Used for sf-views for multiple hash routes
@@ -220,3 +219,4 @@ self.trigger = function(){
 }
 
 self.parse();
+})();
