@@ -1,6 +1,8 @@
 import {internal, forProxying, SFOptions} from "./shared.js";
 import $ from "./sf-dom.js";
 import SFURL from "./sf-url.js";
+import Request from "./sf-request.js";
+import Security from "./sf-security.js";
 import {getCallerFile} from "./sf-hot-reload.js";
 
 export class SFPageView extends HTMLElement{}
@@ -170,7 +172,7 @@ internal.router.findRoute = function(url){
 
 export default function Self(selector, name){
 	if(this === sf)
-		return console.error('sf.views need to be constructed using "new sf.views"');
+		return console.error('sf.Views need to be constructed using "new sf.Views"');
 
 	if(name === void 0)
 		name = slash;
@@ -487,7 +489,7 @@ export default function Self(selector, name){
 			getSelector();
 
 			if(initialized === false)
-				return console.error("sf.views haven't finished initializing, and waiting for related parent element");
+				return console.error("sf.Views haven't finished initializing, and waiting for related parent element");
 		}
 
 		if(_routeCount === void 0){
@@ -802,7 +804,7 @@ export default function Self(selector, name){
 		for (var i = 0; i < onEvent.loading.length; i++)
 			if(onEvent.loading[i](_routeCount || 1, routeTotal)) return;
 
-		RouterLoading = sf.request(
+		RouterLoading = Request(
 			method || 'GET',
 			window.location.origin + thePath,
 			Object.assign(data || url.defaultData, {
@@ -966,14 +968,14 @@ $(function(){
 	if(Self.onCrossing === void 0)
 		Self.onCrossing = function(url, target){
 			console.error("Unhandled crossing URL origin", url, target);
-			console.warn("Handle it by make your custom function like `sf.views.onCrossing = func(){}`");
+			console.warn("Handle it by make your custom function like `sf.Views.onCrossing = func(){}`");
 		};
 
 	$.on(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
 		if(ev.isTrusted === false && internal.rejectUntrusted)
-			return sf.security.report && sf.security.report(1,ev);
+			return Security.report && Security.report(1,ev);
 
 		const attr = this.getAttribute('href');
 		if(attr.slice(0, 1) === '@'){ // ignore

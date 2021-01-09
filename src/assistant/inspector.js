@@ -1,4 +1,4 @@
-import {$} from "../index.js";
+import {$, getScope} from "../index.js";
 
 if(window.sf$ === void 0)
 	window.sf$ = {};
@@ -85,7 +85,7 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 	$('body').on('pointermove', function(e){
 		if(locking) return;
 		if(e.ctrlKey && e.altKey){
-			const el = sf(e.target, true);
+			const el = getScope(e.target, true);
 			if(!el){
 				My.hasShadow = false;
 				My.message = "No Frame Detected";
@@ -133,7 +133,7 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 		// Model/Component
 		var modelEl = e.target;
 		var i = 1;
-		while(modelEl = sf(modelEl, true)){
+		while(modelEl = getScope(modelEl, true)){
 			(modelEl.sf$collection ? componentList : modelList).push({
 				name: (i++)+'. '+(modelEl.sf$controlled || '{embedded template}'),
 				nested,

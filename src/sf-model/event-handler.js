@@ -1,6 +1,6 @@
 import {customEvent} from "./custom-event.js";
 import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
-import Model from "../sf-model.js";
+import Model, {findBindListElement} from "../sf-model.js";
 import {internal, sfRegex} from "../shared.js";
 import $ from "../sf-dom.js";
 

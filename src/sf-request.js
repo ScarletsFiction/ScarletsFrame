@@ -41,7 +41,10 @@ function request(method, url, data, options, callback){
 	options.beforeOpen && options.beforeOpen(xhr);
 
 	if(method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE'){
-		url += (url.includes('?') === false ? '?' : '')+serializeQuery(data);
+		const hasQuery = serializeQuery(data);
+		if(hasQuery.length !== 0)
+			url += (url.includes('?') === false ? '?' : '')+hasQuery;
+
 		data = null;
 	}
 
