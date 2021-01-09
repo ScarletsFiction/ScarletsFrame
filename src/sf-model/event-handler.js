@@ -10,8 +10,10 @@ if(!window.TouchEvent)
 function getDirectReference(_modelScope, script){
 	script = parsePropertyPath(script.trim());
 
-	if(script.includes('_modelScope.'))
-		return deepProperty(_modelScope, script.slice(12));
+	if(script[0] === '_modelScope'){
+		script.shift();
+		return deepProperty(_modelScope, script);
+	}
 	return deepProperty(window, script);
 }
 

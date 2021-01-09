@@ -233,7 +233,7 @@ SFDevSpace.modelListHoverLeave = function($dom){
 SFDevSpace.openEditor_ = {err(){
 	console.error("Source path couldn't be found");
 }, go(devPath, propName){
-	___browserSync___.socket.emit('sf-open-source', [devPath, propName]);
+	window.___browserSync___.socket.emit('sf-open-source', [devPath, propName]);
 }};
 
 SFDevSpace.openEditor = function(model, propName){
@@ -376,7 +376,7 @@ SFDevSpace.component('sf-view-info', {
 		if(devData === void 0)
 			return console.error("Source path couldn't be found");
 
-		___browserSync___.socket.emit('sf-open-source', [devData.path[0], void 0, My.name]);
+		window.___browserSync___.socket.emit('sf-open-source', [devData.path[0], void 0, My.name]);
 	}
 });
 

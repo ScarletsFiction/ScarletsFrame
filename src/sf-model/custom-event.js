@@ -1,5 +1,6 @@
 import Window from "../sf-window.js";
 import $ from "../sf-dom.js";
+import {isTouchDevice} from "../shared.js";
 
 const toDegree = 180/Math.PI;
 export var customEvent = {
