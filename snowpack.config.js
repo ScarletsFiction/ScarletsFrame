@@ -8,4 +8,7 @@ module.exports = {
     // '@snowpack/plugin-babel',
     '@snowpack/plugin-dotenv'
   ],
+  buildOptions: {
+  	htmlFragments: true
+  }
 };
