@@ -16,6 +16,7 @@ import Space from "./sf-space.js";
 import URL from "./sf-url.js";
 import Views from "./sf-views.js";
 import Window from "./sf-window.js";
+import Internal from "./internal.js";
 
 if(window.sf$ === void 0)
 	window.sf$ = {};
@@ -36,6 +37,7 @@ window.sf = {
 	URL,
 	Views,
 	Window,
+	Internal,
 };
 
 export {
@@ -54,6 +56,7 @@ export {
 	URL,
 	Views,
 	Window,
+	Internal,
 };
 
 // import.meta.hot?.accept();

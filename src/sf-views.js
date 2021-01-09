@@ -1,6 +1,7 @@
 import {internal, forProxying, SFOptions} from "./shared.js";
 import $ from "./sf-dom.js";
 import SFURL from "./sf-url.js";
+import {getCallerFile} from "./sf-hot-reload.js";
 
 export class SFPageView extends HTMLElement{}
 if(window.sf$proxy)

@@ -3,8 +3,9 @@ import {getCallerFile, hotModel} from "./sf-hot-reload.js";
 import $ from "./sf-dom.js";
 import Loader from "./sf-loader.js";
 import Component from "./sf-component.js";
-
-import "./sf-model/a_model.js";
+import {getStaticMethods, getPrototypeMethods} from "./utils.js";
+import {ModelInit} from "./sf-model/a_model.js";
+import {removeModelBinding} from "./sf-model/element-bind.js";
 
 // Data save and HTML content binding
 export default function Self(name, options, func, namespace){
@@ -131,7 +132,7 @@ Self.for = function(name, options, func, namespace){
 	if(Loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
 		const temp = internal.modelPending[name];
 		for (let i = 0; i < temp.length; i++) {
-			Self.init(temp[i], temp[i].getAttribute('name'));
+			ModelInit(temp[i], temp[i].getAttribute('name'));
 		}
 
 		delete internal.modelPending[name];
@@ -235,13 +236,13 @@ export class SFModel extends HTMLElement {
 			// Run init when all assets have loaded
 			if(Loader.DOMWasLoaded){
 				internal.language.refreshLang(this);
-				return Self.init(this, name);
+				return ModelInit(this, name);
 			}
 
 			const that = this;
 			Loader.onFinish(function(){
 				internal.language.refreshLang(that);
-				Self.init(that, name);
+				ModelInit(that, name);
 			});
 			return;
 		}
@@ -271,7 +272,7 @@ export class SFModel extends HTMLElement {
 				}
 			}
 
-			internal.model.removeModelBinding(that.model);
+			removeModelBinding(that.model);
 		};
 
 		if(window.destroying)
@@ -302,7 +303,7 @@ $(function(){
 	for(var keys in internal.modelPending){
 		var ref = internal.modelPending[keys];
 		for (var z = 0; z < ref.length; z++)
-			sf.model.init(ref[z], ref[z].getAttribute('name'));
+			ModelInit(ref[z], ref[z].getAttribute('name'));
 
 		delete internal.modelPending[keys];
 	}

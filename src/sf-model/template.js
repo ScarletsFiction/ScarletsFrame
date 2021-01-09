@@ -1,9 +1,11 @@
 import Internal from "../internal.js";
-import {internal, SFOptions} from "../shared.js";
+import {internal, SFOptions, emptyArray, sfRegex} from "../shared.js";
 import {templateErrorInfo, findErrorLocation, _eP, applyParseIndex} from "./a_model.js";
 import $ from "../sf-dom.js";
 import {eventHandler} from "./event-handler.js";
 import {repeatedListBinding} from "./repeated-list.js";
+import {bindInput} from "./input-bind.js";
+
 
 function elseIfHandle(else_, item, modelScope){
 	const { elseIf } = else_;
@@ -143,7 +145,8 @@ export function templateExec(parse, item, atIndex, parsed, repeatListIndex){
 
 	return changed;
 }
-function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template, registerRootEvent){
+
+export function parserForAttribute(current, ref, item, modelRef, parsed, changesReference, rootHandler, template, registerRootEvent){
 	for(let a = 0; a < ref.length; a++){
 		const refB = ref[a];
 
@@ -365,7 +368,7 @@ Internal.async = function(mode){
 	else animFrameMode = true; // Disable async
 }
 
-const syntheticRepeatedList = function(template, property, modelScope){
+export function syntheticRepeatedList(template, property, modelScope){
 	const { bindList } = template;
 	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;
 	const changes = template.modelRefRoot[property];

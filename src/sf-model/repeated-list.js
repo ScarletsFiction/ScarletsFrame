@@ -7,12 +7,12 @@ import {GetModelScope} from "../sf-model.js";
 import Component from "../sf-component.js";
 import Internal from "../internal.js";
 import $ from "../sf-dom.js";
-import {findScrollerElement, addScrollerStyle} from "../sf-virtual_scroll.js";
+import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";
 import {internal, SFOptions, sfRegex} from "../shared.js";
 import {initBindingInformation, extractPreprocess} from "./parser.js";
-import {hiddenProperty} from "../utils.js";
+import {hiddenProperty, parsePropertyPath, deepProperty} from "../utils.js";
 import {repeatedListBindRoot, bindElement} from "./element-bind.js";
-import {syntheticTemplate} from "./template.js";
+import {syntheticTemplate, templateParser} from "./template.js";
 
 var RE_Assign = false;
 var RE_ProcessIndex;
@@ -309,7 +309,7 @@ function refreshKeyFromEM(EM){
 	}
 }
 
-class RepeatedProperty{ // extends Object
+export class RepeatedProperty{ // extends Object
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -402,7 +402,7 @@ class RepeatedProperty{ // extends Object
 	}
 }
 
-class RepeatedMap extends Map{
+export class RepeatedMap extends Map{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -465,7 +465,7 @@ class RepeatedMap extends Map{
 	}
 }
 
-class RepeatedSet extends Set{
+export class RepeatedSet extends Set{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -678,7 +678,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	}
 }
 
-class RepeatedList extends Array{
+export class RepeatedList extends Array{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 

@@ -2,8 +2,9 @@
 // For using as remote, developer should build
 // their own auth or communication system
 
+import {internal} from "./shared.js";
+let {windowEv} = internal;
 let headerTags = '';
-let windowDestroyListener = false;
 
 function winDestroy(win){
 	const opt = win.winOptions;
@@ -48,8 +49,8 @@ const SFWindow = {
 			options.id = Math.round(Math.random()*1000) + String(Date.now()).slice(3);
 
 		const winID = options.id;
-		if(windowDestroyListener === false){
-			windowDestroyListener = true;
+		if(internal.windowDestroyListener === false){
+			internal.windowDestroyListener = true;
 			window.addEventListener('beforeunload', function(){
 				sf.window.destroy();
 			});
@@ -204,8 +205,6 @@ const SFWindow = {
 		return null;
 	}
 };
-
-var windowEv = {};
 
 function portComponentDefinition(linker, from, into){
 	for(let name in from){

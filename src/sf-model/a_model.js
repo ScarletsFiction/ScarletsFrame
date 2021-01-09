@@ -2,9 +2,11 @@ import {internal, SFOptions} from "../shared.js";
 import Internal from "../internal.js";
 import Model from "../sf-model.js";
 import $ from "../sf-dom.js";
-import {avoidQuotes} from "../utils.js";
+import {avoidQuotes, proxyClass, parsePropertyPath, deepProperty} from "../utils.js";
 import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.js";
 import {repeatedListBinding} from "./repeated-list.js";
+import {bindInput} from "./input-bind.js";
+import {templateParser_regex} from "./template.js";
 
 export function ModelInit(el, modelName, namespace){
 	if(el.model !== void 0)

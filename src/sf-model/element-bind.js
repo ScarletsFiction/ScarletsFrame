@@ -1,6 +1,8 @@
 import {internal, forProxying} from "../shared.js";
-import {stringifyPropertyPath} from "../utils.js";
-import {syntheticTemplate} from "./template.js";
+import {stringifyPropertyPath, deepProperty} from "../utils.js";
+import {syntheticTemplate, templateParser, syntheticRepeatedList} from "./template.js";
+import {extractPreprocess, initBindingInformation, revalidateBindingPath} from "./parser.js";
+import {RepeatedList, RepeatedMap, RepeatedSet, ElementManipulatorProxy} from "./repeated-list.js";
 
 export function removeModelBinding(ref, isDeep, isLazy){
 	if(ref === void 0)

@@ -4,14 +4,17 @@
 // ToDo: Make the implementation more efficient
 import {SFOptions, internal} from "./shared.js";
 import Loader from "./sf-loader.js";
-import Component from "./sf-component.js";
+import Component, {prepareComponentTemplate} from "./sf-component.js";
 import Model from "./sf-model.js";
+import Views from "./sf-views.js";
 import $ from "./sf-dom.js";
+import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
+import {templateParser} from "./sf-model/template.js";
 
 let hotReloadAll = false; // All model property
 SFOptions.devMode = true;
 
-let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
+export let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
 let backupTemplate, backupCompTempl;
 
 $(function(){
@@ -220,7 +223,7 @@ export function hotComponentRefresh(space, name, func){
 
 // Refresh views html and component
 export function hotTemplate(templates){
-	const vList = View.list;
+	const vList = Views.list;
 	const changes = {};
 
 	for(let path in templates){
@@ -305,7 +308,7 @@ export function hotComponentTemplate(scope, name){
 			element.textContent = '';
 
 			// Clear old DOM linker
-			internal.model.removeModelBinding(model);
+			removeModelBinding(model);
 
 			let temp = registrar[3];
 			if(registrar[3].constructor !== Object){
@@ -330,14 +333,14 @@ export function hotComponentTemplate(scope, name){
 			}
 
 			if(tempDOM === true)
-				var parsed = internal.model.templateParser(copy, model, void 0, void 0, void 0, element);
+				var parsed = templateParser(copy, model, void 0, void 0, void 0, element);
 			else{
-				var parsed = internal.model.templateParser(copy, model);
+				var parsed = templateParser(copy, model);
 				element.appendChild(parsed);
 			}
 
 			element.sf$elementReferences = parsed.sf$elementReferences;
-			Model.bindElement(element, model, copy);
+			bindElement(element, model, copy);
 
 			// Put it back after children was ready
 			if(parentNode !== null)

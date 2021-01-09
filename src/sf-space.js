@@ -1,5 +1,6 @@
 import Model from "./sf-model.js";
 import Component from "./sf-component.js";
+import $ from "./sf-dom.js";
 import {internal, forProxying} from "./shared.js";
 import {ModelInit} from "./sf-model/a_model.js";
 
@@ -65,26 +66,24 @@ function createRoot_(registered, id, space){
 
 if(window.sf$proxy)
 	internal.space = window.sf$proxy.internalSpace;
-else
-	internal.space = {
-		empty:true,
-		initComponent(root, tagName, elem, $item, asScope){
-			Component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
-		},
-		initModel(root, elem){
-			const name = elem.getAttribute('name');
-			const space = root.sf$space.Space;
+else{
+	internal.space.initComponent = function(root, tagName, elem, $item, asScope){
+		Component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
+	}
+	internal.space.initModel = function(root, elem){
+		const name = elem.getAttribute('name');
+		const space = root.sf$space.Space;
 
-			// Pending if model handler was not loaded
-			if(space.modelFunc[name] === void 0)
-				return space.modelFunc[name] = [[elem, name, root.sf$space]];
+		// Pending if model handler was not loaded
+		if(space.modelFunc[name] === void 0)
+			return space.modelFunc[name] = [[elem, name, root.sf$space]];
 
-			if(space.modelFunc[name].constructor === Array)
-				return space.modelFunc[name].push([elem, name, root.sf$space]);
+		if(space.modelFunc[name].constructor === Array)
+			return space.modelFunc[name].push([elem, name, root.sf$space]);
 
-			ModelInit(elem, name, root.sf$space);
-		},
+		ModelInit(elem, name, root.sf$space);
 	};
+}
 
 if(window.sf$proxy === void 0)
 	forProxying.internalSpace = internal.space;

@@ -1,5 +1,5 @@
 import {internal, TemplatePending, SFOptions} from "./shared.js";
-import {capitalizeLetters} from "./utils.js";
+import {capitalizeLetters, proxyClass} from "./utils.js";
 import $ from "./sf-dom.js";
 import Model from "./sf-model.js";
 import Space from "./sf-space.js";
@@ -8,7 +8,7 @@ import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreproce
 import {bindInput} from "./sf-model/input-bind.js";
 import {repeatedListBinding} from "./sf-model/repeated-list.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
-import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd} from "./sf-hot-reload.js";
+import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd, proxyTemplate} from "./sf-hot-reload.js";
 
 export default function Self(name, options, func, namespace){
 	if(options !== void 0){
@@ -26,7 +26,7 @@ export default function Self(name, options, func, namespace){
 	return temp ? temp[2] : [];
 }
 
-function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
+export function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar){
 	if(temp.nodeType !== 1)
 		return console.error(name, "component with content", temp, "should be wrapped inside of element");
 

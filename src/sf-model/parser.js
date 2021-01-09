@@ -5,15 +5,16 @@
 // .apply() or spread ...array is slower than direct function call
 // object[0] is slower than array[0]
 
-import {sfRegex, internal} from "../shared.js";
+import {sfRegex, internal, emptyArray} from "../shared.js";
 import {modelKeys as getModelKeys, SFModel} from "../sf-model.js";
 import $ from "../sf-dom.js";
 import {SFPageView} from "../sf-views.js";
 import {bindElement} from "./element-bind.js";
 import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
 import {REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./template.js";
-import {parseIndexAllocate, modelScript} from "./a_model.js";
-
+import {parseIndexAllocate, modelScript, templateErrorInfo, escapeParse, trimIndentation} from "./a_model.js";
+import {toArray, stringifyPropertyPath} from "../utils.js";
+import {templateExec, parserForAttribute} from "./template.js";
 
 // ToDo: directly create parse_index from here
 function dataParser(html, _model_, template, _modelScoped, preParsedReference, justName){
@@ -928,7 +929,7 @@ function revalidateTemplateRef(template, modelRef){
 }
 
 // This will affect syntheticTemplate validation on property observer
-function revalidateBindingPath(refRoot, paths, modelRef){
+export function revalidateBindingPath(refRoot, paths, modelRef){
 	for (let i = 0; i < paths.length; i++) {
 		const path = paths[i];
 		const deep = deepProperty(modelRef, path.slice(0, -1));

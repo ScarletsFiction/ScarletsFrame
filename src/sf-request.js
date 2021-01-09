@@ -1,19 +1,11 @@
 import $ from "./sf-dom.js";
 
-$.get = (url, data, options, callback) => custom('GET', url, data, options, callback)
-$.post = (url, data, options, callback) => custom('POST', url, data, options, callback)
-$.getJSON = (url, data, options, callback) => custom('getJSON', url, data, options, callback)
-$.postJSON = (url, data, options, callback) => custom('postJSON', url, data, options, callback)
+$.get = (url, data, options, callback) => Self('GET', url, data, options, callback)
+$.post = (url, data, options, callback) => Self('POST', url, data, options, callback)
+$.getJSON = (url, data, options, callback) => Self('getJSON', url, data, options, callback)
+$.postJSON = (url, data, options, callback) => Self('postJSON', url, data, options, callback)
 
-let Self = {};
-export default Self;
-
-Self = custom;
-const statusCode = Self.statusCode = {};
-Self.onerror = null;
-Self.onsuccess = null;
-
-function custom(method, url, data, options, callback){
+export default function Self(method, url, data, options, callback){
 	if(data && data.constructor === Function){
 		callback = data;
 		data = void 0;
@@ -39,6 +31,10 @@ function custom(method, url, data, options, callback){
 
 	return request(method, url, data, options, callback);
 }
+
+const statusCode = Self.statusCode = {};
+Self.onerror = null;
+Self.onsuccess = null;
 
 function request(method, url, data, options, callback){
 	const xhr = new XMLHttpRequest();

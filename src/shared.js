@@ -3,6 +3,8 @@ export const isTouchDevice = ()=> navigator.maxTouchPoints !== 0;
 
 export var internal = {
 	virtualScrolling: false,
+	space: {empty:true},
+	windowEv: {}
 };
 export var privateRoot = {};
 export var forProxying = {};

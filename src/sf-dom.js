@@ -1,7 +1,10 @@
 import {internal} from "./shared.js";
+let {windowEv} = internal;
+
 import Loader from "./sf-loader.js";
 import Window from "./sf-window.js";
 import {customEvent} from "./sf-model/custom-event.js";
+import {toArray} from "./utils.js";
 
 const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
 

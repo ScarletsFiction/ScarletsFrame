@@ -5,6 +5,8 @@ import Request from "./sf-request.js";
 import Space from "./sf-space.js";
 import {internal} from "./shared.js";
 import {syntheticTemplate} from "./sf-model/template.js";
+import $ from "./sf-dom.js";
+import {parseIndexAllocate, applyParseIndex} from "./sf-model/a_model.js";
 
 export default function Self(el){
 	Self.init(el);
@@ -42,7 +44,7 @@ Self.changeDefault = function(defaultLang){
 	Self.default = defaultLang;
 
 	// Maybe have create other window?
-	if(windowDestroyListener !== false && SFWindow.list.length !== 0){
+	if(internal.windowDestroyListener !== false && SFWindow.list.length !== 0){
 		const windows = SFWindow.list;
 
 		for (let i = 0; i < windows.length; i++)
@@ -131,14 +133,16 @@ function startRequest(){
 		if(activeRequest !== false)
 			activeRequest.abort();
 
-		activeRequest = Request('POST', Self.serverURL, {
-			lang:Self.default,
-			paths:JSON.stringify(pending)
-		}, {
-			sendType:'JSON',
-			receiveType:'JSON',
-		})
-		.done(function(obj){
+		if(Self.serverURL.includes('.json'))
+			activeRequest = Request('GET', Self.serverURL.split('*').join(Self.default));
+		else{
+			activeRequest = Request('POST', Self.serverURL, {
+				lang:Self.default,
+				paths:JSON.stringify(pending)
+			}, {sendType:'JSON', receiveType:'JSON'});
+		}
+
+		activeRequest.done(function(obj){
 			pending = false;
 			Self.add(Self.default, obj);
 		})
@@ -427,7 +431,6 @@ function refreshLang(list, noPending, callback){
 	});
 }
 
-const templateParser_regex_split = /{{%=[0-9]+%/g;
 function elementReferencesRefresh(elem){
 	const eRef = elem.sf$elementReferences;
 	let processed = false;
@@ -470,7 +473,7 @@ function elementReferencesRefresh(elem){
 			// ToDo: fix value that fail/undefined if it's from RepeatedList/Property
 			if(elemRef.ref.name === 'value'){
 				const refB = elemRef.ref;
-				elemRef.attribute.value = internal.model.applyParseIndex(refB.value, refB.parse_index, eRef.parsed, template.parse);
+				elemRef.attribute.value = applyParseIndex(refB.value, refB.parse_index, eRef.parsed, template.parse);
 			}
 			continue;
 		}
@@ -583,7 +586,7 @@ function createParseIndex(text, remakeRef, template){
 
 	remakeRef.parse_index = parse_index;
 	remakeRef.value = value.split('%*&');
-	internal.model.parseIndexAllocate(remakeRef.value);
+	parseIndexAllocate(remakeRef.value);
 	return true;
 }
 
