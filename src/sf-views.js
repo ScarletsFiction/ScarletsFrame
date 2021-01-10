@@ -170,8 +170,9 @@ internal.router.findRoute = function(url){
 	return false;
 }
 
+// ToDo turn this into a class
 export default function Self(selector, name){
-	if(this === sf)
+	if(this.Views === Self)
 		return console.error('sf.Views need to be constructed using "new sf.Views"');
 
 	if(name === void 0)
