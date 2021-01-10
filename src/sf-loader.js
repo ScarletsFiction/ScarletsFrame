@@ -1,4 +1,4 @@
-import sf from "./internal.js";
+import internal from "./internal.js";
 
 const Self = {};
 export default Self;
@@ -135,7 +135,7 @@ function domStateEvent(){
 					whenDOMReady[i]();
 				} catch(e) {
 					console.error(e);
-					sf.onerror && sf.onerror(e);
+					internal.onerror && internal.onerror(e);
 				}
 			}
 		}
@@ -176,8 +176,8 @@ function waitResources(){
 		try{
 			whenDOMLoaded[i]();
 		} catch(e){
-			console.error(e);
-			sf.onerror && sf.onerror(e);
+			console.error({func: whenDOMLoaded[i]}, e);
+			internal.onerror && internal.onerror(e);
 		}
 	}
 

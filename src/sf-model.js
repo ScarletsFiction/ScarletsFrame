@@ -40,7 +40,7 @@ export function findBindListElement(el, includeComponent){
 	return null;
 }
 
-export function GetModelScope(el, returnNode){
+export function getScope(el, returnNode){
 	if(el === void 0)
 		el = $0;
 

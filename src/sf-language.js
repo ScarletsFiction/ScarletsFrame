@@ -1,4 +1,4 @@
-import {GetModelScope} from "./sf-model.js";
+import {getScope} from "./sf-model.js";
 import SFWindow from "./sf-window.js";
 import Component from "./sf-component.js";
 import Request from "./sf-request.js";
@@ -48,7 +48,7 @@ Self.changeDefault = function(defaultLang){
 		const windows = SFWindow.list;
 
 		for (let i = 0; i < windows.length; i++)
-			windows[i].sf.lang.changeDefault(defaultLang);
+			windows[i].sf.language.changeDefault(defaultLang);
 	}
 
 	function forComponents(){
@@ -353,7 +353,7 @@ function refreshLang(list, noPending, callback){
 				continue;
 			}
 			else{
-				const modelElement = GetModelScope(elem, true);
+				const modelElement = getScope(elem, true);
 				if(modelElement !== null){
 					if(parentElement.has(modelElement))
 						continue;
@@ -410,7 +410,7 @@ function refreshLang(list, noPending, callback){
 
 			let { model } = elem;
 			if(model === void 0)
-				model = GetModelScope(elem);
+				model = getScope(elem);
 
 			// Avoid model that doesn't have binding
 			if(model.sf$bindedKey === void 0)

@@ -1,4 +1,4 @@
-import {$, getScope} from "../index.js";
+import {$, getScope, Space} from "../index.js";
 
 if(window.sf$ === void 0)
 	window.sf$ = {};
@@ -6,7 +6,7 @@ if(window.sf$ === void 0)
 window.sf$.hasInspector = true;
 
 // For browser interface
-var SFDevSpace = new sf.Space('sf_devmode');
+var SFDevSpace = new Space('sf_devmode');
 var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 	html:`
 	<div class="sf-shadow-mark" style="
@@ -326,7 +326,7 @@ SFDevSpace.component('sf-space-info', {
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(){
-		alert("SF.Space inspector haven't finished yet");
+		alert("sf.Space inspector haven't finished yet");
 	}
 
 	My.enter = function(){
@@ -353,7 +353,7 @@ SFDevSpace.component('sf-view-info', {
 		My.leave();
 		setTimeout(()=> {
 			if(e.ctrlKey) return My.openEditor();
-			alert("SF.Views inspector haven't finished yet");
+			alert("sf.Views inspector haven't finished yet");
 		}, 20);
 	}
 

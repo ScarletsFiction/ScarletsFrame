@@ -3,7 +3,7 @@
 //
 // Note: using .apply can be more faster than ...spread
 
-import {GetModelScope} from "../sf-model.js";
+import {getScope} from "../sf-model.js";
 import Component from "../sf-component.js";
 import Internal from "../internal.js";
 import $ from "../sf-dom.js";
@@ -194,7 +194,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 		template.bindList = this;
 
 		if(SFOptions.devMode === true)
-			template.rootIndex = $.getSelector(parentNode, true, GetModelScope(parentNode, true));
+			template.rootIndex = $.getSelector(parentNode, true, getScope(parentNode, true));
 
 		if(this.constructor === RepeatedList){
 			template.repeatedList = true;
@@ -339,10 +339,10 @@ export class RepeatedProperty{ // extends Object
 						return;
 
 					for (var i = a; i < olds.length; i++)
-						Internal.delete(that, olds[i]);
+						Obj.delete(that, olds[i]);
 
 					for (var i = a; i < news.length; i++)
-						Internal.set(that, news[i], val[news[i]]);
+						Obj.set(that, news[i], val[news[i]]);
 
 					that._list = news;
 				}
@@ -530,39 +530,40 @@ export class RepeatedSet extends Set{
 }
 
 // Only for Object or RepeatedProperty
-Internal.set = function(obj, prop, val){
-	if(obj[prop] === val)
-		return;
+export const Obj = {
+	set(obj, prop, val){
+		if(obj[prop] === val)
+			return;
 
-	if(obj.$EM === void 0){
-		obj[prop] = val;
-		return;
-	}
+		if(obj.$EM === void 0){
+			obj[prop] = val;
+			return;
+		}
 
-	if(obj[prop] === void 0){
-		obj[prop] = val;
-		ProxyProperty(obj, prop, false);
+		if(obj[prop] === void 0){
+			obj[prop] = val;
+			ProxyProperty(obj, prop, false);
 
-		obj.$EM.append(prop);
-		obj._list.push(prop);
-	}
-}
+			obj.$EM.append(prop);
+			obj._list.push(prop);
+		}
+	},
+	delete(obj, prop){
+		if(obj.$EM === void 0){
+			delete obj[prop];
+			return;
+		}
 
-Internal.delete = function(obj, prop){
-	if(obj.$EM === void 0){
+		const i = obj._list.indexOf(prop);
+		if(i === -1)
+			return;
+
+		obj.$EM.remove(i);
 		delete obj[prop];
-		return;
+
+		obj._list.splice(i, 1);
 	}
-
-	const i = obj._list.indexOf(prop);
-	if(i === -1)
-		return;
-
-	obj.$EM.remove(i);
-	delete obj[prop];
-
-	obj._list.splice(i, 1);
-}
+};
 
 function ProxyProperty(obj, prop, force){
 	if(force || Object.getOwnPropertyDescriptor(obj, prop).set === void 0){

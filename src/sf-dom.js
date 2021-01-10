@@ -703,7 +703,7 @@ function recreateDOMList($el, length){
 		callback.selector = selector;
 		callback.options = options;
 
-		if(element === Window){
+		if(element === Window.list){
 			if(windowEv[event] === void 0)
 				windowEv[event] = [];
 
@@ -778,7 +778,7 @@ function recreateDOMList($el, length){
 			selector = void 0;
 		}
 
-		if(element === Window){
+		if(element === Window.list){
 			if(windowEv[event] === void 0 || windowEv[event].length === 0)
 				return;
 
