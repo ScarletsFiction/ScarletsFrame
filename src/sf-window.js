@@ -15,7 +15,7 @@ function winDestroy(win){
 
 	win.destroying = true;
 
-	delete sf.window.list[opt.id];
+	delete Window.list[opt.id];
 	win.document.body.remove();
 	win.close();
 	console.log(`%c[${opt.title}]`, "color: #9bff82", "Closed!");
@@ -28,31 +28,22 @@ function firstInitSFWindow(){
 	});
 }
 
-const SFWindow = {
-	list:{},
-	destroy(id){
-		if(id !== void 0)
-			winDestroy(this.list[id]);
-		else{
-			const { list } = this;
-			for(let k in list)
-				winDestroy(list[k]);
-		}
+export default class Window{
+	static frameworkPath = "";
+	// id = ...
 
-		window.requestAnimationFrame = reqAnimFrame;
-	},
-	create(options, onLoaded){
+	constructor(options, onLoaded){
 		if(options === void 0)
 			options = {};
 
 		if(options.id === void 0)
 			options.id = Math.round(Math.random()*1000) + String(Date.now()).slice(3);
 
-		const winID = options.id;
+		const winID = this.id = options.id;
 		if(internal.windowDestroyListener === false){
 			internal.windowDestroyListener = true;
 			window.addEventListener('beforeunload', function(){
-				sf.window.destroy();
+				Window.destroy();
 			});
 		}
 
@@ -66,18 +57,25 @@ const SFWindow = {
 		else console.error("The options must have a template (templatePath | templateHTML | templateURL)");
 
 		if(template === void 0)
-			return console.error("Template not found") && false;
+			throw new Error("Template not found");
 
 		const windowFeatures = `width=${options.width || 500},height=${options.height || 400}`;
-		const linker = window.open(window.location.origin+(options.route || ''), '', windowFeatures);
+		const linker = this.context = window.open(window.location.origin+(options.route || ''), '', windowFeatures);
 
 		if(linker === null)
-			return console.error("It seems the popup was blocked by the browser") && false;
+			throw new Error("It seems the popup was blocked by the browser");
 
 		if(headerTags === ''){
-			headerTags = $('script[src*="scarletsframe"]')[0].outerHTML;
-			const styles = $('link, style');
+			headerTags = $('script[src*="scarletsframe"]');
+			if(headerTags.length === 0){
+				if(Window.frameworkPath === '')
+					throw new Error("Failed to automatically detect framework URL. Please specify URL in the 'Window.frameworkPath'. (example: 'https://cdn.jsdelivr.net/npm/scarletsframe@latest')");
 
+				headerTags = `<script src="${Window.frameworkPath}"></script>`;
+			}
+			else headerTags = headerTags[0].outerHTML;
+
+			const styles = $('link, style');
 			for (let i = 0; i < styles.length; i++)
 				headerTags += styles[i].outerHTML;
 		}
@@ -88,17 +86,17 @@ const SFWindow = {
 		linker.loaded = function(){
 			windows[winID] = linker;
 
-			if(linker.sf.space === void 0)
+			if(linker.sf.Space === void 0)
 				throw new Error("Looks like ScarletsFrame.js can't be loaded from the other window.");
 
-			linker.sf.space.list = sf.space.list;
+			linker.sf.Space.list = sf.Space.list;
 
 			// Proxying
 			linker.sf.model.root = sf.model.root;
 			linker.sf.model.init = sf.model.init;
 			linker.sf.component.new = sf.component.new;
-			linker.sf.lang.init = sf.lang.init;
-			linker.sf.lang.changeDefault = sf.lang.changeDefault;
+			linker.sf.language.init = sf.language.init;
+			linker.sf.language.changeDefault = sf.language.changeDefault;
 
 			// Put original reference for different constructor
 			linker.Text._ref = Text;
@@ -111,10 +109,10 @@ const SFWindow = {
 			// Component
 			portComponentDefinition(linker, sf.component.registered, linker.sf.component.registered);
 
-			const spaces = sf.space.list;
+			const spaces = sf.Space.list;
 			for(let name in spaces){
 				const space = spaces[name];
-				const ref = new linker.sf.space(name, {
+				const ref = new linker.sf.Space(name, {
 					templatePath: space.templatePath
 				});
 
@@ -143,11 +141,11 @@ const SFWindow = {
 			});
 
 			onLoaded && onLoaded({
-				views: linker.sf.views,
-				url: linker.sf.url
+				Views: linker.sf.Views,
+				URL: linker.sf.URL
 			});
 
-			sf.lang.init(linker.document.body);
+			sf.language.init(linker.document.body);
 
 			for(let ev in windowEv){
 				const callbackList = windowEv[ev];
@@ -156,6 +154,8 @@ const SFWindow = {
 					linker.addEventListener(ev, evCallback, evCallback.options);
 				}
 			}
+
+			linker.loaded = null;
 		}
 
 		if(options.title === void 0)
@@ -181,17 +181,33 @@ const SFWindow = {
 		}</head><body><script>setTimeout(loaded,1000)</script></body></html>`);
 
 		linker.addEventListener('beforeunload', function(ev){
-			sf.window.destroy(winID);
+			Window.destroy(winID);
 		});
+	}
 
-		return true;
-	},
-	source(lists, ev){
+	destroy(){
+		Window.destroy(this.id);
+	}
+
+	// === Static ===
+	static list = {};
+	static destroy(id){
+		if(id !== void 0)
+			winDestroy(this.list[id]);
+		else{
+			const { list } = this;
+			for(let k in list)
+				winDestroy(list[k]);
+		}
+
+		window.requestAnimationFrame = reqAnimFrame;
+	}
+	static source(lists, ev){
 		if(ev === void 0)
 			ev = window.event;
 
 		if(ev === void 0)
-			throw new Error("Can't capture event, please add event data on parameter 2 of sf.window.source");
+			throw new Error("Can't capture event, please add event data on parameter 2 of sf.Window.source");
 
 		if(lists === void 0)
 			return lists.view;
@@ -204,7 +220,7 @@ const SFWindow = {
 
 		return null;
 	}
-};
+}
 
 function portComponentDefinition(linker, from, into){
 	for(let name in from){
@@ -226,5 +242,3 @@ function portComponentDefinition(linker, from, into){
 		ref[1] = linker.sf$defineComponent(name);
 	}
 }
-
-export default SFWindow;
