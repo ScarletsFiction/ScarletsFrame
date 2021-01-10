@@ -20,6 +20,9 @@ Self.interpolate = {}
 internal.language = {};
 
 Self.add = function(lang, obj){
+	if(obj.constructor !== Object)
+		throw new Error("Parameter 2 must be an object");
+
 	if(Self.list[lang] === void 0)
 		Self.list[lang] = {};
 
@@ -134,7 +137,9 @@ function startRequest(){
 			activeRequest.abort();
 
 		if(Self.serverURL.includes('.json'))
-			activeRequest = Request('GET', Self.serverURL.split('*').join(Self.default));
+			activeRequest = Request('GET', Self.serverURL.split('*').join(Self.default), null, {
+				receiveType:'JSON'
+			});
 		else{
 			activeRequest = Request('POST', Self.serverURL, {
 				lang:Self.default,
