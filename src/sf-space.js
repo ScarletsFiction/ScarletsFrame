@@ -104,6 +104,7 @@ export default class Space{
 		if(namespace !== namespace.toLowerCase())
 			throw new Error('`namespace` must be lowercase');
 
+		forProxying.internalSpaceEmpty = internal.space.empty = false;
 		this.namespace = namespace;
 
 		let scope = Space.list[namespace];
@@ -222,6 +223,7 @@ class SFSpace extends HTMLElement {
 	constructor(){
 		super();
 		this.sf$firstInit = true;
+		forProxying.internalSpaceEmpty = internal.space.empty = false;
 	}
 	connectedCallback(){
 		if(this.sf$destroying !== void 0){
@@ -233,7 +235,6 @@ class SFSpace extends HTMLElement {
 			return;
 
 		delete this.sf$firstInit;
-		forProxying.internalSpaceEmpty = internal.space.empty = false;
 
 		// Extract namespace name
 		for(let i=0, n=this.attributes.length; i < n; i++){

@@ -20,7 +20,7 @@ import {Obj} from "./sf-model/repeated-list.js";
 if(window.sf$ === void 0)
 	window.sf$ = {};
 
-window.sfx = {
+window.sf = {
 	API,
 	component,
 	$,

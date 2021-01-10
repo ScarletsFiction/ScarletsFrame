@@ -6,6 +6,7 @@ import Component from "./sf-component.js";
 import {getStaticMethods, getPrototypeMethods} from "./utils.js";
 import {ModelInit} from "./sf-model/a_model.js";
 import {removeModelBinding} from "./sf-model/element-bind.js";
+import "./sf-space.js";
 
 // Data save and HTML content binding
 export default function Self(name, options, func, namespace){
