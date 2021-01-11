@@ -3,6 +3,8 @@ import {$, getScope, Space} from "../index.js";
 if(window.sf$ === void 0)
 	window.sf$ = {};
 
+export default 1;
+
 window.sf$.hasInspector = true;
 
 // For browser interface

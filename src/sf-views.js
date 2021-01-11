@@ -668,7 +668,7 @@ export default function Self(selector, name){
 					selectorElement = dom.sf$viewSelector = {};
 			}
 
-			if(SFOptions.hotReload && url.template !== void 0)
+			if(SFOptions.devMode && url.template !== void 0)
 				dom.sf$templatePath = url.template;
 
 			if(url.hasChild){

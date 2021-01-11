@@ -164,7 +164,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 
 		var temp = {ref:refB};
 
-		if(SFOptions.hotReload)
+		if(SFOptions.devMode)
 			temp.element = current;
 
 		if(refB.name === 'style')
@@ -371,7 +371,7 @@ Internal.async = function(mode){
 export function syntheticRepeatedList(template, property, modelScope){
 	const { bindList } = template;
 	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;
-	const changes = template.modelRefRoot[property];
+	// const changes = template.modelRefRoot[property];
 
 	if(elements === void 0 && bindList.$EM.list !== void 0){
 		const list = bindList.$EM.list;

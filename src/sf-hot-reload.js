@@ -14,15 +14,10 @@ import {templateParser} from "./sf-model/template.js";
 let hotReloadAll = false; // All model property
 SFOptions.devMode = true;
 
-export let proxyModel, proxySpace, proxyComponent, proxyTemplate, internalProp;
-let backupTemplate, backupCompTempl;
+export let proxyModel, proxySpace, proxyComponent, proxyTemplate = {}, internalProp;
+export let backupTemplate, backupCompTempl;
 
-$(function(){
-	setTimeout(()=> {
-		if(!SFOptions.hotReload)
-			console.log('[ScarletsFrame] %cHot reload was inactive', 'color:yellow');
-	}, 5000);
-})
+console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 
 export default function HotReload(mode){
 	if(mode === 1)
@@ -32,11 +27,10 @@ export default function HotReload(mode){
 
 	if(proxyModel !== void 0) return;
 
-	backupTemplate = {};
+	backupTemplate = Object.assign({}, templates);
 	backupCompTempl = new WeakMap();
 	proxyModel = new WeakMap();
 	proxyComponent = new WeakMap();
-	proxyTemplate = {};
 	proxySpace = new WeakMap(/*
 		(Space) => {compName:[scopes]}
 	*/);
@@ -352,25 +346,6 @@ export function hotComponentTemplate(scope, name){
 
 	backupCompTempl.set(registrar, registrar[3]);
 }
-
-$(function(){
-	setTimeout(function(){
-		if(window.SFDevSpace !== void 0 || window.sf$.hasInspector) return;
-
-		var path = $('script[src*="scarletsframe."]')[0];
-		if(path === void 0){
-			Loader.js(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js']);
-			Loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css']);
-			return;
-		}
-
-		path = path.src.split('scarletsframe.')[0];
-		Loader.js([path+'dev-mode.js']);
-		Loader.css([path+'dev-mode.css']);
-	}, 1);
-});
-
-console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 
 export function getCallerFile(step){
 	try{throw new Error()}catch(e){

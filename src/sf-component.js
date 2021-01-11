@@ -8,7 +8,7 @@ import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreproce
 import {bindInput} from "./sf-model/input-bind.js";
 import {repeatedListBinding} from "./sf-model/repeated-list.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
-import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd, proxyTemplate} from "./sf-hot-reload.js";
+import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd, proxyTemplate, backupCompTempl} from "./sf-hot-reload.js";
 
 export default function Self(name, options, func, namespace){
 	if(options !== void 0){
@@ -154,10 +154,10 @@ Self.html = function(name, outerHTML, namespace){
 				if(window.templates[outerHTML.template] !== void 0){
 					template = window.templates[outerHTML.template];
 
-					if(SFOptions.hotReload && proxyTemplate[outerHTML.template] === void 0)
+					if(SFOptions.devMode && proxyTemplate[outerHTML.template] === void 0)
 						proxyTemplate[outerHTML.template] = [scope, name];
 
-					if(!outerHTML.keepTemplate && SFOptions.hotReload === false)
+					if(!outerHTML.keepTemplate && SFOptions.devMode === false)
 						delete window.templates[outerHTML.template];
 				}
 				else{

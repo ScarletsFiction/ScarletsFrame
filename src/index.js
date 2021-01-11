@@ -1,4 +1,5 @@
 import "./shared.js";
+import Assistant from "./assistant/main.js";
 import API from "./sf-api.js";
 import component from "./sf-component.js";
 import $ from "./sf-dom.js";
@@ -38,7 +39,8 @@ window.sf = {
 	Window,
 	internal,
 	getScope,
-	Obj
+	Obj,
+	Assistant
 };
 
 export {
@@ -59,7 +61,8 @@ export {
 	Window,
 	internal,
 	getScope,
-	Obj
+	Obj,
+	Assistant
 };
 
 // import.meta.hot?.accept();

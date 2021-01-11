@@ -1,4 +1,4 @@
-import {$, model, hotReload} from "../index.js";
+import {$, model, hotReload, Assistant} from "../index.js";
 import {parsePreprocess, queuePreprocess} from "../sf-model/parser.js";
 import "./t-sf-model.js";
 import "./t-sf-component.js";
@@ -9,7 +9,9 @@ import "./t-sf-views.js";
 import "./t-sf-virtual_scroll.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
-hotReload(1);
+// Enable Development Mode, Development Assistant, and Hot Reload Level 1
+Assistant(1);
+
 $(function(){console.log("✔️ Loading finished")});
 
 class ImgModel{
