@@ -43,7 +43,7 @@ export default class Window{
 			options.id = Math.round(Math.random()*1000) + String(Date.now()).slice(3);
 
 		const winID = this.id = options.id;
-		if(internal.windowDestroyListener === false){
+		if(!internal.windowDestroyListener){
 			internal.windowDestroyListener = true;
 			window.addEventListener('beforeunload', function(){
 				Window.destroy();
