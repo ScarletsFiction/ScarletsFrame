@@ -14,6 +14,7 @@ export default {
   output: {
     file: "dist/main.js",
     format: "iife",
+    name: "sf"
   },
   plugins
 };
