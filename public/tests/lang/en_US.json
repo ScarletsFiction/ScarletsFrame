@@ -1,0 +1,14 @@
+{
+    "second":"Second!",
+    "my":{
+        "test":"My Test!"
+    },
+    "stuff":{
+        "chicken":"Rooster!",
+        "game":"Harvestmoon!"
+    },
+    "another":{
+        "day":"Sunday!",
+        "friend":"Aliz!"
+    }
+}

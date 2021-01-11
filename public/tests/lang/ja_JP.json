@@ -1,0 +1,31 @@
+{
+	"translated":"{data} [b:bold]翻訳済み",
+	"hello":{
+	    "other":{
+	        "side":"[b:反対側]からこんにちは"
+	    }
+	},
+	"i'm":{
+	    "here":"私はここにいます！"
+	},
+	"second":"第二!",
+	"my":{
+	    "test":"私のテスト!"
+	},
+	"stuff":{
+	    "chicken":"オンドリ!",
+	    "game":"中秋の名月!"
+	},
+	"another":{
+	    "day":"日曜日!",
+	    "friend":"Aliz!"
+	},
+	"custom":{
+	  "el":{
+	    "iB1":"可変コンテンツ：{inputBinding1}",
+	    "iB2":"上記のコンテンツ：{inputBinding2.text}",
+	    "iB3":"それは{inputBinding2.text}です"
+	  }
+	},
+	"test":{"complex":"[b:{item}] {data} japan test"}
+}

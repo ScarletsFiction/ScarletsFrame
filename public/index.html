@@ -4,11 +4,492 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ScarletsFrame Tests</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+
+    <title>Test Page</title>
+    <script src='https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.js'></script>
+    <script>
+      // We don't need this slow stuff
+      SimpleBar.removeObserver();
+
+      var _bst = window.setTimeout;
+      var _bst_ = 0;
+      window.setTimeout = function(f,t){
+        _bst_++;
+        return _bst(f,t);
+      }
+
+      var _bsi = window.setInterval;
+      var _bsi_ = 0;
+      window.setInterval = function(f,t){
+        _bsi_++;
+        return _bsi(f,t);
+      }
+
+      _bst(function(){
+        console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
+      }, 5000);
+
+      var tempbst = 0;
+      _bst(function(){
+        tempbst = _bst_+_bsi_;
+        console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
+      }, 20000);
+
+      _bst(function(){
+        if(tempbst !== _bst_+_bsi_){
+          console.log("There are", _bst_, "setTimeout,", _bsi_, "setInterval that was called before");
+          return console.log("⚔ Looks like internal framework timer was not effective");
+        }
+        else console.log("✔️ Internal timer looks OK");
+      }, 30000);
+    </script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css">
+    <style type="text/css">
+      img{
+        width: 100px;
+        position: fixed;
+      }
+      .sf-dom-queued{
+        color: transparent;
+        background-color: gainsboro;
+        user-select: none;
+      }
+      span.bold{
+       font-weight: bold;
+      }
+      span.transit{
+       transition: background-color 1s ease-in;
+       background-color: white;
+      }
+      span.transit.pink{
+       background-color: pink;
+      }
+      sf-page-view{
+       display: none;
+      }
+      sf-page-view.page-current{
+       display: block;
+      }
+      nested-view{
+        background: rgba(0,0,200,0.2);
+        display: block;
+        height: 16px;
+      }
+      nested2-view{
+        background: rgba(0,200,0,0.2);
+        display: block;
+        height: 16px;
+      }
+      custom-view > sf-page-view:first-child{
+       display: block;
+      }
+      sf-m, comp-test{
+        display: block;
+      }
+    </style>
+   </head>
+   <body class="body">
+    <sf-m name="image" style="position: fixed;left:40vw;top:40vh">
+      <img
+        title="Image only for testing, this is not part of distributable package. This image belongs to the respective owner. Watari Masahito, Eris, Konosuba."
+        src="/tests/img.jpg"
+        :style="transform:{{trans}}"
+        .@dragmove="dragmove"
+        @click="console.log"
+        @gesture="gesture(321, event)"
+        @taphold="taphold(this, event)"
+      >
+    </sf-m>
+
+    <!-- Dynamic Page -->
+    <div>
+       <b>Dynamic Page Navigation</b><br>
+       <i>Note: the url also changed, if you hit refresh you will be redirected to other page.</i><br><br>
+       <custom-view>
+          View place<br>
+          <a href="/test/page1">Go to page 1</a> || Nest->
+          <a href="/test/page1/nest1">1-1</a> |
+          <a href="/test/page1/nest2">1-2</a> |
+          <a href="/test/page1/nest1/nest1">1-1-1</a> |
+          <a href="/test/page1/nest1/nest2">1-1-2</a> |
+          <a href="/test/page1/nest2/nest1">1-2-1</a> |
+          <a href="/test/page1/nest2/nest2">1-2-2</a> | <br>
+          <a href="/test/page2">Go to page 2</a> || Nest->
+          <a href="/test/page2/nest1">2-1</a> |
+          <a href="/test/page2/nest2">2-2</a> |
+          <a href="/test/page2/nest1/nest1">2-1-1</a> |
+          <a href="/test/page2/nest1/nest2">2-1-2</a> |
+          <a href="/test/page2/nest2/nest1">2-2-1</a> |
+          <a href="/test/page2/nest2/nest2">2-2-2</a> |
+          <a href="/test/page2/nest2/nest3">2-2-3</a> | <br>
+          <a href="/test/urlTemp">Template</a> || Nest->
+          <a href="/test/urlTemp/1">1</a> |
+          <a href="/test/urlTemp/1/2">1-2</a> |
+       </custom-view>
+       <br><br>
+       <a href="@/">Refresh whole page</a><br>
+
+       <!-- This should be passed as unhandled -->
+       <a href="//www.google.com">Test1</a>
+       <a href="//www.google.com/hey">Test2</a>
+    </div><br><br>
+
+    <!-- Virtual Scroll And Array Binding -->
+    <sf-m name="virtual-scroll" id="reinit2">
+      <style type="text/css">
+         .scroller{
+            overflow-x: hidden;
+            overflow-y: scroll;
+            height: 200px;
+         }
+      </style>
+
+      <b>Virtual Scroll - Static Height & Scroll on parent {{ id }} - {{ list1.length }}</b>
+      <div data-simplebar style="height: 200px;">
+         <ul class="sf-virtual-list">
+           <li sf-each="x in list1" data-id="{{x.id}}" style="background:{{ oneSelect === x.id ? 'yellow' : '' }}" @click="handleClick(event, 1)">
+             <label>{{ x.id+(false?"\' \"":'') }}</label>
+
+             {{@if x === list1[0]:
+                x.first = true;"\' \"";
+                {[<span> - Am I the ({{ one+(false?"\' \"":'') }}) one?</span>]}
+
+             @elseif x.first && x !== list1[0]:
+                delete x.first;
+                {[<span> - I'm no longer the "{{ one }}" one..</span>]}
+             }}
+           </li>
+         </ul>
+      </div><br>
+
+      <b>Virtual Scroll - Dynamic Height</b>
+      <i>Automatically scroll to item-11</i>
+      <ul class="scroller sf-virtual-list sf-list-dynamic">
+         <li sf-each="x in list2" data-id="{{x.id}}" style="background:{{ twoSelect === x.id ? 'yellow' : '' }}" >
+            <label @click="handleClick(event, 2)">{{x.id}}</label>
+         </li>
+      </ul>
+    </sf-m>
+
+    <div style="height: 150px;">
+      <sf-m name="virtual-scroll">
+      {{ list3.length }} - x - {{ list6.size }} - {{ list7.size }}
+      </sf-m><br>
+
+      <!-- Repeat1 -->
+      <sf-m name="virtual-scroll" style="display:inline-block;width: 30%;float: left;">
+        <div sf-each="key,nyan in list3" @click="withKeyClick(key, nyan, 1)">{{@exec
+          for (var i = 0; i < nyan.length; i++) {
+            {[ <b>1-></b> "'{{key}}. test[{{i}}] = {{ nyan[i] }}'"<br> ]}
+          }
+        }}</div>
+        <div sf-each="key,val in list4" @click="withKeyClick(key, val, 1)">
+          <span><b>1-></b> obj[{{ key }}] = {{ val }}</span><br>
+        </div>
+        <div sf-each="key,val in list6" @click="withKeyClick(key, val, 1)">
+          <span><b>1-></b> map[{{ key.a }}] = {{ val.b }}</span><br>
+        </div>
+        <div sf-each="val in list7" @click="withKeyClick(val, 1)">
+          <span><b>1-></b> set -> {{ val }}</span><br>
+        </div>
+        bottom-boundary
+      </sf-m>
+
+      <!-- Repeat2 -->
+      <sf-m name="virtual-scroll" style="display:inline-block;width: 30%;">
+         <div sf-each="key,nyan in list3" @click="withKeyClick(key, nyan, 2)">{{@exec
+           for (var i = 0; i < nyan.length; i++) {
+             {[ <b>2-></b> {{key}}. test[{{i}}] = {{ nyan[i] }}<br> ]}
+           }
+         }}</div>
+         <div sf-each="key,val in list4" @click="withKeyClick(key, val, 2)">
+           <span><b>2-></b> obj[{{ key }}] = {{ val }}</span><br>
+         </div>
+         <div sf-each="key,val in list6" @click="withKeyClick(key, val, 2)">
+           <span><b>2-></b> map[{{ key.a }}] = {{ val.b }}</span><br>
+         </div>
+         <div sf-each="val in list7" @click="withKeyClick(val, 2)">
+           <span><b>2-></b> set -> {{ val }}</span><br>
+         </div>
+         bottom-boundary
+      </sf-m>
+
+      <!-- Repeat3 -->
+      <sf-m name="virtual-scroll" style="display:inline-block;width: 30%;">
+         must be 0 ~ 6
+         <div sf-each="i,nyan in list5" @click="withKeyClick(i, nyan, 3)">
+          {{ i }}. {{ nyan.a }}
+         </div>
+         bottom-boundary
+      </sf-m>
+
+      <!-- Iterables -->
+      <sf-m name="virtual-scroll" style="display:inline-block;width: 30%;">
+         must be 0 ~ 6
+         <div sf-each="nyan in strRange()" @click="withKeyClick(i, nyan, 4)">
+          {{ i }}. {{ nyan.a }}
+         </div>
+         bottom-boundary
+      </sf-m>
+    </div>
+    <br><br><br><br><br><br><br><br>
+
+    <!-- Model and Controller -->
+    <sf-m name="model-binding" id="reinit">
+       <span :class="transit {{ bold ? 'bold' : '' }} {{ pink ? 'pink' : '' }}">Change variable on keyboard input</span><br>
+
+       <input type="text" sf-into="inputBinding1" onkeyup="sf.getScope(this).onKeyUp(event)" value="One way binding"><br>
+       <input sf-lang="i'm.here" type="text" sf-bind="inputBinding1" placeholder="test"><br>
+       <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }} <b>hay</b> nyam {{inputBinding2.text}} <u>ahoy</u></span><br><br>
+
+       <span class="bold" style="
+          font-weight: {{ bold ? 'bold' : 'unset' }};
+          background-color: {{ pink ? 'pink' : '' }};
+       ">Another one</span><br>
+
+       <textarea type="text" sf-bind="inputBinding2.text" placeholder="will round a number if called from script"></textarea><br>
+       <input type="text" value="It's {{inputBinding2.text}}" sf-lang="custom.el.iB3" disabled><br>
+       <span sf-lang="custom.el.iB2">Above Content: {{ inputBinding2.text }}</span><br><br>
+       <select sf-bind="inputBinding8">
+          <option value="en_US">en_US</option>
+          <option value="id_ID">id_ID</option>
+          <option value="ja_JP">ja_JP</option>
+       </select><br>
+
+       <input type="checkbox" value="check1" sf-bind="inputBinding3">Check 1
+       <input type="checkbox" value="check2" sf-bind="inputBinding3">Check 2<br>
+       <input type="radio" name="inputBinding4" value="radio1" sf-bind> Radio 1
+       <input type="radio" name="inputBinding4" value="radio2" sf-bind> Radio 2<br>
+       <select sf-bind="inputBinding5" multiple typedata="number">
+          <option value="1">Select 1</option>
+          <option value="2">Select 2</option>
+          <option value="3">Select 3</option>
+       </select>
+       <select sf-bind="inputBinding6" typedata="number">
+          <option value="{{x.value}}" sf-each="x in inputBinding6a">
+          {{x.text}} - {{text}}
+        </option>
+       </select><br><br>
+       <input type="file" multiple sf-bind="inputBinding7"><br>
+
+       <b>Conditional HTML</b><br>
+       <div>
+          {{@if showHTML === true:
+             {[<span>This 1st must not be displayed "{{ stuff }}"</span><br>]}
+          }}
+          <span>Some bind: {{ stuff+stuff }}</span><br>
+          {{@if showHTML === false:
+             {[<span>'"\'\"This 2th must be displayed {{ stuff+"'\"" }} {{ stuffes }}</span>]}
+          }}<br><br>
+          {{@if showHTML === false:
+             {[<span>Template with"'\"\'
+                <b aw yeah></b>
+              </span><br>]}
+          }}
+       </div>
+
+       <div>
+         <comp-bind-test sf-scope="comp.bind"></comp-bind-test>
+         <div>{{comp.bind.text}}</div>
+         <input sf-bind="comp.bind.text">
+       </div>
+
+       <b>Test template content with function and attribute</b><br>
+        <div id="chk1" class="dummy {{  testObj.status[0].toUpperCase() + testObj.status.slice(1) }}">{{
+          testObj.status[0].toUpperCase() + testObj.status.slice(1)
+        }}</div>
+
+        <div sf-each="i,x in testObj.deep" class="dummy {{  x.status[0].toUpperCase() + x.status.slice(1) }}">{{
+          x.status[0].toUpperCase() + x.status.slice(1)
+        }}</div>
+
+       <b>Execution for the current model scope</b><br>
+       <div>
+          <div>
+          {{@exec
+            var bindThis = prefix;
+
+             for(var i = 1; i <= 5; i++){
+                {[<span attr="{{ bindThis }} o{{ i }}">'{{ bindThis }}'{{ i }}</span><br>]};
+             }
+
+             var calculate = (5+4);
+             {[<span>5 + 4 = {{ calculate+(false?"\' \"":'') }}</span><br>]}
+
+             var escapeHTML = "<span>This must be HTML escaped (except the bold)</span>"+vul;
+             var noEscapeHTML = "<br><span>This shouldn't be HTML escaped (no &lt;span&gt;)</span>";
+
+             {[ <b>{{escapeHTML}}</b> ]}
+             @return noEscapeHTML;
+          }}
+          {{@exec {[ <br><br>shouldn't being parsed {{vuln}} ]} }}
+          </div>
+       </div>
+    </sf-m>
+
+    <!-- Components -->
+    <sf-m name="components" id='components'>
+      <div id="nyam" @click="handleClick" test="{{ test }}">
+       <a @click="clickOK">test click</a><br>
+       <comp-test id="henlos">
+          <input type="text" sf-bind="data"/>
+          <span sf-lang="test.complex">custom {{data}} <b>{{item}}</b> here</span>
+          <span sf-each="num in tries">{{num}},</span>
+          <comp-test id="deepTest">
+            Deep repeat yeah
+            <comp-test id="deepRepeat" style="display:inline-block" sf-each="item in tries"></comp-test>
+          </comp-test>
+       </comp-test>
+       <comp-test id="async"></comp-test>
+       <comp-test id="repeat" sf-each="item in items"></comp-test>
+     </div>
+     <div>
+      <b>Below must be 2,2,1</b><br>
+       <dynamic-reserved index="2"></dynamic-reserved>
+       <dynamic-reserved index="2">
+          reserve two
+          <sf-reserved name="test"></sf-reserved>
+          ?
+       </dynamic-reserved><br>
+       <dynamic-reserved index="1"></dynamic-reserved>
+       <br>
+       <b>Below must be 1,2</b><br>
+       <dynamic-template></dynamic-template>
+     </div>
+    </sf-m>
+
+    <!-- Language -->
+    <div id="lang-test">
+       <p sf-lang="hello.other.side" onclick="sf.language.changeDefault('id_ID')">a<b>b</b>c</p>
+       <input type="text" sf-lang="i'm.here" placeholder="" />
+
+       <p sf-lang="my.test" onclick="sf.language.changeDefault('ja_JP')"></p>
+       <p sf-lang="second" onclick="sf.language.changeDefault('en_US')"></p>
+    </div>
+
+    <sf-space test-space="asd">
+      Inner namespace 1 testing
+      <sf-m name="obj" id="obj1">
+        <!--{{@exec @return {[<barbar-test></barbar-test>]} }}-->
+        {{ test }} - <span id="ningen" sf-each="num in list" @click="inc">{{num}}.</span>
+        <input id="iyi" sf-bind="test"></input> - {{ test }}
+      </sf-m>
+      <my-obj id="1">{{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
+        <input sf-bind="test"></input> - {{ test }}</my-obj>
+    </sf-space><br>
+    <sf-space test-space="zxc">
+      Inner namespace 2 testing
+      <sf-m name="obj" id="obj1">
+        {{ test }} - <span sf-each="num in list" @click="inc">{{num}}.</span>
+        <input sf-bind="test"></input> - {{ test }}
+      </sf-m>
+      <my-obj id="1">{{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
+        <input sf-bind="test"></input> - {{ test }}</my-obj>
+    </sf-space>
+
+    <div>
+      Outer namespace testing
+      <sf-m name="obj" id="obj2">
+        {{ test }} - <span sf-each="num in list" @click="inc">{{num}}.</span>
+        <input sf-bind="test"></input> - {{ test }}
+      </sf-m>
+      <my-obj id="2">{{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
+        <input sf-bind="test"></input> - {{ test }}</my-obj>
+    </div>
+
+    <sf-m name="deep-property" class="container">
+      <!-- Bind the html content -->
+      <div class="today">
+        {{ one + ' ' + today.deep.two }}
+        {{ one }} {{ today.deep.two }}
+        <div>
+        <input sf-bind="today.deep.two"/>
+        <input sf-bind="one"/></div>
+      </div>
+
+      <div class="row">
+        <ul class="todo-list">
+          <!-- Bind array from the model -->
+          <li sf-each="key, item in list">
+            <div class="checkbox">
+              <input sf-bind="item.four"/>
+              <input sf-bind="item.text.three"/>
+              <input sf-bind="today.deep.two"/>
+              <input sf-bind="one"/>
+              <label>
+                {{key}}. {{ item.four + ' ' + item.text.three }}
+                <span testval="{{key}}. {{ today.deep.two }} {{ one }}"> - </span>
+                {{key}}. {{ today.deep.two }} {{ one }}
+              </label>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </sf-m>
+
+    <br>Must have 5 item start from m11:
+    <sf-m name="fultest">
+      <div style="display:inline-block">m{{ ful + 1 }}</div>,
+      <ful-test>
+        <div style="display:inline-block">c{{ ful + 2 }}</div>,
+        <sf-m name="fultest">
+          <div style="display:inline-block">m{{ ful + 3 }}</div>,
+          <ful-test>
+            <div style="display:inline-block">c{{ ful + 4 }}</div>,
+            <sf-m name="fultest">
+              <div style="display:inline-block">m{{ ful + 5 }}</div>
+            </sf-m>
+          </ful-test>
+        </sf-m>
+      </ful-test>
+    </sf-m>
+
+    <br>RepeatedElement inside of RepeatedElement:
+    <sf-m name="repeattest">
+      <div sf-each="key, val in lv1">
+        lv1 <span sf-each="key2, val2 in val.lv2">
+          <br> -- lv2 <span sf-each="key3, val3 in val2.lv3">
+            {{ key +'-'+ val3 +'-'+ hi + vul }}
+          </span>
+        </span>
+      </div>
+    </sf-m>
+
+    Class as model/component test
+    <sf-m name="clastest">{{nyam}} {{ful}}</sf-m>
+    <clas-test>{{nyam}} {{ful}}</clas-test>
+    <br>
+
+    <sf-m name="repeattest">
+      <div>
+        {{@exec
+          for (var i = 1; i <= 5; i++) {
+            if(i > stars) break;
+            {[ <span>{{stars+vul}}</span>- ]}
+          }
+          for (; i <= 5; i++) {
+            {[ <span>k</span>- ]}
+          }
+        }}
+        <br>
+        {{@exec
+          for (var i = 1; i <= 5; i++) {
+            if(i > stars) break;
+            {[ <span>i {{vul}}</span>- ]}
+          }
+        }}
+      </div>
+    </sf-m>
+    <br>
+    <br>
+
     <script type="module" src="/dist/index.js"></script>
+    <script type="module" src="/dist/tests/index.js"></script>
     <script type="module" src="/dist/assistant/inspector.js"></script>
     <link rel="stylesheet" type="text/css" href="/dist/assistant/inspector.css">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
   </body>
 </html>
