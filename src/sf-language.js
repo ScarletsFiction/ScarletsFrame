@@ -8,8 +8,32 @@ import {syntheticTemplate} from "./sf-model/template.js";
 import $ from "./sf-dom.js";
 import {parseIndexAllocate, applyParseIndex} from "./sf-model/a_model.js";
 
-export default function Self(el){
-	Self.init(el);
+let Self = {};
+export default Self;
+Self.init = function(el){
+	const list = el.querySelectorAll('[sf-lang]');
+	if(list.length === 0)
+		return;
+
+	if(Self.list[Self.default] === void 0)
+		Self.list[Self.default] = {};
+
+	refreshLang(list, false, function(){
+		if(pending !== false && Self.serverURL !== false){
+			const callback = function(){
+				pending = false;
+				refreshLang(pendingElement, true);
+			}
+
+			callback.callbackOnly = true;
+			pendingCallback.push(callback);
+
+			startRequest();
+		}
+
+		if(pending !== false && Self.serverURL === false)
+			console.warn("Some language was not found, and the serverURL was set to false", pending);
+	});
 }
 
 Self.list = {};
@@ -81,11 +105,14 @@ Self.changeDefault = function(defaultLang){
 	}
 	else forComponents();
 
-	Self.init(document.body);
+	// Lazy init
+	setTimeout(()=> {
+		Self.init(document.body);
 
-	const wList = SFWindow.list;
-	for(let key in wList)
-		Self.init(wList[key].document.body);
+		const wList = SFWindow.list;
+		for(let key in wList)
+			Self.init(wList[key].document.body);
+	}, 1);
 }
 
 const interpolate_ = /{(.*?)}/;
@@ -263,32 +290,6 @@ const pendingElement = [];
 var activeRequest = false;
 
 Self.onError = console.error;
-
-Self.init = function(el){
-	const list = el.querySelectorAll('[sf-lang]');
-	if(list.length === 0)
-		return;
-
-	if(Self.list[Self.default] === void 0)
-		Self.list[Self.default] = {};
-
-	refreshLang(list, false, function(){
-		if(pending !== false && Self.serverURL !== false){
-			const callback = function(){
-				pending = false;
-				refreshLang(pendingElement, true);
-			}
-
-			callback.callbackOnly = true;
-			pendingCallback.push(callback);
-
-			startRequest();
-		}
-
-		if(pending !== false && Self.serverURL === false)
-			console.warn("Some language was not found, and the serverURL was set to false", pending);
-	});
-}
 
 function diveObject(obj, path, setValue){
 	const parts = path.split('.');
