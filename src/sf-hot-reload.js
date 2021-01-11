@@ -7,6 +7,7 @@ import Loader from "./sf-loader.js";
 import Component, {prepareComponentTemplate} from "./sf-component.js";
 import Model from "./sf-model.js";
 import Views from "./sf-views.js";
+import Assistant from "./assistant/inspector.js";
 import $ from "./sf-dom.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {templateParser} from "./sf-model/template.js";
@@ -17,14 +18,36 @@ SFOptions.devMode = true;
 export let proxyModel, proxySpace, proxyComponent, proxyTemplate = {}, internalProp;
 export let backupTemplate, backupCompTempl;
 
-console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
+setTimeout(function(){
+	if(!SFOptions.hotReload){
+		SFOptions.devMode = false;
+		proxyTemplate = void 0;
+	}
+	else{
+		console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
+
+		$(function(){
+			if(window.SFDevSpace !== void 0) return;
+
+			var path = $('script[src*="scarletsframe."]')[0];
+			if(path === void 0){
+				Loader.js(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js']);
+				Loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css']);
+				return;
+			}
+
+			path = path.src.split('scarletsframe.')[0];
+			Loader.js([path+'dev-mode.js']);
+			Loader.css([path+'dev-mode.css']);
+		});
+	}
+}, 1);
 
 export default function HotReload(mode){
 	if(mode === 1)
 		SFOptions.hotReload = true;
 	else if(mode === 2)
 		hotReloadAll = SFOptions.hotReload = true;
-
 	if(proxyModel !== void 0) return;
 
 	backupTemplate = Object.assign({}, templates);
@@ -46,6 +69,7 @@ export default function HotReload(mode){
 
 	$(function(){
 		backupTemplate = Object.assign({}, templates);
+		Assistant();
 
 		// Register event
 		setTimeout(function(){
@@ -56,7 +80,7 @@ export default function HotReload(mode){
 				socket.on('sf-hot-js', runScript);
 				socket.on('sf-hot-html', runScript);
 			}
-			else console.error("HotReload: Failed to listen to browserSync");
+			// else console.error("HotReload: Failed to listen to browserSync");
 		}, 1000);
 	});
 }

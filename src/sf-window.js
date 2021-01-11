@@ -2,7 +2,10 @@
 // For using as remote, developer should build
 // their own auth or communication system
 
-import {internal} from "./shared.js";
+import {internal, forProxying} from "./shared.js";
+import {model, component, Space, language} from "./index.js";
+import {ModelInit} from "./sf-model/a_model.js";
+import $ from "./sf-dom.js";
 let {windowEv} = internal;
 let headerTags = '';
 
@@ -65,11 +68,14 @@ export default class Window{
 		if(linker === null)
 			throw new Error("It seems the popup was blocked by the browser");
 
+		linker.document.body.textContent = '';
+		linker.document.head.textContent = '';
+
 		if(headerTags === ''){
 			headerTags = $('script[src*="scarletsframe"]');
 			if(headerTags.length === 0){
 				if(Window.frameworkPath === '')
-					throw new Error("Failed to automatically detect framework URL. Please specify URL in the 'Window.frameworkPath'. (example: 'https://cdn.jsdelivr.net/npm/scarletsframe@latest')");
+					throw new Error("Failed to automatically detect framework URL. Please specify URL in the 'sf.Window.frameworkPath'. (example: 'https://cdn.jsdelivr.net/npm/scarletsframe@latest')");
 
 				headerTags = `<script src="${Window.frameworkPath}"></script>`;
 			}
@@ -82,21 +88,26 @@ export default class Window{
 
 		linker.winOptions = options;
 
-		const windows = this.list;
 		linker.loaded = function(){
-			windows[winID] = linker;
+			Window.list[winID] = linker;
+
+			// Temporary backward compatibility
+			if(linker.sf.Space === void 0 && linker.sf.space !== void 0){
+				linker.sf.Space = linker.sf.space;
+				linker.sf.language = linker.sf.lang;
+			}
 
 			if(linker.sf.Space === void 0)
 				throw new Error("Looks like ScarletsFrame.js can't be loaded from the other window.");
 
-			linker.sf.Space.list = sf.Space.list;
+			linker.sf.Space.list = Space.list;
 
 			// Proxying
-			linker.sf.model.root = sf.model.root;
-			linker.sf.model.init = sf.model.init;
-			linker.sf.component.new = sf.component.new;
-			linker.sf.language.init = sf.language.init;
-			linker.sf.language.changeDefault = sf.language.changeDefault;
+			linker.sf.model.root = model.root;
+			linker.sf.model.init = ModelInit;
+			linker.sf.component.new = component.new;
+			linker.sf.language.init = language.init;
+			linker.sf.language.changeDefault = language.changeDefault;
 
 			// Put original reference for different constructor
 			linker.Text._ref = Text;
@@ -107,9 +118,9 @@ export default class Window{
 			linker.HTMLTemplateElement._ref = HTMLTemplateElement;
 
 			// Component
-			portComponentDefinition(linker, sf.component.registered, linker.sf.component.registered);
+			portComponentDefinition(linker, component.registered, linker.sf.component.registered);
 
-			const spaces = sf.Space.list;
+			const spaces = Space.list;
 			for(let name in spaces){
 				const space = spaces[name];
 				const ref = new linker.sf.Space(name, {
@@ -124,7 +135,6 @@ export default class Window{
 				portComponentDefinition(linker, space.default.registered, ref.default.registered);
 			}
 
-			linker.document.body.textContent = '';
 			$(linker.document.body).append(template);
 			linker.sf$proxy.sfLoaderTrigger();
 
@@ -145,7 +155,7 @@ export default class Window{
 				URL: linker.sf.URL
 			});
 
-			sf.language.init(linker.document.body);
+			language.init(linker.document.body);
 
 			for(let ev in windowEv){
 				const callbackList = windowEv[ev];
@@ -193,9 +203,9 @@ export default class Window{
 	static list = {};
 	static destroy(id){
 		if(id !== void 0)
-			winDestroy(this.list[id]);
+			winDestroy(Window.list[id]);
 		else{
-			const { list } = this;
+			const { list } = Window;
 			for(let k in list)
 				winDestroy(list[k]);
 		}

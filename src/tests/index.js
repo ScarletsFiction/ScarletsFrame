@@ -1,4 +1,4 @@
-import {$, model, hotReload, Assistant} from "../index.js";
+import {$, model, hotReload, Window} from "../index.js";
 import {parsePreprocess, queuePreprocess} from "../sf-model/parser.js";
 import "./t-sf-model.js";
 import "./t-sf-component.js";
@@ -10,7 +10,8 @@ import "./t-sf-virtual_scroll.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 // Enable Development Mode, Development Assistant, and Hot Reload Level 1
-Assistant(1);
+hotReload(1);
+Window.frameworkPath = 'https://cdn.jsdelivr.net/npm/scarletsframe@latest';
 
 $(function(){console.log("✔️ Loading finished")});
 

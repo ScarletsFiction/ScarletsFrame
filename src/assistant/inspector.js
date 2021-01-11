@@ -1,14 +1,10 @@
 import {$, getScope, Space} from "../index.js";
 
-if(window.sf$ === void 0)
-	window.sf$ = {};
-
-export default 1;
-
-window.sf$.hasInspector = true;
+export default function(){
 
 // For browser interface
 var SFDevSpace = new Space('sf_devmode');
+window.SFDevSpace = SFDevSpace;
 var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 	html:`
 	<div class="sf-shadow-mark" style="
@@ -963,3 +959,5 @@ $(function(){
 	.on('pointerup', preventAltCtrlClick, {capture:true})
 	.on('click', preventAltCtrlClick, {capture:true});
 });
+
+};
