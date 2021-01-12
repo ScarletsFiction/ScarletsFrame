@@ -10,7 +10,7 @@ import $ from "../sf-dom.js";
 import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";
 import {internal, SFOptions, sfRegex} from "../shared.js";
 import {initBindingInformation, extractPreprocess} from "./parser.js";
-import {hiddenProperty, parsePropertyPath, deepProperty} from "../utils.js";
+import {hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
 import {repeatedListBindRoot, bindElement} from "./element-bind.js";
 import {syntheticTemplate, templateParser} from "./template.js";
 
