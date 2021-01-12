@@ -43,7 +43,7 @@ export class VirtualScrollManipulator {
 		this.elList = $EM.elements;
 		this.list = $EM.list;
 		this.iTop = document.createElement(firstEl.tagName);
-		this.iTop.classList.add('virtual-spacer');
+		this.iTop.className = 'virtual-spacer';
 		this.iRoot = root;
 		this.iBottom = this.iTop.cloneNode();
 

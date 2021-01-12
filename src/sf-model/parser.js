@@ -351,7 +351,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 	for (var i = 0; i < backup.length; i++) {
 		var current = backup[i];
 		var flag = document.createElement('template');
-		flag.classList.add('sf-each-prepare');
+		flag.className = 'sf-each-prepare';
 		current.parentNode.replaceChild(flag, current);
 	}
 
@@ -815,9 +815,6 @@ export function parsePreprocess(nodes, modelRef, modelKeysRegex){
 	var template, current;
 	try{
 		for(current of nodes){
-			// Get reference for debugging
-			internal.processingElement = current;
-
 			if(current.nodeType === 3 && binded.has(current.parentNode) === false){
 				if(current.parentNode.constructor._ref === SFModel._ref){
 					// Auto wrap element if parent is 'SF-M'

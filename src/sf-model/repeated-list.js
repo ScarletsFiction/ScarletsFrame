@@ -3,7 +3,7 @@
 //
 // Note: using .apply can be more faster than ...spread
 
-import {getScope} from "../sf-model.js";
+import {getScope, findBindListElement} from "../sf-model.js";
 import Component from "../sf-component.js";
 import Internal from "../internal.js";
 import $ from "../sf-dom.js";
@@ -160,9 +160,6 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 
 	let template, originalAddr;
 	if(!isComponent){
-		// Get reference for debugging
-		internal.processingElement = element;
-
 		if(modelKeysRegex.specialElement !== void 0)
 			originalAddr = modelKeysRegex.specialElement.repeat[RE_ProcessIndex];
 

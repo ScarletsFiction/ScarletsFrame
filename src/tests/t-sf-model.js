@@ -91,7 +91,7 @@ model('model-binding', function(My, root){
 		My.testObj.deep.b.status = "b✔️ this one ok"+adder;
 		My.testObj.deep.c.status = "c✔️ this one ok"+adder;
 		requestAnimationFrame(function(){
-			if(!chk1.classList.value === 'dummy A✔️ this one ok'+adder || chk1.textContent !== 'A✔️ this one ok'+adder){
+			if(!chk1.className === 'dummy A✔️ this one ok'+adder || chk1.textContent !== 'A✔️ this one ok'+adder){
 				console.error('This one not refreshed', chk1);
 				console.error('should reflect with ->', My.testObj);
 			}

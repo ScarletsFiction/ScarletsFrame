@@ -98,7 +98,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				else dom.appendChild(ref.html);
 
 				internal.component.skip = false;
-				dom.classList.add('page-prepare');
+				dom.className = 'page-prepare';
 			}
 
 			route.keys = keys;
@@ -783,7 +783,7 @@ export default function Self(selector, name){
 		if(url.html){
 			if((url.html.constructor._ref || url.html.constructor) === HTMLTemplateElement){
 				const node = document.createElement('sf-page-view');
-				node.classList.add('page-prepare');
+				node.className = 'page-prepare';
 
 				const clone = url.html.cloneNode(true).content.childNodes;
 				for(let p=0, n=clone.length; p < n; p++){
@@ -823,7 +823,7 @@ export default function Self(selector, name){
 
 			// Create new element
 			const dom = document.createElement('sf-page-view');
-			dom.classList.add('page-prepare');
+			dom.className = 'page-prepare';
 
 			var elements = $.parseElement(html_content);
 			for(var p=0, n=elements.length; p < n; p++){
@@ -834,7 +834,7 @@ export default function Self(selector, name){
 			if(url.templateURL !== void 0){
 				internal.component.skip = true;
 				const temp = document.createElement('sf-page-view');
-				temp.classList.add('page-prepare');
+				temp.className = 'page-prepare';
 
 				var elements = $.parseElement(html_content);
 				for(var p=0, n=elements.length; p < n; p++){
