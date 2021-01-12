@@ -169,12 +169,11 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 
 		if(refB.name === 'style')
 			temp.style = current.style;
+		else if(refB.name === 'class')
+			temp.class = current.classList;
 		else{
 			temp.attribute = isValueInput === true
-				? current
-				: (refB.name === 'class'
-				   ? current.classList
-				   : current.attributes[refB.name]);
+				? current : current.attributes[refB.name];
 		}
 
 		if(current.hasAttribute('sf-lang'))
@@ -203,8 +202,6 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 }
 
 export function templateParser(template, item, original, modelRef, rootHandler, copy, repeatListIndex, namespace){
-	internal.processingElement = template.html;
-
 	let html = original === true ? template.html : template.html.cloneNode(true);
 	const { addresses } = template;
 
@@ -362,16 +359,14 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 	return html;
 }
 
+var disableAsync = false;
 Internal.async = function(mode){
-	if(mode)
-		animFrameMode = false; // Enable async
-	else animFrameMode = true; // Disable async
+	animFrameMode = disableAsync = !mode;
 }
 
 export function syntheticRepeatedList(template, property, modelScope){
 	const { bindList } = template;
 	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;
-	// const changes = template.modelRefRoot[property];
 
 	if(elements === void 0 && bindList.$EM.list !== void 0){
 		const list = bindList.$EM.list;
@@ -447,7 +442,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 	   && templateExec(template.parse, item, changes, parsed, repeatListIndex) === false)
 		return;
 
-	if(!asyncing && animFrameMode === false){
+	if(!asyncing && animFrameMode === false && disableAsync === false){
 		if(changesReference.async === true)
 			return;
 
@@ -505,9 +500,11 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 			continue;
 		}
 
+		if(cRef.ref.parse_index !== void 0) // Multiple
+			temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
+
 		if(cRef.textContent !== void 0){ // Text only
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
 				if(cRef.textContent.textContent === temp) continue;
 				cRef.textContent.textContent = temp;
 
@@ -533,36 +530,39 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 			continue;
 		}
 
+		if(cRef.style !== void 0){ // Styles
+			if(cRef.ref.parse_index === void 0)
+				temp = parsed[cRef.ref.direct];
+
+			if(cRef.style.cssText === temp) continue;
+			cRef.style.cssText = temp;
+			haveChanges = true;
+			continue;
+		}
+
+		if(cRef.class !== void 0){ // Class
+			if(cRef.ref.parse_index === void 0)
+				temp = parsed[cRef.ref.direct];
+
+			if(cRef.class.value === temp) continue;
+			cRef.class.value = temp;
+			haveChanges = true;
+			continue;
+		}
+
 		if(cRef.attribute !== void 0){ // Attributes
-			if(cRef.ref.parse_index !== void 0){ // Multiple
-				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
-				if(cRef.attribute.value === temp) continue;
-			}
+			if(cRef.ref.parse_index !== void 0 && cRef.attribute.value === temp) // Multiple
+				continue;
 
 			// Direct value
 			else if(parsed[cRef.ref.direct] !== void 0){
 				temp = parsed[cRef.ref.direct];
 				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}
-			else continue;
 
 			cRef.attribute.value = temp;
 			haveChanges = true;
 			continue;
-		}
-
-		if(cRef.style !== void 0){ // Styles
-			if(cRef.ref.parse_index !== void 0) // Multiple
-				temp = applyParseIndex(cRef.ref.value, cRef.ref.parse_index, parsed, template.parse, item, repeatListIndex);
-
-			// Direct value
-			else if(parsed[cRef.ref.direct] !== void 0)
-				temp = parsed[cRef.ref.direct];
-			else continue;
-
-			if(cRef.style.cssText === temp) continue;
-			cRef.style.cssText = temp;
-			haveChanges = true;
 		}
 	}
 
