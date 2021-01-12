@@ -237,8 +237,7 @@ function touchGesture(that, callback){
 		ev.stopImmediatePropagation();
 		findAnd(1, ev);
 
-		const p1 = pointers[0];
-		const p2 = pointers[1];
+		const [p1, p2] = pointers;
 		const dx = p2.clientX - p1.clientX;
 		const dy = p2.clientY - p1.clientY;
 
