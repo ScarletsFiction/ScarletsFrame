@@ -534,6 +534,8 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 			if(cRef.ref.parse_index === void 0)
 				temp = parsed[cRef.ref.direct];
 
+			// ToDo: Performance improvement with style[name] = value
+			// instead of .cssText
 			if(cRef.style.cssText === temp) continue;
 			cRef.style.cssText = temp;
 			haveChanges = true;

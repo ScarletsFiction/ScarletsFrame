@@ -1429,9 +1429,9 @@ export class ElementManipulator{
 
 		if(this.$VSM === void 0){
 			const other_sibling = other.nextSibling;
-			const other_parent = other.parentNode;
-			index.parentNode.insertBefore(other, index.nextSibling);
-			other_parent.insertBefore(index, other_sibling);
+			const parentNode = this.parentNode;
+			parentNode.replaceChild(other, index);
+			parentNode.insertBefore(index, other_sibling);
 		}
 		else this.$VSM.swap(ii, oo);
 
