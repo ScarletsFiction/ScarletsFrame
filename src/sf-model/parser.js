@@ -224,7 +224,7 @@ function toObserve(full, model, properties){
 	const place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
 
 	// Get property name
-	if(place[properties] === void 0){
+	if(!(properties in place)){
 		place[properties] = [toObserve.template.i];
 
 		if(place === toObserve.template.modelRef)
@@ -700,7 +700,7 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 	for (let i = childNodes.length - 1; i >= 0; i--) {
 		const currentNode = childNodes[i];
 
-		if(excludes[currentNode.nodeName] !== void 0)
+		if(currentNode.nodeName in excludes)
 			continue;
 
 		if(currentNode.nodeType === 1){ // Tag

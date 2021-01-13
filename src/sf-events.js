@@ -16,7 +16,7 @@ export default function Events(name, defaultVal){
 	// Status trigger only triggered when true otherwise it will pending the callback
 	// After triggered, all events will be cleared
 	if(defaultVal !== void 0 && defaultVal.constructor === Boolean){
-		if(Events[name] !== void 0 && Events[name] !== defaultVal)
+		if(name in Events && Events[name] !== defaultVal)
 			console.warn("Events", name, "already has value:", Events[name]);
 
 		const trigger = function(){
@@ -54,7 +54,7 @@ export default function Events(name, defaultVal){
 	}
 
 	// Events.on (Listener)
-	else if(Events[name] === void 0){
+	else if(!(name in Events)){
 		Events[name] = function(){
 			for (let i = 0; i < callback.length; i++) {
 				try{
@@ -69,7 +69,7 @@ export default function Events(name, defaultVal){
 			}
 		}
 
-		if(My._listener[name] === void 0)
+		if(!(name in My._listener))
 			My._listener[name] = [];
 
 		const callback = My._listener[name];
@@ -82,7 +82,7 @@ Events.when = function(name, callback){
 	if(Events[name] === true)
 		return callback();
 
-	if(My._statusTrigger[name] === void 0)
+	if(!(name in My._statusTrigger))
 		My._statusTrigger[name] = [];
 
 	My._statusTrigger[name].push(callback);
@@ -94,14 +94,14 @@ Events.once = function(name, callback){
 }
 
 Events.on = function(name, callback){
-	if(My._listener[name] === void 0)
+	if(!(name in My._listener))
 		My._listener[name] = [];
 
 	My._listener[name].push(callback);
 }
 
 Events.off = function(name, callback){
-	if(My._listener[name] === void 0)
+	if(!(name in My._listener))
 		return My._listener[name].length = 0;
 
 	const i = My._listener[name].indexOf(callback);

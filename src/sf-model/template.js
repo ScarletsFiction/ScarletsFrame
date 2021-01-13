@@ -483,7 +483,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 
 				// Replace if exist, skip if similar
 				for (var a = 0; a < tDOMLength; a++) {
-					if(currentDOM[a] === void 0)
+					if(!(a in currentDOM))
 						break;
 
 					z--;
@@ -557,7 +557,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 				continue;
 
 			// Direct value
-			else if(parsed[cRef.ref.direct] !== void 0){
+			else if(cRef.ref.direct in parsed){
 				temp = parsed[cRef.ref.direct];
 				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}

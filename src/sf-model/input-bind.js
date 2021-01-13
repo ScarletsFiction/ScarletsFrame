@@ -321,7 +321,7 @@ export function bindInput(temp, modelLocal, mask, modelScope){
 
 		// Get reference
 		let propertyNameLocal = null;
-		if(model[propertyName] === void 0){
+		if(!(propertyName in model)){
 			let deepScope = parsePropertyPath(propertyName);
 			propertyNameLocal = deepScope.slice();
 

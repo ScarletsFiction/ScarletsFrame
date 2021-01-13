@@ -14,12 +14,12 @@ export default function Self(name, options, func, namespace){
 		return Self.for(name, options, func, namespace);
 
 	// If it's component tag
-	if((namespace || Component).registered[name] !== void 0)
+	if(name in (namespace || Component).registered)
 		return (namespace || root_)(name);
 
 	const scope = namespace || Self;
-	if(scope.root[name] === void 0){
-		if(internal.modelInherit[name] !== void 0)
+	if(!(name in scope.root)){
+		if(name in internal.modelInherit)
 			scope.root[name] = new internal.modelInherit[name]();
 		else
 			scope.root[name] = {};
@@ -108,7 +108,7 @@ Self.for = function(name, options, func, namespace){
 		if(func === void 0){
 			let root = (namespace || Self).root;
 
-			if(root[name] === void 0){
+			if(!(name in root)){
 				options.$el = $();
 				root[name] = options;
 			}
@@ -130,7 +130,7 @@ Self.for = function(name, options, func, namespace){
 	if(!SFOptions.hotReload && func.constructor === Function)
 		func(scopeTemp, scope);
 
-	if(Loader.DOMWasLoaded && internal.modelPending[name] !== void 0){
+	if(Loader.DOMWasLoaded && name in internal.modelPending){
 		const temp = internal.modelPending[name];
 		for (let i = 0; i < temp.length; i++) {
 			ModelInit(temp[i], temp[i].getAttribute('name'));
@@ -233,7 +233,7 @@ export class SFModel extends HTMLElement {
 		const name = this.getAttribute('name');
 
 		// Instant run when model scope was found or have loaded
-		if(Self.root[name] !== void 0 && internal.modelPending[name] === void 0){
+		if(name in Self.root && !(name in internal.modelPending)){
 			// Run init when all assets have loaded
 			if(Loader.DOMWasLoaded){
 				internal.language.refreshLang(this);
@@ -249,7 +249,7 @@ export class SFModel extends HTMLElement {
 		}
 
 		// Pending model initialization
-		if(internal.modelPending[name] === void 0)
+		if(!(name in internal.modelPending))
 			internal.modelPending[name] = [];
 
 		internal.modelPending[name].push(this);
@@ -293,7 +293,7 @@ var root_ = function(scope){
 	if(Component.registered[scope])
 		return Component(scope);
 
-	if(Self.root[scope] === void 0)
+	if(!(scope in Self.root))
 		Self.root[scope] = {};
 
 	return Self.root[scope];

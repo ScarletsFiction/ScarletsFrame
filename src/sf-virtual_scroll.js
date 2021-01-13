@@ -330,7 +330,7 @@ export class VirtualScrollManipulator {
 		let last;
 
 		for (var a = i; a < until; a++){
-			if(elList[a] === void 0){
+			if(!(a in elList)){
 				until = a;
 				console.log('ToDo: fix this part');
 				break;
@@ -521,7 +521,7 @@ Object.assign(VirtualScrollManipulator.prototype, {
 
 	remove(index){
 		this.totalHeight -= this.elList[index].sf$heightPos;
-		if(index === 0 && this.elList[1] !== void 0)
+		if(index === 0 && 1 in this.elList)
 			this.elList[1].sf$scrollPos = 1;
 
 		this.recalculateElementData(index);
@@ -532,7 +532,7 @@ Object.assign(VirtualScrollManipulator.prototype, {
 		for (var i = index; i < other; i++)
 			this.totalHeight -= this.elList[i].sf$heightPos;
 
-		if(index === 0 && this.elList[i] !== void 0)
+		if(index === 0 && i in this.elList)
 			this.elList[i].sf$scrollPos = 1;
 
 		this.elList.splice(index, other-index);

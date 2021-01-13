@@ -234,7 +234,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	let bindedKey = model.sf$bindedKey;
 
-	if(bindedKey[propertyName] !== void 0){
+	if(propertyName in bindedKey){
 		bindedKey = bindedKey[propertyName];
 		if(bindedKey.includes(callback) === false)
 			bindedKey.push(callback);
@@ -289,7 +289,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		originalPropertyName = stringifyPropertyPath(originalPropertyName);
 	}
 
-	if(isALength !== false && model[isALength] === void 0){
+	if(isALength !== false && !(isALength in model)){
 		Object.defineProperty(model, isALength, {
 			value(){
 				var temp;

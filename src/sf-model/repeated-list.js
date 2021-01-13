@@ -332,7 +332,7 @@ export class RepeatedProperty{ // extends Object
 					}
 
 					// Return if all new value has been assigned
-					if(a === news.length && olds[a] === void 0)
+					if(a === news.length && !(a in olds))
 						return;
 
 					for (var i = a; i < olds.length; i++)
@@ -537,7 +537,7 @@ export const Obj = {
 			return;
 		}
 
-		if(obj[prop] === void 0){
+		if(!(prop in obj)){
 			obj[prop] = val;
 			ProxyProperty(obj, prop, false);
 
@@ -1132,7 +1132,7 @@ export class RepeatedList extends Array{
 
 		for (let i = index; i < length; i++) {
 			// Create element if not exist
-			if(elems[i] === void 0){
+			if(!(i in elems)){
 				this.$EM.hardRefresh(i);
 				return;
 			}
@@ -1312,7 +1312,7 @@ export class ElementManipulator{
 
 		for (let i = index; i < other; i++) {
 			const oldChild = exist[i];
-			if(oldChild === void 0 || list[i] === void 0)
+			if(oldChild === void 0 || !(i in list))
 				break;
 
 			const ref = list[i];

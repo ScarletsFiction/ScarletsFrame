@@ -295,7 +295,7 @@ export default function Self(selector, name){
 			return Self;
 		}
 
-		if(onEvent[event] === void 0)
+		if(!(event in onEvent))
 			return console.error(`Event '${event}' was not exist`);
 
 		if(onEvent[event].includes(func) === false)
@@ -314,7 +314,7 @@ export default function Self(selector, name){
 			return Self;
 		}
 
-		if(onEvent[event] === void 0)
+		if(!(event in onEvent))
 			return console.error(`Event '${event}' was not exist`);
 
 		if(func === void 0){
@@ -364,7 +364,7 @@ export default function Self(selector, name){
 				}
 
 				if(pendingAutoRoute){
-					if(SFURL.routes[name] !== void 0)
+					if(name in SFURL.routes)
 						firstRouted = Self.goto(SFURL.routes[name]);
 					else
 						firstRouted = Self.goto('/');
@@ -697,7 +697,7 @@ export default function Self(selector, name){
 				// Find current parent
 				for (var i = 0; i < last.length; i++) {
 					const found = last[i].sf$viewSelector;
-					if(found === void 0 || found[selectorName] === void 0)
+					if(found === void 0 || !(selectorName in found))
 						continue;
 
 					DOMReference = found[selectorName];
@@ -764,7 +764,7 @@ export default function Self(selector, name){
 		}
 
 		//(url.url || path)
-		if(url.templateURL !== void 0 && cachedURL[url.templateURL] !== void 0){
+		if(url.templateURL !== void 0 && url.templateURL in cachedURL){
 			afterDOMLoaded(cachedURL[url.templateURL].cloneNode(true));
 			return true;
 		}

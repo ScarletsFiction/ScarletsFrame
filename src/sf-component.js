@@ -122,7 +122,7 @@ Self.for = function(name, options, func, namespace){
 	Object.defineProperty(registrar[2], 'root', {value:construct});
 	window[`$${capitalizeLetters(name.split('-'))}`] = construct;
 
-	if(waitingHTML[name] !== void 0)
+	if(name in waitingHTML)
 		checkWaiting(name, namespace);
 	else if(SFOptions.hotReload)
 		hotComponentRefresh(scope, name, func);
@@ -151,10 +151,10 @@ Self.html = function(name, outerHTML, namespace){
 		if(outerHTML.template){
 			templatePath = outerHTML.template;
 			if(window.templates){
-				if(window.templates[outerHTML.template] !== void 0){
+				if(outerHTML.template in window.templates){
 					template = window.templates[outerHTML.template];
 
-					if(SFOptions.devMode && proxyTemplate[outerHTML.template] === void 0)
+					if(SFOptions.devMode && !(outerHTML.template in proxyTemplate))
 						proxyTemplate[outerHTML.template] = [scope, name];
 
 					if(!outerHTML.keepTemplate && SFOptions.devMode === false)
@@ -215,7 +215,7 @@ Self.html = function(name, outerHTML, namespace){
 		registrar[3].templatePath = templatePath;
 	}
 
-	if(waitingHTML[name] !== void 0)
+	if(name in waitingHTML)
 		checkWaiting(name, namespace);
 
 	if(SFOptions.hotReload){
@@ -251,7 +251,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		if(_fromCheck === true)
 			return;
 
-		if(waitingHTML[name] === void 0)
+		if(!(name in waitingHTML))
 			waitingHTML[name] = [];
 
 		waitingHTML[name].push({el:element, item:$item, namespace});

@@ -10,7 +10,7 @@ function getNamespace(name, id){
 	if(scope === void 0)
 		scope = Space.list[name] = {_waiting:[]};
 
-	if(scope[id] === void 0){
+	if(!(id in scope)){
 		let ref = scope.default;
 		if(ref === void 0){
 			ref = scope.default = createRoot_({}, 'default', scope);
@@ -31,7 +31,7 @@ function createRoot_(registered, id, space){
 		if(temp) return temp[2];
 
 		temp = SpaceScope.root;
-		if(temp[scope] === void 0){
+		if(!(scope in temp)){
 			temp = temp[scope] = {$el:$()};
 
 			const func = modelFunc[scope];
@@ -75,7 +75,7 @@ else{
 		const space = root.sf$space.Space;
 
 		// Pending if model handler was not loaded
-		if(space.modelFunc[name] === void 0)
+		if(!(name in space.modelFunc))
 			return space.modelFunc[name] = [[elem, name, root.sf$space]];
 
 		if(space.modelFunc[name].constructor === Array)
@@ -174,7 +174,7 @@ export default class Space{
 			const old = this.modelFunc[name];
 			this.modelFunc[name] = func;
 
-			if(this.modelList.default[name] === void 0)
+			if(!(name in this.modelList.default))
 				this.modelList.default[name] = {};
 
 			if(old !== void 0 && old.constructor === Array){

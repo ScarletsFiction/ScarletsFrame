@@ -797,7 +797,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 			functions.add(temp);
 		else if(type === 'object')
 			objects.push(temp);
-		else if(bindedKey[key] !== void 0 && !bindedKey.sf$passive[key])
+		else if(key in bindedKey && !bindedKey.sf$passive[key])
 			reactive.push(temp);
 		else{
 			bindedKey.sf$passive[key] = true;

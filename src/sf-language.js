@@ -15,7 +15,7 @@ Self.init = function(el){
 	if(list.length === 0)
 		return;
 
-	if(Self.list[Self.default] === void 0)
+	if(!(Self.default in Self.list))
 		Self.list[Self.default] = {};
 
 	refreshLang(list, false, function(){
@@ -47,7 +47,7 @@ Self.add = function(lang, obj){
 	if(obj.constructor !== Object)
 		throw new Error("Parameter 2 must be an object");
 
-	if(Self.list[lang] === void 0)
+	if(!(lang in Self.list))
 		Self.list[lang] = {};
 
 	diveFill(Self.list[lang], obj);
@@ -99,7 +99,7 @@ Self.changeDefault = function(defaultLang){
 		}
 	}
 
-	if(Self.list[defaultLang] === void 0){
+	if(!(defaultLang in Self.list)){
 		forComponents.callbackOnly = true;
 		pendingCallback.push(forComponents);
 	}
@@ -124,10 +124,10 @@ function interpolate(text, obj){
 			return obj;
 		}
 
-		if(obj[match] !== void 0)
+		if(match in obj)
 			return obj[match].constructor === Function ? obj[match]() : obj[match];
 
-		if(Self.interpolate[match] !== void 0)
+		if(match in Self.interpolate)
 			return Self.interpolate[match].constructor === Function ? Self.interpolate[match]() : Self.interpolate[match];
 
 		return full;
@@ -143,7 +143,7 @@ Self.get = function(path, obj, callback){
 		obj = void 0;
 	}
 
-	if(Self.list[Self.default] === void 0)
+	if(!(Self.default in Self.list))
 		Self.list[Self.default] = {};
 
 	if(path.constructor === String)
@@ -254,7 +254,7 @@ function getMany(paths, obj, callback){
 }
 
 Self.assign = function(model, keyPath, obj, callback){
-	if(Self.list[Self.default] === void 0)
+	if(!(Self.default in Self.list))
 		Self.list[Self.default] = {};
 
 	if(obj !== void 0 && obj.constructor === Function){
@@ -277,7 +277,7 @@ Self.assign = function(model, keyPath, obj, callback){
 
 function diveFill(obj1, obj2){
 	for(let key in obj2){
-		if(obj1[key] === void 0)
+		if(!(key in obj1))
 			obj1[key] = obj2[key];
 
 		else if(obj2[key].constructor === Object)
@@ -297,7 +297,7 @@ function diveObject(obj, path, setValue){
 		const key = parts[i];
 
 		if(setValue === void 0){ // get only
-	    	if(obj[key] === void 0)
+	    	if(!key in obj))
 	    		return;
 
 	    	obj = obj[key];
@@ -308,7 +308,7 @@ function diveObject(obj, path, setValue){
 				return;
 			}
 
-			if(obj[key] === void 0)
+			if(!(key in obj))
                 obj = obj[key] = {};
             else obj = obj[key];
 		}
@@ -572,10 +572,10 @@ function createParseIndex(text, remakeRef, template){
 	const parse_index = []
 	const value = text.replace(/{(.*?)}/g, function(full, match){
 		if(isNaN(match) !== false){
-			if(template.modelRefRoot[match] !== void 0)
+			if(match in template.modelRefRoot)
 				match = template.modelRefRoot[match][0];
 
-			else if(template.modelRef !== void 0 && template.modelRef[match] !== void 0)
+			else if(template.modelRef !== void 0 && match in template.modelRef)
 				match = template.modelRef[match][0];
 			else{
 				console.error(`Language can't find existing model binding for '${match}' from`, Object.keys(template.modelRefRoot), template);

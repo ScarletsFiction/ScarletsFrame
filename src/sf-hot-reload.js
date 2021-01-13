@@ -149,7 +149,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 				if(val && val.constructor === Function)
 					refunction(prop, val);
-				else if(obj[prop] === void 0 || hotReloadAll === true)
+				else if(!(prop in obj) || hotReloadAll === true)
 					obj[prop] = val; // Reassign non-function value
 
 				return true;
@@ -219,7 +219,7 @@ export function hotComponentRemove(el){
 // On component scope reregistered
 export function hotComponentRefresh(space, name, func){
 	let list = proxySpace.get(space);
-	if(list === void 0 || list[name] === void 0)
+	if(list === void 0 || !(name in list))
 		return;
 
 	list = list[name];
@@ -245,7 +245,7 @@ export function hotTemplate(templates){
 	const changes = {};
 
 	for(let path in templates){
-		if(backupTemplate[path] === void 0 || backupTemplate[path] === templates[path])
+		if(!(path in backupTemplate) || backupTemplate[path] === templates[path])
 			continue;
 
 		const forComp = proxyTemplate[path]; // [space, name]
@@ -280,7 +280,7 @@ export function hotTemplate(templates){
 		for (let i = 0; i < sfPageViews.length; i++) {
 			const page = sfPageViews[i];
 			const pageTemplate = page.sf$templatePath;
-			if(pageTemplate === void 0 || changes[pageTemplate] === void 0)
+			if(pageTemplate === void 0 || !(pageTemplate in changes))
 				continue;
 
 			page.innerHTML = templates[pageTemplate];

@@ -315,7 +315,7 @@ class DOMList{
 	}
 	on(event, selector, callback, options){
 		for (let i = 0; i < this.length; i++){
-			if(customEvent[event] !== void 0){
+			if(event in customEvent){
 				customEvent[event](this[i], null, callback);
 				continue;
 			}
@@ -332,7 +332,7 @@ class DOMList{
 				continue;
 			}
 
-			if(customEvent[event] !== void 0){
+			if(event in customEvent){
 				if(this[i][`sf$eventDestroy_${event}`] !== void 0)
 					this[i][`sf$eventDestroy_${event}`]();
 
@@ -611,7 +611,7 @@ function recreateDOMList($el, length){
 
 	$.parentHasProperty = function(element, propertyName){
 		do {
-			if(element[propertyName] !== void 0)
+			if(propertyName in element)
 				return element;
 
 			element = element.parentNode;
@@ -704,7 +704,7 @@ function recreateDOMList($el, length){
 		callback.options = options;
 
 		if(element === Window.list){
-			if(windowEv[event] === void 0)
+			if(!(event in windowEv))
 				windowEv[event] = [];
 
 			// Listen on current window
@@ -734,7 +734,7 @@ function recreateDOMList($el, length){
 		if(element.sf$eventListener === void 0)
 			element.sf$eventListener = {};
 
-		if(element.sf$eventListener[event] === void 0)
+		if(!(event in element.sf$eventListener))
 			element.sf$eventListener[event] = [];
 
 		element.sf$eventListener[event].push(callback);
@@ -779,7 +779,7 @@ function recreateDOMList($el, length){
 		}
 
 		if(element === Window.list){
-			if(windowEv[event] === void 0 || windowEv[event].length === 0)
+			if(!(event in windowEv) || windowEv[event].length === 0)
 				return;
 
 			const list = windowEv[event];
@@ -829,7 +829,7 @@ function recreateDOMList($el, length){
 		}
 		else{
 			var ref = element.sf$eventListener;
-			if(ref !== void 0 && ref[event] !== void 0){
+			if(ref !== void 0 && event in ref){
 				const ref2 = ref[event];
 				for (var i = ref2.length - 1; i >= 0; i--) {
 					if(selector && ref2[i].selector !== selector)
