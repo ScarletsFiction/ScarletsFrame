@@ -103,16 +103,17 @@ export function removeModelBinding(ref, isDeep, isLazy){
 
 		const bindRef = bindedKey[key];
 		for (var i = bindRef.length-1; i >= 0; i--) {
-			if(bindRef[i].constructor === Function)
-				continue;
+			const temp = bindRef[i];
 
-			var temp = bindRef[i];
 			if(temp.bindList){
 				if(temp.template.bindList.$EM === void 0)
 					bindRef.splice(i, 1);
 
 				continue;
 			}
+
+			if(temp.constructor === Function)
+				continue;
 
 			if(temp.element.isConnected === false)
 				bindRef.splice(i, 1);

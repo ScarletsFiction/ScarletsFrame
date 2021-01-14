@@ -73,6 +73,14 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 					pattern = ref[pattern.source].$data;
 					isDeep = pattern.source;
 				}
+
+				let {observe} = pattern;
+				for (var a = 0; a < observe.length; a++) {
+					var deep = parsePropertyPath(observe[a]);
+					if(deep.length === 1) deep = deep[0];
+
+					modelToViewBinding(modelRef, deep, pattern.call);
+				}
 			}
 			else isDeep = parsePropertyPath(pattern.source);
 
@@ -201,13 +209,6 @@ function listFromFunction(modelRef, pattern, list){
 
 		// Ducktape for make SyntheticTemplate call this as function
 		pattern.call.inputBoundRun = true;
-
-		for (var i = 0; i < observe.length; i++) {
-			var deep = parsePropertyPath(observe[i]);
-			if(deep.length === 1) deep = deep[0];
-
-			modelToViewBinding(modelRef, deep, pattern.call);
-		}
 	}
 	else pattern.call = func;
 
@@ -361,7 +362,10 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	EM.callback = callback; // Update callback
 
 	const isAlone = parentNode.$EM === void 0;
-	parentNode.$EM = EM;
+	parentNode.$EM = this.$EM;
+
+	if(pattern.call !== void 0)
+		pattern.call.bindList = this;
 
 	// Check if this was nested repeated element
 	if(originalAddr && modelKeysRegex.bindList !== void 0){
