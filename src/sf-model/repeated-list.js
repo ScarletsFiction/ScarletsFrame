@@ -12,7 +12,7 @@ import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManip
 import {internal, SFOptions, sfRegex} from "../shared.js";
 import {initBindingInformation, extractPreprocess} from "./parser.js";
 import {avoidQuotes, hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
-import {repeatedListBindRoot, bindElement} from "./element-bind.js";
+import {modelToViewBinding, repeatedListBindRoot, bindElement} from "./element-bind.js";
 import {syntheticTemplate, templateParser} from "./template.js";
 
 var RE_Assign = false;
@@ -59,30 +59,20 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 			let isDeep;
 			if(pattern.source.slice(-1) === ')'){
 				if(modelRef.sf$uniqList === void 0)
-					modelRef.sf$uniqList = {};
+					Object.defineProperty(modelRef, 'sf$uniqList', {value:{}});
 
 				let ref = modelRef.sf$uniqList;
-				if(!(pattern.source in ref))
-					ref[pattern.source] = [];
+				if(!(pattern.source in ref)){
+					const that = ref[pattern.source] = [];
+					that.$data = pattern;
 
-				const func = avoidQuotes(pattern.source, function(temp_){
-					// Unescape HTML
-					temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
-
-					// Mask model for variable
-					return temp_.replace(modelRef.sf$internal._regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
-				});
-
-				pattern.call = modelScript(false, 'return '+func.replace('(', '.call(_model_,'));
-
-				pattern.observe = [];
-				func.replace(sfRegex.itemsObserve, function(full, _, match){
-					pattern.observe.push(match);
-				});
-
-				isDeep = pattern.source = ['sf$uniqList', pattern.source];
-
-				console.log(pattern);
+					listFromFunction(modelRef, pattern, that);
+					isDeep = pattern.source;
+				}
+				else{
+					pattern = ref[pattern.source].$data;
+					isDeep = pattern.source;
+				}
 			}
 			else isDeep = parsePropertyPath(pattern.source);
 
@@ -129,6 +119,105 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 		pattern = parsePatternRule(modelRef, pattern, proto);
 		proto.construct(modelRef, element, pattern, element.parentNode, namespace, modelKeysRegex);
 	}
+}
+
+const listFunctionHandle = {
+	generator(ret, list, modelRef){
+		let val = ret.next();
+		if(val.done) return list.splice(0);
+
+		// Async Generator
+		if(val.then !== void 0){
+			list.splice(0);
+			val.then(({value, done})=>{
+				list.push(value);
+
+				if(!done)
+					listFunctionHandle.asyncGenerator(ret, list, modelRef);
+			})
+			return;
+		}
+
+		console.log(val);
+
+		list.assign([val.value, ...ret]);
+	},
+	async asyncGenerator(ret, list, modelRef){
+		console.log(11, ret);
+		var promise = await ret.next();
+
+		while(promise.done === false){
+			list.push(promise.value);
+			promise = (await ret.next());
+		}
+	}
+};
+
+function listFromFunction(modelRef, pattern, list){
+	let func = avoidQuotes(pattern.source, function(temp){
+		// Unescape HTML
+		temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+
+		// Mask model for variable
+		return temp.replace(modelRef.sf$internal._regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
+	});
+
+	// Replace "range" into the internal function
+	if(func.indexOf('range(') === 0)
+		func = '_eP('+func.slice(6);
+
+	let observe = pattern.observe = [];
+	func.replace(sfRegex.itemsObserve, (full, _, match)=> {
+		pattern.observe.push(match);
+	});
+
+	func = modelScript(false, 'return '+func.replace('(', '.call(_model_,'));
+
+	if(observe.length !== 0){
+		let debouncing = false;
+		pattern.call = ()=>{
+			if(debouncing) return;
+			debouncing = true;
+
+			setTimeout(()=> {
+				debouncing = false;
+
+				let ret = func(list, modelRef, rangeFunction);
+				if(ret === void 0) return;
+
+				// Generator
+				if(ret.next !== void 0)
+					return listFunctionHandle.generator(ret, list, modelRef);
+
+				// Async Function
+				if(ret.then !== void 0){
+					ret.then((val)=>{
+						list.assign(val);
+					})
+					return;
+				}
+
+				// Array
+				list.assign(ret);
+			}, 1);
+		};
+
+		for (var i = 0; i < observe.length; i++) {
+			var deep = parsePropertyPath(observe[i]);
+			if(deep.length === 1) deep = deep[0];
+
+			modelToViewBinding(modelRef, deep, pattern.call);
+		}
+	}
+	else pattern.call = func;
+
+	pattern.call();
+	pattern.source = ['sf$uniqList', pattern.source];
+}
+
+function rangeFunction(from, end, increment){
+	console.log(from, end, increment, this);
+	return [11,22];
 }
 
 function parsePatternRule(modelRef, pattern, proto){
@@ -715,10 +804,10 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 
 export class RepeatedList extends Array{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
-		const {that, target, prop, firstInit} = rule;
+		const {that, target, prop, firstInit, pattern} = rule;
 
 		// Initialize property once
-		if(firstInit){
+		if(firstInit && pattern.call === void 0){
 			Object.defineProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
