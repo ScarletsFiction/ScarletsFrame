@@ -140,6 +140,9 @@ function domStateEvent(){
 			}
 		}
 
+		// If this framework is used without using sf.loader it possible to have
+		// startup bug where some script haven't been loaded, we may need to
+		// add some delay before calling "else waitResources();"
 		if(Self.turnedOff === false)
 			resourceWaitTimer = setInterval(waitResources, 100);
 		else waitResources();
