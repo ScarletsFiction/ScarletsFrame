@@ -138,7 +138,7 @@ const listFunctionHandle = {
 			return;
 		}
 
-		list.assign([val.value, ...ret]);
+		list.remake([val.value, ...ret]);
 	},
 	async asyncGenerator(ret, list, modelRef){
 		var promise = await ret.next();
@@ -189,13 +189,13 @@ function listFromFunction(modelRef, pattern, list){
 				// Async Function
 				if(ret.then !== void 0){
 					ret.then(val=> {
-						list.assign(val);
+						list.remake(val);
 					})
 					return;
 				}
 
 				// Array
-				list.assign(ret);
+				list.remake(ret);
 			}, 1);
 		};
 
@@ -240,7 +240,7 @@ function rangeFunction(begin, end, step){
 	if(!isNumber) for(var i=0; i < arr.length; i++)
 		arr[i] = String.fromCharCode(arr[i]);
 
-	this.assign(arr);
+	this.remake(arr);
 }
 
 function parsePatternRule(modelRef, pattern, proto){
@@ -1404,10 +1404,10 @@ export class ElementManipulator{
 						bindElement(temp, this.modelRef, this.template, ref);
 
 					this.elementRef.set(ref, temp);
-
-					if(this.elements !== void 0)
-						exist[i] = temp;
 				}
+
+				if(this.elements !== void 0)
+					exist[i] = temp;
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -1419,10 +1419,10 @@ export class ElementManipulator{
 							bindElement(temp, this.modelRef, this.template, ref);
 
 						this.elementRef.set(ref, temp);
-
-						if(this.elements !== void 0)
-							exist[i] = temp;
 					}
+
+					if(this.elements !== void 0)
+						exist[i] = temp;
 				}
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
@@ -1485,10 +1485,10 @@ export class ElementManipulator{
 						bindElement(temp, this.modelRef, template, ref);
 
 					this.elementRef.set(ref, temp);
-
-					if(this.elements != void 0)
-						exist[i] = temp;
 				}
+
+				if(this.elements !== void 0)
+					exist[i] = temp;
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -1500,10 +1500,10 @@ export class ElementManipulator{
 							bindElement(temp, this.modelRef, template, ref);
 
 						this.elementRef.set(ref, temp);
-
-						if(this.elements != void 0)
-							exist[i] = temp;
 					}
+
+					if(this.elements !== void 0)
+						exist[i] = temp;
 				}
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
@@ -1524,7 +1524,7 @@ export class ElementManipulator{
 
 			this.parentNode.replaceChild(temp, oldChild);
 
-			if(this.elements != void 0)
+			if(this.elements !== void 0)
 				exist[i] = temp;
 
 			if(this.callback.update)
