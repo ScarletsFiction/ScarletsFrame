@@ -315,6 +315,8 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	}
 
 	bindedKey._regex = callback.template && callback.template.modelRefRoot_regex;
+	if(model.sf$internal)
+		model.sf$internal._regex = bindedKey._regex;
 
 	let objValue = model[propertyName]; // Object value
 	if(objValue == null)

@@ -7,10 +7,11 @@ import {getScope, findBindListElement} from "../sf-model.js";
 import Component from "../sf-component.js";
 import Internal from "../internal.js";
 import $ from "../sf-dom.js";
+import {modelScript} from "./a_model.js";
 import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";
 import {internal, SFOptions, sfRegex} from "../shared.js";
 import {initBindingInformation, extractPreprocess} from "./parser.js";
-import {hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
+import {avoidQuotes, hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
 import {repeatedListBindRoot, bindElement} from "./element-bind.js";
 import {syntheticTemplate, templateParser} from "./template.js";
 
@@ -44,16 +45,49 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 			console.error("'", script, "' should match the pattern like `key,val in list`");
 			continue;
 		}
-		pattern = pattern.slice(1);
 
-		if(pattern[0].includes(','))
-			pattern[0] = pattern[0].split(' ').join('').split(',');
+		pattern = {
+			props: pattern[1],
+			source: pattern[2]
+		};
 
-		let target = modelRef[pattern[1]];
+		if(pattern.props.includes(','))
+			pattern.props = pattern.props.split(' ').join('').split(',');
+
+		let target = modelRef[pattern.source];
 		if(target === void 0){
-			const isDeep = parsePropertyPath(pattern[1]);
+			let isDeep;
+			if(pattern.source.slice(-1) === ')'){
+				if(modelRef.sf$uniqList === void 0)
+					modelRef.sf$uniqList = {};
+
+				let ref = modelRef.sf$uniqList;
+				if(!(pattern.source in ref))
+					ref[pattern.source] = [];
+
+				const func = avoidQuotes(pattern.source, function(temp_){
+					// Unescape HTML
+					temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+
+					// Mask model for variable
+					return temp_.replace(modelRef.sf$internal._regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
+				});
+
+				pattern.call = modelScript(false, 'return '+func.replace('(', '.call(_model_,'));
+
+				pattern.observe = [];
+				func.replace(sfRegex.itemsObserve, function(full, _, match){
+					pattern.observe.push(match);
+				});
+
+				isDeep = pattern.source = ['sf$uniqList', pattern.source];
+
+				console.log(pattern);
+			}
+			else isDeep = parsePropertyPath(pattern.source);
+
 			if(isDeep.length !== 1){
-				pattern[1] = isDeep;
+				pattern.source = isDeep;
 				target = deepProperty(modelRef, isDeep);
 
 				// Cache deep
@@ -62,14 +96,14 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 			}
 
 			if(target === void 0)
-				modelRef[pattern[1]] = target = [];
+				modelRef[pattern.source] = target = [];
 		}
 		else{
 			// Enable element binding
 			if(modelRef.sf$bindedKey === void 0)
 				initBindingInformation(modelRef);
 
-			modelRef.sf$bindedKey[pattern[1]] = true;
+			modelRef.sf$bindedKey[pattern.source] = true;
 		}
 
 		const { constructor } = target;
@@ -83,11 +117,11 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 		else if(constructor === Set || constructor === RepeatedSet)
 			proto = RepeatedSet;
 		else if(constructor === WeakSet || constructor === WeakMap){
-			console.error(pattern[1], target, "WeakMap or WeakSet is not supported");
+			console.error(pattern.source, target, "WeakMap or WeakSet is not supported");
 			continue;
 		}
 		else{
-			console.error(pattern[1], target, "should be an array or object but got", constructor);
+			console.error(pattern.source, target, "should be an array or object but got", constructor);
 			continue;
 		}
 
@@ -98,7 +132,7 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 }
 
 function parsePatternRule(modelRef, pattern, proto){
-	let prop = pattern[1];
+	let prop = pattern.source;
 	const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
 
 	var firstInit;
@@ -136,11 +170,14 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 
 	if(this.$EM === void 0){
 		hiddenProperty(this, '$EM', EM, true);
-		Object.defineProperty(target, `on$${prop}`, {
-			configurable: true,
-			get:()=> callback,
-			set:(val)=> Object.assign(callback, val)
-		});
+
+		if(pattern.call === void 0){
+			Object.defineProperty(target, `on$${prop}`, {
+				configurable: true,
+				get:()=> callback,
+				set:(val)=> Object.assign(callback, val)
+			});
+		}
 	}
 	else if(this.$EM.constructor === ElementManipulatorProxy)
 		this.$EM.list.push(EM);
@@ -150,7 +187,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 		this.$EM.list = newList;
 	}
 
-	let mask = pattern[0], uniqPattern;
+	let mask = pattern.props, uniqPattern;
 	if(mask.constructor === Array){
 		uniqPattern = mask[0];
 		mask = mask.pop();
