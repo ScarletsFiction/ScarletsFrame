@@ -179,7 +179,7 @@ function waitResources(){
 		try{
 			whenDOMLoaded[i]();
 		} catch(e){
-			console.error({func: whenDOMLoaded[i]}, e);
+			console.error(e.model || {func: whenDOMLoaded[i]}, e);
 			internal.onerror && internal.onerror(e);
 		}
 	}

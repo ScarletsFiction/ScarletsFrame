@@ -301,11 +301,16 @@ var root_ = function(scope){
 
 // Let's check all pending model
 $(function(){
-	for(var keys in internal.modelPending){
-		var ref = internal.modelPending[keys];
-		for (var z = 0; z < ref.length; z++)
-			ModelInit(ref[z], ref[z].getAttribute('name'));
+	try{
+		for(var keys in internal.modelPending){
+			var ref = internal.modelPending[keys];
+			for (var z = 0; z < ref.length; z++)
+				ModelInit(ref[z], ref[z].getAttribute('name'));
 
-		delete internal.modelPending[keys];
+			delete internal.modelPending[keys];
+		}
+	} catch(e) {
+		e.model = {name:ref[z].getAttribute('name'), scope:ref[z].model};
+		throw e;
 	}
 });
