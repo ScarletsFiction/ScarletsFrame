@@ -30,7 +30,7 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 			RE_ProcessIndex = i;
 		}
 		else{
-			// ToDo: find the culprit why we need to check this
+			// ToDo: find why we need to check this
 			if(!element.hasAttribute('sf-each'))
 				continue;
 
@@ -359,6 +359,8 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	EM.template.mask = mask;
 	EM.elementRef = new WeakMap();
 	EM.callback = callback; // Update callback
+
+	const isAlone = parentNode.$EM === void 0;
 	parentNode.$EM = EM;
 
 	// Check if this was nested repeated element
@@ -388,7 +390,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	element.remove();
 
 	// check if alone
-	if(parentNode.childNodes.length <= 1 || parentNode.textContent.trim().length === 0)
+	if(isAlone && (parentNode.childNodes.length <= 1 || parentNode.textContent.trim().length === 0))
 		return true;
 
 	const that = this;
@@ -1451,8 +1453,7 @@ export class ElementManipulator{
 
 	update(index, other){
 		const exist = this.parentChilds || this.elements;
-		const { list } = this;
-		const { template } = this;
+		const { list, template } = this;
 
 		if(index === void 0){
 			index = 0;
