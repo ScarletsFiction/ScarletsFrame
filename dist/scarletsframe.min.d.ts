@@ -2,16 +2,15 @@
 // Project: https://github.com/ScarletsFiction/ScarletsFrame
 // Definitions by: StefansArya <https://github.com/stefansarya>
 
-/**
- * If got element then the model object will be returned.
- * @param elem HTMLElement
- */
-export declare function sf(elem:HTMLElement): HTMLElement | null | void;
-
 declare type ModelScope = (state: SFModel, root:(name: String) => SFModel) => void;
 declare type ComponentScope = (state: SFModel, root:(name: String) => SFModel, $item: any) => SFModel | void;
 
 export declare namespace sf {
+	/**
+	 * If got element then the model object will be returned.
+	 * @param elem HTMLElement
+	 */
+	export function getScope(elem:HTMLElement): HTMLElement | null | void;
 	/**
 	 * Define new < sf-m name="" > element handler, the model scope can be shared with every < sf-m name="" >
 	 * @param name < sf-m name="name.here" >< /sf-m >
@@ -48,13 +47,13 @@ export declare namespace sf {
 		/** Add some js to resource loading list */
 		function js(list: string[]): void;
 	}
-	export { Space as space };
+	export { Space };
 
 	/**
 	 * Get full URL with sf-views hash
 	 */
-	export function url(): string;
-	export namespace url {
+	export function URL(): string;
+	export namespace URL {
 		/** URL Data */
 		const data: {};
 		/** Hash path from URL */
@@ -66,8 +65,8 @@ export declare namespace sf {
 		/** Parse URL data from a string */
 		function parse(url: string): URLData;
 	}
-	export function lang(): void;
-	export namespace lang {
+	export function language(): void;
+	export namespace language {
 		/** List of loaded language */
 		export const list: {};
 		/** Default interpolation data */
@@ -84,25 +83,15 @@ export declare namespace sf {
 		/** Init SF Language for selected element */
 		export function init(el: HTMLElement): void;
 	}
-	export namespace window {
-		/** window collection */
-		const list_1: {};
-		export { list_1 as list };
-		/** Destroy a window */
-		export function destroy(id: string): void;
-		/** Create new window with options */
-		export function create(options: WindowOptions, onLoaded?: Function): void;
-		/** Find element that from a window where the event triggered from */
-		export function source(lists: HTMLElement[], ev: EventTarget): HTMLElement;
-	}
+	export { Window };
 	/**
 	 * Enable Hot Reload
 	 * @param mode 1=Reload scope function only, 2=Reload all
 	 */
 	export function hotReload(mode: number): void;
-	export { View as views };
-	export function dom(selector: string | Function | HTMLElement | HTMLElement[], context: HTMLElement | DOMList): void | DOMList;
-	export namespace dom {
+	export { Views };
+	export function $(selector: string | Function | HTMLElement | HTMLElement[], context: HTMLElement | DOMList): void | DOMList;
+	export namespace $ {
 		const fn: DOMList;
 	}
 
@@ -172,7 +161,7 @@ declare class DOMList extends Array<HTMLElement> {
 	postJSON(url: String, data?:object, options?:RequestOptions): XHRPromise;
 }
 declare class SFModel {
-	/** 
+	/**
 	 * Component or Model's container element list
 	 * $el: DOMList | ((selector:string) => DOMList);
 	 */
@@ -297,6 +286,21 @@ declare class API {
 	upload(url: string, data: FormData): XHRPromise;
 	request(method: HTTPMethod, url: string, data?: object, options?: RequestOptions): XHRPromise;
 }
+declare class Window {
+	/** Create new window with options */
+	constructor(options: WindowOptions, onLoaded?: Function);
+
+	/** window collection */
+	static list: {};
+
+	/** Destroy the window */
+	destroy(): void;
+
+	/** Destroy a window */
+	static destroy(id: string): void;
+	/** Find element that from a window where the event triggered from */
+	static source(lists: HTMLElement[], ev: EventTarget): HTMLElement;
+}
 declare class Space {
 	/**
 	 * @param namespace name for <sf-space name>
@@ -372,7 +376,7 @@ declare type RouteEventLoading = (loaded?: number, total?: number) => boolean | 
 declare type RouteEventLoaded = (loaded?: number, total?: number, element?: HTMLElement) => boolean | void;
 declare type RouteEventError = (statusCode?: number, data?: object) => boolean | void;
 
-declare class View {
+declare class Views {
 	/**
 	 * Page routing for ScarletsFrame
 	 * @param selector Specify custom element as views container
