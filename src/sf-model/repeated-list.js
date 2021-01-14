@@ -215,9 +215,32 @@ function listFromFunction(modelRef, pattern, list){
 	pattern.source = ['sf$uniqList', pattern.source];
 }
 
-function rangeFunction(from, end, increment){
-	console.log(from, end, increment, this);
-	return [11,22];
+function rangeFunction(begin, end, step){
+	const isNumber = begin.constructor === Number;
+	if(!isNumber){
+		begin = begin.charCodeAt(0);
+		end = end.charCodeAt(0);
+	}
+
+	const direction = Math.sign(end - begin); // -1 or 1
+
+	if(step === void 0)
+		step = direction;
+	else if(Math.sign(step) !== direction)
+		throw `Infinity loop detected for sf-each: "range(${[...arguments].join(', ')})"`;
+
+	var arr = new Array(direction*(end - begin) / Math.abs(Math.round(step)));
+	if(direction === 1){
+		for (var i=0; begin <= end; begin += step, i++)
+			arr[i] = begin;
+	}
+	else for (var i=0; begin >= end; begin += step, i++)
+		arr[i] = begin;
+
+	if(!isNumber) for(var i=0; i < arr.length; i++)
+		arr[i] = String.fromCharCode(arr[i]);
+
+	this.assign(arr);
 }
 
 function parsePatternRule(modelRef, pattern, proto){
