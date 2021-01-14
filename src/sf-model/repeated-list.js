@@ -138,12 +138,9 @@ const listFunctionHandle = {
 			return;
 		}
 
-		console.log(val);
-
 		list.assign([val.value, ...ret]);
 	},
 	async asyncGenerator(ret, list, modelRef){
-		console.log(11, ret);
 		var promise = await ret.next();
 
 		while(promise.done === false){
@@ -191,7 +188,7 @@ function listFromFunction(modelRef, pattern, list){
 
 				// Async Function
 				if(ret.then !== void 0){
-					ret.then((val)=>{
+					ret.then(val=> {
 						list.assign(val);
 					})
 					return;
@@ -201,6 +198,9 @@ function listFromFunction(modelRef, pattern, list){
 				list.assign(ret);
 			}, 1);
 		};
+
+		// Ducktape for make SyntheticTemplate call this as function
+		pattern.call.inputBoundRun = true;
 
 		for (var i = 0; i < observe.length; i++) {
 			var deep = parsePropertyPath(observe[i]);
@@ -229,7 +229,7 @@ function rangeFunction(begin, end, step){
 	else if(Math.sign(step) !== direction)
 		throw `Infinity loop detected for sf-each: "range(${[...arguments].join(', ')})"`;
 
-	var arr = new Array(direction*(end - begin) / Math.abs(Math.round(step)));
+	var arr = new Array(Math.ceil(direction*(end - begin) / Math.abs(step)));
 	if(direction === 1){
 		for (var i=0; begin <= end; begin += step, i++)
 			arr[i] = begin;
@@ -904,7 +904,7 @@ export class RepeatedList extends Array{
 		return this.length;
 	}
 
-	splice(index, limit, addition){
+	splice(index, limit){
 		if(index === 0 && limit === void 0){
 			this.$EM.clear(0);
 			return super.splice.apply(this, arguments);
@@ -928,7 +928,7 @@ export class RepeatedList extends Array{
 		if(arguments.length >= 3){ // Inserting data
 			limit = arguments.length - 2;
 
-			for (var i = 0; i < limit; i++)
+			for (var i = 1; i <= limit; i++)
 				this.$EM.insertAfter(index + i);
 		}
 
@@ -1148,7 +1148,7 @@ export class RepeatedList extends Array{
 			// Add new element at the end
 			if(matchLeft === 0){
 				if(newList.length === lastLength) return;
-				this.splice(lastLength, 0, ...newList.slice(lastLength));
+				this.push(...newList.slice(lastLength));
 
 				if(this.$length !== void 0) this.$length();
 				return;
@@ -1175,11 +1175,18 @@ export class RepeatedList extends Array{
 			return;
 		}
 
+		var c = 0, a = lastLength; // Clear from this index
+		if(lastLength !== 0) for(c--, a++; c < lastLength; c++, a--) {
+			if(this[c] !== newList[c]) break;
+		}
+
+		if(c !== 0) newList = newList.slice(c);
+
 		// Clear all items and merge the new one
-		super.splice(0, lastLength, ...newList);
+		super.splice(c, a, ...newList);
 
 		// Rebuild all element
-		if(atMiddle !== true){
+		if(atMiddle !== true && c === 0){
 			this.$EM.clear(0);
 			this.$EM.hardRefresh(0);
 		}
@@ -1191,7 +1198,7 @@ export class RepeatedList extends Array{
 				this.$EM.removeRange(this.length, lastLength);
 
 			// And start refreshing
-			this.$EM.hardRefresh(0, this.length);
+			this.$EM.hardRefresh(c);
 		}
 
 		if(this.$length !== void 0) this.$length();
