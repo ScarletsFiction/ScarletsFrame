@@ -399,6 +399,42 @@ export class RepeatedProperty{ // extends Object
 	}
 }
 
+// Only for Object or RepeatedProperty
+export const Obj = {
+	set(obj, prop, val){
+		if(obj[prop] === val)
+			return;
+
+		if(obj.$EM === void 0){
+			obj[prop] = val;
+			return;
+		}
+
+		if(!(prop in obj)){
+			obj[prop] = val;
+			ProxyProperty(obj, prop, false);
+
+			obj.$EM.append(prop);
+			obj._list.push(prop);
+		}
+	},
+	delete(obj, prop){
+		if(obj.$EM === void 0){
+			delete obj[prop];
+			return;
+		}
+
+		const i = obj._list.indexOf(prop);
+		if(i === -1)
+			return;
+
+		obj.$EM.remove(i);
+		delete obj[prop];
+
+		obj._list.splice(i, 1);
+	}
+};
+
 export class RepeatedMap extends Map{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
@@ -525,42 +561,6 @@ export class RepeatedSet extends Set{
 		return this;
 	}
 }
-
-// Only for Object or RepeatedProperty
-export const Obj = {
-	set(obj, prop, val){
-		if(obj[prop] === val)
-			return;
-
-		if(obj.$EM === void 0){
-			obj[prop] = val;
-			return;
-		}
-
-		if(!(prop in obj)){
-			obj[prop] = val;
-			ProxyProperty(obj, prop, false);
-
-			obj.$EM.append(prop);
-			obj._list.push(prop);
-		}
-	},
-	delete(obj, prop){
-		if(obj.$EM === void 0){
-			delete obj[prop];
-			return;
-		}
-
-		const i = obj._list.indexOf(prop);
-		if(i === -1)
-			return;
-
-		obj.$EM.remove(i);
-		delete obj[prop];
-
-		obj._list.splice(i, 1);
-	}
-};
 
 function ProxyProperty(obj, prop, force){
 	if(force || Object.getOwnPropertyDescriptor(obj, prop).set === void 0){

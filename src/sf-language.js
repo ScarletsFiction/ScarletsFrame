@@ -297,7 +297,7 @@ function diveObject(obj, path, setValue){
 		const key = parts[i];
 
 		if(setValue === void 0){ // get only
-	    	if(!key in obj))
+	    	if(!(key in obj))
 	    		return;
 
 	    	obj = obj[key];
