@@ -1435,8 +1435,11 @@ export class ElementManipulator{
 				}
 			}
 
-			if(this.$VSM === void 0)
-				this.parentNode.appendChild(temp);
+			if(this.$VSM === void 0){
+				if(this.bound_end !== void 0)
+					this.parentNode.insertBefore(temp, this.bound_end);
+				else this.parentNode.appendChild(temp);
+			}
 			else{
 				exist[i] = temp;
 				this.$VSM.newElementInit(temp, i-1);

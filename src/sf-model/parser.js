@@ -350,9 +350,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 	const backup = targetNode.querySelectorAll('[sf-each]');
 	for (var i = 0; i < backup.length; i++) {
 		var current = backup[i];
-		var flag = document.createElement('template');
-		flag.className = 'sf-each-prepare';
-		current.parentNode.replaceChild(flag, current);
+		current.parentNode.replaceChild(document.createElement('sf-each-prepare'), current);
 	}
 
 	let template;
@@ -461,9 +459,9 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 	internal.component.skip = tempSkip;
 
 	// Restore element repeated list
-	const restore = copy.getElementsByClassName('sf-each-prepare');
+	const restore = copy.getElementsByTagName('sf-each-prepare');
 	for (var i = 0; i < backup.length; i++) {
-		var current = restore[0];
+		const current = restore[0];
 		current.parentNode.replaceChild(backup[i], current);
 	}
 
