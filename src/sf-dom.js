@@ -17,7 +17,7 @@ export default function $(selector, context){
 				Object.defineProperty(temp, '_', {value:true});
 			return Object.setPrototypeOf(temp, DOMList.prototype);
 		}
-		else return _DOMList([]);
+		return _DOMList([]);
 	}
 
 	if(selector.constructor === Function)
@@ -27,8 +27,8 @@ export default function $(selector, context){
 		if(context.classList === void 0){
 			if(context.animateKey === $.fn.animateKey)
 				return context.find(selector);
-			else
-				return $(queryElements(context, selector));
+
+			return $(queryElements(context, selector));
 		}
 		return _DOMList(context.querySelectorAll(selector));
 	}
