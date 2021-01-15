@@ -225,15 +225,6 @@
          </div>
          bottom-boundary
       </sf-m>
-
-      <!-- Iterables -->
-      <sf-m name="virtual-scroll" style="display:inline-block;width: 30%;">
-         must be 0 ~ 6
-         <div sf-each="nyan in strRange()" @click="withKeyClick(i, nyan, 4)">
-          {{ i }}. {{ nyan.a }}
-         </div>
-         bottom-boundary
-      </sf-m>
     </div>
     <br><br><br><br><br><br><br><br>
 
@@ -481,6 +472,20 @@
             {[ <span>i {{vul}}</span>- ]}
           }
         }}
+      </div>
+      <br>
+      <br>
+
+      <div>
+        <div><span sf-each="i in range(begin, end, step)">{{ i }}</span></div>
+        <div>
+          <span sf-each="i in range(10, 1, -step)">{{ i }}</span>
+          <span sf-each="i in range(1, 10, step)">{{ i }}</span>
+        </div>
+        <div><span sf-each="i in range('a', 'z', step)">{{ i }}</span></div>
+        <div><span sf-each="key, i in asyncRangeTest(step)">{{ i }}</span></div>
+        <div><span sf-each="key, i in generatorTest(step)">{{ i }}</span></div>
+        <div><span sf-each="key, i in asyncGeneratorTest(step)">{{ i }}</span></div>
       </div>
     </sf-m>
     <br>

@@ -415,15 +415,15 @@ SFDevSpace.swallowObject = function(obj){
 	var temp = [];
 	if(isArray){
 		text += '[';
-		for (var i = 0; i < obj.length; i++) {
-			if(obj[i] instanceof HTMLElement)
-				temp.push('<'+obj[i].tagName.toLowerCase()+'>');
-			else if(typeof obj[i] === 'object')
-				temp.push('{...}');
-			else if(typeof obj[i] === 'function')
-				temp.push('Function()');
-			else temp.push(obj[i]);
-		}
+		temp = obj.map(val=> {
+			if(val instanceof HTMLElement)
+				return '<'+val.tagName.toLowerCase()+'>';
+			if(typeof val === 'object')
+				return '{...}';
+			if(typeof val === 'function')
+				return 'Function()';
+			return val;
+		});
 	}
 	else{
 		text += '{';
@@ -513,6 +513,8 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 			if(deep.prototype !== void 0)
 				return deepRegister(deep);
 		}
+
+		if(typeof model !== 'object') return;
 
 		if(model.sf$refresh === void 0)
 			Object.defineProperty(model, 'sf$refresh', {value:[]});

@@ -204,6 +204,8 @@ model('deep-property', function(My){
 });
 
 model('repeattest', function(My){
+	window.repeattest = My;
+
 	My.hi = 'ok';
 	My.stars = 3;
 	My.vul = adder;
@@ -217,5 +219,33 @@ model('repeattest', function(My){
 		},{
 			lv3:["nice3a","nice3b"]
 		}]
-	}]
+	}];
+
+	My.begin = 1;
+	My.end = 10;
+	My.step = 1;
+
+	function delay(time){
+		return new Promise(resolve=> setTimeout(resolve, time));
+	}
+
+	My.asyncRangeTest = async function(step){
+		await delay(3000);
+		return ['asyncRangeTest', 1,2,3];
+	}
+	My.generatorTest = function*(step){
+		yield 'generatorTest';
+		yield 1;
+		yield 2;
+		yield 3;
+	}
+	My.asyncGeneratorTest = async function*(step){
+		yield 'asyncGeneratorTest';
+		await delay(1000);
+		yield 1;
+		await delay(1000);
+		yield 2;
+		await delay(1000);
+		yield 3;
+	}
 });

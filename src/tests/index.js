@@ -14,6 +14,8 @@ hotReload(1);
 Window.frameworkPath = 'https://cdn.jsdelivr.net/npm/scarletsframe@latest';
 // internal.async(false);
 
+window.$ = $;
+
 $(function(){console.log("✔️ Loading finished")});
 
 class ImgModel{

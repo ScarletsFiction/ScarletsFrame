@@ -74,18 +74,6 @@ model('virtual-scroll', function(self, root){
 	var map = self.list6 = new Map();
 	map.set({a:1}, {b:1}).set({a:2}, {b:2}).set({a:3}, {b:3});
 	self.list7 = new Set([1,2,3]);
-
-	self.strRange = function*(begin, end, step){
-	  begin = begin.charCodeAt(0);
-	  end = end.charCodeAt(0);
-
-	  if(step > 0)
-	    for(;begin <= end; begin += step)
-	      yield String.fromCharCode(begin);
-	  else
-	    for(;begin >= end; begin += step)
-	      yield String.fromCharCode(begin);
-	}
 });
 
 var aList = null;
