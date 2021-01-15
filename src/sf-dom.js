@@ -19,11 +19,11 @@ export default function $(selector, context){
 		}
 		else return _DOMList([]);
 	}
-	else if(selector.constructor === Function)
+
+	if(selector.constructor === Function)
 		return Loader.onFinish(selector);
-	else if(selector.constructor === String && selector.slice(0,1) === '<' && selector.slice(-1) === '>')
-		return _DOMList($.parseElement(selector, true));
-	else if(context){
+
+	if(context){
 		if(context.classList === void 0){
 			if(context.animateKey === $.fn.animateKey)
 				return context.find(selector);
@@ -32,8 +32,16 @@ export default function $(selector, context){
 		}
 		return _DOMList(context.querySelectorAll(selector));
 	}
-	else if(selector.constructor === String)
+
+	if(selector.constructor === String){
+		if(selector.slice(0,1) === '\n')
+			selector = selector.trim();
+
+		if(selector.slice(0,1) === '<' && selector.slice(-1) === '>')
+			return _DOMList($.parseElement(selector, true));
 		return _DOMList(document.querySelectorAll(selector));
+	}
+
 	return _DOMList(selector);
 }
 
