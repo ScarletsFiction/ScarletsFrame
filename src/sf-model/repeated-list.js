@@ -238,8 +238,10 @@ function rangeFunction(begin, end, step){
 	else for (var i=0; begin >= end; begin += step, i++)
 		arr[i] = begin;
 
-	if(!isNumber) for(var i=0; i < arr.length; i++)
-		arr[i] = String.fromCharCode(arr[i]);
+	if(!isNumber){
+		for(var i=0; i < arr.length; i++)
+			arr[i] = String.fromCharCode(arr[i]);
+	}
 
 	this.remake(arr, true);
 }
@@ -1182,8 +1184,10 @@ export class RepeatedList extends Array{
 		}
 
 		var c = 0, a = lastLength; // Clear from this index
-		if(lastLength !== 0) for(c--, a++; c < lastLength; c++, a--) {
-			if(this[c] !== newList[c]) break;
+		if(lastLength !== 0){
+			for(c--, a++; c < lastLength; c++, a--) {
+				if(this[c] !== newList[c]) break;
+			}
 		}
 
 		if(c !== 0) newList = newList.slice(c);
