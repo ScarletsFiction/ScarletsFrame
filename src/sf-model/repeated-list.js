@@ -920,7 +920,7 @@ export class RepeatedList extends Array{
 
 		const lastLength = this.length;
 
-		if(lastLength === 0) index = 0;
+		if(lastLength === 0) index = -1;
 		// Trim the index if more than length
 		else if(arguments.length >= 3 && index >= lastLength)
 			index = lastLength - 1;
