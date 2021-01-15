@@ -146,7 +146,7 @@ const listFunctionHandle = {
 			return;
 		}
 
-		list.remake([val.value, ...ret]);
+		list.remake([val.value, ...ret], true);
 	},
 	async asyncGenerator(ret, list, modelRef){
 		var promise = await ret.next();
@@ -197,13 +197,13 @@ function listFromFunction(modelRef, pattern, list){
 				// Async Function
 				if(ret.then !== void 0){
 					ret.then(val=> {
-						list.remake(val);
+						list.remake(val, true);
 					})
 					return;
 				}
 
 				// Array
-				list.remake(ret);
+				list.remake(ret, true);
 			}, 1);
 		};
 
@@ -241,7 +241,7 @@ function rangeFunction(begin, end, step){
 	if(!isNumber) for(var i=0; i < arr.length; i++)
 		arr[i] = String.fromCharCode(arr[i]);
 
-	this.remake(arr);
+	this.remake(arr, true);
 }
 
 function parsePatternRule(modelRef, pattern, proto){
@@ -912,7 +912,7 @@ export class RepeatedList extends Array{
 
 	splice(index, limit){
 		if(index === 0 && limit === void 0){
-			this.$EM.clear(0);
+			this.$EM.clear();
 			return super.splice.apply(this, arguments);
 		}
 
@@ -1193,7 +1193,7 @@ export class RepeatedList extends Array{
 
 		// Rebuild all element
 		if(atMiddle !== true && c === 0){
-			this.$EM.clear(0);
+			this.$EM.clear();
 			this.$EM.hardRefresh(0);
 		}
 
@@ -1659,8 +1659,12 @@ export class ElementManipulator{
 	removeRange(index, other){
 		const exist = this.parentChilds || this.elements;
 
-		for (let i = index; i < other; i++)
-			exist[index].remove();
+		if(this.parentChilds)
+			for (let i = index; i < other; i++)
+				exist[index].remove();
+		else
+			for (let i = index; i < other; i++)
+				exist[i].remove();
 
 		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(exist, index, other);
