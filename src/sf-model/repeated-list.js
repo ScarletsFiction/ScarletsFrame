@@ -66,11 +66,16 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 					const that = ref[pattern.source] = [];
 					that.$data = pattern;
 
+					ref.sf$bindedKey ??= {};
+					ref.sf$bindedKey[pattern.source] = true;
+
 					listFromFunction(modelRef, pattern, that);
 					isDeep = pattern.source;
 				}
 				else{
-					pattern = ref[pattern.source].$data;
+					const {props} = pattern;
+					Object.assign(pattern, ref[pattern.source].$data);
+					pattern.props = props;
 					isDeep = pattern.source;
 				}
 
@@ -79,7 +84,7 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 					var deep = parsePropertyPath(observe[a]);
 					if(deep.length === 1) deep = deep[0];
 
-					modelToViewBinding(modelRef, deep, pattern.call);
+					modelToViewBinding(modelRef, deep, pattern.call, void 0, void 0, 'callback');
 				}
 			}
 			else isDeep = parsePropertyPath(pattern.source);

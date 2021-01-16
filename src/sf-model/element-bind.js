@@ -4,7 +4,7 @@ import {syntheticTemplate, templateParser, syntheticRepeatedList} from "./templa
 import {extractPreprocess, initBindingInformation, revalidateBindingPath} from "./parser.js";
 import {RepeatedList, RepeatedMap, RepeatedSet, ElementManipulatorProxy} from "./repeated-list.js";
 
-export function removeModelBinding(ref, isDeep, isLazy){
+export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 	if(ref === void 0)
 		return;
 
@@ -76,7 +76,9 @@ export function removeModelBinding(ref, isDeep, isLazy){
 			}
 
 			delete obj.$EM;
-			if(isLazy === void 0){
+			if(isUniqList)
+				obj.length = 0;
+			else if(isLazy === void 0){
 				delete bindedKey[key];
 				delete ref[key];
 				ref[key] = obj;
@@ -101,38 +103,43 @@ export function removeModelBinding(ref, isDeep, isLazy){
 			continue;
 		}
 
-		const bindRef = bindedKey[key];
-		for (var i = bindRef.length-1; i >= 0; i--) {
-			const temp = bindRef[i];
-
-			if(temp.bindList){
-				if(temp.template.bindList.$EM === void 0)
-					bindRef.splice(i, 1);
-
-				continue;
+		const {elements, callback, bindList, input} = bindedKey[key];
+		var bindLength = 0;
+		if(elements){
+			for (var i = elements.length-1; i >= 0; i--) {
+				if(elements[i].element.isConnected === false)
+					elements.splice(i, 1);
 			}
 
-			if(temp.constructor === Function)
-				continue;
-
-			if(temp.element.isConnected === false)
-				bindRef.splice(i, 1);
+			bindLength += elements.length;
 		}
-
-		if(bindRef.input !== void 0){
-			for (var i = bindRef.input.length-1; i >= 0; i--) {
-				if(bindRef.input[i].isConnected === false)
-					bindRef.input.splice(i, 1);
+		if(bindList){
+			for (var i = bindList.length-1; i >= 0; i--) {
+				if(bindList[i].bindList.$EM === void 0)
+					bindList.splice(i, 1);
 			}
 
-			if(bindRef.input.length === 0)
-				for (var i = bindRef.length-1; i >= 0; i--) {
-					if(bindRef[i].inputBoundRun)
-						bindRef.splice(i, 1);
-				}
+			bindLength += bindList.length;
+		}
+		if(input){
+			for (var i = input.length-1; i >= 0; i--) {
+				if(input[i].isConnected === false)
+					input.splice(i, 1);
+			}
+
+			if(input.length === 0)
+				delete bindedKey[key].inputBound;
+
+			bindLength += input.length;
+		}
+		if(callback){
+			for (var i = callback.length-1; i >= 0; i--) {
+				if(callback[i].element?.isConnected === false)
+					callback.splice(i, 1);
+			}
 		}
 
-		if(bindRef.length === 0 && isLazy === void 0){
+		if(bindLength === 0 && isLazy === void 0 && !isUniqList){
 			delete bindedKey[key];
 
 			if(obj === void 0 || Object.getOwnPropertyDescriptor(ref, key).set === void 0)
@@ -152,7 +159,7 @@ export function removeModelBinding(ref, isDeep, isLazy){
 	for(let path in deep){
 		const model = deepProperty(ref, path.split('%$'));
 		if(model !== void 0)
-			removeModelBinding(model, true, isLazy);
+			removeModelBinding(model, true, isLazy, path === 'sf$uniqList');
 	}
 }
 
@@ -190,7 +197,7 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 	}
 }
 
-export function modelToViewBinding(model, propertyName, callback, elementBind, type){
+export function modelToViewBinding(model, propertyName, callback, elementBind, type, bindName){
 	const originalModel = model;
 	let originalPropertyName = propertyName;
 
@@ -236,24 +243,38 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	let bindedKey = model.sf$bindedKey;
 
 	if(propertyName in bindedKey){
+		var hasBindInit = true;
 		bindedKey = bindedKey[propertyName];
-		if(bindedKey.includes(callback) === false)
-			bindedKey.push(callback);
 
-		if(elementBind !== void 0){
-			if(bindedKey.input === void 0){
-				bindedKey.input = [elementBind];
-				bindedKey.input.type = type;
+		if(bindName === 'inputBound'){
+			if(elementBind !== void 0){
+				if(bindedKey.input === void 0){
+					bindedKey.input = [elementBind];
+					bindedKey.input.type = type;
+				}
+				else bindedKey.input.push(elementBind);
 			}
-			else bindedKey.input.push(elementBind);
+
+			if(bindName in bindedKey) return;
+			bindedKey.inputBound = callback;
+		}
+		else{
+			let ref = bindedKey[bindName] ??= [];
+
+			if(ref.includes(callback) === false)
+				ref.push(callback);
 		}
 
 		if(!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex)
 			return;
 	}
 	else{
+		var hasBindInit = false;
+
 		// For contributor: don't delete sf$bindedKey from model because can cause memory leak
-		bindedKey = bindedKey[propertyName] = [callback];
+		bindedKey = bindedKey[propertyName] = {
+			[bindName]: (bindName !== 'inputBound' ? [callback] : callback)
+		};
 
 		if(elementBind !== void 0){
 			var ref = bindedKey;
@@ -273,8 +294,18 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	// Proxy property
 	const desc = isALength !== false ? {set:true} : Object.getOwnPropertyDescriptor(model, propertyName);
-	if(desc !== void 0 && desc.set !== void 0 && (!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex))
-		return;
+	if(desc !== void 0 && desc.set !== void 0){
+		if(!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex)
+			return;
+
+		if(desc.configurable === false)
+			return console.error(`Object property '${propertyName}' in `, model, ` is not configurable`);
+
+		// Proxy the setter
+		if(isALength === false && hasBindInit === false){
+			console.log('hello', desc);
+		}
+	}
 
 	if(originalPropertyName.constructor === Array){
 		if(originalModel.sf$internal === void 0){
@@ -290,32 +321,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		originalPropertyName = stringifyPropertyPath(originalPropertyName);
 	}
 
-	if(isALength !== false && !(isALength in model)){
-		Object.defineProperty(model, isALength, {
-			value(){
-				var temp;
-				for (let i = 0; i < bindedKey.length; i++) {
-					temp = bindedKey[i];
-					syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel);
-				}
-			}
-		});
-	}
-
-	// Add custom original because the creation was from different template
-	if(desc !== void 0 && desc.set !== void 0){
-		// ToDo: Use other workaround when this was undefined for fixing unobserved stuff
-		if(bindedKey._regex === void 0){
-			bindedKey._regex = callback.template.modelRefRoot_regex;
-			return;
-		}
-
-		callback.model = originalModel;
-		callback.prop = originalPropertyName;
-		return;
-	}
-
-	bindedKey._regex = callback.template && callback.template.modelRefRoot_regex;
+	bindedKey._regex ??= callback.template && callback.template.modelRefRoot_regex;
 
 	if(model.sf$internal && model.sf$internal._regex === void 0 && bindedKey._regex !== void 0)
 		model.sf$internal._regex = bindedKey._regex;
@@ -339,55 +345,82 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			get:()=> _m2v
 		});
 
+	bindedKey._set = (val)=> {
+		if(objValue !== val){
+			let newValue, noFeedback;
+			if(internal.inputBoundRunning === false){
+				if(_m2v !== void 0){
+					newValue = _m2v.call(model, val);
+
+					if(newValue !== void 0)
+						noFeedback = true;
+				}
+
+				if(_on !== void 0)
+					newValue = _on.call(model, val, true);
+			}
+
+			objValue = newValue !== void 0 ? newValue : val;
+
+			if(bindedKey.inputBound)
+				bindedKey.inputBound(objValue, bindedKey.input);
+
+			if(bindedKey.callback){
+				const {callback} = bindedKey;
+				for (var i = 0; i < callback.length; i++)
+					callback[i]();
+			}
+
+			if(bindedKey.bindList){
+				const {bindList} = bindedKey;
+				for (var i = 0; i < bindList.length; i++)
+					syntheticRepeatedList(bindList[i], originalPropertyName, originalModel);
+			}
+
+			if(bindedKey.elements){
+				const {elements} = bindedKey;
+				var temp;
+				for (var i = 0; i < elements.length; i++){
+					temp = elements[i];
+
+					// false === no update
+					syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel);
+				}
+			}
+
+			if(noFeedback) objValue = val;
+		}
+
+		internal.inputBoundRunning = false;
+	}
+
+	if(isALength !== false && !(isALength in model)){
+		Object.defineProperty(model, isALength, {
+			value(){
+				bindedKey._set(model[propertyName]);
+			}
+		});
+	}
+
+	// Add custom original because the creation was from different template
+	if(desc !== void 0 && desc.set !== void 0){
+		callback.model = originalModel;
+		callback.prop = originalPropertyName;
+		return;
+	}
+
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,
 		get:()=> objValue,
-		set:(val)=> {
-			if(objValue !== val){
-				let newValue, noFeedback, temp;
-				if(internal.inputBoundRunning === false){
-					if(_m2v !== void 0){
-						newValue = _m2v.call(model, val);
-
-						if(newValue !== void 0)
-							noFeedback = true;
-					}
-
-					if(_on !== void 0)
-						newValue = _on.call(model, val, true);
-				}
-
-				objValue = newValue !== void 0 ? newValue : val;
-
-				for (let i = 0; i < bindedKey.length; i++) {
-					temp = bindedKey[i];
-					if(temp.inputBoundRun){
-						temp(objValue, bindedKey.input);
-						continue;
-					}
-
-					if(temp.bindList){
-						syntheticRepeatedList(temp.template, originalPropertyName, originalModel);
-						continue;
-					}
-
-					syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel); // false === no update
-				}
-
-				if(noFeedback) objValue = val;
-			}
-
-			internal.inputBoundRunning = false;
-		}
+		set:bindedKey._set
 	});
 }
 
 export function repeatedListBindRoot(template, modelScope){
-	let ref = {bindList:true, template};
 	let properties = template.modelRefRoot_path;
 	for (var i = 0; i < properties.length; i++)
-		modelToViewBinding(modelScope, properties[i], ref);
+		modelToViewBinding(modelScope, properties[i], template, void 0, void 0, 'bindList');
 }
 
 export function bindElement(element, modelScope, template, localModel, modelKeysRegex){
@@ -425,7 +458,7 @@ export function bindElement(element, modelScope, template, localModel, modelKeys
 	let properties = template.modelRefRoot_path;
 	if(template.repeatedList === void 0){
 		for (var i = 0; i < properties.length; i++)
-			modelToViewBinding(modelScope, properties[i], ref);
+			modelToViewBinding(modelScope, properties[i], ref, void 0, void 0, 'elements');
 	}
 
 	if(template.modelRef_path !== void 0){
@@ -437,6 +470,6 @@ export function bindElement(element, modelScope, template, localModel, modelKeys
 
 		properties = template.modelRef_path;
 		for (var i = 0; i < properties.length; i++)
-			modelToViewBinding(localModel, properties[i], ref);
+			modelToViewBinding(localModel, properties[i], ref, void 0, void 0, 'elements');
 	}
 }

@@ -279,7 +279,7 @@ function elementBoundChanges(model, property, element, oneWay, modelLocal, prope
 	element.sfType = type;
 
 	if(oneWay === true) return;
-	modelToViewBinding(modelLocal, propertyNameLocal || property, inputBoundRun, element, type);
+	modelToViewBinding(modelLocal, propertyNameLocal || property, inputBoundRun, element, type, 'inputBound');
 }
 
 export function bindInput(temp, modelLocal, mask, modelScope){

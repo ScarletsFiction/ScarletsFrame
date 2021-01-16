@@ -245,7 +245,7 @@ export function templateErrorInfo(e, element, item, modelRef, template){
 
 		if(modelRef?.$el !== void 0){
 			el = modelRef.$el[0];
-			if(el && el.constructor === SFModel){
+			if(el && el.constructor === Model.SFModel){
 				if(modelRef.$el.length !== 1){
 					isSingle = "From one of shared model's element:";
 					parentElement = modelRef.$el.slice(0);
