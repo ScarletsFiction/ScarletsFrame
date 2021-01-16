@@ -521,10 +521,21 @@ function assignSquareBracket(value, elem, template, eRef){
 	}
 
 	let found = template && true;
+
+	// Check if have a template
+	if(!found){
+		for (var i = 0; i < value.length; i++) {
+			if(value[i].includes('{'))
+				value[i] = value[i].replace(/{.*?}/g, function(full){
+					return `{${full}}`;
+				});
+		}
+	}
+
 	elem.textContent = value[0];
 
 	if(elem.firstChild !== null)
-		found = found && elementRebinding(template, eRef, elem.firstChild, elem);
+		if(found) elementRebinding(template, eRef, elem.firstChild, elem);
 
 	for (var a = 1; a < value.length; a++) {
 		const square = squares[a-1];
@@ -535,7 +546,7 @@ function assignSquareBracket(value, elem, template, eRef){
 
 		elemBackup.textContent = square.val;
 		elem.appendChild(elemBackup);
-		found = found && elementRebinding(template, eRef, elemBackup.firstChild, elem);
+		if(found) elementRebinding(template, eRef, elemBackup.firstChild, elem);
 
 		var elemBackup = backup._text;
 		if(elemBackup === void 0 || elemBackup.length === 0)
@@ -546,7 +557,7 @@ function assignSquareBracket(value, elem, template, eRef){
 		}
 
 		elem.appendChild(elemBackup);
-		found = found && elementRebinding(template, eRef, elemBackup, elem);
+		if(found) elementRebinding(template, eRef, elemBackup, elem);
 	}
 
 	if(value[a-1] === '')
@@ -596,8 +607,6 @@ function elementRebinding(template, eRef, elem, parentNode){
 
 	if(createParseIndex(elem.textContent, remake.ref, template))
 		eRef.push(remake);
-
-	return true;
 }
 
 function refreshTemplate(elemRef){
