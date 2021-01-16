@@ -404,6 +404,9 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	// Add custom original because the creation was from different template
 	if(desc !== void 0 && desc.set !== void 0){
+		if(callback.prop && callback.prop !== originalPropertyName)
+			console.error(`Key already has bind information '${callback.prop}' but being replaced with ${originalPropertyName}`);
+
 		callback.model = originalModel;
 		callback.prop = originalPropertyName;
 		return;
@@ -452,13 +455,14 @@ export function bindElement(element, modelScope, template, localModel, modelKeys
 		delete template.html;
 	}
 
-	const ref = {element, template};
+	// Don't use shared object or it would be modified by other property binding
+	// const ref = {element, template};
 
 	// modelRefRoot_path index is not related with modelRefRoot property/key position
 	let properties = template.modelRefRoot_path;
 	if(template.repeatedList === void 0){
 		for (var i = 0; i < properties.length; i++)
-			modelToViewBinding(modelScope, properties[i], ref, void 0, void 0, 'elements');
+			modelToViewBinding(modelScope, properties[i], {element, template}, void 0, void 0, 'elements');
 	}
 
 	if(template.modelRef_path !== void 0){
@@ -470,6 +474,6 @@ export function bindElement(element, modelScope, template, localModel, modelKeys
 
 		properties = template.modelRef_path;
 		for (var i = 0; i < properties.length; i++)
-			modelToViewBinding(localModel, properties[i], ref, void 0, void 0, 'elements');
+			modelToViewBinding(localModel, properties[i], {element, template}, void 0, void 0, 'elements');
 	}
 }

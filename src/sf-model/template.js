@@ -398,7 +398,6 @@ function runFrameStack(){
 		// try to find "animFrameStack.push({" from your editor
 		t.q.async = false;
 		syntheticTemplate(t.w, t.e, t.r, t.t, true);
-
 	}
 
 	animFrameStack.length = 0;
@@ -407,6 +406,10 @@ function runFrameStack(){
 
 const C_zero = [0];
 export function syntheticTemplate(element, template, property, item, asyncing){
+	const changesReference = element.sf$elementReferences;
+	if(!asyncing && changesReference.async === true && changesReference.property === property)
+		return;
+
 	var changes;
 	if(property !== void 0){
 		changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
@@ -425,8 +428,6 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 	else if(template.parse.length === 0)
 		return false;
 	// else: Update all binding
-
-	const changesReference = element.sf$elementReferences;
 
 	if(changesReference.parsed === void 0){
 		if(template.parse.length !== 0)
@@ -447,6 +448,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 			return;
 
 		changesReference.async = true;
+		changesReference.property = property;
 
 		// if you want to know what is this for
 		// try to find "runFrameStack(" from your editor
