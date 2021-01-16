@@ -1,5 +1,6 @@
 import {$, model, component, Views} from "../index.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
+import {hotReloadLevel} from "./index.js";
 
 Views.onCrossing = function(url){
   console.log("Cross domain catched:", url);
@@ -116,7 +117,8 @@ setTimeout(function(){
 
 		setTimeout(function(){
 			var len = $('custom-view').html().split('reloaded').length;
-			if(len !== 8)
+			var count = hotReloadLevel === 1 ? 6 : 8;
+			if(len !== count)
 				console.error("❌ Reloaded views is should be 8 but got", len);
 			else console.log("✔️ Reloaded views are working");
 		}, 500);
