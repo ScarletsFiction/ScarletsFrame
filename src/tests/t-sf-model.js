@@ -169,6 +169,7 @@ model('components', function(My){
 });
 
 model('deep-property', function(My){
+  window.deep = My;
   My.one = 'One';
   My.today = {deep:{two:'Two'}};
   My.list = [];
@@ -197,7 +198,7 @@ model('deep-property', function(My){
       	if(My.$el('.today').text().trim() !== 'One12 Two12\n One12 Two12')
       	  console.error('❌', My.$el('.today').text().trim(), ', should be ->', 'One12 Two12\n One12 Two12');
       	if(!My.$el('label [testval]').attr('testval').includes('Two12 One12'))
-      	  console.error('❌ ', $el('label [testval]').attr('testval'), ', should be changed to -> Two12 One12');
+      	  console.error('❌ ', My.$el('label [testval]').attr('testval'), ', should be changed to -> Two12 One12');
       });
     });
   }

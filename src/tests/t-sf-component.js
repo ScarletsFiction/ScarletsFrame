@@ -211,6 +211,10 @@ component('dynamic-template', {template:'test/template.html'}, function(My, root
 
 model('fultest', function(My){
 	My.ful = '1'+adder;
+
+	My.hotReloaded = function(){
+		console.error("This shouldn't be called before hot reload");
+	}
 });
 
 component('ful-test', function(My){
