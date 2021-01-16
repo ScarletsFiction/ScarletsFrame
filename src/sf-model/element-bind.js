@@ -134,7 +134,8 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 		}
 		if(callback){
 			for (var i = callback.length-1; i >= 0; i--) {
-				if(callback[i].element?.isConnected === false)
+				const els = callback[i].element;
+				if(els && els.isConnected === false)
 					callback.splice(i, 1);
 			}
 		}

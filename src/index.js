@@ -7,7 +7,6 @@ import Space from "./sf-space.js";
 import $ from "./sf-dom.js";
 import events from "./sf-events.js";
 import language from "./sf-language.js";
-import link from "./sf-link.js";
 import loader from "./sf-loader.js";
 import request from "./sf-request.js";
 import security from "./sf-security.js";
@@ -26,7 +25,6 @@ import {Obj} from "./sf-model/repeated-list.js";
 // 	$,
 // 	events,
 // 	language,
-// 	link,
 // 	loader,
 // 	request,
 // 	security,
@@ -47,7 +45,6 @@ export {
 	$,
 	events,
 	language,
-	link,
 	loader,
 	request,
 	security,

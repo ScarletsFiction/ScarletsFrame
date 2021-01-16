@@ -410,6 +410,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 
 	var changes;
 	if(property !== void 0){
+		// Don't use abc?.def?.[prop] because it's not performant
 		changes = (template.modelRef && template.modelRef[property]) || template.modelRefRoot[property];
 
 		if(!changes || changes.length === 0){
@@ -446,7 +447,6 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 			return;
 
 		changesReference.async = true;
-		changesReference.property = property;
 
 		// if you want to know what is this for
 		// try to find "runFrameStack(" from your editor
