@@ -225,6 +225,24 @@ model('repeattest', function(My){
 	My.end = 10;
 	My.step = 1;
 
+	My.init = function(){
+		setTimeout(()=> {
+			My.step = 3;
+		}, 3000);
+		setTimeout(()=> {
+			My.step = 1;
+			My.begin = -5;
+		}, 4000);
+		setTimeout(()=> {
+			My.begin = -2;
+			My.end = 7;
+		}, 5000);
+		setTimeout(()=> {
+			My.begin = 1;
+			My.end = 10;
+		}, 5000);
+	}
+
 	function delay(time){
 		return new Promise(resolve=> setTimeout(resolve, time));
 	}

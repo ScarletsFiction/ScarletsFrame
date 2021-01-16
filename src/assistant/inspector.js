@@ -872,9 +872,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 		if(args.length !== 0){
 			const len = args.length;
-			args = args.toString().split(')')[0].split('(')[1];
-			if(args === void 0)
-				args = '...'+len;
+			args = args.toString().split(')')[0].split('(')[1] ?? '...'+len;
 		}
 		else args = '';
 
