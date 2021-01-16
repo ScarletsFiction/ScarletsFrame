@@ -35,14 +35,12 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 
 	// Create custom listener for repeated element
 	if(rootHandler){
-		if(rootHandler.sf$listListenerLock === void 0)
-			rootHandler.sf$listListenerLock = new WeakSet();
+		rootHandler.sf$listListenerLock ??= new WeakSet();
 
 		rootHandler.sf$listListenerLock.add(template);
 		const elementIndex = $.getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
 
-		if(rootHandler.sf$listListener === void 0)
-			rootHandler.sf$listListener = {};
+		rootHandler.sf$listListener ??= {};
 
 		let withKey = false;
 		if(template.uniqPattern !== void 0)

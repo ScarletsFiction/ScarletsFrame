@@ -713,25 +713,16 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 
 			var attrs = currentNode.attributes;
 			if(attrs['sf-each'] !== void 0){
-				if(collectOther.repeat === void 0)
-					collectOther.repeat = [];
-
-				collectOther.repeat.push(currentNode);
+				(collectOther.repeat ??= []).push(currentNode);
 				continue;
 			}
 
 			if(attrs['sf-into'] !== void 0 || attrs['sf-bind'] !== void 0){
-				if(collectOther.input === void 0)
-					collectOther.input = [];
-
-				collectOther.input.push(currentNode);
+				(collectOther.input ??= []).push(currentNode);
 			}
 
 			if(attrs['sf-scope'] !== void 0){
-				if(collectOther.scope === void 0)
-					collectOther.scope = [];
-
-				collectOther.scope.push(currentNode);
+				(collectOther.scope ??= []).push(currentNode);
 				continue;
 			}
 

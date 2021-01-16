@@ -66,8 +66,7 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 					const that = ref[pattern.source] = [];
 					that.$data = pattern;
 
-					ref.sf$bindedKey ??= {};
-					ref.sf$bindedKey[pattern.source] = true;
+					(ref.sf$bindedKey ??= {})[pattern.source] = true;
 
 					listFromFunction(modelRef, pattern, that);
 					isDeep = pattern.source;
@@ -377,10 +376,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	// Check if this was nested repeated element
 	if(originalAddr && modelKeysRegex.bindList !== void 0){
 		template.parentTemplate = modelKeysRegex;
-		var _list = modelKeysRegex.scopes._list;
-
-		if(_list === void 0)
-			_list = modelKeysRegex.scopes._list = [];
+		var _list = modelKeysRegex.scopes._list ??= [];
 
 		if(modelKeysRegex.uniqPattern !== void 0)
 			_list.push(modelKeysRegex.uniqPattern);
@@ -1787,8 +1783,7 @@ export class ElementManipulator{
 	}
 
 	clearBinding(elemList, from, to){
-		if(to === void 0)
-			to = this.list.length;
+		to ??= this.list.length;
 
 		const modelRoot = this.modelRef;
 		const binded = this.template.modelRefRoot_path;
@@ -1805,12 +1800,8 @@ export class ElementManipulator{
 						continue;
 
 					for (var z = bindList.length-1; z >= 0; z--) {
-						if(bindList[z].element === elem){
-							if(elem.sf$bindedBackup === void 0)
-								elem.sf$bindedBackup = [];
-
-							elem.sf$bindedBackup.push([binded[a], bindList.splice(z, 1)[0]]);
-						}
+						if(bindList[z].element === elem)
+							(elem.sf$bindedBackup ??= []).push([binded[a], bindList.splice(z, 1)[0]]);
 					}
 				}
 			}
@@ -1831,10 +1822,7 @@ export class ElementManipulator{
 					continue;
 
 				var elem = bindList[z].element;
-				if(elem.sf$bindedBackup === void 0)
-					elem.sf$bindedBackup = [];
-
-				elem.sf$bindedBackup.push([binded[a], bindList.splice(z, 1)[0]]);
+				(elem.sf$bindedBackup ??= []).push([binded[a], bindList.splice(z, 1)[0]]);
 			}
 		}
 	}

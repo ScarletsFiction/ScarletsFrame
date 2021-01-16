@@ -25,8 +25,7 @@ export default class API{
 		return this.request('POST', this.url+url, formData);
 	}
 	request(method, url, data, beforeSend){
-		if(data === void 0)
-			data = {};
+		data ??= {};
 
 		if(this.mask){
 			var options = {receiveType:'JSON'};

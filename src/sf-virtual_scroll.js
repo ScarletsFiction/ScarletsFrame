@@ -459,8 +459,7 @@ Object.assign(VirtualScrollManipulator.prototype, {
 	},
 
 	newElementInit(el, before){
-		if(el.sf$heightPos === void 0)
-			el.sf$heightPos = this.elHeight + this.elMarginY;
+		el.sf$heightPos ??= this.elHeight + this.elMarginY;
 
 		if(before === 0)
 			el.sf$scrollPos = 1;

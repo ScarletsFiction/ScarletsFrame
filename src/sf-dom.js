@@ -95,8 +95,7 @@ class DOMList{
 		if(i < 0)
 			i = this.length + i;
 
-		if(count === void 0)
-			count = this.length - i;
+		count ??= this.length - i;
 
 		for (var n = this.length - count; i < n; i++)
 			this[i] = this[i + count];
@@ -739,8 +738,7 @@ function recreateDOMList($el, length){
 
 	function saveEvent(element, event, callback){
 		// Save event listener
-		if(element.sf$eventListener === void 0)
-			element.sf$eventListener = {};
+		element.sf$eventListener ??= {};
 
 		if(!(event in element.sf$eventListener))
 			element.sf$eventListener[event] = [];

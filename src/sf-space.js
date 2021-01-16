@@ -6,9 +6,7 @@ import {ModelInit} from "./sf-model/a_model.js";
 
 // ToDo: Tidy up, the implementation seems dirty
 function getNamespace(name, id){
-	let scope = Space.list[name];
-	if(scope === void 0)
-		scope = Space.list[name] = {_waiting:[]};
+	let scope = Space.list[name] ??= {_waiting:[]};
 
 	if(!(id in scope)){
 		let ref = scope.default;
@@ -45,10 +43,7 @@ function createRoot_(registered, id, space){
 	};
 
 	if(space.Space === void 0){
-		if(space._pendingInit === void 0)
-			space = space._pendingInit = {modelFunc:{}, modelList:{}, componentList:{}, _scope:[]};
-		else space = space._pendingInit;
-
+		space = space._pendingInit ??= {modelFunc:{}, modelList:{}, componentList:{}, _scope:[]};
 		space._scope.push(SpaceScope);
 	}
 	else space = space.Space;
@@ -107,9 +102,7 @@ export default class Space{
 		forProxying.internalSpaceEmpty = internal.space.empty = false;
 		this.namespace = namespace;
 
-		let scope = Space.list[namespace];
-		if(scope === void 0)
-			scope = Space.list[namespace] = {};
+		let scope = Space.list[namespace] ??= {};
 
 		if(scope._pendingInit){
 			let temp = scope._pendingInit;

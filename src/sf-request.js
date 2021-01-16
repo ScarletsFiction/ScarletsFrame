@@ -16,8 +16,7 @@ export default function Self(method, url, data, options, callback){
 		options = void 0;
 	}
 
-	if(options === void 0)
-		options = {};
+	options ??= {};
 
 	if(method === 'getJSON'){
 		options.receiveType = 'JSON';

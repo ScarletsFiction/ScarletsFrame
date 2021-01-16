@@ -100,8 +100,7 @@ Self.for = function(name, options, func, namespace){
 			throw new Error("The second parameter of sf.component can't be a string. Maybe you want to use sf.component.html to define component's HTML template instead.");
 	}
 
-	if(func === void 0)
-		func = NOOP;
+	func ??= NOOP;
 
 	// internal.component.tagName.add(name.toUpperCase());
 	const scope = namespace || Self;
@@ -262,8 +261,8 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	const attr = element.attributes;
 	const inherit = internal.componentInherit[name];
 
-	if(attr.length !== 0 && $item === void 0)
-		$item = {};
+	if(attr.length !== 0)
+		$item ??= {};
 
 	if(attr.length !== 0 && ($item.constructor === String || $item.constructor === Number))
 		$item = {item:$item};
@@ -338,8 +337,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		}
 	}
 
-	if(registrar[4] === void 0)
-		registrar[4] = createModelKeysRegex(element, newObj, null);
+	registrar[4] ??= createModelKeysRegex(element, newObj, null);
 
 	let forceConnectCall = false;
 	if(element.childNodes.length === 0){

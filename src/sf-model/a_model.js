@@ -28,10 +28,9 @@ export function ModelInit(el, modelName, namespace){
 		firstInit = true;
 	}
 
-	if(model.$el === void 0)
-		model.$el = $();
-
+	model.$el ??= $();
 	model.$el = model.$el.push(el);
+
 	if(model.sf$internal === void 0){
 		Object.defineProperty(model, 'sf$internal', {configurable:true, value:{
 			modelKeysRegex:createModelKeysRegex(el, model, null),

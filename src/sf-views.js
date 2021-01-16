@@ -175,9 +175,10 @@ export default function Self(selector, name){
 	if(this.Views === Self)
 		return console.error('sf.Views need to be constructed using "new sf.Views"');
 
-	if(name === void 0)
-		name = slash;
+	// If undefined then name set it as '/'
+	name ??= slash;
 
+	// if have name and  not false
 	if(name)
 		Self.list[name] = Self;
 
@@ -206,8 +207,7 @@ export default function Self(selector, name){
 	Self.maxCache = 4;
 	function removeOldCache(current){
 		const parent = current.parentNode;
-		if(parent.sf$cachedDOM === void 0)
-			parent.sf$cachedDOM = [];
+		parent.sf$cachedDOM ??= [];
 
 		const i = parent.sf$cachedDOM.indexOf(current);
 		if(i === -1)
@@ -661,12 +661,8 @@ export default function Self(selector, name){
 		}
 
 		const afterDOMLoaded = function(dom){
-			if(url.selector || url.hasChild){
-				var selectorElement = dom.sf$viewSelector;
-
-				if(selectorElement === void 0)
-					selectorElement = dom.sf$viewSelector = {};
-			}
+			if(url.selector || url.hasChild)
+				var selectorElement = dom.sf$viewSelector ??= {};
 
 			if(SFOptions.devMode && url.template !== void 0)
 				dom.sf$templatePath = url.template;

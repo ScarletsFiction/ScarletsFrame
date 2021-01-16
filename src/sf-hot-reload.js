@@ -124,8 +124,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		return;
 	}
 
-	if(scope.$el === void 0)
-		scope.$el = $();
+	scope.$el ??= $();
 
 	var firstTime = scope.$el._hotReload === void 0;
 	if(firstTime)
@@ -195,10 +194,7 @@ export function hotComponentAdd(space, name, scope){
 		proxySpace.set(space, proxy);
 	}
 
-	let list = proxy[name];
-	if(list === void 0)
-		list = proxy[name] = [];
-
+	let list = proxy[name] ??= [];
 	list.push(scope);
 
 	proxy = {};

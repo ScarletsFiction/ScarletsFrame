@@ -36,11 +36,8 @@ export default class Window{
 	// id = ...
 
 	constructor(options, onLoaded){
-		if(options === void 0)
-			options = {};
-
-		if(options.id === void 0)
-			options.id = Math.round(Math.random()*1000) + String(Date.now()).slice(3);
+		options ??= {};
+		options.id ??= Math.round(Math.random()*1000) + String(Date.now()).slice(3);
 
 		const winID = this.id = options.id;
 		if(!internal.windowDestroyListener){
@@ -168,8 +165,7 @@ export default class Window{
 			linker.loaded = null;
 		}
 
-		if(options.title === void 0)
-			options.title = "Untitled Space";
+		options.title ??= "Untitled Space";
 
 		linker.console.log = function(){
 			console.log(`%c[${options.title}]`, "color: #9bff82", ...arguments);
@@ -213,8 +209,7 @@ export default class Window{
 		window.requestAnimationFrame = reqAnimFrame;
 	}
 	static source(lists, ev){
-		if(ev === void 0)
-			ev = window.event;
+		ev ??= window.event;
 
 		if(ev === void 0)
 			throw new Error("Can't capture event, please add event data on parameter 2 of sf.Window.source");

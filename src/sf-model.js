@@ -42,8 +42,7 @@ export function findBindListElement(el, includeComponent){
 }
 
 export function getScope(el, returnNode){
-	if(el === void 0)
-		el = $0;
+	el ??= $0;
 
 	// If it's Node type
 	if(el.tagName !== void 0){
@@ -140,8 +139,7 @@ Self.for = function(name, options, func, namespace){
 	}
 
 	if(SFOptions.devMode){
-		if(scopeTemp.$el === void 0)
-			scopeTemp.$el = $();
+		scopeTemp.$el ??= $();
 
 		if(scopeTemp.$el.$devData === void 0)
 			Object.defineProperty(scopeTemp.$el, '$devData', {

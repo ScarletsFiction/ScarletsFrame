@@ -333,11 +333,8 @@ internal.language.refreshLang = function(el){
 
 function refreshLang(list, noPending, callback){
 	requestAnimationFrame(function(){
-		let defaultLang = Self.list[Self.default];
 		const parentElement = new Set();
-
-		if(defaultLang === void 0)
-			defaultLang = Self.list[Self.default] = {};
+		let defaultLang = Self.list[Self.default] ??= {};
 
 		const checks = new Set();
 		for (let i = list.length-1; i >= 0; i--) {
@@ -415,8 +412,7 @@ function refreshLang(list, noPending, callback){
 			elem.sf_lang = Self.default;
 
 			let { model } = elem;
-			if(model === void 0)
-				model = getScope(elem);
+			model ??= getScope(elem);
 
 			// Avoid model that doesn't have binding
 			if(model.sf$bindedKey === void 0)
@@ -442,8 +438,7 @@ function elementReferencesRefresh(elem){
 	let processed = false;
 	const { template } = eRef;
 
-	if(eRef.parsed === void 0)
-		eRef.parsed = new Array(template.parse);
+	eRef.parsed ??= new Array(template.parse);
 
 	for (var i = eRef.length-1; i >= 0; i--) {
 		const elemRef = eRef[i];
@@ -516,16 +511,10 @@ function assignSquareBracket(value, elem, template, eRef){
 	const backup = {};
 	for(var a=0, n=childNodes.length; a<n; a++){
 		var place, elemBackup = childNodes[a];
-		if(elemBackup.nodeType === 3){
-			place = backup._text;
-			if(place === void 0)
-				place = backup._text = [];
-		}
-		else if(elemBackup.nodeType === 1){
-			place = backup[elemBackup.tagName];
-			if(place === void 0)
-				place = backup[elemBackup.tagName] = [];
-		}
+		if(elemBackup.nodeType === 3)
+			place = backup._text ??= [];
+		else if(elemBackup.nodeType === 1)
+			place = backup[elemBackup.tagName] ??= [];
 		else continue;
 
 		place.push(elemBackup);
