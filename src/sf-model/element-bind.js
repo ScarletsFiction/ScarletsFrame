@@ -345,7 +345,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			get:()=> _m2v
 		});
 
-	bindedKey._set = (val)=> {
+	const set = (val)=> {
 		if(objValue !== val){
 			let newValue, noFeedback;
 			if(internal.inputBoundRunning === false){
@@ -397,7 +397,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(isALength !== false && !(isALength in model)){
 		Object.defineProperty(model, isALength, {
 			value(){
-				bindedKey._set(model[propertyName]);
+				set(model[propertyName]);
 			}
 		});
 	}
@@ -413,7 +413,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		enumerable: true,
 		configurable: true,
 		get:()=> objValue,
-		set:bindedKey._set
+		set
 	});
 }
 

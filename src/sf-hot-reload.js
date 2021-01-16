@@ -61,6 +61,8 @@ export default function HotReload(mode){
 	internalProp = {
 		init:true,
 		initClone:true,
+		hotReload:true,
+		hotReloaded:true,
 		reinit:true,
 		destroy:true,
 		destroyClone:true,
@@ -126,10 +128,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 	scope.$el ??= $();
 
-	var firstTime = scope.$el._hotReload === void 0;
-	if(firstTime)
-		Object.defineProperty(scope.$el, '_hotReload', {value: true});
-
+	var firstTime = scope.sf$bindedKey === void 0;
 	!firstTime && scope.hotReload && scope.hotReload(scope);
 
 	if(func.constructor === Function){
@@ -161,13 +160,12 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	}
 	else Object.setPrototypeOf(scope, func.class.prototype);
 
-	if(haveLoaded.has(scope) || forceHaveLoaded){
-		if(!firstTime || forceHaveLoaded){
-			scope.sf$refresh && scope.sf$refresh.forEach(v=>v());
-			scope.hotReloaded && scope.hotReloaded(scope);
-		}
+	if(!firstTime || forceHaveLoaded){
+		scope.sf$refresh && scope.sf$refresh.forEach(v=>v());
+		scope.hotReloaded && scope.hotReloaded(scope);
 	}
-	else haveLoaded.add(scope);
+
+	haveLoaded.add(scope);
 }
 
 // On model scope reregistered
