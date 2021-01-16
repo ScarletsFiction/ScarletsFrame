@@ -1,8 +1,8 @@
 import {internal, forProxying} from "../shared.js";
 import {stringifyPropertyPath, deepProperty} from "../utils.js";
-import {syntheticTemplate, templateParser, syntheticRepeatedList} from "./template.js";
+import {syntheticTemplate, templateParser, syntheticReactiveArray} from "./template.js";
 import {extractPreprocess, initBindingInformation, revalidateBindingPath} from "./parser.js";
-import {RepeatedList, RepeatedMap, RepeatedSet, ElementManipulatorProxy} from "./repeated-list.js";
+import {ReactiveArray, ReactiveMap, ReactiveSet, ElementManipulatorProxy} from "./repeated-list.js";
 
 export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 	if(ref === void 0)
@@ -16,21 +16,21 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 		const obj = ref[key];
 		if(obj !== void 0 && obj.$EM !== void 0){
 			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
-			if(obj.constructor === RepeatedList){
+			if(obj.constructor === ReactiveArray){
 				for (var i = 0; i < obj.length; i++){
 					if(typeof obj[i] === 'object')
 						removeModelBinding(obj[i], false, isLazy);
 					else break;
 				}
 			}
-			else if(obj.constructor === RepeatedMap){
+			else if(obj.constructor === ReactiveMap){
 				for(const [k, v] of obj){
 					if(typeof v === 'object')
 						removeModelBinding(v, false, isLazy);
 					else break;
 				}
 			}
-			else if(obj.constructor === RepeatedSet){
+			else if(obj.constructor === ReactiveSet){
 				for(const v of obj){
 					if(typeof v === 'object')
 						removeModelBinding(v, false, isLazy);
@@ -85,7 +85,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 			}
 
 			// Reset prototype without copying the array to new reference
-			if(obj.constructor === RepeatedList){
+			if(obj.constructor === ReactiveArray){
 				Object.setPrototypeOf(obj, Array.prototype);
 				continue;
 			}
@@ -176,7 +176,7 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 			continue;
 
 		const ref = refPaths[a].slice(0, -1);
-		if(obj.constructor === RepeatedList){
+		if(obj.constructor === ReactiveArray){
 			for (let i = 0; i < obj.length; i++) {
 				var deep = deepProperty(obj[i], ref);
 				if(deep === void 0)
@@ -374,7 +374,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			if(bindedKey.bindList){
 				const {bindList} = bindedKey;
 				for (var i = 0; i < bindList.length; i++)
-					syntheticRepeatedList(bindList[i], originalPropertyName, originalModel);
+					syntheticReactiveArray(bindList[i], originalPropertyName, originalModel);
 			}
 
 			if(bindedKey.elements){

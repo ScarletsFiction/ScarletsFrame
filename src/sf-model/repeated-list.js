@@ -110,14 +110,14 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 
 		const { constructor } = target;
 		let proto;
-		if(constructor === Array || constructor === RepeatedList)
-			proto = RepeatedList;
-		else if(constructor === Object || constructor === RepeatedProperty)
-			proto = RepeatedProperty;
-		else if(constructor === Map || constructor === RepeatedMap)
-			proto = RepeatedMap;
-		else if(constructor === Set || constructor === RepeatedSet)
-			proto = RepeatedSet;
+		if(constructor === Array || constructor === ReactiveArray)
+			proto = ReactiveArray;
+		else if(constructor === Object || constructor === PropertyList)
+			proto = PropertyList;
+		else if(constructor === Map || constructor === ReactiveMap)
+			proto = ReactiveMap;
+		else if(constructor === Set || constructor === ReactiveSet)
+			proto = ReactiveSet;
 		else if(constructor === WeakSet || constructor === WeakMap){
 			console.error(pattern.source, target, "WeakMap or WeakSet is not supported");
 			continue;
@@ -349,7 +349,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 		if(SFOptions.devMode === true)
 			template.rootIndex = $.getSelector(parentNode, true, getScope(parentNode, true));
 
-		if(this.constructor === RepeatedList){
+		if(this.constructor === ReactiveArray){
 			template.repeatedList = true;
 			repeatedListBindRoot(template, modelRef);
 		}
@@ -417,7 +417,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 }
 
 // This will be called when constructing the
-// Repeated (Property,Map,Set), but not for RepeatedList
+// Reactive (Object,Map,Set), but not for ReactiveArray
 function afterConstruct(modelRef, element, rule, parentNode, namespace){
 	const { that } = rule;
 
@@ -447,14 +447,14 @@ function refreshKeyFromEM(EM){
 	if(template.modelRef._sfkey_ === void 0) return;
 	const elements = EM.elements || EM.parentChilds;
 
-	if(list.constructor === RepeatedList){
+	if(list.constructor === ReactiveArray){
 		for (var i = 0; i < list.length; i++) {
 			const temp = elements[i];
 			temp.sf$repeatListIndex = i;
 			syntheticTemplate(temp, template, '_sfkey_', list[i]);
 		}
 	}
-	else{ // RepeatedMap
+	else{ // ReactiveMap
 		var i = 0;
 		for(const [key, val] of list){
 			const temp = elements[i++];
@@ -464,7 +464,7 @@ function refreshKeyFromEM(EM){
 	}
 }
 
-export class RepeatedProperty{ // extends Object
+export class PropertyList{ // extends Object
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -557,7 +557,7 @@ export class RepeatedProperty{ // extends Object
 	}
 }
 
-// Only for Object or RepeatedProperty
+// Only for Object or PropertyList
 export const Obj = {
 	set(obj, prop, val){
 		if(obj[prop] === val)
@@ -593,7 +593,7 @@ export const Obj = {
 	}
 };
 
-export class RepeatedMap extends Map{
+export class ReactiveMap extends Map{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -656,7 +656,7 @@ export class RepeatedMap extends Map{
 	}
 }
 
-export class RepeatedSet extends Set{
+export class ReactiveSet extends Set{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -746,7 +746,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	if(hasChild)
 		scopes = template.scopes;
 
-	if(that.constructor === RepeatedMap || that.constructor === RepeatedSet){
+	if(that.constructor === ReactiveMap || that.constructor === ReactiveSet){
 		const isMap = that instanceof Map;
 		let i = -1;
 		for(let item of that){
@@ -787,7 +787,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 		return;
 	}
 
-	if(that.constructor === RepeatedProperty){
+	if(that.constructor === PropertyList){
 		temp = that;
 		that = Object.values(that);
 	}
@@ -826,7 +826,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 		}
 	}
 
-	// For RepeatedProperty
+	// For PropertyList
 	if(temp !== void 0){
 		var i = 0;
 		for(let keys in temp)
@@ -834,7 +834,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	}
 }
 
-export class RepeatedList extends Array{
+export class ReactiveArray extends Array{
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit, pattern} = rule;
 
@@ -1996,7 +1996,7 @@ function RE_getBindedList(modelRoot, binded){
 
 ;{
 	const RE_Prototype = {
-		// For RepeatedProperty, RepeatedList, RepeatedMap, RepeatedSet
+		// For PropertyList, ReactiveArray, ReactiveMap, ReactiveSet
 		$el:{
 			value(selector){
 				const { $EM } = this;
@@ -2008,8 +2008,8 @@ function RE_getBindedList(modelRoot, binded){
 	};
 
 	const d = Object.defineProperties;
-	d(RepeatedProperty.prototype, RE_Prototype);
-	d(RepeatedList.prototype, RE_Prototype);
-	d(RepeatedMap.prototype, RE_Prototype);
-	d(RepeatedSet.prototype, RE_Prototype);
+	d(PropertyList.prototype, RE_Prototype);
+	d(ReactiveArray.prototype, RE_Prototype);
+	d(ReactiveMap.prototype, RE_Prototype);
+	d(ReactiveSet.prototype, RE_Prototype);
 };

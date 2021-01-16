@@ -415,7 +415,7 @@ declare class Views {
 	goto(path: string, data?: Function | object, method?: Function | HTTPMethod, callback?: Function): void;
 }
 
-export class RepeatedProperty {
+export class PropertyList {
 	/**
 	 * Select related elements from this list with query selector
 	 * @param selector Query selector
@@ -435,11 +435,11 @@ export class RepeatedProperty {
 	refresh(): any;
 }
 
-export class RepeatedList extends RepeatedProperty {
+export class ReactiveArray extends PropertyList {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
 	/** ToDo */
-	assign(fromIndex: number, withArray: object[] | object, removes?: object | Boolean, putLast?: Boolean): RepeatedList;
+	assign(fromIndex: number, withArray: object[] | object, removes?: object | Boolean, putLast?: Boolean): ReactiveArray;
 	/**
 	 * Swap an item with another item with index
 	 * @param from index

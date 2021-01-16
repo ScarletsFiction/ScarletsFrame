@@ -776,7 +776,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 	var reactive = [];
 	var passive = new Set() // use Set to get the prototype too;
-	var statelists = []; // RepeatedList
+	var statelists = []; // ReactiveArray
 	var objects = [];
 	var functions = new Set(); // use Set to get the prototype too;
 

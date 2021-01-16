@@ -364,7 +364,7 @@ Internal.async = function(mode){
 	animFrameMode = disableAsync = !mode;
 }
 
-export function syntheticRepeatedList(template, property, modelScope){
+export function syntheticReactiveArray(template, property, modelScope){
 	const { bindList } = template;
 	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;
 
@@ -407,8 +407,6 @@ function runFrameStack(){
 const C_zero = [0];
 export function syntheticTemplate(element, template, property, item, asyncing){
 	const changesReference = element.sf$elementReferences;
-	if(!asyncing && changesReference.async === true && changesReference.property === property)
-		return;
 
 	var changes;
 	if(property !== void 0){
