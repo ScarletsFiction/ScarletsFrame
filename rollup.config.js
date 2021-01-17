@@ -14,7 +14,7 @@ export default [{
   output: {
     file: "dist/scarletsframe.min.js",
     sourcemap: true,
-    sourcemapFile: "dist//scarletsframe.min.js.map",
+    sourcemapFile: "dist/scarletsframe.min.js.map_",
     format: "iife",
     name: "sf"
   },
@@ -24,7 +24,7 @@ export default [{
   output: {
     file: "dist/scarletsframe.hot.js",
     sourcemap: true,
-    sourcemapFile: "dist//scarletsframe.hot.js.map",
+    sourcemapFile: "dist/scarletsframe.hot.js.map_",
     format: "iife",
     name: "sf"
   },
