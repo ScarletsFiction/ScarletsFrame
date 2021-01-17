@@ -47,6 +47,9 @@ Self.add = function(lang, obj){
 	if(obj.constructor !== Object)
 		throw new Error("Parameter 2 must be an object");
 
+	if(!lang || lang.constructor !== String)
+		throw new Error("Parameter 1 must be a locale text (en_US)");
+
 	if(!(lang in Self.list))
 		Self.list[lang] = {};
 

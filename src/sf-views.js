@@ -44,7 +44,7 @@ window.addEventListener('popstate', function(ev){
 	// console.warn('historyIndex', historyIndex, window.history.state, routeDirection > 0 ? 'forward' : 'backward');
 
 	// Reparse current URL
-	Self.goto();
+	Views.goto();
 	disableHistoryPush = false;
 	SFURI.trigger();
 }, false);
@@ -171,16 +171,18 @@ internal.router.findRoute = function(url){
 }
 
 // ToDo turn this into a class
-export default function Self(selector, name){
-	if(this.Views === Self)
+export default function Views(selector, name){
+	if(this.Views === Views)
 		return console.error('sf.Views need to be constructed using "new sf.Views"');
 
 	// If undefined then name set it as '/'
 	name ??= slash;
 
+	let Self = this
+
 	// if have name and  not false
 	if(name)
-		Self.list[name] = Self;
+		Views.list[name] = this;
 
 	let pendingAutoRoute = false;
 
@@ -932,16 +934,16 @@ export default function Self(selector, name){
 	return Self;
 };
 
-Self.list = {};
-Self.goto = function(url){
+Views.list = {};
+Views.goto = function(url){
 	const parsed = SFURI.parse(url);
 	SFURI.data = parsed.data;
 	SFURI.query = parsed.query;
 	// SFURI.routes = parsed.routes;
 
-	const views = Self.list;
+	const views = Views.list;
 
-	for(let list in Self.list){
+	for(let list in Views.list){
 		// For root path
 		if(list === slash){
 			if(views[slash].currentPath !== parsed.path)
@@ -956,14 +958,14 @@ Self.goto = function(url){
 	}
 }
 
-Self.resetCache = function(){
+Views.resetCache = function(){
 	cachedURL = {};
 }
 
 // Listen to every link click, capture mode
 $(function(){
-	if(Self.onCrossing === void 0)
-		Self.onCrossing = function(url, target){
+	if(Views.onCrossing === void 0)
+		Views.onCrossing = function(url, target){
 			console.error("Unhandled crossing URL origin", url, target);
 			console.warn("Handle it by make your custom function like `sf.Views.onCrossing = func(){}`");
 		};
@@ -988,11 +990,11 @@ $(function(){
 
 		// If it's different domain
 		if(path.includes('//')){
-			Self.onCrossing(this.href, this.getAttribute('target'));
+			Views.onCrossing(this.href, this.getAttribute('target'));
 			return;
 		}
 
 		// Let ScarletsFrame handle this link
-		Self.goto(attr);
+		Views.goto(attr);
 	}, true);
 });
