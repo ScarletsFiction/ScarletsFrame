@@ -1,11 +1,27 @@
-import {$, getScope, Space} from "../index.js";
+
+// -- Only for ScarletsFiction Members --
+// When editing the inspector.css make sure it's hardlinked
+// ./inspector.css -> ../../dist/inspector.css
+
+import {$, getScope, Space, loader} from "../index.js";
 
 export default function(){
+
+void function(){
+	var path = $('script[src*="scarletsframe."]')[0];
+	if(path === void 0){
+		loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/inspector.css']);
+		return;
+	}
+
+	path = path.src.split('scarletsframe.')[0];
+	loader.css([path+'inspector.css']);
+}();
 
 // For browser interface
 var SFDevSpace = new Space('sf_devmode');
 window.SFDevSpace = SFDevSpace;
-var SFDevMode = SFDevSpace.component('sf-dev-mode', {
+var SFDevMode = SFDevSpace.component('sf-inspector', {
 	html:`
 	<div class="sf-shadow-mark" style="
 		display: {{ hasShadow ? '' : 'none' }};
@@ -207,11 +223,11 @@ var SFDevMode = SFDevSpace.component('sf-dev-mode', {
 // Add to body when DOM was finished loading
 setTimeout(()=> {
 	$(function(){
-		// Create sf-dev-mode component inside of sf_devmode space
+		// Create sf-inspector component inside of sf_devmode space
 		// Then append it in the body
 		$('body').append(`
 	<sf-space sf_devmode>
-		<sf-dev-mode></sf-dev-mode>
+		<sf-inspector></sf-inspector>
 		<div class="sf-viewer"></div>
 	</sf-space>`);
 	});
