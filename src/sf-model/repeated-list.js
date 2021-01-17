@@ -916,7 +916,9 @@ export class ReactiveArray extends Array{
 	splice(index, limit){
 		if(index === 0 && limit === void 0){
 			this.$EM.clear();
-			return super.splice.apply(this, arguments);
+			const ret = super.splice.apply(this, arguments);
+			if(this.$length !== void 0) this.$length();
+			return ret;
 		}
 
 		const lastLength = this.length;
