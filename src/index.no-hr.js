@@ -1,6 +1,6 @@
 import "./shared.js";
 import API from "./sf-api.js";
-import hotReload from "./sf-hot-reload.js";
+// import hotReload from "./sf-hot-reload.js";
 import model, {getScope} from "./sf-model.js";
 import component from "./sf-component.js";
 import Space from "./sf-space.js";
@@ -18,7 +18,7 @@ import {Obj} from "./sf-model/repeated-list.js";
 
 export {
 	API,
-	hotReload,
+	// hotReload,
 	model,
 	component,
 	Space,

@@ -9,12 +9,24 @@ const plugins = [sourcemaps(), babel({
 if(process.env.production)
   plugins.push(terser({ output: { comments: false } }));
 
-export default {
-  input: "src/index.js",
+export default [{
+  input: "src/index.no-hr.js",
   output: {
-    file: "dist/main.js",
+    file: "dist/scarletsframe.min.js",
+    sourcemap: true,
+    sourcemapFile: "dist//scarletsframe.min.js.map",
     format: "iife",
     name: "sf"
   },
   plugins
-};
+}, {
+  input: "src/index.js",
+  output: {
+    file: "dist/scarletsframe.hot.js",
+    sourcemap: true,
+    sourcemapFile: "dist//scarletsframe.hot.js.map",
+    format: "iife",
+    name: "sf"
+  },
+  plugins
+}];

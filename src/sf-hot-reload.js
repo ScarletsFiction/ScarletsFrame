@@ -1,7 +1,6 @@
 // Allow direct function replacement to accelerate development
 // Note: This feature will allocate more small memory and small slow down
 // ToDo: Fix memory leak on RepeatedElement when using this feature
-// ToDo: Make the implementation more efficient
 import {SFOptions, internal} from "./shared.js";
 import Loader from "./sf-loader.js";
 import Component, {prepareComponentTemplate} from "./sf-component.js";
@@ -23,24 +22,7 @@ setTimeout(function(){
 		SFOptions.devMode = false;
 		proxyTemplate = void 0;
 	}
-	else{
-		console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
-
-		$(function(){
-			if(window.SFDevSpace !== void 0) return;
-
-			var path = $('script[src*="scarletsframe."]')[0];
-			if(path === void 0){
-				Loader.js(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.js']);
-				Loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/dev-mode.css']);
-				return;
-			}
-
-			path = path.src.split('scarletsframe.')[0];
-			Loader.js([path+'dev-mode.js']);
-			Loader.css([path+'dev-mode.css']);
-		});
-	}
+	else console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 }, 1);
 
 export default function HotReload(mode){
