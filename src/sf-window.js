@@ -92,6 +92,8 @@ export default class Window{
 			if(linker.sf.Space === void 0 && linker.sf.space !== void 0){
 				linker.sf.Space = linker.sf.space;
 				linker.sf.language = linker.sf.lang;
+				linker.sf.URI = linker.sf.url;
+				linker.sf.Views = linker.sf.views;
 			}
 
 			if(linker.sf.Space === void 0)
@@ -149,7 +151,7 @@ export default class Window{
 
 			onLoaded && onLoaded({
 				Views: linker.sf.Views,
-				URL: linker.sf.URL
+				URI: linker.sf.URI
 			});
 
 			language.init(linker.document.body);

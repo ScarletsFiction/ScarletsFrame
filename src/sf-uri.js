@@ -68,7 +68,7 @@ Self.replace = function(){
 	Self.trigger();
 }
 
-// If url === undefined, it will parse current URL save the data into sf.url
+// If url === undefined, it will parse current URL save the data into sf.URI
 // If url is String, it will parse the String and create new object to save the data
 Self.parse = function(url){
 	let obj, URLQuery, URLHash, URLData;

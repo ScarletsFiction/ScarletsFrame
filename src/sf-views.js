@@ -1,6 +1,6 @@
 import {internal, forProxying, SFOptions} from "./shared.js";
 import $ from "./sf-dom.js";
-import SFURL from "./sf-url.js";
+import SFURI from "./sf-uri.js";
 import Request from "./sf-request.js";
 import Security from "./sf-security.js";
 import {getCallerFile} from "./sf-hot-reload.js";
@@ -46,7 +46,7 @@ window.addEventListener('popstate', function(ev){
 	// Reparse current URL
 	Self.goto();
 	disableHistoryPush = false;
-	SFURL.trigger();
+	SFURI.trigger();
 }, false);
 
 const cachedURL = {};
@@ -186,7 +186,7 @@ export default function Self(selector, name){
 
 	// Init current URL as current View Path
 	if(name === slash)
-		Self.currentPath = SFURL.path;
+		Self.currentPath = SFURI.path;
 	else if(name === false)
 		Self.currentPath = '';
 	else{
@@ -359,13 +359,13 @@ export default function Self(selector, name){
 				if(name === slash && !rootDOM.childElementCount){
 					Self.currentPath = '';
 					disableHistoryPush = true;
-					firstRouted = Self.goto(SFURL.path);
+					firstRouted = Self.goto(SFURI.path);
 					disableHistoryPush = false;
 				}
 
 				if(pendingAutoRoute){
-					if(name in SFURL.routes)
-						firstRouted = Self.goto(SFURL.routes[name]);
+					if(name in SFURI.routes)
+						firstRouted = Self.goto(SFURI.routes[name]);
 					else
 						firstRouted = Self.goto('/');
 
@@ -538,13 +538,13 @@ export default function Self(selector, name){
 
 		if(_routeCount === void 0){
 			if(name === slash)
-				SFURL.path = path;
+				SFURI.path = path;
 			else if(name)
-				SFURL.routes[name] = path;
+				SFURI.routes[name] = path;
 
 			// This won't trigger popstate event
 			if(!disableHistoryPush && name !== false)
-				SFURL.push();
+				SFURI.push();
 		}
 
 		// Check if view was exist
@@ -934,10 +934,10 @@ export default function Self(selector, name){
 
 Self.list = {};
 Self.goto = function(url){
-	const parsed = SFURL.parse(url);
-	SFURL.data = parsed.data;
-	SFURL.query = parsed.query;
-	// SFURL.routes = parsed.routes;
+	const parsed = SFURI.parse(url);
+	SFURI.data = parsed.data;
+	SFURI.query = parsed.query;
+	// SFURI.routes = parsed.routes;
 
 	const views = Self.list;
 

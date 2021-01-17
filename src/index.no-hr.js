@@ -10,7 +10,7 @@ import language from "./sf-language.js";
 import loader from "./sf-loader.js";
 import request from "./sf-request.js";
 import security from "./sf-security.js";
-import URL from "./sf-url.js";
+import URI from "./sf-uri.js";
 import Views from "./sf-views.js";
 import Window from "./sf-window.js";
 import internal from "./internal.js";
@@ -28,7 +28,7 @@ export {
 	loader,
 	request,
 	security,
-	URL,
+	URI,
 	Views,
 	Window,
 	internal,
