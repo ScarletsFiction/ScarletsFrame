@@ -64,7 +64,7 @@ export default function HotReload(mode){
 				socket.on('sf-hot-js', runScript);
 				socket.on('sf-hot-html', runScript);
 			}
-			// else console.error("HotReload: Failed to listen to browserSync");
+			else console.error("HotReload: Failed to listen to browserSync");
 		}, 1000);
 	});
 }

@@ -7,6 +7,9 @@ import {$, getScope, Space, loader} from "../index.js";
 
 export default function(){
 
+// Return if there are another installed inspector
+if(window.SFDevSpace) return;
+
 void function(){
 	var path = $('script[src*="scarletsframe."]')[0];
 	if(path === void 0){
