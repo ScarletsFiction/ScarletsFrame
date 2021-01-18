@@ -7,10 +7,6 @@ You can just use feature like "Replace All" from your text editor.
 // Helper for getting model/component scope from an element
 sf(element) -> sf.getScope(element)
 
-// Helper for assigning value to an object reactively for PropertyList
-sf.set -> sf.Obj.set
-sf.delete -> sf.Obj.delete
-
 // Object renaming
 sf.lang -> sf.language
 sf.url -> sf.URI
@@ -22,7 +18,17 @@ sf.lang(element) -> sf.language.init(element)
 // Class will need to be constructed with 'new ...()'
 sf.views -> sf.Views    // Class
 sf.space -> sf.Space    // Class
+
+---------------------------------------
+
+// Most of you may haven't use this feature yet
+// But this will be written here for reference
+sf.events(a, b) -> sf.events.register(a, b)
 sf.window -> sf.Window  // Class
+
+// Helper for assigning value to an object reactively for PropertyList
+sf.set -> sf.Obj.set
+sf.delete -> sf.Obj.delete
 
 // Type Defininition (for TypeScript)
 RepeatedProperty -> PropertyList;
