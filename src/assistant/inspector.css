@@ -1,4 +1,4 @@
-sf-dev-mode{
+sf-inspector{
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -263,6 +263,7 @@ sf-model-viewer .val-Boolean{
 
 .sf-model-list-hover{
 	filter: drop-shadow(0 0 17px #00d1ff);
+	display: block;
 	animation: sf-model-list-anim 1s ease-in-out infinite;
 }
 
