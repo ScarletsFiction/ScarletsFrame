@@ -6,7 +6,7 @@ import Loader from "./sf-loader.js";
 import Component, {prepareComponentTemplate} from "./sf-component.js";
 import Model from "./sf-model.js";
 import Views from "./sf-views.js";
-import Assistant from "./assistant/inspector.js";
+import Inspector from "./assistant/inspector.js";
 import $ from "./sf-dom.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {templateParser} from "./sf-model/template.js";
@@ -53,7 +53,9 @@ export default function HotReload(mode){
 
 	$(function(){
 		backupTemplate = Object.assign({}, templates);
-		Assistant();
+
+		// Turn on the inspector assistant
+		Inspector();
 
 		// Register event
 		setTimeout(function(){

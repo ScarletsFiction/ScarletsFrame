@@ -1,3 +1,6 @@
+// This will be compiled with Rollup to build minified and bundled module
+// Without hotreload or feature for development
+
 import "./shared.js";
 import API from "./sf-api.js";
 // import hotReload from "./sf-hot-reload.js";
