@@ -90,7 +90,7 @@ export declare namespace sf {
 	 */
 	export function hotReload(mode: number): void;
 	export { Views };
-	export function $(selector: string | Function | HTMLElement | HTMLElement[], context: HTMLElement | DOMList): void | DOMList;
+	export function $(selector: string | Function | HTMLElement | HTMLElement[], context?: HTMLElement | DOMList): void | DOMList;
 	export namespace $ {
 		const fn: DOMList;
 	}
@@ -113,48 +113,48 @@ declare class DOMList extends Array<HTMLElement> {
 	removeClass(name: string): DOMList;
 	toggleClass(name: string): DOMList;
 	hasClass(name: string): boolean;
-	prop(name: string, value: any): DOMList;
-	attr(name: string, value: string): DOMList;
-	removeAttr(name: string, value: string): DOMList;
-	css(name: string, value: string): DOMList;
+	prop(name: string, value?: any): DOMList;
+	attr(name: string, value?: string): DOMList;
+	removeAttr(name: string): DOMList;
+	css(name: string, value?: string): DOMList;
 	on(event: string, selector?: Function | string, callback?: Function, options?: object): DOMList;
 	off(event: string, selector?: Function | string, callback?: Function, options?: object): DOMList;
 	once(event: string, selector?: Function | string, callback?: Function): DOMList;
-	trigger(event: string, data: any, direct: boolean): DOMList;
-	animateKey(name: string, callback: Function, duration: number): DOMList;
+	trigger(event: string, data?: any, direct?: boolean): DOMList;
+	animateKey(name: string, callback?: Function, duration?: number): DOMList;
 	each(callback: (index?: number, value?: any) => void): DOMList;
-	data(key: string, value: any): DOMList;
+	data(key: string, value?: any): DOMList;
 	removeData(key: string): DOMList;
 	append(element: HTMLElement | DOMList): DOMList;
 	prepend(element: HTMLElement | DOMList): DOMList;
-	eq(index: number, count: number): DOMList;
+	eq(index: number, count?: number): DOMList;
 	inserAfter(element: HTMLElement | DOMList): DOMList;
 	inserBefore(element: HTMLElement | DOMList): DOMList;
 	text(text?: string): DOMList | string;
 	html(text?: string): DOMList | string;
 	val(val?: string): DOMList | string;
-	click(data: any): DOMList;
-	blur(data: any): DOMList;
-	focus(data: any): DOMList;
-	focusin(data: any): DOMList;
-	focusout(data: any): DOMList;
-	keyup(data: any): DOMList;
-	keydown(data: any): DOMList;
-	keypress(data: any): DOMList;
-	submit(data: any): DOMList;
-	change(data: any): DOMList;
-	mousedown(data: any): DOMList;
-	mousemove(data: any): DOMList;
-	mouseup(data: any): DOMList;
-	mouseenter(data: any): DOMList;
-	mouseleave(data: any): DOMList;
-	mouseout(data: any): DOMList;
-	mouseover(data: any): DOMList;
-	touchstart(data: any): DOMList;
-	touchend(data: any): DOMList;
-	touchmove(data: any): DOMList;
-	resize(data: any): DOMList;
-	scroll(data: any): DOMList;
+	click(data?: any): DOMList;
+	blur(data?: any): DOMList;
+	focus(data?: any): DOMList;
+	focusin(data?: any): DOMList;
+	focusout(data?: any): DOMList;
+	keyup(data?: any): DOMList;
+	keydown(data?: any): DOMList;
+	keypress(data?: any): DOMList;
+	submit(data?: any): DOMList;
+	change(data?: any): DOMList;
+	mousedown(data?: any): DOMList;
+	mousemove(data?: any): DOMList;
+	mouseup(data?: any): DOMList;
+	mouseenter(data?: any): DOMList;
+	mouseleave(data?: any): DOMList;
+	mouseout(data?: any): DOMList;
+	mouseover(data?: any): DOMList;
+	touchstart(data?: any): DOMList;
+	touchend(data?: any): DOMList;
+	touchmove(data?: any): DOMList;
+	resize(data?: any): DOMList;
+	scroll(data?: any): DOMList;
 	get(url: String, data?:object, options?:RequestOptions): XHRPromise;
 	post(url: String, data?:object, options?:RequestOptions): XHRPromise;
 	getJSON(url: String, data?:object, options?:RequestOptions): XHRPromise;
@@ -354,14 +354,14 @@ interface Router {
 	/** Router event listener */
 	on?: {
 		leaving?: () => void;
-		coming?: (data: object) => void;
-		showed?: (data: object) => void;
+		coming?: (data?: object) => void;
+		showed?: (data?: object) => void;
 		hidden?: () => void;
 	};
 	/** Add another router relative with this router views URL path */
 	routes?: Router[];
 	/** Call a function before routing to this views URL path */
-	beforeRoute?: (data: object) => boolean | void;
+	beforeRoute?: (data?: object) => boolean | void;
 }
 declare enum RouteEvent {
 	"start" = "start",
@@ -438,8 +438,8 @@ export class PropertyList {
 export class ReactiveArray extends PropertyList {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
-	/** ToDo */
-	assign(fromIndex: number, withArray: object[] | object, removes?: object | Boolean, putLast?: Boolean): ReactiveArray;
+	/** Almost like usual array replacement, but this will reuse available elements to improve performance */
+	assign(fromIndex: number | object[], withArray?: object[] | object, removes?: object | Boolean, putLast?: Boolean): ReactiveArray;
 	/**
 	 * Swap an item with another item with index
 	 * @param from index

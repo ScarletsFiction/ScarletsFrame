@@ -9,8 +9,12 @@ The documentation located on [Github Wiki](https://github.com/ScarletsFiction/Sc
 
 This framework haven't reach v1.0.0. Every increment of `(v0.*.0)` may have a breaking changes. Please see the **CHANGELOG.md** if you want to check the breaking changes. Make sure to specify the version instead of **latest** when using CDN link or the package like below.
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.33.x/dist/scarletsframe.min.js"></script>
+```xml
+<!-- Production mode -->
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.min.js"></script>
+
+<!-- Development mode -->
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.dev.js"></script>
 ```
 
 ## Try it online like a project
@@ -44,7 +48,7 @@ Example with file and folder structure
 This is optional if you prefer using CDN link.
 But I recommend to use the default template that have Hot Reload enabled.
 ```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.33.x/dist/scarletsframe.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.min.js'></script>
 ```
 
 ## Using the template
@@ -66,7 +70,7 @@ $ npm start
 ## Install with with NPM
 This is optional if you prefer for using webpack, parcel, rollup, etc.
 ```sh
-$ npm i scarletsframe@0.33.x
+$ npm i scarletsframe@0.34.x
 ```
 
 And include it on your project with webpack ([example](https://github.com/krausest/js-framework-benchmark/tree/master/frameworks/keyed/scarletsframe)) or browserify.
