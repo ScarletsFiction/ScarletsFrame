@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+<!-- This test still a bit crazy, written to test every feature paralelly. -->
+<!-- If you don't find any error in the Browser's Developer Tools -->
+<!-- except 1 error about HotReload with BrowserSync -->
+<!-- Then every features of this framework is working properly -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ScarletsFrame Tests</title>
@@ -92,6 +96,7 @@
     </style>
    </head>
    <body class="body">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <sf-m name="image" style="position: fixed;left:40vw;top:40vh">
       <img
         title="Image only for testing, this is not part of distributable package. This image belongs to the respective owner. Watari Masahito, Eris, Konosuba."
@@ -495,6 +500,5 @@
     <script type="module" src="/dist/index.js"></script>
     <script type="module" src="/dist/tests/index.js"></script>
     <link rel="stylesheet" type="text/css" href="http://localhost:8080/dist/assistant/inspector.css">
-    <noscript>You need to enable JavaScript to run this app.</noscript>
   </body>
 </html>

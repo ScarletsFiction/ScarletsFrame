@@ -1,3 +1,34 @@
+## Breaking changes since 0.34.0
+From this version, the framework was using ES6 module.<br>
+Because of it there are some changes for the API to make it tree shakeable and more easy to understand.
+
+You can just use feature like "Replace All" from your text editor.
+```rust
+// Helper for getting model/component scope from an element
+sf(element) -> sf.getScope(element)
+
+// Helper for assigning value to an object reactively for PropertyList
+sf.set -> sf.Obj.set
+sf.delete -> sf.Obj.delete
+
+// Object renaming
+sf.lang -> sf.language
+sf.url -> sf.URI
+sf.dom -> sf.$
+
+// Changes on dynamic element language initialization
+sf.lang(element) -> sf.language.init(element)
+
+// Class will need to be constructed with 'new ...()'
+sf.views -> sf.Views    // Class
+sf.space -> sf.Space    // Class
+sf.window -> sf.Window  // Class
+
+// Type Defininition (for TypeScript)
+RepeatedProperty -> PropertyList;
+RepeatedList -> ReactiveArray;
+```
+
 ## Breaking changes since 0.33.0
 This is just a small changes. If you have used `sf.views` for your router with the template you will need to specify the file extension.
 
