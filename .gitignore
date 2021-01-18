@@ -2,10 +2,8 @@
 /pnpm-lock.yaml
 /example/
 *.map
-/dist/scarletsframe.js
 /dist/scarletsframe.min.js
-/dist/scarletsframe.es6.js
-/dist/scarletsframe.hot.js
+/dist/scarletsframe.dev.js
 mynote.md
 /tests/
 package-lock.json
