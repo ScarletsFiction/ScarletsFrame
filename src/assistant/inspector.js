@@ -5,7 +5,7 @@
 
 import {$, getScope, Space, loader} from "../index.js";
 
-export default function(){
+export function Inspector(){
 
 // Return if there are another installed inspector
 if(window.SFDevSpace) return;

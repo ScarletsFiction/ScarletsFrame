@@ -4,9 +4,9 @@
 // Note: using .apply can be more faster than ...spread
 
 import {getScope, findBindListElement} from "../sf-model.js";
-import Component from "../sf-component.js";
-import Internal from "../internal.js";
-import $ from "../sf-dom.js";
+import {component as Component} from "../sf-component.js";
+import {internal as Internal} from "../internal.js";
+import {$} from "../sf-dom.js";
 import {modelScript} from "./a_model.js";
 import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";
 import {internal, SFOptions, sfRegex} from "../shared.js";

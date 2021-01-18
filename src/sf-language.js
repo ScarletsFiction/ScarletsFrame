@@ -1,121 +1,160 @@
 import {getScope} from "./sf-model.js";
-import SFWindow from "./sf-window.js";
-import Component from "./sf-component.js";
-import Request from "./sf-request.js";
-import Space from "./sf-space.js";
+import {Window as SFWindow} from "./sf-window.js";
+import {component as Component} from "./sf-component.js";
+import {request as Request} from "./sf-request.js";
+import {Space} from "./sf-space.js";
 import {internal} from "./shared.js";
 import {syntheticTemplate} from "./sf-model/template.js";
-import $ from "./sf-dom.js";
+import {$} from "./sf-dom.js";
 import {parseIndexAllocate, applyParseIndex} from "./sf-model/a_model.js";
 
-let Self = {};
-export default Self;
-Self.init = function(el){
-	const list = el.querySelectorAll('[sf-lang]');
-	if(list.length === 0)
-		return;
-
-	if(!(Self.default in Self.list))
-		Self.list[Self.default] = {};
-
-	refreshLang(list, false, function(){
-		if(pending !== false && Self.serverURL !== false){
-			const callback = function(){
-				pending = false;
-				refreshLang(pendingElement, true);
-			}
-
-			callback.callbackOnly = true;
-			pendingCallback.push(callback);
-
-			startRequest();
-		}
-
-		if(pending !== false && Self.serverURL === false)
-			console.warn("Some language was not found, and the serverURL was set to false", pending);
-	});
-}
-
-Self.list = {};
-Self.default = 'en_US';
-Self.serverURL = false;
-Self.interpolate = {}
+let waiting = false;
+var pendingCallback = [];
 
 internal.language = {};
+export class language{
+	static list = {};
+	static default = 'en_US';
+	static serverURL = false;
+	static interpolate = {};
 
-Self.add = function(lang, obj){
-	if(obj.constructor !== Object)
-		throw new Error("Parameter 2 must be an object");
+	static init(el){
+		const list = el.querySelectorAll('[sf-lang]');
+		if(list.length === 0)
+			return;
 
-	if(!lang || lang.constructor !== String)
-		throw new Error("Parameter 1 must be a locale text (en_US)");
+		if(!(language.default in language.list))
+			language.list[language.default] = {};
 
-	if(!(lang in Self.list))
-		Self.list[lang] = {};
+		refreshLang(list, false, function(){
+			if(pending !== false && language.serverURL !== false){
+				const callback = function(){
+					pending = false;
+					refreshLang(pendingElement, true);
+				}
 
-	diveFill(Self.list[lang], obj);
+				callback.callbackOnly = true;
+				pendingCallback.push(callback);
 
-	pending = false;
-	if(pendingCallback.length === 0)
-		return;
+				startRequest();
+			}
 
-	const defaultLang = Self.list[Self.default];
-	for (let i = 0; i < pendingCallback.length; i++) {
-		if(pendingCallback[i].callbackOnly === void 0)
-			pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
-		else
-			pendingCallback[i]();
+			if(pending !== false && language.serverURL === false)
+				console.warn("Some language was not found, and the serverURL was set to false", pending);
+		});
 	}
 
-	pendingCallback.length = 0;
-}
+	static add(lang, obj){
+		if(obj.constructor !== Object)
+			throw new Error("Parameter 2 must be an object");
 
-Self.changeDefault = function(defaultLang){
-	Self.default = defaultLang;
+		if(!lang || lang.constructor !== String)
+			throw new Error("Parameter 1 must be a locale text (en_US)");
 
-	// Maybe have create other window?
-	if(internal.windowDestroyListener !== false && SFWindow.list.length !== 0){
-		const windows = SFWindow.list;
+		if(!(lang in language.list))
+			language.list[lang] = {};
 
-		for (let i = 0; i < windows.length; i++)
-			windows[i].sf.language.changeDefault(defaultLang);
-	}
+		diveFill(language.list[lang], obj);
 
-	function forComponents(){
-		const { registered } = Component;
-		for(let keys in registered){
-			if(registered[keys][3] !== void 0)
-				refreshTemplate(registered[keys]);
+		pending = false;
+		if(pendingCallback.length === 0)
+			return;
+
+		const defaultLang = language.list[language.default];
+		for (let i = 0; i < pendingCallback.length; i++) {
+			if(pendingCallback[i].callbackOnly === void 0)
+				pendingCallback[i](diveObject(defaultLang, pendingCallback[i].path));
+			else
+				pendingCallback[i]();
 		}
+
+		pendingCallback.length = 0;
 	}
 
-	function forSpaceComponents(){
-		const { list } = Space;
+	static changeDefault(defaultLang){
+		language.default = defaultLang;
 
-		for(let name in list){
-			const { registered } = list[name].default;
+		// Maybe have create other window?
+		if(internal.windowDestroyListener !== false && SFWindow.list.length !== 0){
+			const windows = SFWindow.list;
 
+			for (let i = 0; i < windows.length; i++)
+				windows[i].sf.language.changeDefault(defaultLang);
+		}
+
+		function forComponents(){
+			const { registered } = Component;
 			for(let keys in registered){
 				if(registered[keys][3] !== void 0)
 					refreshTemplate(registered[keys]);
 			}
 		}
+
+		function forSpaceComponents(){
+			const { list } = Space;
+
+			for(let name in list){
+				const { registered } = list[name].default;
+
+				for(let keys in registered){
+					if(registered[keys][3] !== void 0)
+						refreshTemplate(registered[keys]);
+				}
+			}
+		}
+
+		if(!(defaultLang in language.list)){
+			forComponents.callbackOnly = true;
+			pendingCallback.push(forComponents);
+		}
+		else forComponents();
+
+		// Lazy init
+		setTimeout(()=> {
+			language.init(document.body);
+
+			const wList = SFWindow.list;
+			for(let key in wList)
+				language.init(wList[key].document.body);
+		}, 1);
 	}
 
-	if(!(defaultLang in Self.list)){
-		forComponents.callbackOnly = true;
-		pendingCallback.push(forComponents);
+	static get(path, obj, callback){
+		if(obj !== void 0 && obj.constructor === Function){
+			callback = obj;
+			obj = void 0;
+		}
+
+		if(!(language.default in language.list))
+			language.list[language.default] = {};
+
+		if(path.constructor === String)
+			return getSingle(path, obj, callback);
+		else
+			return getMany(path, obj, callback);
 	}
-	else forComponents();
 
-	// Lazy init
-	setTimeout(()=> {
-		Self.init(document.body);
+	static assign(model, keyPath, obj, callback){
+		if(!(language.default in language.list))
+			language.list[language.default] = {};
 
-		const wList = SFWindow.list;
-		for(let key in wList)
-			Self.init(wList[key].document.body);
-	}, 1);
+		if(obj !== void 0 && obj.constructor === Function){
+			callback = obj;
+			obj = void 0;
+		}
+
+		const keys = Object.keys(keyPath);
+		const vals = Object.values(keyPath);
+
+		getMany(vals, obj, function(values){
+			for (let i = 0; i < keys.length; i++) {
+				model[keys[i]] = diveObject(values, vals[i]);
+			}
+
+			if(callback)
+				callback();
+		});
+	}
 }
 
 const interpolate_ = /{(.*?)}/;
@@ -130,33 +169,15 @@ function interpolate(text, obj){
 		if(match in obj)
 			return obj[match].constructor === Function ? obj[match]() : obj[match];
 
-		if(match in Self.interpolate)
-			return Self.interpolate[match].constructor === Function ? Self.interpolate[match]() : Self.interpolate[match];
+		if(match in language.interpolate)
+			return language.interpolate[match].constructor === Function ? language.interpolate[match]() : language.interpolate[match];
 
 		return full;
 	});
 }
 
-let waiting = false;
-var pendingCallback = [];
-
-Self.get = function(path, obj, callback){
-	if(obj !== void 0 && obj.constructor === Function){
-		callback = obj;
-		obj = void 0;
-	}
-
-	if(!(Self.default in Self.list))
-		Self.list[Self.default] = {};
-
-	if(path.constructor === String)
-		return getSingle(path, obj, callback);
-	else
-		return getMany(path, obj, callback);
-}
-
 function startRequest(){
-	if(pending === false || Self.serverURL === false)
+	if(pending === false || language.serverURL === false)
 		return;
 
 	// Request to server after 500ms
@@ -166,27 +187,27 @@ function startRequest(){
 		if(activeRequest !== false)
 			activeRequest.abort();
 
-		if(Self.serverURL.includes('.json'))
-			activeRequest = Request('GET', Self.serverURL.split('*').join(Self.default), null, {
+		if(language.serverURL.includes('.json'))
+			activeRequest = Request('GET', language.serverURL.split('*').join(language.default), null, {
 				receiveType:'JSON'
 			});
 		else{
-			activeRequest = Request('POST', Self.serverURL, {
-				lang:Self.default,
+			activeRequest = Request('POST', language.serverURL, {
+				lang:language.default,
 				paths:JSON.stringify(pending)
 			}, {sendType:'JSON', receiveType:'JSON'});
 		}
 
 		activeRequest.done(function(obj){
 			pending = false;
-			Self.add(Self.default, obj);
+			language.add(language.default, obj);
 		})
-		.fail(Self.onError);
+		.fail(language.onError);
 	}, 500);
 }
 
 function getSingle(path, obj, callback){
-	let value = diveObject(Self.list[Self.default], path);
+	let value = diveObject(language.list[language.default], path);
 	if(value !== void 0){
 		if(obj)
 			value = interpolate(value, obj);
@@ -211,7 +232,7 @@ function getSingle(path, obj, callback){
 }
 
 function getMany(paths, obj, callback){
-	const default_ = Self.list[Self.default];
+	const default_ = language.list[language.default];
 	let value = {};
 	const missing = [];
 
@@ -256,28 +277,6 @@ function getMany(paths, obj, callback){
 	startRequest();
 }
 
-Self.assign = function(model, keyPath, obj, callback){
-	if(!(Self.default in Self.list))
-		Self.list[Self.default] = {};
-
-	if(obj !== void 0 && obj.constructor === Function){
-		callback = obj;
-		obj = void 0;
-	}
-
-	const keys = Object.keys(keyPath);
-	const vals = Object.values(keyPath);
-
-	getMany(vals, obj, function(values){
-		for (let i = 0; i < keys.length; i++) {
-			model[keys[i]] = diveObject(values, vals[i]);
-		}
-
-		if(callback)
-			callback();
-	});
-}
-
 function diveFill(obj1, obj2){
 	for(let key in obj2){
 		if(!(key in obj1))
@@ -292,7 +291,7 @@ var pending = false;
 const pendingElement = [];
 var activeRequest = false;
 
-Self.onError = console.error;
+language.onError = console.error;
 
 function diveObject(obj, path, setValue){
 	const parts = path.split('.');
@@ -337,11 +336,11 @@ internal.language.refreshLang = function(el){
 function refreshLang(list, noPending, callback){
 	requestAnimationFrame(function(){
 		const parentElement = new Set();
-		let defaultLang = Self.list[Self.default] ??= {};
+		let defaultLang = language.list[language.default] ??= {};
 
 		const checks = new Set();
 		for (let i = list.length-1; i >= 0; i--) {
-			if((list[i].sf_lang === Self.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
+			if((list[i].sf_lang === language.default && noPending === true) || list[i].hasAttribute('sf-lang-skip')){
 				list.splice(i, 1);
 				continue;
 			}
@@ -412,7 +411,7 @@ function refreshLang(list, noPending, callback){
 
 		// Reapply template (component)
 		for(var elem of parentElement){
-			elem.sf_lang = Self.default;
+			elem.sf_lang = language.default;
 
 			let { model } = elem;
 			model ??= getScope(elem);
@@ -459,7 +458,7 @@ function elementReferencesRefresh(elem){
 		}
 		else continue;
 
-		const value = diveObject(Self.list[Self.default], key);
+		const value = diveObject(language.list[language.default], key);
 		if(value === void 0){
 			if(pending === false)
 				pending = {};
@@ -637,9 +636,9 @@ function refreshTemplate(elemRef){
 
 		found = true;
 
-		const value = diveObject(Self.list[Self.default], elem.getAttribute('sf-lang'));
+		const value = diveObject(language.list[language.default], elem.getAttribute('sf-lang'));
 		if(value === void 0){
-			console.error(`Can't found '${elem.getAttribute('sf-lang')}' for ${Self.default}, in`, Self.list[Self.default], ", maybe the language wasn't fully loaded");
+			console.error(`Can't found '${elem.getAttribute('sf-lang')}' for ${language.default}, in`, language.list[language.default], ", maybe the language wasn't fully loaded");
 
 			const callback_ = function(){
 				refreshTemplate(elemRef);

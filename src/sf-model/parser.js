@@ -7,7 +7,7 @@
 
 import {sfRegex, internal, emptyArray} from "../shared.js";
 import {modelKeys as getModelKeys, SFModel} from "../sf-model.js";
-import $ from "../sf-dom.js";
+import {$ }from "../sf-dom.js";
 import {SFPageView} from "../sf-views.js";
 import {bindElement} from "./element-bind.js";
 import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";

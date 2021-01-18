@@ -1,8 +1,8 @@
 import {internal, forProxying, SFOptions} from "./shared.js";
-import $ from "./sf-dom.js";
-import SFURI from "./sf-uri.js";
-import Request from "./sf-request.js";
-import Security from "./sf-security.js";
+import {$} from "./sf-dom.js";
+import {URI} from "./sf-uri.js";
+import {request as Request} from "./sf-request.js";
+import {security as Security} from "./sf-security.js";
 import {getCallerFile} from "./sf-hot-reload.js";
 
 export class SFPageView extends HTMLElement{}
@@ -46,7 +46,7 @@ window.addEventListener('popstate', function(ev){
 	// Reparse current URL
 	Views.goto();
 	disableHistoryPush = false;
-	SFURI.trigger();
+	URI.trigger();
 }, false);
 
 const cachedURL = {};
@@ -171,7 +171,7 @@ internal.router.findRoute = function(url){
 }
 
 // ToDo turn this into a class
-export default function Views(selector, name){
+export function Views(selector, name){
 	if(this.Views === Views)
 		return console.error('sf.Views need to be constructed using "new sf.Views"');
 
@@ -188,7 +188,7 @@ export default function Views(selector, name){
 
 	// Init current URL as current View Path
 	if(name === slash)
-		Self.currentPath = SFURI.path;
+		Self.currentPath = URI.path;
 	else if(name === false)
 		Self.currentPath = '';
 	else{
@@ -361,13 +361,13 @@ export default function Views(selector, name){
 				if(name === slash && !rootDOM.childElementCount){
 					Self.currentPath = '';
 					disableHistoryPush = true;
-					firstRouted = Self.goto(SFURI.path);
+					firstRouted = Self.goto(URI.path);
 					disableHistoryPush = false;
 				}
 
 				if(pendingAutoRoute){
-					if(name in SFURI.routes)
-						firstRouted = Self.goto(SFURI.routes[name]);
+					if(name in URI.routes)
+						firstRouted = Self.goto(URI.routes[name]);
 					else
 						firstRouted = Self.goto('/');
 
@@ -540,13 +540,13 @@ export default function Views(selector, name){
 
 		if(_routeCount === void 0){
 			if(name === slash)
-				SFURI.path = path;
+				URI.path = path;
 			else if(name)
-				SFURI.routes[name] = path;
+				URI.routes[name] = path;
 
 			// This won't trigger popstate event
 			if(!disableHistoryPush && name !== false)
-				SFURI.push();
+				URI.push();
 		}
 
 		// Check if view was exist
@@ -936,10 +936,10 @@ export default function Views(selector, name){
 
 Views.list = {};
 Views.goto = function(url){
-	const parsed = SFURI.parse(url);
-	SFURI.data = parsed.data;
-	SFURI.query = parsed.query;
-	// SFURI.routes = parsed.routes;
+	const parsed = URI.parse(url);
+	URI.data = parsed.data;
+	URI.query = parsed.query;
+	// URI.routes = parsed.routes;
 
 	const views = Views.list;
 

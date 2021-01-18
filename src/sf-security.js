@@ -1,6 +1,6 @@
 import {internal} from "./shared.js";
 internal.rejectUntrusted = false;
 
-export default function(level){
+export function security(level){
 	if(level & 1) internal.rejectUntrusted = true;
 }

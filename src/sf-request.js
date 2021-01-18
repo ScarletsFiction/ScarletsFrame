@@ -1,11 +1,6 @@
-import $ from "./sf-dom.js";
+import {$} from "./sf-dom.js";
 
-$.get = (url, data, options, callback) => Self('GET', url, data, options, callback)
-$.post = (url, data, options, callback) => Self('POST', url, data, options, callback)
-$.getJSON = (url, data, options, callback) => Self('getJSON', url, data, options, callback)
-$.postJSON = (url, data, options, callback) => Self('postJSON', url, data, options, callback)
-
-export default function Self(method, url, data, options, callback){
+export function request(method, url, data, options, callback){
 	if(data && data.constructor === Function){
 		callback = data;
 		data = void 0;
@@ -28,14 +23,19 @@ export default function Self(method, url, data, options, callback){
 		method = 'POST';
 	}
 
-	return request(method, url, data, options, callback);
+	return HttpRequest(method, url, data, options, callback);
 }
 
-const statusCode = Self.statusCode = {};
-Self.onerror = null;
-Self.onsuccess = null;
+$.get = (url, data, options, callback) => request('GET', url, data, options, callback)
+$.post = (url, data, options, callback) => request('POST', url, data, options, callback)
+$.getJSON = (url, data, options, callback) => request('getJSON', url, data, options, callback)
+$.postJSON = (url, data, options, callback) => request('postJSON', url, data, options, callback)
 
-function request(method, url, data, options, callback){
+const statusCode = request.statusCode = {};
+request.onerror = null;
+request.onsuccess = null;
+
+function HttpRequest(method, url, data, options, callback){
 	const xhr = new XMLHttpRequest();
 	options.beforeOpen && options.beforeOpen(xhr);
 
@@ -143,12 +143,12 @@ class ReqEventRegister extends XMLHttpRequest{
 		return this;
 	}
 	static ontimeout(){
-		Self.onerror && Self.onerror(this);
+		request.onerror && request.onerror(this);
 		this._cb.fail && this._cb.fail('timeout');
 		this._cb.always && this._cb.always('timeout');
 	}
 	static onerror(){
-		Self.onerror && Self.onerror(this);
+		request.onerror && request.onerror(this);
 		this._cb.fail && this._cb.fail(this.status);
 		this._cb.always && this._cb.always('error');
 	}
@@ -168,12 +168,12 @@ class ReqEventRegister extends XMLHttpRequest{
 
 				if(parsed !== void 0){
 					callback.done && callback.done(JSON.parse(xhr.responseText), xhr.status);
-					Self.onsuccess && Self.onsuccess(xhr);
+					request.onsuccess && request.onsuccess(xhr);
 				}
 			}
 			else{
 				callback.done && callback.done(xhr.response, xhr.status);
-				Self.onsuccess && Self.onsuccess(xhr);
+				request.onsuccess && request.onsuccess(xhr);
 			}
 		}
 		else if(callback.fail){

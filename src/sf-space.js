@@ -1,6 +1,6 @@
-import Model from "./sf-model.js";
-import Component from "./sf-component.js";
-import $ from "./sf-dom.js";
+import {model as Model} from "./sf-model.js";
+import {component as Component} from "./sf-component.js";
+import {$} from "./sf-dom.js";
 import {internal, forProxying} from "./shared.js";
 import {ModelInit} from "./sf-model/a_model.js";
 
@@ -83,7 +83,7 @@ else{
 if(window.sf$proxy === void 0)
 	forProxying.internalSpace = internal.space;
 
-export default class Space{
+export class Space{
 	// { name:{ default:{}, id:{}, ... } }
 	static list = {};
 	inherit = {};

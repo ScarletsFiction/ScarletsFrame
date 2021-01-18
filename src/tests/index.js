@@ -12,7 +12,7 @@ import {adder, minimalTest, windowTest} from "./t-shared.js";
 // Enable Development Mode, Development Assistant, and Hot Reload Level 1
 export let hotReloadLevel = 1;
 hotReload(hotReloadLevel);
-Window.frameworkPath = 'https://cdn.jsdelivr.net/npm/scarletsframe@latest';
+Window.frameworkPath = 'https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js';
 // internal.async(false);
 
 window.$ = $;

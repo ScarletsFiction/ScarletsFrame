@@ -1,23 +1,23 @@
 import {internal, forProxying, SFOptions} from "./shared.js";
 import {getCallerFile, hotModel} from "./sf-hot-reload.js";
-import $ from "./sf-dom.js";
-import Loader from "./sf-loader.js";
-import Component from "./sf-component.js";
+import {$} from "./sf-dom.js";
+import {loader as Loader} from "./sf-loader.js";
+import {component as Component} from "./sf-component.js";
 import {getStaticMethods, getPrototypeMethods} from "./utils.js";
 import {ModelInit} from "./sf-model/a_model.js";
 import {removeModelBinding} from "./sf-model/element-bind.js";
 import "./sf-space.js";
 
 // Data save and HTML content binding
-export default function Self(name, options, func, namespace){
+export function model(name, options, func, namespace){
 	if(options !== void 0)
-		return Self.for(name, options, func, namespace);
+		return model.for(name, options, func, namespace);
 
 	// If it's component tag
 	if(name in (namespace || Component).registered)
 		return (namespace || root_)(name);
 
-	const scope = namespace || Self;
+	const scope = namespace || model;
 	if(!(name in scope.root)){
 		if(name in internal.modelInherit)
 			scope.root[name] = new internal.modelInherit[name]();
@@ -58,12 +58,12 @@ export function getScope(el, returnNode){
 	}
 };
 
-Self.root = {};
+model.root = {};
 internal.modelPending = {};
 internal.modelInherit = {};
 
 // Find an index for the element on the list
-Self.index = function(element, getProp){
+model.index = function(element, getProp){
 	if(!element.sf$elementReferences || !element.sf$elementReferences.template.bindList)
 		element = findBindListElement(element);
 
@@ -93,7 +93,7 @@ Self.index = function(element, getProp){
 }
 
 // Declare model for the name with a function
-Self.for = function(name, options, func, namespace){
+model.for = function(name, options, func, namespace){
 	if(options.constructor === Function){
 		func = options;
 
@@ -105,7 +105,7 @@ Self.for = function(name, options, func, namespace){
 	}
 	else{
 		if(func === void 0){
-			let root = (namespace || Self).root;
+			let root = (namespace || model).root;
 
 			if(!(name in root)){
 				options.$el = $();
@@ -119,7 +119,7 @@ Self.for = function(name, options, func, namespace){
 		internal.modelInherit[name] = options.extend;
 	}
 
-	const scope = namespace || Self;
+	const scope = namespace || model;
 	if(SFOptions.hotReload)
 		hotModel(scope, name, func);
 
@@ -200,7 +200,7 @@ export function modelKeys(modelRef, toString){
 
 	return keys;
 }
-Self.modelKeys = modelKeys;
+model.modelKeys = modelKeys;
 
 // Define sf-model element
 export class SFModel extends HTMLElement {
@@ -231,7 +231,7 @@ export class SFModel extends HTMLElement {
 		const name = this.getAttribute('name');
 
 		// Instant run when model scope was found or have loaded
-		if(name in Self.root && !(name in internal.modelPending)){
+		if(name in model.root && !(name in internal.modelPending)){
 			// Run init when all assets have loaded
 			if(Loader.DOMWasLoaded){
 				internal.language.refreshLang(this);
@@ -263,7 +263,7 @@ export class SFModel extends HTMLElement {
 			if(that.model.$el){
 				const i = that.model.$el.indexOf(that);
 				if(i !== -1){
-					var model = that.model;
+					const model = that.model;
 					const temp = model.$el[i];
 
 					model.$el = model.$el.splice(i, 1);
@@ -291,10 +291,10 @@ var root_ = function(scope){
 	if(Component.registered[scope])
 		return Component(scope);
 
-	if(!(scope in Self.root))
-		Self.root[scope] = {};
+	if(!(scope in model.root))
+		model.root[scope] = {};
 
-	return Self.root[scope];
+	return model.root[scope];
 }
 
 // Let's check all pending model

@@ -2,41 +2,21 @@
 // Without hotreload or feature for development
 
 import "./shared.js";
-import API from "./sf-api.js";
-// import hotReload from "./sf-hot-reload.js";
-import model, {getScope} from "./sf-model.js";
-import component from "./sf-component.js";
-import Space from "./sf-space.js";
-import $ from "./sf-dom.js";
-import events from "./sf-events.js";
-import language from "./sf-language.js";
-import loader from "./sf-loader.js";
-import request from "./sf-request.js";
-import security from "./sf-security.js";
-import URI from "./sf-uri.js";
-import Views from "./sf-views.js";
-import Window from "./sf-window.js";
-import internal from "./internal.js";
-import {Obj} from "./sf-model/repeated-list.js";
-
-export {
-	API,
-	// hotReload,
-	model,
-	component,
-	Space,
-	$,
-	events,
-	language,
-	loader,
-	request,
-	security,
-	URI,
-	Views,
-	Window,
-	internal,
-	getScope,
-	Obj,
-};
+export {API} from "./sf-api.js";
+// export {hotReload} from "./sf-hot-reload.js";
+export {model, getScope} from "./sf-model.js";
+export {component} from "./sf-component.js";
+export {Space} from "./sf-space.js";
+export {$} from "./sf-dom.js";
+export {events} from "./sf-events.js";
+export {language} from "./sf-language.js";
+export {loader} from "./sf-loader.js";
+export {request} from "./sf-request.js";
+export {security} from "./sf-security.js";
+export {URI} from "./sf-uri.js";
+export {Views} from "./sf-views.js";
+export {Window} from "./sf-window.js";
+export {internal} from "./internal.js";
+export {Obj} from "./sf-model/repeated-list.js";
 
 // import.meta.hot?.accept();

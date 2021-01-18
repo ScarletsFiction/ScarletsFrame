@@ -1,7 +1,7 @@
-import Internal from "../internal.js";
+import {internal as Internal} from "../internal.js";
 import {internal, SFOptions, emptyArray, sfRegex} from "../shared.js";
 import {templateErrorInfo, findErrorLocation, _eP, applyParseIndex} from "./a_model.js";
-import $ from "../sf-dom.js";
+import {$} from "../sf-dom.js";
 import {eventHandler} from "./event-handler.js";
 import {repeatedListBinding} from "./repeated-list.js";
 import {bindInput} from "./input-bind.js";

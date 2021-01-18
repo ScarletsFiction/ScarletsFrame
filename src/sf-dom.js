@@ -1,14 +1,14 @@
 import {internal} from "./shared.js";
 let {windowEv} = internal;
 
-import Loader from "./sf-loader.js";
-import Window from "./sf-window.js";
+import {loader as Loader} from "./sf-loader.js";
+import {Window} from "./sf-window.js";
 import {customEvent} from "./sf-model/custom-event.js";
 import {toArray} from "./utils.js";
 
 const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
 
-export default function $(selector, context){
+export function $(selector, context){
 	if(!selector){
 		if(selector === void 0){
 			const temp = sel=> temp.find(sel);

@@ -1,7 +1,7 @@
 import {internal, SFOptions} from "../shared.js";
-import Internal from "../internal.js";
-import Model from "../sf-model.js";
-import $ from "../sf-dom.js";
+import {internal as Internal} from "../internal.js";
+import {model as Model} from "../sf-model.js";
+import {$} from "../sf-dom.js";
 import {avoidQuotes, proxyClass, parsePropertyPath, deepProperty} from "../utils.js";
 import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.js";
 import {repeatedListBinding} from "./repeated-list.js";

@@ -5,7 +5,7 @@
 import {internal, forProxying} from "./shared.js";
 import {model, component, Space, language} from "./index.js";
 import {ModelInit} from "./sf-model/a_model.js";
-import $ from "./sf-dom.js";
+import {$} from "./sf-dom.js";
 let {windowEv} = internal;
 let headerTags = '';
 
@@ -31,7 +31,7 @@ function firstInitSFWindow(){
 	});
 }
 
-export default class Window{
+export class Window{
 	static frameworkPath = "";
 	// id = ...
 
@@ -72,7 +72,7 @@ export default class Window{
 			headerTags = $('script[src*="scarletsframe"]');
 			if(headerTags.length === 0){
 				if(Window.frameworkPath === '')
-					throw new Error("Failed to automatically detect framework URL. Please specify URL in the 'sf.Window.frameworkPath'. (example: 'https://cdn.jsdelivr.net/npm/scarletsframe@latest')");
+					throw new Error("Failed to automatically detect framework URL. Please specify URL in the 'sf.Window.frameworkPath'. (example: 'https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js')");
 
 				headerTags = `<script src="${Window.frameworkPath}"></script>`;
 			}

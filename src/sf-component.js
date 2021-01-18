@@ -1,8 +1,8 @@
 import {internal, TemplatePending, SFOptions} from "./shared.js";
 import {capitalizeLetters, proxyClass} from "./utils.js";
-import $ from "./sf-dom.js";
-import Model from "./sf-model.js";
-import Space from "./sf-space.js";
+import {$} from "./sf-dom.js";
+import {model as Model} from "./sf-model.js";
+import {Space} from "./sf-space.js";
 import {templateParser} from "./sf-model/template.js";
 import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreprocess, queuePreprocess} from "./sf-model/parser.js";
 import {bindInput} from "./sf-model/input-bind.js";
@@ -10,19 +10,19 @@ import {repeatedListBinding} from "./sf-model/repeated-list.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd, proxyTemplate, backupCompTempl} from "./sf-hot-reload.js";
 
-export default function Self(name, options, func, namespace){
+export function component(name, options, func, namespace){
 	if(options !== void 0){
 		if(options.constructor === Function)
 			func = options;
 
 		if(func !== options)
-			Self.html(name, options, namespace);
+			component.html(name, options, namespace);
 
 		if(func === void 0 || func.constructor === Function)
-			return Self.for(name, options, func, namespace);
+			return component.for(name, options, func, namespace);
 	}
 
-	const temp = Self.registered[name];
+	const temp = component.registered[name];
 	return temp ? temp[2] : [];
 }
 
@@ -58,12 +58,12 @@ $(function(){
 
 const waitingHTML = {};
 
-Self.registered = {};
-Self.roots = {};
+component.registered = {};
+component.roots = {};
 // internal.component.tagName = new Set();
 
 function checkWaiting(name, namespace){
-	const scope = namespace || Self;
+	const scope = namespace || component;
 
 	const upgrade = waitingHTML[name];
 	for (let i = upgrade.length - 1; i >= 0; i--) {
@@ -71,7 +71,7 @@ function checkWaiting(name, namespace){
 			continue;
 
 		let { el } = upgrade[i];
-		el = Self.new(name, el, upgrade[i].item, namespace, false, true);
+		el = component.new(name, el, upgrade[i].item, namespace, false, true);
 		if(el === void 0)
 			return;
 
@@ -83,7 +83,7 @@ function checkWaiting(name, namespace){
 		delete waitingHTML[name];
 }
 
-Self.for = function(name, options, func, namespace){
+component.for = function(name, options, func, namespace){
 	if(options.constructor === Function){
 		func = options;
 
@@ -103,7 +103,7 @@ Self.for = function(name, options, func, namespace){
 	func ??= NOOP;
 
 	// internal.component.tagName.add(name.toUpperCase());
-	const scope = namespace || Self;
+	const scope = namespace || component;
 
 	// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template
 	let registrar = scope.registered[name];
@@ -140,8 +140,8 @@ Self.for = function(name, options, func, namespace){
 	return registrar[2];
 }
 
-Self.html = function(name, outerHTML, namespace){
-	const scope = namespace || Self;
+component.html = function(name, outerHTML, namespace){
+	const scope = namespace || component;
 	let templatePath = false;
 
 	if(outerHTML.constructor === Object){
@@ -161,7 +161,7 @@ Self.html = function(name, outerHTML, namespace){
 				}
 				else{
 					TemplatePending.push(function(){
-						Self.html(name, outerHTML, namespace, true);
+						component.html(name, outerHTML, namespace, true);
 					});
 					return console.warn(`Waiting template path '${outerHTML.template}' to be loaded`);
 				}
@@ -173,7 +173,7 @@ Self.html = function(name, outerHTML, namespace){
 
 		if(template === void 0){
 			TemplatePending.push(function(){
-				Self.html(name, outerHTML, namespace, true);
+				component.html(name, outerHTML, namespace, true);
 			});
 			return console.warn(`Waiting template for '${name}' to be loaded`);
 		}
@@ -226,7 +226,7 @@ Self.html = function(name, outerHTML, namespace){
 }
 
 const tempDOM = document.createElement('div');
-Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
+component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	if(internal.component.skip)
 		return;
 
@@ -240,7 +240,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		return;
 	}
 
-	const scope = namespace || Self;
+	const scope = namespace || component;
 
 	if(namespace !== void 0)
 		element.sf$space = namespace;
@@ -382,7 +382,7 @@ Self.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		// Temporary element
 		if(registrar[3] === void 0 && element.hasAttribute('sf-as-template')){
 			element.removeAttribute('sf-as-template');
-			Self.html(name, element.outerHTML);
+			component.html(name, element.outerHTML);
 		}
 
 		const specialElement = {
@@ -488,7 +488,7 @@ class SFComponent extends HTMLElement{
 			}
 		}
 
-		Self.new(tagName, this, $item, void 0, asScope);
+		component.new(tagName, this, $item, void 0, asScope);
 	}
 
 	connectedCallback(which){
@@ -600,7 +600,7 @@ function defineComponent(name){
 	if(window.sf$proxy)
 		Copy.constructor = window.opener.Function;
 
-	Self.roots[name] = Copy;
+	component.roots[name] = Copy;
 	customElements.define(name, Copy);
 	return Copy;
 }

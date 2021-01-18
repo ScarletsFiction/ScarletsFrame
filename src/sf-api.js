@@ -1,6 +1,6 @@
-import Request from "./sf-request.js";
+import {request as Request} from "./sf-request.js";
 
-export default class API{
+export class API{
 	constructor(url){
 		this.url = url;
 		this.accessToken = false;

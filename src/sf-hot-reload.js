@@ -2,12 +2,12 @@
 // Note: This feature will allocate more small memory and small slow down
 // ToDo: Fix memory leak on RepeatedElement when using this feature
 import {SFOptions, internal} from "./shared.js";
-import Loader from "./sf-loader.js";
-import Component, {prepareComponentTemplate} from "./sf-component.js";
-import Model from "./sf-model.js";
-import Views from "./sf-views.js";
-import Inspector from "./assistant/inspector.js";
-import $ from "./sf-dom.js";
+import {loader as Loader} from "./sf-loader.js";
+import {component as Component, prepareComponentTemplate} from "./sf-component.js";
+import {model as Model} from "./sf-model.js";
+import {Views} from "./sf-views.js";
+import {Inspector} from "./assistant/inspector.js";
+import {$} from "./sf-dom.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {templateParser} from "./sf-model/template.js";
 
@@ -25,7 +25,7 @@ setTimeout(function(){
 	else console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
 }, 1);
 
-export default function HotReload(mode){
+export function hotReload(mode){
 	if(mode === 1)
 		SFOptions.hotReload = true;
 	else if(mode === 2)
