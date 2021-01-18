@@ -1,11 +1,11 @@
 import {internal as Internal} from "../internal.js";
 import {internal, SFOptions, emptyArray, sfRegex} from "../shared.js";
 import {templateErrorInfo, findErrorLocation, _eP, applyParseIndex} from "./a_model.js";
-import {$} from "../sf-dom.js";
+import {parseElement, prevAll} from "../sf-dom.utils.js";
 import {eventHandler} from "./event-handler.js";
 import {repeatedListBinding} from "./repeated-list.js";
 import {bindInput} from "./input-bind.js";
-
+import {childIndexes} from "../sf-dom.utils.js";
 
 function elseIfHandle(else_, item, modelScope){
 	const { elseIf } = else_;
@@ -244,7 +244,7 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 	// Find element where the data belongs to
 	for (var i = 0; i < addresses.length; i++) {
 		var ref = addresses[i];
-		const current = $.childIndexes(ref.address, html); //26ms
+		const current = childIndexes(ref.address, html); //26ms
 
 		// Modify element attributes
 		if(ref.nodeType === 1){
@@ -277,7 +277,7 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 				dynamicFlag:current,
 				direct:ref.parse_index,
 				parentNode:current.parentNode,
-				startFlag:ref.startFlag && $.childIndexes(ref.startFlag, html)
+				startFlag:ref.startFlag && childIndexes(ref.startFlag, html)
 			};
 			changesReference.push(cRef);
 
@@ -305,7 +305,7 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 			for (var i = 0; i < specialInput.length; i++) {
 				var ref = specialInput[i];
 				specialInput_[i] = {
-					el:$.childIndexes(ref.addr, html),
+					el:childIndexes(ref.addr, html),
 					rule:ref.rule,
 					id:ref.id,
 				};
@@ -321,7 +321,7 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 			for (var i = 0; i < specialRepeat.length; i++) {
 				var ref = specialRepeat[i];
 				specialRepeat_[i] = {
-					el:$.childIndexes(ref.addr, html),
+					el:childIndexes(ref.addr, html),
 					rule:ref.rule
 				};
 			}
@@ -349,7 +349,7 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 
 		// Parse if it's not HTMLElement
 		if(tDOM.length !== 0)
-			tDOM = $.parseElement(tDOM);
+			tDOM = parseElement(tDOM);
 		else tDOM = document.createTextNode(tDOM);
 
 		for(var a = 0, n = tDOM.length; a < n; a++)
@@ -469,9 +469,9 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 				if(cRef.dynamicFlag.currentHTML === temp2)
 					continue;
 
-				const tDOM = $.parseElement(cRef.dynamicFlag.currentHTML = temp2);
+				const tDOM = parseElement(cRef.dynamicFlag.currentHTML = temp2);
 				const tDOMLength = tDOM.length;
-				const currentDOM = $.prevAll(cRef.dynamicFlag, cRef.startFlag);
+				const currentDOM = prevAll(cRef.dynamicFlag, cRef.startFlag);
 
 				let z = tDOMLength;
 

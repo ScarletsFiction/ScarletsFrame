@@ -178,3 +178,11 @@ export function toArray(b){
 
 	return c;
 }
+
+export function getCallerFile(step){
+	try{throw new Error()}catch(e){
+		var temp = e.stack.split('\n')[step+2];
+		if(!temp) return '';
+		return temp.split('://').pop();
+	}
+}

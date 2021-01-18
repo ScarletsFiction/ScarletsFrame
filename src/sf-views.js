@@ -1,9 +1,10 @@
 import {internal, forProxying, SFOptions} from "./shared.js";
-import {$} from "./sf-dom.js";
+import {onEvent, parseElement} from "./sf-dom.utils.js";
 import {URI} from "./sf-uri.js";
 import {request as Request} from "./sf-request.js";
 import {security as Security} from "./sf-security.js";
-import {getCallerFile} from "./sf-hot-reload.js";
+import {getCallerFile} from "./utils.js";
+import {loader as Loader} from "./sf-loader.js";
 
 export class SFPageView extends HTMLElement{}
 if(window.sf$proxy)
@@ -92,7 +93,7 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				internal.component.skip = true;
 
 				if(ref.html.constructor === String){
-					route.html = $.parseElement(`<template>${ref.html}</template>`, true)[0];
+					route.html = parseElement(`<template>${ref.html}</template>`, true)[0];
 					internal.component.skip = false;
 				}
 				else dom.appendChild(ref.html);
@@ -354,7 +355,7 @@ export function Views(selector, name){
 			getSelector();
 
 		if(!firstRouted && name){
-			$(function(){
+			Loader.onFinish(function(){
 				if(firstRouted)
 					return;
 
@@ -775,7 +776,7 @@ export function Views(selector, name){
 			if(htmlTemp === void 0) return console.error("Template not found: '"+url.template+"', does the file extension was match?");
 
 			// Create new element
-			url.html = $.parseElement(`<template>${htmlTemp}</template>`, true)[0];
+			url.html = parseElement(`<template>${htmlTemp}</template>`, true)[0];
 		}
 
 		if(url.html){
@@ -823,7 +824,7 @@ export function Views(selector, name){
 			const dom = document.createElement('sf-page-view');
 			dom.className = 'page-prepare';
 
-			var elements = $.parseElement(html_content);
+			var elements = parseElement(html_content);
 			for(var p=0, n=elements.length; p < n; p++){
 				dom.insertBefore(elements[0], null);
 			}
@@ -834,7 +835,7 @@ export function Views(selector, name){
 				const temp = document.createElement('sf-page-view');
 				temp.className = 'page-prepare';
 
-				var elements = $.parseElement(html_content);
+				var elements = parseElement(html_content);
 				for(var p=0, n=elements.length; p < n; p++){
 					temp.insertBefore(elements[0], null);
 				}
@@ -963,14 +964,14 @@ Views.resetCache = function(){
 }
 
 // Listen to every link click, capture mode
-$(function(){
+Loader.onFinish(function(){
 	if(Views.onCrossing === void 0)
 		Views.onCrossing = function(url, target){
 			console.error("Unhandled crossing URL origin", url, target);
 			console.warn("Handle it by make your custom function like `sf.Views.onCrossing = func(){}`");
 		};
 
-	$.on(document.body, 'click', 'a[href]', function(ev){
+	onEvent(document.body, 'click', 'a[href]', function(ev){
 		ev.preventDefault();
 
 		if(ev.isTrusted === false && internal.rejectUntrusted)

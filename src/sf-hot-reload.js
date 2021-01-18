@@ -7,9 +7,10 @@ import {component as Component, prepareComponentTemplate} from "./sf-component.j
 import {model as Model} from "./sf-model.js";
 import {Views} from "./sf-views.js";
 import {Inspector} from "./assistant/inspector.js";
-import {$} from "./sf-dom.js";
+import {parseElement} from "./sf-dom.utils.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {templateParser} from "./sf-model/template.js";
+import {$} from "./sf-dom.js";
 
 let hotReloadAll = false; // All model property
 SFOptions.devMode = true;
@@ -253,7 +254,7 @@ export function hotTemplate(templates){
 
 	for(let name in vList){
 		const { routes } = vList[name];
-		const sfPageViews = $('sf-page-view', vList[name].rootDOM);
+		const sfPageViews = vList[name].rootDOM.querySelectorAll('sf-page-view');
 
 		for (let i = 0; i < sfPageViews.length; i++) {
 			const page = sfPageViews[i];
@@ -263,7 +264,7 @@ export function hotTemplate(templates){
 
 			page.innerHTML = templates[pageTemplate];
 
-			page.routeCached.html = $.parseElement(`<template>${templates[pageTemplate]}</template>`, true)[0];
+			page.routeCached.html = parseElement(`<template>${templates[pageTemplate]}</template>`, true)[0];
 
 			// Replace with the old nested view
 			const nesteds = page.sf$viewSelector;
@@ -347,12 +348,4 @@ export function hotComponentTemplate(scope, name){
 	}
 
 	backupCompTempl.set(registrar, registrar[3]);
-}
-
-export function getCallerFile(step){
-	try{throw new Error()}catch(e){
-		var temp = e.stack.split('\n')[step+2];
-		if(!temp) return '';
-		return temp.split('://').pop();
-	}
 }

@@ -1,7 +1,7 @@
 import {internal, SFOptions} from "../shared.js";
 import {internal as Internal} from "../internal.js";
 import {model as Model} from "../sf-model.js";
-import {$} from "../sf-dom.js";
+import {escapeText, childIndexes} from "../sf-dom.utils.js";
 import {avoidQuotes, proxyClass, parsePropertyPath, deepProperty} from "../utils.js";
 import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.js";
 import {repeatedListBinding} from "./repeated-list.js";
@@ -77,7 +77,7 @@ export function initPendingComponentScope(list, html){
 			el = ref;
 			el.sf$asScope = true;
 		}
-		else el = $.childIndexes(ref.addr, html);
+		else el = childIndexes(ref.addr, html);
 
 		const obj = deepProperty(html.model, ref.rule);
 		const temp = ref.rule.slice(0);
@@ -119,7 +119,7 @@ export function trimIndentation(text){
 
 export function _eP(val, type){
 	if(type === 0) // HTML
-		return $.escapeText(val);
+		return escapeText(val);
 
 	// Attr
 	return val != null ? val.toString().split('"').join('&quot;').split("'").join("&#39;") : val;
@@ -254,7 +254,7 @@ export function templateErrorInfo(e, element, item, modelRef, template){
 
 		var sfeach;
 		if(SFOptions.devMode && template.rootIndex)
-			sfeach = $.childIndexes(template.rootIndex, el) || void 0;
+			sfeach = childIndexes(template.rootIndex, el) || void 0;
 
 		console.log("%cTemplate's data:%c", 'color:orange', '',
 		            "\n - Parent Element:", el,

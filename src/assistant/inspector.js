@@ -3,7 +3,10 @@
 // When editing the inspector.css make sure it's hardlinked
 // ./inspector.css -> ../../dist/inspector.css
 
-import {$, getScope, Space, loader} from "../index.js";
+import {getScope} from "../sf-model.js";
+import {Space} from "../sf-space.js";
+import {loader} from "../sf-loader.js";
+import {$} from "../sf-dom.js";
 
 export function Inspector(){
 

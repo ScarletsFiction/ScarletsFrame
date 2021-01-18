@@ -1,7 +1,7 @@
 import {internal as Internal} from "../internal.js";
 import {internal} from "../shared.js";
 import {initBindingInformation} from "./parser.js";
-import {$} from "../sf-dom.js";
+import {onEvent} from "../sf-dom.utils.js";
 import {modelToViewBinding} from "./element-bind.js";
 import {parsePropertyPath, deepProperty} from "../utils.js";
 
@@ -233,18 +233,18 @@ function elementBoundChanges(model, property, element, oneWay, modelLocal, prope
 		typeData = Number;
 
 	element.typeData = typeData;
-	$.on(element, 'change', triggerInputEvent);
+	onEvent(element, 'change', triggerInputEvent);
 
 	// Bound value change
 	if(element.constructor === HTMLTextAreaElement){
-		$.on(element, 'input', inputTextBound);
+		onEvent(element, 'input', inputTextBound);
 		type = 1;
 
 		if(oneWay === false)
 			element.value = val;
 	}
 	else if(element.selectedOptions !== void 0){
-		$.on(element, 'input', inputSelectBound);
+		onEvent(element, 'input', inputSelectBound);
 		type = 2;
 
 		assignElementData.select(val, element);
@@ -252,23 +252,23 @@ function elementBoundChanges(model, property, element, oneWay, modelLocal, prope
 	else{
 		var type = element.type.toLowerCase();
 		if(type === 'radio'){
-			$.on(element, 'input', inputTextBound);
+			onEvent(element, 'input', inputTextBound);
 			type = 3;
 
 			element.checked = val == element.value;
 		}
 		else if(type === 'checkbox'){
-			$.on(element, 'input', inputCheckBoxBound);
+			onEvent(element, 'input', inputCheckBoxBound);
 			type = 4;
 
 			assignElementData.checkbox(val, element);
 		}
 		else if(type === 'file'){
-			$.on(element, 'input', inputFilesBound);
+			onEvent(element, 'input', inputFilesBound);
 			type = 5;
 		}
 		else{
-			$.on(element, 'input', inputTextBound);
+			onEvent(element, 'input', inputTextBound);
 			type = 1;
 
 			if(oneWay === false)

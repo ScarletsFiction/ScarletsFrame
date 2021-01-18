@@ -1,5 +1,3 @@
-import {$} from "./sf-dom.js";
-
 export function request(method, url, data, options, callback){
 	if(data && data.constructor === Function){
 		callback = data;
@@ -25,11 +23,6 @@ export function request(method, url, data, options, callback){
 
 	return HttpRequest(method, url, data, options, callback);
 }
-
-$.get = (url, data, options, callback) => request('GET', url, data, options, callback)
-$.post = (url, data, options, callback) => request('POST', url, data, options, callback)
-$.getJSON = (url, data, options, callback) => request('getJSON', url, data, options, callback)
-$.postJSON = (url, data, options, callback) => request('postJSON', url, data, options, callback)
 
 const statusCode = request.statusCode = {};
 request.onerror = null;

@@ -12,6 +12,7 @@ import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManip
 import {internal, SFOptions, sfRegex} from "../shared.js";
 import {initBindingInformation, extractPreprocess} from "./parser.js";
 import {avoidQuotes, hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
+import {getSelector} from "../sf-dom.utils.js";
 import {modelToViewBinding, repeatedListBindRoot, bindElement} from "./element-bind.js";
 import {syntheticTemplate, templateParser} from "./template.js";
 
@@ -347,7 +348,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 		template.bindList = this;
 
 		if(SFOptions.devMode === true)
-			template.rootIndex = $.getSelector(parentNode, true, getScope(parentNode, true));
+			template.rootIndex = getSelector(parentNode, true, getScope(parentNode, true));
 
 		if(this.constructor === ReactiveArray){
 			template.repeatedList = true;
@@ -2015,3 +2016,5 @@ function RE_getBindedList(modelRoot, binded){
 	d(ReactiveMap.prototype, RE_Prototype);
 	d(ReactiveSet.prototype, RE_Prototype);
 };
+
+internal.ElementManipulatorProxy = ElementManipulatorProxy;

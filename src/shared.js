@@ -1,10 +1,11 @@
 export function NOOP(){}
 export const isTouchDevice = ()=> navigator.maxTouchPoints !== 0;
 
-export var internal = {
+export const internal = {
 	virtualScrolling: false,
 	space: {empty:true},
-	windowEv: {}
+	windowEv: {},
+	WindowList: {}
 };
 export var privateRoot = {};
 export var forProxying = {};

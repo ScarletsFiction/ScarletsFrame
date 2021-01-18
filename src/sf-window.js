@@ -3,9 +3,12 @@
 // their own auth or communication system
 
 import {internal, forProxying} from "./shared.js";
-import {model, component, Space, language} from "./index.js";
+import {model} from "./sf-model.js";
+import {component} from "./sf-component.js";
+import {Space} from "./sf-space.js";
+import {language} from "./sf-language.js";
 import {ModelInit} from "./sf-model/a_model.js";
-import {$} from "./sf-dom.js";
+import {parseElement} from "./sf-dom.utils.js";
 let {windowEv} = internal;
 let headerTags = '';
 
@@ -69,16 +72,16 @@ export class Window{
 		linker.document.head.textContent = '';
 
 		if(headerTags === ''){
-			headerTags = $('script[src*="scarletsframe"]');
-			if(headerTags.length === 0){
+			headerTags = document.querySelector('script[src*="scarletsframe"]');
+			if(headerTags === null){
 				if(Window.frameworkPath === '')
 					throw new Error("Failed to automatically detect framework URL. Please specify URL in the 'sf.Window.frameworkPath'. (example: 'https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/scarletsframe.min.js')");
 
 				headerTags = `<script src="${Window.frameworkPath}"></script>`;
 			}
-			else headerTags = headerTags[0].outerHTML;
+			else headerTags = headerTags.outerHTML;
 
-			const styles = $('link, style');
+			const styles = document.querySelectorAll('link, style');
 			for (let i = 0; i < styles.length; i++)
 				headerTags += styles[i].outerHTML;
 		}
@@ -198,7 +201,7 @@ export class Window{
 	}
 
 	// === Static ===
-	static list = {};
+	static list = internal.WindowList;
 	static destroy(id){
 		if(id !== void 0)
 			winDestroy(Window.list[id]);
@@ -237,11 +240,11 @@ function portComponentDefinition(linker, from, into){
 			if(ref[3].constructor === Object){
 				const template = Object.create(ref[3]);
 				ref[3] = template;
-				template.html = $.parseElement(template.html.outerHTML)[0];
+				template.html = parseElement(template.html.outerHTML)[0];
 			}
 			else{
 				const { tempDOM } = ref[3];
-				ref[3] = $.parseElement(ref[3].outerHTML)[0];
+				ref[3] = parseElement(ref[3].outerHTML)[0];
 				ref[3].tempDOM = tempDOM;
 			}
 		}

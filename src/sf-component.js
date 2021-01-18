@@ -1,6 +1,6 @@
 import {internal, TemplatePending, SFOptions} from "./shared.js";
-import {capitalizeLetters, proxyClass} from "./utils.js";
-import {$} from "./sf-dom.js";
+import {capitalizeLetters, proxyClass, getCallerFile} from "./utils.js";
+import {parseElement} from "./sf-dom.utils.js";
 import {model as Model} from "./sf-model.js";
 import {Space} from "./sf-space.js";
 import {templateParser} from "./sf-model/template.js";
@@ -8,7 +8,8 @@ import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreproce
 import {bindInput} from "./sf-model/input-bind.js";
 import {repeatedListBinding} from "./sf-model/repeated-list.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
-import {getCallerFile, hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd, proxyTemplate, backupCompTempl} from "./sf-hot-reload.js";
+import {hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd, proxyTemplate, backupCompTempl} from "./sf-hot-reload.js";
+import {$} from "./sf-dom.js";
 
 export function component(name, options, func, namespace){
 	if(options !== void 0){
@@ -51,10 +52,12 @@ export function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar)
 internal.component = {};
 internal.componentInherit = {};
 
-$(function(){
-	if(TemplatePending.length !== 0)
-		window.templates = window.templates;
-});
+setTimeout(()=> {
+	$(function(){
+		if(TemplatePending.length !== 0)
+			window.templates = window.templates;
+	});
+}, 10);
 
 const waitingHTML = {};
 
@@ -190,7 +193,7 @@ component.html = function(name, outerHTML, namespace){
 
 	let temp;
 	if(outerHTML.constructor === String)
-		temp = $.parseElement(outerHTML);
+		temp = parseElement(outerHTML);
 	else temp = outerHTML;
 
 	if(temp.length === 1)

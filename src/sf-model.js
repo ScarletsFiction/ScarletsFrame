@@ -1,9 +1,9 @@
 import {internal, forProxying, SFOptions} from "./shared.js";
-import {getCallerFile, hotModel} from "./sf-hot-reload.js";
+import {hotModel} from "./sf-hot-reload.js";
 import {$} from "./sf-dom.js";
 import {loader as Loader} from "./sf-loader.js";
 import {component as Component} from "./sf-component.js";
-import {getStaticMethods, getPrototypeMethods} from "./utils.js";
+import {getStaticMethods, getPrototypeMethods, getCallerFile} from "./utils.js";
 import {ModelInit} from "./sf-model/a_model.js";
 import {removeModelBinding} from "./sf-model/element-bind.js";
 import "./sf-space.js";
@@ -298,17 +298,19 @@ var root_ = function(scope){
 }
 
 // Let's check all pending model
-$(function(){
-	try{
-		for(var keys in internal.modelPending){
-			var ref = internal.modelPending[keys];
-			for (var z = 0; z < ref.length; z++)
-				ModelInit(ref[z], ref[z].getAttribute('name'));
+setTimeout(()=> {
+	$(function(){
+		try{
+			for(var keys in internal.modelPending){
+				var ref = internal.modelPending[keys];
+				for (var z = 0; z < ref.length; z++)
+					ModelInit(ref[z], ref[z].getAttribute('name'));
 
-			delete internal.modelPending[keys];
+				delete internal.modelPending[keys];
+			}
+		} catch(e) {
+			e.model = {name:ref[z].getAttribute('name'), scope:ref[z].model};
+			throw e;
 		}
-	} catch(e) {
-		e.model = {name:ref[z].getAttribute('name'), scope:ref[z].model};
-		throw e;
-	}
-});
+	});
+}, 10);

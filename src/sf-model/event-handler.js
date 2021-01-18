@@ -1,8 +1,8 @@
 import {customEvent} from "./custom-event.js";
 import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
+import {childIndexes, getSelector} from "../sf-dom.utils.js";
 import {model as Model, findBindListElement} from "../sf-model.js";
 import {internal, sfRegex} from "../shared.js";
-import {$} from "../sf-dom.js";
 
 if(!window.TouchEvent)
 	window.TouchEvent = void 0;
@@ -38,7 +38,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		rootHandler.sf$listListenerLock ??= new WeakSet();
 
 		rootHandler.sf$listListenerLock.add(template);
-		const elementIndex = $.getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
+		const elementIndex = getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
 
 		rootHandler.sf$listListener ??= {};
 
@@ -110,9 +110,9 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 				if(realThat === null)
 					return;
 
-				var call = findEventFromList($.getSelector(elem, true, realThat), realThat.sf$elementReferences.template);
+				var call = findEventFromList(getSelector(elem, true, realThat), realThat.sf$elementReferences.template);
 				if(call !== void 0)
-					call.call($.childIndexes(found, realThat), ev, realThat.model, _modelScope, realThat.sf$repeatListIndex);
+					call.call(childIndexes(found, realThat), ev, realThat.model, _modelScope, realThat.sf$repeatListIndex);
 
 				return;
 			}

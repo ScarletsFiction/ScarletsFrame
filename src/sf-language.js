@@ -5,7 +5,7 @@ import {request as Request} from "./sf-request.js";
 import {Space} from "./sf-space.js";
 import {internal} from "./shared.js";
 import {syntheticTemplate} from "./sf-model/template.js";
-import {$} from "./sf-dom.js";
+import {getSelector, childIndexes} from "./sf-dom.utils.js";
 import {parseIndexAllocate, applyParseIndex} from "./sf-model/a_model.js";
 
 let waiting = false;
@@ -75,8 +75,8 @@ export class language{
 		language.default = defaultLang;
 
 		// Maybe have create other window?
-		if(internal.windowDestroyListener !== false && SFWindow.list.length !== 0){
-			const windows = SFWindow.list;
+		if(internal.windowDestroyListener !== false && internal.WindowList.length !== 0){
+			const windows = internal.WindowList;
 
 			for (let i = 0; i < windows.length; i++)
 				windows[i].sf.language.changeDefault(defaultLang);
@@ -113,7 +113,7 @@ export class language{
 		setTimeout(()=> {
 			language.init(document.body);
 
-			const wList = SFWindow.list;
+			const wList = internal.WindowList;
 			for(let key in wList)
 				language.init(wList[key].document.body);
 		}, 1);
@@ -602,7 +602,7 @@ function elementRebinding(template, eRef, elem, parentNode){
 	const remake = {
 		textContent:elem,
 		ref:{
-			address:$.getSelector(elem, true, parentNode),
+			address:getSelector(elem, true, parentNode),
 			nodeType:3
 		}
 	};
@@ -624,7 +624,7 @@ function refreshTemplate(elemRef){
 		if(addresses[i].skipSFLang || addresses[i].value === void 0)
 			continue;
 
-		const elem = $.childIndexes(addresses[i].address, template.html).parentNode;
+		const elem = childIndexes(addresses[i].address, template.html).parentNode;
 
 		if(addresses[i].sf_lang !== void 0){
 			addresses.splice(i, 1);
@@ -656,8 +656,8 @@ function refreshTemplate(elemRef){
 
 		for (let a = 0; a < eRef.length; a++){
 			const { ref } = eRef[a];
-			const temp = $.childIndexes(ref.address, elem);
-			ref.address = $.getSelector(temp, true, template.html);
+			const temp = childIndexes(ref.address, elem);
+			ref.address = getSelector(temp, true, template.html);
 
 			if(temp.parentNode.hasAttribute('sf-lang') === false)
 				ref.sf_lang = true;

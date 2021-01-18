@@ -7,13 +7,13 @@
 
 import {sfRegex, internal, emptyArray} from "../shared.js";
 import {modelKeys as getModelKeys, SFModel} from "../sf-model.js";
-import {$ }from "../sf-dom.js";
+import {parseElement, getSelector} from "../sf-dom.utils.js";
 import {SFPageView} from "../sf-views.js";
 import {bindElement} from "./element-bind.js";
-import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
+import {$} from "../sf-dom.js";
 import {REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./template.js";
 import {parseIndexAllocate, modelScript, templateErrorInfo, escapeParse, trimIndentation} from "./a_model.js";
-import {toArray, stringifyPropertyPath} from "../utils.js";
+import {toArray, stringifyPropertyPath, avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
 import {templateExec, parserForAttribute} from "./template.js";
 
 // ToDo: directly create parse_index from here
@@ -279,7 +279,7 @@ export function templateInjector(targetNode, modelScope, cloneDynamic){
 			}
 
 			// Need a copy with Array.from
-			serve = toArray($.parseElement(serve));
+			serve = toArray(parseElement(serve));
 			$(serve).insertBefore(ref.nextSibling || ref);
 			ref.remove();
 		}
@@ -312,7 +312,7 @@ export function templateInjector(targetNode, modelScope, cloneDynamic){
 					continue;
 				}
 
-				serve = $.parseElement(serve);
+				serve = parseElement(serve);
 				$(serve).insertBefore(ref.nextSibling || ref);
 				ref.remove();
 			}
@@ -450,7 +450,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 	if(container !== void 0)
 		copy = `<${container}>${copy}</${container}>`;
 
-	copy = $.parseElement(copy, true)[0];
+	copy = parseElement(copy, true)[0];
 	if(container !== void 0){
 		copy = copy.firstElementChild;
 		copy.remove();
@@ -478,7 +478,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 
 		if(temp.nodeType === 1){ // Element
 			temp.attributes = addressAttributes(ref, template);
-			temp.address = $.getSelector(ref, true);
+			temp.address = getSelector(ref, true);
 		}
 
 		else if(temp.nodeType === 3){ // Text node
@@ -511,7 +511,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 						nodeType:-1,
 						parse_index:indexes[a],
 						startFlag:flag,
-						address:$.getSelector(flag, true)
+						address:getSelector(flag, true)
 					});
 				}
 
@@ -529,7 +529,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 						continue;
 					}
 
-					addr.startFlag = $.getSelector(prev, true);
+					addr.startFlag = getSelector(prev, true);
 				}
 
 				// Merge boundary address
@@ -563,7 +563,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 				temp.parse_index = indexes;
 			}
 
-			temp.address = $.getSelector(ref, true);
+			temp.address = getSelector(ref, true);
 			ref.textContent = '-';
 		}
 
@@ -613,7 +613,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 			}
 
 			specialInput[i] = {
-				addr:$.getSelector(el, true),
+				addr:getSelector(el, true),
 				rule,
 				id
 			};
@@ -634,7 +634,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 				rule = rule.replace(temp, ' in ');
 
 			specialRepeat[i] = {
-				addr:$.getSelector(el, true),
+				addr:getSelector(el, true),
 				rule
 			};
 
@@ -652,7 +652,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 				rule.shift();
 
 			specialScope[i] = {
-				addr:$.getSelector(el, true),
+				addr:getSelector(el, true),
 				rule
 			};
 

@@ -5,8 +5,8 @@
 // sf$scrollPos need to start from 1 (iTop's height)
 
 import {internal} from "./shared.js";
-import {ElementManipulatorProxy, ElementManipulator} from "./sf-model/repeated-list.js";
 
+let ElementManipulatorProxy = null; // This will be filled when constructing VirtualScroll class
 const VSM_Threshold = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 internal.virtualScrolling = false;
 
@@ -575,6 +575,7 @@ Object.assign(VirtualScrollManipulator.prototype, {
 export class VirtualScroll{
 	constructor($EM){
 		this.$EM = $EM;
+		ElementManipulatorProxy = internal.ElementManipulatorProxy;
 	}
 
 	visibilityCallback = function(){
