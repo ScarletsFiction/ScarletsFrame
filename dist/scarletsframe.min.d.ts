@@ -5,98 +5,6 @@
 declare type ModelScope = (state: SFModel, root:(name: String) => SFModel) => void;
 declare type ComponentScope = (state: SFModel, root:(name: String) => SFModel, $item: any) => SFModel | void;
 
-export declare namespace sf {
-	/**
-	 * If got element then the model object will be returned.
-	 * @param elem HTMLElement
-	 */
-	export function getScope(elem:HTMLElement): HTMLElement | null | void;
-	/**
-	 * Define new < sf-m name="" > element handler, the model scope can be shared with every < sf-m name="" >
-	 * @param name < sf-m name="name.here" >< /sf-m >
-	 * @param options Model configuration, this can be the 3rd parameter
-	 * @param scope Your extendable class or callable function
-	 */ export function model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
-	export namespace model {
-		/**
-		 * Find the index of RepeatedElement on DOM
-		 * @param element single RepeatedElement
-		 */ function index(element: HTMLElement): number;
-	}
-	/**
-	 * Define new < component-name > element handler, if the component scope is returning a model scope it would be used as current scope instead
-	 * @param name < name-here >< /name-here >
-	 * @param options Model configuration, this can be the 3rd parameter
-	 * @param scope Your extendable class or callable function
-	 */ export function component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
-	export namespace component {
-		/**
-		 * Define new template for a component, this is optional
-		 * If the you already write the content of the component
-		 * in the DOM then you can skip this
-		 * @param name Component name
-		 * @param template The template content for the component
-		 */ function html(name: String, template: String | HTMLElement | TemplateOptions): void;
-	}
-	export { API };
-	export namespace loader {
-		/** Called when page is loading some resource */
-		function onProgress(callback: (loaded?: number, total?: number) => void): void;
-		/** Add some css to resource loading list */
-		function css(list: string[]): void;
-		/** Add some js to resource loading list */
-		function js(list: string[]): void;
-	}
-	export { Space };
-
-	/**
-	 * Get full URL with sf-views hash
-	 */
-	export function URL(): string;
-	export namespace URL {
-		/** URL Data */
-		const data: {};
-		/** Hash path from URL */
-		const routes: {};
-		/** URL Pathname */
-		const path: string;
-		/** GET Query in the URL */
-		const query: string;
-		/** Parse URL data from a string */
-		function parse(url: string): URLData;
-	}
-	export function language(): void;
-	export namespace language {
-		/** List of loaded language */
-		export const list: {};
-		/** Default interpolation data */
-		export const interpolate: {};
-		/** Current language for initialization */
-		const _default: string;
-		export { _default as default };
-		/** Language server */
-		export const serverURL: string;
-		/** Add language data */
-		export function add(lang: string, obj: object): void;
-		/** Get language from path */
-		export function get(path: string, obj?: object | Function, callback?: Function): void;
-		/** Init SF Language for selected element */
-		export function init(el: HTMLElement): void;
-	}
-	export { Window };
-	/**
-	 * Enable Hot Reload
-	 * @param mode 1=Reload scope function only, 2=Reload all
-	 */
-	export function hotReload(mode: number): void;
-	export { Views };
-	export function $(selector: string | Function | HTMLElement | HTMLElement[], context?: HTMLElement | DOMList): DOMList;
-	export namespace $ {
-		const fn: DOMList;
-	}
-
-	export function request(method:HTTPMethod, url:string, data?:object, options?:RequestOptions): XHRPromise;
-}
 declare class DOMList extends Array<HTMLElement> {
 	constructor(arrayLength?: number);
 	constructor(arrayLength: number);
@@ -235,7 +143,7 @@ declare class SFSpace {
 	/** Destroy sf-space */
 	destroy(): void;
 }
-declare class URLData {
+declare class URIData {
 	path: string;
 	data: {};
 	routes: {};
@@ -415,6 +323,114 @@ declare class Views {
 	goto(path: string, data?: Function | object, method?: Function | HTTPMethod, callback?: Function): void;
 }
 
+declare class VirtualScroll {
+	/** Is the element has dynamic size? */
+	dynamicSize: boolean;
+	/** Number of element that will be prepared on outer container viewport */
+	prepareSize: number;
+	/** Observe visibility for element on the index */
+	observeVisibility(index: any): any;
+	/** Unobserve visibility for element on the index */
+	unobserveVisibility(index: any): any;
+	/** Scroll to element on the index */
+	scrollTo(index: any): any;
+	/** Get element offset on the index */
+	offsetTo(index: any): any;
+}
+
+// ==================== Exports ====================
+
+/**
+ * If got element then the model object will be returned.
+ * @param elem HTMLElement
+ */
+export function getScope(elem:HTMLElement): HTMLElement | null | void;
+/**
+ * Define new < sf-m name="" > element handler, the model scope can be shared with every < sf-m name="" >
+ * @param name < sf-m name="name.here" >< /sf-m >
+ * @param options Model configuration, this can be the 3rd parameter
+ * @param scope Your extendable class or callable function
+ */ export function model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
+export namespace model {
+	/**
+	 * Find the index of RepeatedElement on DOM
+	 * @param element single RepeatedElement
+	 */ function index(element: HTMLElement): number;
+}
+/**
+ * Define new < component-name > element handler, if the component scope is returning a model scope it would be used as current scope instead
+ * @param name < name-here >< /name-here >
+ * @param options Model configuration, this can be the 3rd parameter
+ * @param scope Your extendable class or callable function
+ */ export function component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
+export namespace component {
+	/**
+	 * Define new template for a component, this is optional
+	 * If the you already write the content of the component
+	 * in the DOM then you can skip this
+	 * @param name Component name
+	 * @param template The template content for the component
+	 */ function html(name: String, template: String | HTMLElement | TemplateOptions): void;
+}
+export { API };
+export namespace loader {
+	/** Called when page is loading some resource */
+	function onProgress(callback: (loaded?: number, total?: number) => void): void;
+	/** Add some css to resource loading list */
+	function css(list: string[]): void;
+	/** Add some js to resource loading list */
+	function js(list: string[]): void;
+}
+export { Space };
+/**
+ * Get full URL with sf-views hash
+ */
+export function URI(): string;
+export namespace URI {
+	/** URI Data */
+	const data: {};
+	/** Hash path from URI */
+	const routes: {};
+	/** URI Pathname */
+	const path: string;
+	/** GET Query in the URI */
+	const query: string;
+	/** Parse URI data from a string */
+	function parse(uri: string): URIData;
+}
+export function language(): void;
+export namespace language {
+	/** List of loaded language */
+	export const list: {};
+	/** Default interpolation data */
+	export const interpolate: {};
+	/** Current language for initialization */
+	const _default: string;
+	export { _default as default };
+	/** Language server */
+	export const serverURL: string;
+	/** Add language data */
+	export function add(lang: string, obj: object): void;
+	/** Get language from path */
+	export function get(path: string, obj?: object | Function, callback?: Function): void;
+	/** Init SF Language for selected element */
+	export function init(el: HTMLElement): void;
+}
+export { Window };
+/**
+ * Enable Hot Reload
+ * @param mode 1=Reload scope function only, 2=Reload all
+ */
+export function hotReload(mode: number): void;
+export { Views };
+export function $(selector: string | Function | HTMLElement | HTMLElement[], context?: HTMLElement | DOMList): DOMList;
+export namespace $ {
+	const fn: DOMList;
+}
+export function request(method:HTTPMethod, url:string, data?:object, options?:RequestOptions): XHRPromise;
+
+// ==================== Type Definitions ====================
+
 export class PropertyList {
 	/**
 	 * Select related elements from this list with query selector
@@ -456,20 +472,3 @@ export class ReactiveArray extends PropertyList {
 	/** Get the index of an item or element */
 	indexOf(index: object | HTMLElement): number;
 }
-
-declare class VirtualScroll {
-	/** Is the element has dynamic size? */
-	dynamicSize: boolean;
-	/** Number of element that will be prepared on outer container viewport */
-	prepareSize: number;
-	/** Observe visibility for element on the index */
-	observeVisibility(index: any): any;
-	/** Unobserve visibility for element on the index */
-	unobserveVisibility(index: any): any;
-	/** Scroll to element on the index */
-	scrollTo(index: any): any;
-	/** Get element offset on the index */
-	offsetTo(index: any): any;
-}
-
-export default sf;
