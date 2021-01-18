@@ -8,7 +8,7 @@ export class events{
 	static register(name, defaultVal){
 		if(name.constructor === Array){
 			for (let i = 0; i < name.length; i++)
-				events(name[i], defaultVal);
+				events.register(name[i], defaultVal);
 
 			return;
 		}
