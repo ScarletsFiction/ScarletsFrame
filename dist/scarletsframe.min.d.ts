@@ -90,7 +90,7 @@ export declare namespace sf {
 	 */
 	export function hotReload(mode: number): void;
 	export { Views };
-	export function $(selector: string | Function | HTMLElement | HTMLElement[], context?: HTMLElement | DOMList): void | DOMList;
+	export function $(selector: string | Function | HTMLElement | HTMLElement[], context?: HTMLElement | DOMList): DOMList;
 	export namespace $ {
 		const fn: DOMList;
 	}
