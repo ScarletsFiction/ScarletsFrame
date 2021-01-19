@@ -1,4 +1,4 @@
-import {$} from "../sf-dom.js";
+import {onEvent, offEvent} from "../sf-dom.utils.js";
 import {internal, isTouchDevice} from "../shared.js";
 
 const toDegree = 180/Math.PI;
@@ -290,7 +290,7 @@ function touchGesture(that, callback){
 
 	that['sf$eventDestroy_gesture'] = function(){
 		that.removeEventListener('pointerdown', callbackStart);
-		$(internal.WindowList).off('keydown', keyStart);
+		offEvent(internal.WindowList, 'keydown', keyStart);
 	}
 
 	const keyEnd = function(ev){
@@ -314,5 +314,5 @@ function touchGesture(that, callback){
 		view.addEventListener('keyup', keyEnd);
 	};
 
-	$(internal.WindowList).on('keydown', keyStart);
+	onEvent(internal.WindowList, 'keydown', keyStart);
 }

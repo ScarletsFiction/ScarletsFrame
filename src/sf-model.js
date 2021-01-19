@@ -1,5 +1,4 @@
-import {internal, forProxying, SFOptions} from "./shared.js";
-import {hotModel} from "./sf-hot-reload.js";
+import {internal, forProxying, SFOptions, HotReload} from "./shared.js";
 import {$} from "./sf-dom.js";
 import {loader as Loader} from "./sf-loader.js";
 import {component as Component} from "./sf-component.js";
@@ -121,7 +120,7 @@ model.for = function(name, options, func, namespace){
 
 	const scope = namespace || model;
 	if(SFOptions.hotReload)
-		hotModel(scope, name, func);
+		HotReload.Model(scope, name, func);
 
 	let scopeTemp = scope(name);
 

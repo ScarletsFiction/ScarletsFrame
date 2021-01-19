@@ -1,4 +1,3 @@
-import "./shared.js";
 export {API} from "./sf-api.js";
 export {hotReload} from "./sf-hot-reload.js";
 export {model, getScope} from "./sf-model.js";

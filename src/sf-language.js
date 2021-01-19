@@ -1,5 +1,4 @@
 import {getScope} from "./sf-model.js";
-import {Window as SFWindow} from "./sf-window.js";
 import {component as Component} from "./sf-component.js";
 import {request as Request} from "./sf-request.js";
 import {Space} from "./sf-space.js";

@@ -2,7 +2,6 @@ import {internal} from "./shared.js";
 let {windowEv} = internal;
 
 import {loader as Loader} from "./sf-loader.js";
-import {Window} from "./sf-window.js";
 import {request as Request} from "./sf-request.js";
 import {customEvent} from "./sf-model/custom-event.js";
 import {toArray} from "./utils.js";

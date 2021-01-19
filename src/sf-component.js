@@ -1,4 +1,4 @@
-import {internal, TemplatePending, SFOptions} from "./shared.js";
+import {internal, TemplatePending, SFOptions, HotReload} from "./shared.js";
 import {capitalizeLetters, proxyClass, getCallerFile} from "./utils.js";
 import {parseElement} from "./sf-dom.utils.js";
 import {model as Model} from "./sf-model.js";
@@ -8,7 +8,6 @@ import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreproce
 import {bindInput} from "./sf-model/input-bind.js";
 import {repeatedListBinding} from "./sf-model/repeated-list.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
-import {hotComponentTemplate, hotTemplate, hotComponentRefresh, hotComponentRemove, hotComponentAdd, proxyTemplate, backupCompTempl} from "./sf-hot-reload.js";
 import {$} from "./sf-dom.js";
 
 export function component(name, options, func, namespace){
@@ -127,7 +126,7 @@ component.for = function(name, options, func, namespace){
 	if(name in waitingHTML)
 		checkWaiting(name, namespace);
 	else if(SFOptions.hotReload)
-		hotComponentRefresh(scope, name, func);
+		HotReload.ComponentRefresh(scope, name, func);
 
 	if(SFOptions.devMode && registrar[2].$devData === void 0){
 		Object.defineProperty(registrar[2], '$devData', {
@@ -156,8 +155,8 @@ component.html = function(name, outerHTML, namespace){
 				if(outerHTML.template in window.templates){
 					template = window.templates[outerHTML.template];
 
-					if(SFOptions.devMode && !(outerHTML.template in proxyTemplate))
-						proxyTemplate[outerHTML.template] = [scope, name];
+					if(SFOptions.devMode && !(outerHTML.template in HotReload.proxyTemplate))
+						HotReload.proxyTemplate[outerHTML.template] = [scope, name];
 
 					if(!outerHTML.keepTemplate && SFOptions.devMode === false)
 						delete window.templates[outerHTML.template];
@@ -222,9 +221,9 @@ component.html = function(name, outerHTML, namespace){
 
 	if(SFOptions.hotReload){
 		if(templatePath === false)
-			hotComponentTemplate(scope, name);
-		else if(backupCompTempl.has(registrar) === false)
-			backupCompTempl.set(registrar, registrar[3]);
+			HotReload.ComponentTemplate(scope, name);
+		else if(HotReload.backupCompTempl.has(registrar) === false)
+			HotReload.backupCompTempl.set(registrar, registrar[3]);
 	}
 }
 
@@ -336,7 +335,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		// Save the item for hot reloading
 		if(SFOptions.hotReload){
 			newObj.$el.$item = $item;
-			hotComponentAdd(scope, name, newObj);
+			HotReload.ComponentAdd(scope, name, newObj);
 		}
 	}
 
@@ -563,7 +562,7 @@ class SFComponent extends HTMLElement{
 			this.sf$collection.splice(this.sf$collection.indexOf(model), 1);
 
 		if(SFOptions.hotReload)
-			hotComponentRemove(this);
+			HotReload.ComponentRemove(this);
 
 		const $el = model.$el;
 		if($el[0] !== void 0 && $el[0].isConnected === false)

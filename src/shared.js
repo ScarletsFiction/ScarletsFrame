@@ -8,6 +8,9 @@ export const internal = {
 	WindowList: {}
 };
 export var privateRoot = {};
+export var HotReload = {
+	proxyTemplate: {},
+};
 export var forProxying = {};
 export var emptyArray = Object.freeze({length:0});
 
@@ -42,7 +45,7 @@ export var TemplatePending = [];
 Object.defineProperty(window, 'templates', {
 	set: val=> {
 		HTMLTemplates = val;
-		SFOptions.hotReload && internal.hotTemplate(val);
+		SFOptions.hotReload && HotReload.Template(val);
 
 		if(TemplatePending.length !== 0){
 			var temp = TemplatePending;
