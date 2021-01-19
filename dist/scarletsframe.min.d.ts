@@ -350,7 +350,8 @@ export function getScope(elem:HTMLElement): HTMLElement | null | void;
  * @param name < sf-m name="name.here" >< /sf-m >
  * @param options Model configuration, this can be the 3rd parameter
  * @param scope Your extendable class or callable function
- */ export function model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
+ */
+export function model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
 export namespace model {
 	/**
 	 * Find the index of RepeatedElement on DOM
@@ -362,7 +363,7 @@ export namespace model {
  * @param name < name-here >< /name-here >
  * @param options Model configuration, this can be the 3rd parameter
  * @param scope Your extendable class or callable function
- */ export function component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
+ */export function component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
 export namespace component {
 	/**
 	 * Define new template for a component, this is optional

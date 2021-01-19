@@ -22,6 +22,7 @@ sf.space -> sf.Space    // Class
 ---------------------------------------
 
 // Most of you may haven't use this feature yet
+// Because some of it haven't been documented
 // But this will be written here for reference
 sf.events(a, b) -> sf.events.register(a, b)
 sf.window -> sf.Window  // Class
