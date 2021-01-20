@@ -6,15 +6,13 @@
 // object[0] is slower than array[0]
 
 import {sfRegex, internal, emptyArray} from "../shared.js";
-import {SFModel} from "../sf-model.js";
 import {parseElement, getSelector} from "../sf-dom.utils.js";
 import {SFPageView} from "../sf-views.js";
 import {bindElement} from "./element-bind.js";
 import {$} from "../sf-dom.js";
-import {REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./a_shared.js";
-import {parseIndexAllocate, modelScript, templateErrorInfo, escapeParse, trimIndentation} from "./a_model.js";
+import {ModelInternal, REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./a_shared.js";
+import {parseIndexAllocate, modelScript, templateErrorInfo, escapeParse, trimIndentation, templateExec, parserForAttribute} from "./a_utils.js";
 import {modelKeys as getModelKeys, toArray, stringifyPropertyPath, avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
-import {templateExec, parserForAttribute} from "./template.js";
 
 // ToDo: directly create parse_index from here
 function dataParser(html, _model_, template, _modelScoped, preParsedReference, justName){
@@ -708,7 +706,7 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 
 			// Skip nested sf-model or sf-space
 			// Skip element and it's childs that already bound to prevent vulnerability
-			if(currentNode.constructor._ref === SFModel._ref || currentNode.model !== void 0)
+			if(currentNode.constructor._ref === ModelInternal._ref || currentNode.model !== void 0)
 				continue;
 
 			var attrs = currentNode.attributes;
@@ -805,7 +803,7 @@ export function parsePreprocess(nodes, modelRef, modelKeysRegex){
 	try{
 		for(current of nodes){
 			if(current.nodeType === 3 && binded.has(current.parentNode) === false){
-				if(current.parentNode.constructor._ref === SFModel._ref){
+				if(current.parentNode.constructor._ref === ModelInternal._ref){
 					// Auto wrap element if parent is 'SF-M'
 					const replace = document.createElement('span');
 					current.parentNode.insertBefore(replace, current);
@@ -890,18 +888,6 @@ export function parsePreprocess(nodes, modelRef, modelKeysRegex){
 		templateErrorInfo(e, current, "(Not from sf-each)", modelRef, template);
 		throw e;
 	}
-}
-
-export function initBindingInformation(modelRef){
-	if(modelRef.sf$bindedKey !== void 0)
-		return;
-
-	// Element binding data
-	Object.defineProperty(modelRef, 'sf$bindedKey', {
-		configurable: true,
-		writable:true,
-		value:{}
-	});
 }
 
 function revalidateTemplateRef(template, modelRef){

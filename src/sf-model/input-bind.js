@@ -1,6 +1,6 @@
 import {internal as Internal} from "../internal.js";
 import {internal} from "../shared.js";
-import {initBindingInformation} from "./parser.js";
+import {initBindingInformation} from "./a_utils.js";
 import {onEvent} from "../sf-dom.utils.js";
 import {modelToViewBinding} from "./element-bind.js";
 import {parsePropertyPath, deepProperty} from "../utils.js";

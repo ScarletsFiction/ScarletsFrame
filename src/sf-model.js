@@ -4,6 +4,7 @@ import {loader as Loader} from "./sf-loader.js";
 import {component as Component} from "./sf-component.js";
 import {getCallerFile, modelKeys, findBindListElement} from "./utils.js";
 import {ModelInit} from "./sf-model/a_model.js";
+import {ModelInternal} from "./sf-model/a_shared.js";
 import {removeModelBinding} from "./sf-model/element-bind.js";
 import "./sf-space.js";
 
@@ -211,6 +212,7 @@ if(window.sf$proxy)
 	SFModel._ref = window.sf$proxy.SFModel;
 else forProxying.SFModel = SFModel._ref = SFModel;
 
+ModelInternal._ref = SFModel._ref;
 customElements.define('sf-m', SFModel);
 
 var root_ = function(scope){

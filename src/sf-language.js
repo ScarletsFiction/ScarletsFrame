@@ -5,7 +5,7 @@ import {Space} from "./sf-space.js";
 import {internal} from "./shared.js";
 import {syntheticTemplate} from "./sf-model/template.js";
 import {getSelector, childIndexes} from "./sf-dom.utils.js";
-import {parseIndexAllocate, applyParseIndex} from "./sf-model/a_model.js";
+import {parseIndexAllocate, applyParseIndex} from "./sf-model/a_utils.js";
 
 let waiting = false;
 var pendingCallback = [];

@@ -1,7 +1,8 @@
 import {internal, forProxying} from "../shared.js";
 import {stringifyPropertyPath, deepProperty} from "../utils.js";
 import {syntheticTemplate, templateParser, syntheticReactiveArray} from "./template.js";
-import {extractPreprocess, initBindingInformation, revalidateBindingPath} from "./parser.js";
+import {extractPreprocess, revalidateBindingPath} from "./parser.js";
+import {initBindingInformation} from "./a_utils.js";
 import {ReactiveArray, ReactiveMap, ReactiveSet, ElementManipulatorProxy} from "./repeated-list.js";
 
 export function removeModelBinding(ref, isDeep, isLazy, isUniqList){

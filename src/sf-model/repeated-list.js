@@ -6,10 +6,10 @@
 import {component as Component} from "../sf-component.js";
 import {internal as Internal} from "../internal.js";
 import {$} from "../sf-dom.js";
-import {modelScript} from "./a_model.js";
+import {modelScript, initBindingInformation} from "./a_utils.js";
 import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";
 import {internal, SFOptions, sfRegex} from "../shared.js";
-import {initBindingInformation, extractPreprocess} from "./parser.js";
+import {extractPreprocess} from "./parser.js";
 import {getScope, findBindListElement, avoidQuotes, hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
 import {getSelector} from "../sf-dom.utils.js";
 import {modelToViewBinding, repeatedListBindRoot, bindElement} from "./element-bind.js";
