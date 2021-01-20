@@ -1,11 +1,11 @@
 import {internal as Internal} from "../internal.js";
 import {internal, SFOptions, emptyArray, sfRegex} from "../shared.js";
 import {templateErrorInfo, findErrorLocation, _eP, applyParseIndex} from "./a_model.js";
-import {parseElement, prevAll} from "../sf-dom.utils.js";
+import {parseElement, prevAll, childIndexes} from "../sf-dom.utils.js";
 import {eventHandler} from "./event-handler.js";
 import {repeatedListBinding} from "./repeated-list.js";
 import {bindInput} from "./input-bind.js";
-import {childIndexes} from "../sf-dom.utils.js";
+import {REF_DIRECT, REF_IF, REF_EXEC} from "./a_shared.js";
 
 function elseIfHandle(else_, item, modelScope){
 	const { elseIf } = else_;
@@ -26,11 +26,6 @@ function elseIfHandle(else_, item, modelScope){
 
 	return else_.elseValue(item, modelScope, _eP);
 }
-
-// ==== Template parser ====
-export const templateParser_regex = /{{%=([0-9]+)%/g;
-export const templateParser_regex_split = /{{%=[0-9]+%/g;
-export const REF_DIRECT = 0, REF_IF = 1, REF_EXEC = 2;
 
 export function templateExec(parse, item, atIndex, parsed, repeatListIndex){
 	var temp, changed = false;

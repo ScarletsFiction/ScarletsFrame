@@ -186,3 +186,75 @@ export function getCallerFile(step){
 		return temp.split('://').pop();
 	}
 }
+
+// Get property of the model
+export function modelKeys(modelRef, toString){
+	// it maybe custom class
+	if(modelRef.constructor !== Object && modelRef.constructor !== Array){
+		var keys = new Set();
+		for(var key in modelRef){
+			if(key.includes('$'))
+				continue;
+
+			keys.add(key);
+		}
+
+		getStaticMethods(keys, modelRef.constructor);
+		getPrototypeMethods(keys, modelRef.constructor);
+
+		if(toString){
+			let temp = '';
+			for(var key of keys){
+				if(temp.length === 0){
+					temp += key;
+					continue;
+				}
+
+				temp += `|${key}`;
+			}
+
+			return temp;
+		}
+
+		return [...keys];
+	}
+
+	var keys = [];
+	for(var key in modelRef){
+		if(key.includes('$'))
+			continue;
+
+		keys.push(key);
+	}
+
+	if(toString)
+		return keys.join('|');
+
+	return keys;
+}
+
+export function findBindListElement(el, includeComponent){
+	el = el.parentNode;
+	while(el !== null){
+		if((el.sf$elementReferences && el.sf$elementReferences.template.bindList) || (includeComponent && el.sf$controlled !== void 0))
+			return el;
+
+		el = el.parentNode;
+	}
+	return null;
+}
+
+export function getScope(el, returnNode){
+	el ??= $0;
+
+	// If it's Node type
+	if(el.tagName !== void 0){
+		if(el.sf$controlled === void 0 && !(el.sf$elementReferences && el.sf$elementReferences.template.bindList))
+			el = findBindListElement(el, true);
+
+		if(el === null)
+			return el;
+
+		return returnNode ? el : el.model;
+	}
+};

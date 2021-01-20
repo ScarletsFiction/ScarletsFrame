@@ -1,4 +1,4 @@
-import {getScope} from "./sf-model.js";
+import {getScope} from "./utils.js";
 import {component as Component} from "./sf-component.js";
 import {request as Request} from "./sf-request.js";
 import {Space} from "./sf-space.js";

@@ -1,7 +1,6 @@
 import {customEvent} from "./custom-event.js";
-import {avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
+import {avoidQuotes, parsePropertyPath, deepProperty, modelKeys as _modelKeys, findBindListElement} from "../utils.js";
 import {childIndexes, getSelector} from "../sf-dom.utils.js";
-import {model as Model, findBindListElement} from "../sf-model.js";
 import {internal, sfRegex} from "../shared.js";
 
 if(!window.TouchEvent)
@@ -18,7 +17,7 @@ function getDirectReference(_modelScope, script){
 }
 
 export function eventHandler(that, data, _modelScope, rootHandler, template){
-	const modelKeys = Model.modelKeys(_modelScope, true);
+	const modelKeys = _modelKeys(_modelScope, true);
 
 	let direct = false;
 	let script = data.value;

@@ -6,7 +6,7 @@ import {avoidQuotes, proxyClass, parsePropertyPath, deepProperty} from "../utils
 import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.js";
 import {repeatedListBinding} from "./repeated-list.js";
 import {bindInput} from "./input-bind.js";
-import {templateParser_regex} from "./template.js";
+import {templateParser_regex} from "./a_shared.js";
 
 export function ModelInit(el, modelName, namespace){
 	if(el.model !== void 0)

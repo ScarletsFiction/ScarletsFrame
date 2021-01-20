@@ -1,6 +1,7 @@
 export {API} from "./sf-api.js";
 export {hotReload} from "./sf-hot-reload.js";
-export {model, getScope} from "./sf-model.js";
+export {model} from "./sf-model.js";
+export {getScope} from "./utils.js";
 export {component} from "./sf-component.js";
 export {Space} from "./sf-space.js";
 export {$} from "./sf-dom.js";

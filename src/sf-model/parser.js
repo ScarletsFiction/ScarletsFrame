@@ -6,14 +6,14 @@
 // object[0] is slower than array[0]
 
 import {sfRegex, internal, emptyArray} from "../shared.js";
-import {modelKeys as getModelKeys, SFModel} from "../sf-model.js";
+import {SFModel} from "../sf-model.js";
 import {parseElement, getSelector} from "../sf-dom.utils.js";
 import {SFPageView} from "../sf-views.js";
 import {bindElement} from "./element-bind.js";
 import {$} from "../sf-dom.js";
-import {REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./template.js";
+import {REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./a_shared.js";
 import {parseIndexAllocate, modelScript, templateErrorInfo, escapeParse, trimIndentation} from "./a_model.js";
-import {toArray, stringifyPropertyPath, avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
+import {modelKeys as getModelKeys, toArray, stringifyPropertyPath, avoidQuotes, parsePropertyPath, deepProperty} from "../utils.js";
 import {templateExec, parserForAttribute} from "./template.js";
 
 // ToDo: directly create parse_index from here
