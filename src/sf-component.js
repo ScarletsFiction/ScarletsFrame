@@ -90,7 +90,7 @@ component.for = function(name, options, func, namespace){
 		func = options;
 
 		// It's a class
-		if(func.prototype.init !== void 0){
+		if(func.prototype && func.prototype.init !== void 0){
 			internal.componentInherit[name] = func;
 			func = {class:func};
 		}

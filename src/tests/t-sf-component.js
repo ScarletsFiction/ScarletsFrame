@@ -39,7 +39,7 @@ class InheritComponent{
 	}
 }
 
-component('comp-test', {extend: InheritComponent}, function(My, root, item){
+component('comp-test', {extend: InheritComponent}, (My, root, item)=>{
 	My.item = item;
 	My.tries = [1,2,3+adder];
 	My.data = 'zxc'+adder;

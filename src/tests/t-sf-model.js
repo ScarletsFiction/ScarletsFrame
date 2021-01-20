@@ -2,7 +2,7 @@ import {model, component, language} from "../index.js";
 import {ModelInit} from "../sf-model/a_model.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
-model('model-binding', function(My, root){
+model('model-binding', (My, root)=>{
 	window.model_binding = My;
 
 	setTimeout(function(){
