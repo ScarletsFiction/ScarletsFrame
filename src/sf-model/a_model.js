@@ -5,6 +5,7 @@ import {proxyClass, parsePropertyPath, deepProperty} from "../utils.js";
 import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.js";
 import {repeatedListBinding} from "./repeated-list.js";
 import {bindInput} from "./input-bind.js";
+import {$} from "../sf-dom.js";
 
 export function ModelInit(el, modelName, namespace){
 	if(el.model !== void 0)
