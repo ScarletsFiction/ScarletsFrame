@@ -444,7 +444,7 @@
       </ful-test>
     </sf-m>
 
-    <br>RepeatedElement inside of RepeatedElement:
+    <br>ReactiveList inside of ReactiveList:
     <sf-m name="repeattest">
       <div sf-each="key, val in lv1">
         lv1 <span sf-each="key2, val2 in val.lv2">
@@ -455,7 +455,19 @@
       </div>
     </sf-m>
 
-    Class as model/component test
+    <br>ReactiveComponentList inside of ReactiveList:
+    <sf-m name="repeattest">
+      <repeat-test sf-each="val in lv1" sf-as-scope>
+        {{ foo }}
+        <span sf-each="key2, val2 in lv2">
+          <br> -- lv2 <span sf-each="key3, val3 in val2.lv3">
+            {{ val3  }}
+          </span>
+        </span>
+      </repeat-test>
+    </sf-m>
+
+    <br>Class as model/component test
     <sf-m name="clastest">{{nyam}} {{ful}}</sf-m>
     <clas-test>{{nyam}} {{ful}}</clas-test>
     <br>

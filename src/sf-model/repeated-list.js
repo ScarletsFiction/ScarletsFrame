@@ -281,7 +281,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	let callback = target[`on$${prop}`] || {};
 
 	const compTemplate = (namespace || Component).registered[element.tagName.toLowerCase()];
-	if(compTemplate !== void 0 && compTemplate[3] === false && element.childNodes.length !== 0)
+	if(compTemplate !== void 0 && compTemplate[3] === void 0 && element.childNodes.length !== 0)
 		compTemplate[3] = element;
 
 	const isComponent = compTemplate !== void 0 ? compTemplate[1] : false;

@@ -268,3 +268,7 @@ model('repeattest', function(My){
 		yield 3;
 	}
 });
+
+component('repeat-test', function(My){
+	My.foo = 'lv1-component';
+});

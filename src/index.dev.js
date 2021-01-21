@@ -22,6 +22,7 @@ export {Obj} from "./sf-model/repeated-list.js";
 
 // Auto turn on the inspector assistant
 import {Inspector} from "./assistant/inspector.js";
+import {$} from "./sf-dom.js";
 setTimeout(()=> {
 	$(function(){
 		Inspector();

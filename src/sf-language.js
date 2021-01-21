@@ -572,7 +572,7 @@ function assignSquareBracket(value, elem, template, eRef){
 function createParseIndex(text, remakeRef, template){
 	const parse_index = []
 	const value = text.replace(/{(.*?)}/g, function(full, match){
-		if(isNaN(match) !== false){
+		if(isNaN(match)){
 			if(match in template.modelRefRoot)
 				match = template.modelRefRoot[match][0];
 

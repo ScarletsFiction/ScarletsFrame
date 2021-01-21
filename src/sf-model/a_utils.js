@@ -1,6 +1,6 @@
 import {avoidQuotes} from "../utils.js";
 import {escapeText, childIndexes} from "../sf-dom.utils.js";
-import {templateParser_regex, REF_DIRECT, REF_IF, REF_EXEC} from "./a_shared.js";
+import {templateParser_regex, REF_DIRECT, REF_IF, REF_EXEC, ModelInternal} from "./a_shared.js";
 import {internal as Internal} from "../internal.js";
 import {SFOptions, sfRegex} from "../shared.js";
 import {eventHandler} from "./event-handler.js";
@@ -145,10 +145,10 @@ export function templateErrorInfo(e, element, item, modelRef, template){
 
 		if(modelRef?.$el !== void 0){
 			el = modelRef.$el[0];
-			if(el && el.constructor === SFModel){
+			if(el && el.constructor === ModelInternal._ref){
 				if(modelRef.$el.length !== 1){
 					isSingle = "From one of shared model's element:";
-					parentElement = modelRef.$el.slice(0);
+					el = modelRef.$el.slice(0);
 				}
 			}
 		}
