@@ -103,7 +103,8 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 			}
 
 			if(lockCall !== false && lockCall.call !== void 0){
-				lockCall.call.call(lockCall.target, ev, lockCall.model, _modelScope, lockCall.sf$repeatListIndex);
+				const {element} = lockCall;
+				lockCall.call.call(lockCall.target, ev, element.model, _modelScope, element.sf$repeatListIndex);
 				return;
 			}
 
