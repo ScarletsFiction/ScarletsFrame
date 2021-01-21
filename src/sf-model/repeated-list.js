@@ -249,6 +249,14 @@ function rangeFunction(begin, end, step){
 		for(var i=0; i < arr.length; i++)
 			arr[i] = String.fromCharCode(arr[i]);
 	}
+	else{
+		const _step = step % 1;
+		if(_step !== 0){
+			const multiplier = 1 / _step;
+			for (var i = 0; i < arr.length; i++)
+				arr[i] = Math.round(arr[i]*multiplier)/multiplier;
+		}
+	}
 
 	this.remake(arr, true);
 }
