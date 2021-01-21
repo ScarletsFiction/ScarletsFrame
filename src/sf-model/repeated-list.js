@@ -216,7 +216,7 @@ function listFromFunction(modelRef, pattern, list){
 	}
 	else pattern.call = func;
 
-	pattern.call();
+	pattern.call(list, modelRef, rangeFunction);
 	pattern.source = ['sf$uniqList', pattern.source];
 }
 
