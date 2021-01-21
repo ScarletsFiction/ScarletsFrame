@@ -5,6 +5,10 @@ sf-inspector{
 	z-index: 1000;
 }
 
+sf-space[sf_devmode]{
+	display: block !important;
+}
+
 .sf-shadow-mark{
 	top:0;
 	left:0;

@@ -223,7 +223,7 @@ setTimeout(()=> {
 		// Create sf-inspector component inside of sf_devmode space
 		// Then append it in the body
 		$('body').append(`
-	<sf-space sf_devmode>
+	<sf-space sf_devmode style="display: none">
 		<sf-inspector></sf-inspector>
 		<div class="sf-viewer"></div>
 	</sf-space>`);
