@@ -93,10 +93,17 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 			return;
 		}
 
+		let lockCall = false;
+
 		// We need to get element with 'sf-bind-list' and check current element before processing
 		script = function(ev){
 			if(ev.isTrusted === false && wantTrusted){
 				Security.report && Security.report(1, ev);
+				return;
+			}
+
+			if(lockCall !== false && lockCall.call !== void 0){
+				lockCall.call.call(lockCall.target, ev, lockCall.model, _modelScope, lockCall.sf$repeatListIndex);
 				return;
 			}
 
@@ -110,16 +117,39 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 					return;
 
 				var call = findEventFromList(getSelector(elem, true, realThat), realThat.sf$elementReferences.template);
-				if(call !== void 0)
-					call.call(childIndexes(found, realThat), ev, realThat.model, _modelScope, realThat.sf$repeatListIndex);
+				if(call !== void 0){
+					const target = childIndexes(found, realThat);
+					if(lockCall === true){
+						lockCall = {
+							call,
+							target,
+							element:realThat
+						};
+					}
+
+					call.call(target, ev, realThat.model, _modelScope, realThat.sf$repeatListIndex);
+				}
 
 				return;
 			}
 
 			var call = findEventFromList(void 0);
-			if(call !== void 0)
+			if(call !== void 0){
+				if(lockCall === true){
+					lockCall = {
+						call,
+						target:ev.target,
+						element:ev.target
+					};
+				}
+
 				call.call(ev.target, ev, ev.target.model, _modelScope, ev.target.sf$repeatListIndex);
+			}
 		};
+
+		script.lock = function(locking){
+			lockCall = locking;
+		}
 
 		script.listener = listener;
 	}

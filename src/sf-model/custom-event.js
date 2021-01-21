@@ -97,6 +97,9 @@ export var customEvent = {
 			ev.preventDefault();
 			ev.stopPropagation();
 
+			// Lock sf-each target if exist
+			script.lock && script.lock(true);
+
 			script.call(that, ev);
 			view = ev.view === null ? ev.target.ownerDocument : ev.view.document;
 
@@ -114,6 +117,9 @@ export var customEvent = {
 
 			script.call(that, ev);
 			view = ev.view === null ? ev.target.ownerDocument : ev.view.document;
+
+			// Lock sf-each target if exist
+			script.lock && script.lock(false);
 
 			if(isTouchDevice())
 				that.removeEventListener('touchmove', prevent, {passive:false, once:true});
@@ -224,6 +230,9 @@ function touchGesture(that, callback){
 			ev.totalScale =
 			ev.totalAngle = 0;
 
+			// Lock sf-each target if exist
+			script.lock && script.lock(true);
+
 			callback(ev);
 			view.addEventListener('pointermove', callbackMove);
 		}
@@ -271,6 +280,9 @@ function touchGesture(that, callback){
 			ev.scale = ev.angle = 0;
 			ev.totalScale = lastScale - startScale;
 			ev.totalAngle = lastAngle - startAngle;
+
+			// Lock sf-each target if exist
+			script.lock && script.lock(true);
 			callback(ev);
 		}
 		else{
@@ -279,8 +291,10 @@ function touchGesture(that, callback){
 
 			if(pointers.length === 2){
 				view.removeEventListener('pointermove', callbackMove);
-
 				ev.scale = ev.angle = 0;
+
+				// Lock sf-each target if exist
+				script.lock && script.lock(true);
 				callback(ev);
 			}
 		}

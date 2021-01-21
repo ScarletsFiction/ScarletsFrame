@@ -211,12 +211,15 @@ function listFromFunction(modelRef, pattern, list){
 			}, 1);
 		};
 
-		// Ducktape for make SyntheticTemplate call this as function
-		pattern.call.inputBoundRun = true;
+		pattern.call();
 	}
-	else pattern.call = func;
+	else{
+		pattern.call = {}; // Dummy
+		setTimeout(function(){
+			func(list, modelRef, rangeFunction);
+		}, 1);
+	}
 
-	pattern.call(list, modelRef, rangeFunction);
 	pattern.source = ['sf$uniqList', pattern.source];
 }
 
