@@ -10,3 +10,5 @@ rollup.config.js
 babel.config.js
 tsconfig.js
 gulpfile.js
+favicon.ico
+graph.svg

@@ -2,6 +2,8 @@
 /pnpm-lock.yaml
 /example/
 *.map
+/dist/inspector.js
+/dist/inspector.css
 /dist/scarletsframe.min.js
 /dist/scarletsframe.dev.js
 mynote.md
@@ -11,3 +13,4 @@ package-lock.json
 /tsconfig.json
 /favicon.ico
 /public/dist/
+/public/tests/t-shared.js
