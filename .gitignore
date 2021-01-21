@@ -9,7 +9,6 @@
 mynote.md
 /tests/
 package-lock.json
-/src/*.ts
 /tsconfig.json
 /favicon.ico
 /public/dist/

@@ -1,4 +1,4 @@
-// Type definitions for ScarletsFrame
+// Type definitions for ScarletsFrame, still not perfect yet
 // Project: https://github.com/ScarletsFiction/ScarletsFrame
 // Definitions by: StefansArya <https://github.com/stefansarya>
 
@@ -232,13 +232,15 @@ declare class Space {
 	 * @param name <sf-m name="name-here"></sf-m>
 	 * @param options Model configuration, this can be the 3rd parameter
 	 * @param scope Your extendable class or callable function
-	 */ model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SpaceModels;
+	 */
+	model(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SpaceModels;
 	/**
 	 * Define new <component-name> element handler in the element space
 	 * @param name <name-here></name-here>
 	 * @param options Model configuration, this can be the 3rd parameter
 	 * @param scope Your extendable class or callable function
-	 */ component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): SpaceComponents;
+	 */
+	component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): SpaceComponents;
 	/** Destroy sf-space */
 	destroy(): void;
 }
@@ -356,14 +358,16 @@ export namespace model {
 	/**
 	 * Find the index of RepeatedElement on DOM
 	 * @param element single RepeatedElement
-	 */ function index(element: HTMLElement): number;
+	 */
+	function index(element: HTMLElement): number;
 }
 /**
  * Define new < component-name > element handler, if the component scope is returning a model scope it would be used as current scope instead
  * @param name < name-here >< /name-here >
  * @param options Model configuration, this can be the 3rd parameter
  * @param scope Your extendable class or callable function
- */export function component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
+ */
+export function component(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
 export namespace component {
 	/**
 	 * Define new template for a component, this is optional
@@ -371,7 +375,8 @@ export namespace component {
 	 * in the DOM then you can skip this
 	 * @param name Component name
 	 * @param template The template content for the component
-	 */ function html(name: String, template: String | HTMLElement | TemplateOptions): void;
+	 */
+	function html(name: String, template: String | HTMLElement | TemplateOptions): void;
 }
 export { API };
 export namespace loader {
