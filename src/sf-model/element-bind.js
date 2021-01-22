@@ -263,8 +263,11 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		else{
 			let ref = bindedKey[bindName] ??= [];
 
-			if(ref.includes(callback) === false)
+			if(ref.includes(callback) === false){
+				callback.prop = stringifyPropertyPath(originalPropertyName);
+				callback.model = originalModel;
 				ref.push(callback);
+			}
 		}
 
 		if(!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex)
@@ -375,8 +378,12 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 			if(bindedKey.bindList){
 				const {bindList} = bindedKey;
-				for (var i = 0; i < bindList.length; i++)
-					syntheticReactiveArray(bindList[i], originalPropertyName, originalModel);
+				var temp;
+				for (var i = 0; i < bindList.length; i++){
+					temp = bindList[i];
+
+					syntheticReactiveArray(temp, temp.prop || originalPropertyName, temp.model || originalModel);
+				}
 			}
 
 			if(bindedKey.elements){
