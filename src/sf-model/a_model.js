@@ -36,6 +36,7 @@ export function ModelInit(el, modelName, namespace){
 			deepBinding:{}
 		}});
 	}
+	else model.sf$internal.modelKeysRegex ??= createModelKeysRegex(el, model, null);
 
 	if(model.constructor !== Object){
 		if(model.sf$internal.proxied === void 0){

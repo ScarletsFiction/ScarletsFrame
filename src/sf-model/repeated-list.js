@@ -163,6 +163,10 @@ const listFunctionHandle = {
 };
 
 function listFromFunction(modelRef, pattern, list){
+	if(modelRef.sf$internal._regex === void 0)
+		modelRef.sf$internal._regex = modelRef.sf$internal.modelKeysRegex.modelRefRoot_regex;
+
+
 	let func = avoidQuotes(pattern.source, function(temp){
 		// Unescape HTML
 		temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');

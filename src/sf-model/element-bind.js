@@ -314,7 +314,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	if(originalPropertyName.constructor === Array){
 		if(originalModel.sf$internal === void 0){
-			Object.defineProperty(model, 'sf$internal', {configurable:true, value:{
+			Object.defineProperty(originalModel, 'sf$internal', {configurable:true, value:{
 				deepBinding:{}
 			}});
 		}
@@ -376,9 +376,9 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 					callback[i]();
 			}
 
+			var temp;
 			if(bindedKey.bindList){
 				const {bindList} = bindedKey;
-				var temp;
 				for (var i = 0; i < bindList.length; i++){
 					temp = bindList[i];
 
@@ -388,7 +388,6 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 			if(bindedKey.elements){
 				const {elements} = bindedKey;
-				var temp;
 				for (var i = 0; i < elements.length; i++){
 					temp = elements[i];
 
