@@ -1,4 +1,4 @@
-import {customEvent} from "./custom-event.js";
+import {CustomEvent} from "./custom-event.js";
 import {avoidQuotes, parsePropertyPath, deepProperty, modelKeys as _modelKeys, findBindListElement} from "../utils.js";
 import {childIndexes, getSelector} from "../sf-dom.utils.js";
 import {internal, sfRegex} from "../shared.js";
@@ -225,8 +225,8 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		}, options);
 	}
 
-	if(customEvent[eventName]){
-		customEvent[eventName]((rootHandler || that), keys, script, _modelScope, rootHandler);
+	if(CustomEvent[eventName]){
+		CustomEvent[eventName]((rootHandler || that), script, keys, _modelScope);
 		return;
 	}
 

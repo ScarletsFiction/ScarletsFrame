@@ -2,8 +2,8 @@ import {onEvent, offEvent} from "../sf-dom.utils.js";
 import {internal, isTouchDevice} from "../shared.js";
 
 const toDegree = 180/Math.PI;
-export var customEvent = {
-	taphold(that, keys, script){
+export const CustomEvent = {
+	taphold(that, script, keys){
 		const set = new Set();
 		let evStart = null;
 
@@ -72,7 +72,7 @@ export var customEvent = {
 			that.removeEventListener('pointerdown', callbackStart);
 		}
 	},
-	gesture(that, keys, script){
+	gesture(that, script, keys){
 		function callback(data){
 			script.call(that, data);
 		}
@@ -80,7 +80,7 @@ export var customEvent = {
 		touchGesture(that, callback);
 		callback.listener = script;
 	},
-	dragmove(that, keys, script){
+	dragmove(that, script, keys){
 		function callbackMove(ev){
 			ev.stopPropagation();
 			ev.preventDefault();
@@ -139,7 +139,7 @@ export var customEvent = {
 			document.removeEventListener('pointerup', callbackEnd, {once:true});
 		}
 	},
-	filedrop(that, keys, script){
+	filedrop(that, script, keys){
 		that.addEventListener('dragover', function dragover(ev){
 			ev.preventDefault();
 		});
