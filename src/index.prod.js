@@ -19,5 +19,6 @@ export {Views} from "./sf-views.js";
 export {Window} from "./sf-window.js";
 export {internal} from "./internal.js";
 export {Obj} from "./sf-model/repeated-list.js";
+import {CustomEvent as DOMEvent} from "./sf-model/custom-event.js";
 
 // import.meta.hot?.accept();
