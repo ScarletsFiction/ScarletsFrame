@@ -3,7 +3,7 @@ let {windowEv} = internal;
 
 import {loader as Loader} from "./sf-loader.js";
 import {request as Request} from "./sf-request.js";
-import {customEvent} from "./sf-model/custom-event.js";
+import {CustomEvent} from "./sf-model/custom-event.js";
 import {toArray} from "./utils.js";
 import {prevAll, onEvent, onceEvent, offEvent, parseElement, escapeText} from "./sf-dom.utils.js";
 
@@ -57,24 +57,20 @@ const DOMTokenListAdd = DOMTokenList.prototype.add;
 const DOMTokenListRemove = DOMTokenList.prototype.remove;
 const DOMTokenListToggle = DOMTokenList.prototype.toggle;
 
-class DOMList{
+class DOMList extends Array{
 	constructor(elements){
 		if(elements === null){
-	    	this.length = 0;
-			return this;
+			super();
+			return;
 		}
 
 		if(elements.length === void 0 || elements === window){
-			this[0] = elements;
-			this.length = 1;
-			return this;
+			super(elements);
+			return;
 		}
 
-	    for (let i = 0; i < elements.length; i++)
-	    	this[i] = elements[i];
-
-		this.length = elements.length;
-		return this;
+		super(...elements);
+		return;
 	}
 	push(el){
 		if(this._){
@@ -328,8 +324,8 @@ class DOMList{
 	}
 	on(event, selector, callback, options){
 		for (let i = 0; i < this.length; i++){
-			if(event in customEvent){
-				customEvent[event](this[i], null, callback);
+			if(event in CustomEvent){
+				CustomEvent[event](this[i], callback);
 				continue;
 			}
 
@@ -345,7 +341,7 @@ class DOMList{
 				continue;
 			}
 
-			if(event in customEvent){
+			if(event in CustomEvent){
 				if(this[i][`sf$eventDestroy_${event}`] !== void 0)
 					this[i][`sf$eventDestroy_${event}`]();
 
@@ -553,6 +549,10 @@ class DOMList{
 	touchmove(d){return this.trigger('touchmove', d)}
 	resize(d){return this.trigger('resize', d, true)}
 	scroll(d){return this.trigger('scroll', d, true)}
+
+	toString(){
+		return "sQuery[..."+this.length+']';
+	}
 }
 
 function _DOMList(list){
@@ -591,163 +591,152 @@ function recreateDOMList($el, length){
 	return Object.setPrototypeOf(temp, DOMList.prototype);
 }
 
-;(function(){
-	// ToDo: Optimize performance by using `length` check instead of `for` loop
-	$.fn = DOMList.prototype;
-	$.fn.add = $.fn.push;
+// ToDo: Optimize performance by using `length` check instead of `for` loop
+$.fn = DOMList.prototype;
+$.fn.add = $.fn.push;
 
-	// Bring array feature that not modifying current length
-	$.fn.indexOf = Array.prototype.indexOf;
-	$.fn.forEach = Array.prototype.forEach;
-	$.fn.concat = Array.prototype.concat;
-	$.fn.reverse = Array.prototype.reverse;
-	$.fn.slice = Array.prototype.slice;
-	$.fn.filter = Array.prototype.filter;
-	$.fn.includes = Array.prototype.includes;
+$.findOne = function(selector, context){
+	if(context !== void 0) return context.querySelector(selector);
+	return document.querySelector(selector);
+}
 
-	$.findOne = function(selector, context){
-		if(context !== void 0) return context.querySelector(selector);
-		return document.querySelector(selector);
+$.isChildOf = function(child, parent) {
+     let node = child.parentNode;
+     while (node !== null) {
+         if(node === parent)
+             return true;
+
+         node = node.parentNode;
+     }
+
+     return false;
+}
+
+$.parentHasProperty = function(element, propertyName){
+	do {
+		if(propertyName in element)
+			return element;
+
+		element = element.parentNode;
+	} while (element !== null);
+	return null;
+}
+
+$.animateKey = function(element, animationName, duration, callback){
+	if(element === void 0)
+		return;
+
+	if(duration && duration.constructor === Function){
+		callback = duration;
+		duration = void 0;
 	}
 
-	$.isChildOf = function(child, parent) {
-	     let node = child.parentNode;
-	     while (node !== null) {
-	         if(node === parent)
-	             return true;
+	if(duration === void 0 || duration.constructor === Number)
+		duration = {
+			duration:duration && duration.constructor === Number ? duration : 0.6,
+			ease:'ease',
+			fill:'both'
+		};
 
-	         node = node.parentNode;
-	     }
+	if(duration.skipOnHidden && (
+		element.offsetParent === null || window.getComputedStyle(element).visibility === 'hidden'
+	)) return;
 
-	     return false;
-	}
+	let animationEnd = null;
 
-	$.parentHasProperty = function(element, propertyName){
-		do {
-			if(propertyName in element)
-				return element;
+	if(element.style.animation !== void 0)
+		animationEnd = 'animationend';
 
-			element = element.parentNode;
-		} while (element !== null);
-		return null;
-	}
+	if(element.style.WebkitAnimation !== void 0)
+		animationEnd = 'webkitAnimationEnd';
 
-	$.animateKey = function(element, animationName, duration, callback){
-		if(element === void 0)
-			return;
+  	const { style } = element;
+	let arrange = animationName;
 
-		if(duration && duration.constructor === Function){
-			callback = duration;
-			duration = void 0;
+	if(duration.duration !== void 0)
+		arrange += ` ${duration.duration}s`;
+	if(duration.ease !== void 0)
+		arrange += ` ${duration.ease}`;
+
+	if(duration.delay !== void 0){
+		arrange += ` ${duration.delay}s`;
+
+		if(animationEnd === 'animationend')
+			var animationStart = 'animationstart';
+		else var animationStart = 'webkitAnimationStart';
+
+		if(duration.visible === false){
+			element.classList.add('anim-pending');
+			style.visibility = 'hidden';
 		}
 
-		if(duration === void 0 || duration.constructor === Number)
-			duration = {
-				duration:duration && duration.constructor === Number ? duration : 0.6,
-				ease:'ease',
-				fill:'both'
-			};
-
-		if(duration.skipOnHidden && (
-			element.offsetParent === null || window.getComputedStyle(element).visibility === 'hidden'
-		)) return;
-
-		let animationEnd = null;
-
-		if(element.style.animation !== void 0)
-			animationEnd = 'animationend';
-
-		if(element.style.WebkitAnimation !== void 0)
-			animationEnd = 'webkitAnimationEnd';
-
-	  	const { style } = element;
-		let arrange = animationName;
-
-		if(duration.duration !== void 0)
-			arrange += ` ${duration.duration}s`;
-		if(duration.ease !== void 0)
-			arrange += ` ${duration.ease}`;
-
-		if(duration.delay !== void 0){
-			arrange += ` ${duration.delay}s`;
-
-			if(animationEnd === 'animationend')
-				var animationStart = 'animationstart';
-			else var animationStart = 'webkitAnimationStart';
-
-			if(duration.visible === false){
-				element.classList.add('anim-pending');
-				style.visibility = 'hidden';
-			}
-
-			$.once(element, animationStart, function(){
-				if(element.isConnected === false)
-					return;
-
-				if(duration.whenBegin)
-					duration.whenBegin.call(element);
-
-				element.classList.remove('anim-pending');
-				style.visibility = 'visible';
-			});
-		}
-		else style.visibility = 'visible';
-
-		if(duration.iteration !== void 0)
-			arrange += ` ${duration.iteration}`;
-		if(duration.direction !== void 0)
-			arrange += ` ${duration.direction}`;
-		if(duration.fill !== void 0)
-			arrange += ` ${duration.fill}`;
-
-		style.webkitAnimation = style.animation = arrange;
-
-		setTimeout(function(){
-			if(element.isConnected === void 0){
-				if(callback !== void 0) callback.call(element);
+		$.once(element, animationStart, function(){
+			if(element.isConnected === false)
 				return;
-			}
 
-			element.classList.add('anim-element');
+			if(duration.whenBegin)
+				duration.whenBegin.call(element);
 
-			if(element.parentNode !== null){
-				const origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
-				const parentStyle = element.parentNode.style;
-				element.parentNode.classList.add('anim-parent');
-				parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
-			}
-
-			$.once(element, animationEnd, function(){
-				setTimeout(function(){
-					if(element.parentNode !== null){
-						style.visibility = '';
-						element.classList.remove('anim-element');
-						style.webkitAnimation = style.animation = '';
-
-						const parentStyle = element.parentNode.style;
-						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
-
-						if(callback !== void 0) callback.call(element);
-					}
-				});
-			});
+			element.classList.remove('anim-pending');
+			style.visibility = 'visible';
 		});
 	}
+	else style.visibility = 'visible';
 
-	$.remove = function(elements){
-		if(elements.remove !== void 0)
-			return elements.remove();
+	if(duration.iteration !== void 0)
+		arrange += ` ${duration.iteration}`;
+	if(duration.direction !== void 0)
+		arrange += ` ${duration.direction}`;
+	if(duration.fill !== void 0)
+		arrange += ` ${duration.fill}`;
 
-		for (let i = 0; i < elements.length; i++) {
-			elements[i].remove();
+	style.webkitAnimation = style.animation = arrange;
+
+	setTimeout(function(){
+		if(element.isConnected === void 0){
+			if(callback !== void 0) callback.call(element);
+			return;
 		}
-	}
 
-	$.nextAll = (element, nextAll, selector, one)=> prevAll(element, selector, true, one);
-	$.prevAll = prevAll;
-	$.on = onEvent;
-	$.once = onceEvent;
-	$.off = offEvent;
-	$.parseElement = parseElement;
-	$.escapeText = escapeText;
-})();
+		element.classList.add('anim-element');
+
+		if(element.parentNode !== null){
+			const origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
+			const parentStyle = element.parentNode.style;
+			element.parentNode.classList.add('anim-parent');
+			parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
+		}
+
+		$.once(element, animationEnd, function(){
+			setTimeout(function(){
+				if(element.parentNode !== null){
+					style.visibility = '';
+					element.classList.remove('anim-element');
+					style.webkitAnimation = style.animation = '';
+
+					const parentStyle = element.parentNode.style;
+					parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+
+					if(callback !== void 0) callback.call(element);
+				}
+			});
+		});
+	});
+}
+
+$.remove = function(elements){
+	if(elements.remove !== void 0)
+		return elements.remove();
+
+	for (let i = 0; i < elements.length; i++) {
+		elements[i].remove();
+	}
+}
+
+$.nextAll = (element, nextAll, selector, one)=> prevAll(element, selector, true, one);
+$.prevAll = prevAll;
+$.on = onEvent;
+$.once = onceEvent;
+$.off = offEvent;
+$.parseElement = parseElement;
+$.escapeText = escapeText;
