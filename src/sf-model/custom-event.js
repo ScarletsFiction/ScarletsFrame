@@ -223,7 +223,7 @@ function touchGesture(that, callback){
 			const dx = pointers[1].clientX - pointers[0].clientX;
 			const dy = pointers[1].clientY - pointers[0].clientY;
 
-			lastScale = startScale = Math.sqrt(dx**2 + dy**2) * 0.01;
+			lastScale = startScale = ((dx**2 + dy**2) ** 0.5) / 100;
 			lastAngle = startAngle = Math.atan2(dy, dx) * toDegree;
 
 			ev.scale =
@@ -250,7 +250,7 @@ function touchGesture(that, callback){
 		const dx = p2.clientX - p1.clientX;
 		const dy = p2.clientY - p1.clientY;
 
-		const currentScale = Math.sqrt(dx**2 + dy**2) * 0.01;
+		const currentScale = ((dx**2 + dy**2) ** 0.5) / 100;
 		const currentAngle = Math.atan2(dy, dx) * toDegree;
 
 		ev.scale = currentScale - lastScale;
