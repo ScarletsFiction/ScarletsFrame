@@ -1,4 +1,4 @@
-import {internal, SFOptions} from "../shared.js";
+import {internal, SFOptions, HotReload} from "../shared.js";
 import {model as Model, SFModel} from "../sf-model.js";
 import {escapeText, childIndexes} from "../sf-dom.utils.js";
 import {proxyClass, parsePropertyPath, deepProperty} from "../utils.js";
@@ -59,6 +59,11 @@ export function ModelInit(el, modelName, namespace){
 
 	if(specialElement.scope !== void 0)
 		initPendingComponentScope(specialElement.scope, el);
+
+	if(model.hotReloadedHTML && HotReload.active && model.$el[0] !== void 0){
+		model.hotReloadedHTML && model.hotReloadedHTML(el);
+		return;
+	}
 
 	model.init && model.init(el, firstInit);
 

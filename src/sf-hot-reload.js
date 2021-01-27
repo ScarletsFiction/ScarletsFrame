@@ -63,15 +63,18 @@ export function hotReload(mode){
 			if(window.___browserSync___ !== void 0){
 				const { socket } = window.___browserSync___;
 
-				function runScript(code){new Function(code)()}
+				function runScript(code){
+					HotReload.active = true;
+					new Function(code)();
+					HotReload.active = false;
+				}
+
 				socket.on('sf-hot-js', runScript);
 				socket.on('sf-hot-html', runScript);
 			}
 			else console.error("HotReload: Failed to listen to browserSync");
 		}, 1000);
 	});
-
-
 
 	// On model scope reregistered
 	HotReload.Model = function(space, name, func){
@@ -344,7 +347,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 	if(!firstTime || forceHaveLoaded){
 		scope.sf$refresh && scope.sf$refresh.forEach(v=>v());
-		scope.hotReloaded && scope.hotReloaded(scope);
+		scope.hotReloaded && scope.hotReloaded();
 	}
 
 	haveLoaded.add(scope);
