@@ -294,7 +294,7 @@ export class VirtualScrollManipulator {
 		const { scrollTop } = this.iScroller;
 		const { elList } = this;
 
-		for(var i = Math.floor(scrollTop/this.elMaxHeight); i < elList.length; i++){
+		for(var i = (scrollTop/this.elMaxHeight) | 0; i < elList.length; i++){
 			const scrollPos = elList[i].sf$scrollPos;
 			if(scrollPos === void 0 || scrollPos >= scrollTop)
 				break;
