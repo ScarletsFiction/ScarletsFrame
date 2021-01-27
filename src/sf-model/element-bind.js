@@ -264,7 +264,16 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			let ref = bindedKey[bindName] ??= [];
 
 			if(ref.includes(callback) === false){
-				callback.prop = stringifyPropertyPath(originalPropertyName);
+				const prop = stringifyPropertyPath(originalPropertyName);
+
+				// ToDo: Make this more efficient
+				if(bindName === 'bindList' && callback.model){
+					if(callback.model !== originalModel && callback.prop !== prop)
+						console.error(`Key already has bind information '${callback.prop}' but being replaced with ${prop}`);
+					else callback = Object.create(callback)
+				}
+
+				callback.prop = prop;
 				callback.model = originalModel;
 				ref.push(callback);
 			}
