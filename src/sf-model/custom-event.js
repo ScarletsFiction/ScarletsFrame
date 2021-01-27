@@ -77,8 +77,8 @@ export const CustomEvent = {
 			script.call(that, data);
 		}
 
-		touchGesture(that, callback);
 		callback.listener = script;
+		touchGesture(that, callback);
 	},
 	dragmove(that, script, keys){
 		function callbackMove(ev){
@@ -175,6 +175,7 @@ function touchGesture(that, callback){
 	let lastScale = 0;
 	let lastAngle = 0;
 	let actionBackup = '';
+	const script = callback.listener;
 
 	let force = false;
 	const pointers = [];
