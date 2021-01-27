@@ -57,20 +57,24 @@ const DOMTokenListAdd = DOMTokenList.prototype.add;
 const DOMTokenListRemove = DOMTokenList.prototype.remove;
 const DOMTokenListToggle = DOMTokenList.prototype.toggle;
 
-class DOMList extends Array{
+class DOMList{
 	constructor(elements){
 		if(elements === null){
-			super();
-			return;
+	    	this.length = 0;
+			return this;
 		}
 
 		if(elements.length === void 0 || elements === window){
-			super(elements);
-			return;
+			this[0] = elements;
+			this.length = 1;
+			return this;
 		}
 
-		super(...elements);
-		return;
+	    for (let i = 0; i < elements.length; i++)
+	    	this[i] = elements[i];
+
+		this.length = elements.length;
+		return this;
 	}
 	push(el){
 		if(this._){
@@ -549,10 +553,6 @@ class DOMList extends Array{
 	touchmove(d){return this.trigger('touchmove', d)}
 	resize(d){return this.trigger('resize', d, true)}
 	scroll(d){return this.trigger('scroll', d, true)}
-
-	toString(){
-		return "sQuery[..."+this.length+']';
-	}
 }
 
 function _DOMList(list){
@@ -594,6 +594,17 @@ function recreateDOMList($el, length){
 // ToDo: Optimize performance by using `length` check instead of `for` loop
 $.fn = DOMList.prototype;
 $.fn.add = $.fn.push;
+
+// Bring array feature that not modifying current length
+$.fn.indexOf = Array.prototype.indexOf;
+$.fn.forEach = Array.prototype.forEach;
+$.fn.concat = Array.prototype.concat;
+$.fn.reverse = Array.prototype.reverse;
+$.fn.slice = Array.prototype.slice;
+$.fn.filter = Array.prototype.filter;
+$.fn.includes = Array.prototype.includes;
+$.fn.map = Array.prototype.map;
+$.fn.some = Array.prototype.some;
 
 $.findOne = function(selector, context){
 	if(context !== void 0) return context.querySelector(selector);
