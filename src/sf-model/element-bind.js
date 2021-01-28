@@ -266,11 +266,34 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			if(ref.includes(callback) === false){
 				const prop = stringifyPropertyPath(originalPropertyName);
 
-				// ToDo: Make this more efficient
-				if(bindName === 'bindList' && callback.model){
-					if(callback.model !== originalModel && callback.prop !== prop)
-						console.error(`Key already has bind information '${callback.prop}' but being replaced with ${prop}`);
-					else callback = Object.create(callback)
+				if(bindName === 'bindList'){
+					let RefRoot = callback.modelRefRoot_path;
+					if(RefRoot.length !== 0 && callback.hasDeep === void 0){
+						if(callback.hasDeep === void 0){
+							let deep = callback.hasDeep = {};
+							// console.log(originalModel);
+							for (var i = 0; i < RefRoot.length; i++) {
+								const item = RefRoot[i];
+								if(item.length !== 1)
+									deep[item.slice(0, -1).join('%$')] = true;
+							}
+						}
+
+						if(originalModel.sf$internal === void 0){
+							Object.defineProperty(originalModel, 'sf$internal', {
+								configurable:true, value:{}
+							});
+						}
+
+						originalModel.sf$internal.deepBinding = callback.hasDeep;
+					}
+
+					// ToDo: Make this more efficient
+					if(callback.model){
+						if(callback.model !== originalModel && callback.prop !== prop)
+							console.error(`Key already has bind information '${callback.prop}' but being replaced with ${prop}`);
+						else callback = Object.create(callback);
+					}
 				}
 
 				callback.prop = prop;
@@ -329,7 +352,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		}
 
 		// Cache deep sf$bindingKey path
-		if(originalModel.sf$internal !== void 0 && originalPropertyName.length !== 1)
+		if(originalPropertyName.length !== 1)
 			originalModel.sf$internal.deepBinding[originalPropertyName.slice(0, -1).join('%$')] = true;
 
 		originalPropertyName = stringifyPropertyPath(originalPropertyName);
