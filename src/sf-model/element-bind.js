@@ -271,7 +271,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 					if(RefRoot.length !== 0 && callback.hasDeep === void 0){
 						if(callback.hasDeep === void 0){
 							let deep = callback.hasDeep = {};
-							// console.log(originalModel);
+
 							for (var i = 0; i < RefRoot.length; i++) {
 								const item = RefRoot[i];
 								if(item.length !== 1)
