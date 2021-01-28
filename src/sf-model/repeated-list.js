@@ -1157,6 +1157,9 @@ export class ReactiveArray extends Array{
 	}
 
 	remake(newList, atMiddle){
+		if(newList.splice === void 0)
+			throw new Error("ReactiveArray expect an array data but got:\n"+newList);
+
 		const lastLength = this.length;
 
 		// Check if item has same reference
