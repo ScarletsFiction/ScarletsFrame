@@ -345,7 +345,19 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 				originalAddr.template = Object.assign({}, template);
 				const temp = originalAddr.template;
 				delete temp.bindList;
+
+				if(this.constructor === ReactiveArray)
+					originalAddr.template.repeatedList ??= true;
+
+				if(SFOptions.devMode === true)
+					originalAddr.template.rootIndex = getSelector(parentNode, true, getScope(parentNode, true));
 			}
+
+			if(this.constructor === ReactiveArray)
+				template.repeatedList ??= true;
+
+			if(SFOptions.devMode === true)
+				template.rootIndex = getSelector(parentNode, true, getScope(parentNode, true));
 		}
 		else{
 			template = Object.create(originalAddr.template);
@@ -353,21 +365,16 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			// Deep Copy
 			var parses = template.parse = template.parse.slice(0);
 			for (let i = 0; i < parses.length; i++) {
-				let ref = parses[i] = Object.assign({}, parses[i]);
-				ref.data = Object.assign({}, ref.data);
+				let ref = parses[i] = Object.create(parses[i]);
+				ref.data = Object.assign({}, ref.data); // Don't use Object.create here
 				ref.data._modelScope = modelRef;
 			}
 		}
 
 		template.bindList = this;
 
-		if(SFOptions.devMode === true)
-			template.rootIndex = getSelector(parentNode, true, getScope(parentNode, true));
-
-		if(this.constructor === ReactiveArray){
-			template.repeatedList = true;
+		if(this.constructor === ReactiveArray)
 			repeatedListBindRoot(template, modelRef);
-		}
 	}
 	else if(element.hasAttribute('sf-as-scope'))
 		EM.asScope = true;
