@@ -110,7 +110,7 @@ export function hotReload(mode){
 	}
 
 	HotReload.ComponentRemove = function(el){
-		const proxy = proxySpace.get(el.sf$space);
+		const proxy = proxySpace.get(el.sf$space || Component);
 		if(proxy === void 0)
 			return;
 
