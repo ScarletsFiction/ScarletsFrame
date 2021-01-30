@@ -7,7 +7,7 @@
 
 import {sfRegex, internal, emptyArray} from "../shared.js";
 import {parseElement, getSelector} from "../sf-dom.utils.js";
-import {SFPageView} from "../sf-views.js";
+import {SFPageView} from "../sf-views-page.js";
 import {bindElement} from "./element-bind.js";
 import {$} from "../sf-dom.js";
 import {ModelInternal, REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./a_shared.js";

@@ -5,13 +5,7 @@ import {request as Request} from "./sf-request.js";
 import {security as Security} from "./sf-security.js";
 import {getCallerFile} from "./utils.js";
 import {loader as Loader} from "./sf-loader.js";
-
-export class SFPageView extends HTMLElement{}
-if(window.sf$proxy)
-	SFPageView._ref = window.sf$proxy.SFPageView;
-else forProxying.SFPageView = SFPageView._ref = SFPageView;
-
-customElements.define('sf-page-view', SFPageView);
+import {SFPageView} from "./sf-views-page.js";
 
 const rejectResponse = /<html/;
 
