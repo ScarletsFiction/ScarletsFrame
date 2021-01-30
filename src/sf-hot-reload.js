@@ -1,6 +1,5 @@
 // Allow direct function replacement to accelerate development
 // Note: This feature will allocate more small memory and small slow down
-// ToDo: Fix memory leak on RepeatedElement when using this feature
 import {SFOptions, internal, HotReload} from "./shared.js";
 import {loader as Loader} from "./sf-loader.js";
 import {component as Component, prepareComponentTemplate} from "./sf-component.js";

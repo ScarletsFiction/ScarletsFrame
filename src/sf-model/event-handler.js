@@ -46,6 +46,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 			withKey = true;
 
 		// ToDo today: $0.parentElement.sf$listListener
+		// I forgot why I put this ToDo
 
 		if(direct)
 			var func = getDirectReference(_modelScope, script);
