@@ -771,6 +771,8 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	if(that.constructor === ReactiveMap || that.constructor === ReactiveSet){
 		const isMap = that instanceof Map;
 		let i = -1;
+		let pending = beforeChild === void 0 ? [] : false;
+
 		for(let item of that){
 			i++;
 
@@ -800,12 +802,15 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 			}
 
 			if(beforeChild === void 0)
-				tempDOM.appendChild(elem);
+				pending.push(elem);
 			else{
 				EM.elements[i] = elem;
 				tempDOM.insertBefore(elem, beforeChild);
 			}
 		}
+
+		if(pending !== false)
+			tempDOM.append(...pending);
 		return;
 	}
 
@@ -815,6 +820,8 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	}
 
 	const len = that.length;
+	let pending = beforeChild === void 0 ? new Array(len) : false;
+
 	for (var i = 0; i < len; i++) {
 		const item = that[i];
 
@@ -839,7 +846,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 		}
 
 		if(beforeChild === void 0)
-			tempDOM.appendChild(elem);
+			pending[i] = elem;
 		else if(beforeChild === true) // Virtual Scroll
 			EM.elements[i] = elem;
 		else{
@@ -847,6 +854,9 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 			tempDOM.insertBefore(elem, beforeChild);
 		}
 	}
+
+	if(pending !== false)
+		tempDOM.append(...pending);
 
 	// For PropertyList
 	if(temp !== void 0){
@@ -1427,6 +1437,10 @@ export class ElementManipulator{
 		if(this.elements !== void 0)
 			exist.length = list.length || 0;
 
+		let pending = false;
+		if(this.$VSM === void 0 && this.bound_end === void 0)
+			pending = new Array(list.length - index);
+
 		for (var i = index; i < list.length; i++) {
 			const ref = list[i];
 			let temp = this.elementRef.get(ref);
@@ -1476,13 +1490,16 @@ export class ElementManipulator{
 			if(this.$VSM === void 0){
 				if(this.bound_end !== void 0)
 					this.parentNode.insertBefore(temp, this.bound_end);
-				else this.parentNode.appendChild(temp);
+				else pending[i - index] = temp;
 			}
 			else{
 				exist[i] = temp;
 				this.$VSM.newElementInit(temp, i-1);
 			}
 		}
+
+		if(pending !== false && pending.length !== 0)
+			this.parentNode.append(...pending);
 
 		if(this.$VSM) this.$VSM.hardRefresh(index);
 	}
@@ -1801,8 +1818,7 @@ export class ElementManipulator{
 				return this.$VSM.reverse();
 
 			if(this.bound_end === void 0)
-				for (var i = 0; i < elems.length; i++)
-					this.parentNode.appendChild(elems[i]);
+				this.parentNode.append(...elems);
 			else
 				for (var i = 0; i < elems.length; i++)
 					this.parentNode.insertBefore(elems[i], this.bound_end);

@@ -416,10 +416,8 @@ class DOMList{
 		return this;
 	}
 	append(element){
-		if(element.constructor === Array || element.constructor === DOMList){
-			for (let i = 0; i < element.length; i++)
-				this[0].append(element[i]);
-		}
+		if(element.constructor === Array || element.constructor === DOMList)
+			this[0].append(...element);
 		else{
 			if(element.constructor === String)
 				this[0].insertAdjacentHTML('beforeEnd', element);

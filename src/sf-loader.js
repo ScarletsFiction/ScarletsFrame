@@ -13,7 +13,6 @@ export class loader{
 	static DOMReady = false;
 	static turnedOff = true;
 
-
 	// Make event listener
 	static onFinish(func){
 		if(loader.DOMWasLoaded) return func();
@@ -60,14 +59,17 @@ export class loader{
 		loader.turnedOff = false;
 
 		loader.totalContent = loader.totalContent + list.length;
+
+		let temp = new Array(list.length);
 		for(var i = 0; i < list.length; i++){
-			const s = document.createElement('link');
+			const s = temp[i] = document.createElement('link');
 	        s.rel = 'stylesheet';
 	        s.href = list[i];
 	        s.addEventListener('load', loader.f, {once:true});
 	        s.addEventListener('error', loader.f, {once:true});
-	        document.head.appendChild(s);
 		}
+
+        document.head.append(...temp);
 	}
 
 	static js(list, async){

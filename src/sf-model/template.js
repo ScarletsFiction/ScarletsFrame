@@ -25,16 +25,12 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 		html.sf$repeatListIndex = repeatListIndex;
 
 	if(copy !== void 0){
-		const childs = html.childNodes;
-		for (var i = 0, n = childs.length; i < n; i++) {
-			copy.appendChild(childs[0]);
-		}
+        copy.append(...html.childNodes);
 
 		// Assign attributes
 		const attr = html.attributes;
-		for (var i = 0; i < attr.length; i++) {
+		for (var i = 0; i < attr.length; i++)
 			copy.setAttribute(attr[i].name, attr[i].value);
-		}
 
 		html = copy;
 	}
