@@ -8,7 +8,8 @@
       "@babel/preset-env", {
         "targets": {
           "chrome": "55",
-          "firefox": "42"
+          "firefox": "68",
+          "ios": "10.3"
         },
         "corejs" : {
           "version" : "3",
