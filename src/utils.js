@@ -192,12 +192,8 @@ export function modelKeys(modelRef, toString){
 	// it maybe custom class
 	if(modelRef.constructor !== Object && modelRef.constructor !== Array){
 		var keys = new Set();
-		for(var key in modelRef){
-			if(key.includes('$'))
-				continue;
-
+		for(var key in modelRef)
 			keys.add(key);
-		}
 
 		getStaticMethods(keys, modelRef.constructor);
 		getPrototypeMethods(keys, modelRef.constructor);
@@ -220,12 +216,8 @@ export function modelKeys(modelRef, toString){
 	}
 
 	var keys = [];
-	for(var key in modelRef){
-		if(key.includes('$'))
-			continue;
-
+	for(var key in modelRef)
 		keys.push(key);
-	}
 
 	if(toString)
 		return keys.join('|');

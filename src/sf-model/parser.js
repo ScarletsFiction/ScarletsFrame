@@ -321,11 +321,14 @@ export function templateInjector(targetNode, modelScope, cloneDynamic){
 }
 
 export function createModelKeysRegex(targetNode, modelScope, mask){
-	const modelKeys = getModelKeys(modelScope, true);
+	let modelKeys = getModelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
 		throw new Error("Model has no property instead of '$el', maybe some script haven't been loaded");
 	}
+
+	if(modelKeys.includes('$'))
+		modelKeys = modelKeys.split('$').join('\\$');
 
 	const obj = {};
 

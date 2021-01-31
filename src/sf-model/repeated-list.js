@@ -407,7 +407,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			_list.push(modelKeysRegex.modelRef_regex_mask);
 
 		template.scopes = modelKeysRegex.scopes;
-		_list.regex = new RegExp(sfRegex.getScopeList.join(_list.join('|')), 'gm');
+		_list.regex = new RegExp(sfRegex.getScopeList.join(_list.join('|').split('$').join('\\$')), 'gm');
 
 		originalAddr.template = template;
 	}
