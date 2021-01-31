@@ -957,13 +957,16 @@ export class ReactiveArray extends Array{
 
 		if(lastLength === 0) index = -1;
 		// Trim the index if more than length
-		else if(arguments.length >= 3 && index >= lastLength)
-			index = lastLength - 1;
-		// Removing data
-		else if(index < 0) index = lastLength + index;
+		else if(arguments.length >= 3){
+			if(index >= lastLength)
+				index = lastLength - 1;
+			else index--;
+		}
 
+		if(index < 0) index = lastLength + index;
 		if(!limit && limit !== 0) limit = this.length;
 
+		// Removing data
 		for (var i = limit - 1; i >= 0; i--)
 			this.$EM.remove(index + i);
 
