@@ -3,10 +3,10 @@ import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 language.default = 'en_US';
 language.add('en_US', {
-  translated:"translated {data}[b:bo {data} ld]"+adder,
+  translated:"translated {data}[b:bo {data} ld]",
   hello:{
     other:{
-      side:"Hello from the [b:other] side"+adder
+      side:"Hello from the [b:other] side"
     }
   },
   "i'm":{
@@ -22,17 +22,17 @@ language.add('en_US', {
   test:{complex:'custom {data} [b:{item}] here'}
 });
 language.add('id_ID', {
-  translated:"terjemahankan [b:bold] {data}"+adder,
+  translated:"terjemahankan [b:bold] {data}",
   custom:{
     el:{
-      iB1:"Kontent variabel: {inputBinding2.text} nyam [b:halo] {inputBinding1} [b:uhay]"+adder,
+      iB1:"Kontent variabel: {inputBinding2.text} nyam [b:halo] {inputBinding1} [b:uhay]",
       iB2:"Kontent diatas: {inputBinding2.text}",
-      iB3:"Itu adalah {inputBinding2.text}"+adder
+      iB3:"Itu adalah {inputBinding2.text}"
     }
   },
   hello:{
     other:{
-      side:"Halo dari sisi [b:lain]"+adder
+      side:"Halo dari sisi [b:lain]"
     }
   },
   "i'm":{
