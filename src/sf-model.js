@@ -104,7 +104,8 @@ model.for = function(name, options, func, namespace){
 	if(Loader.DOMWasLoaded && name in internal.modelPending){
 		const temp = internal.modelPending[name];
 		for (let i = 0; i < temp.length; i++) {
-			ModelInit(temp[i], temp[i].getAttribute('name'));
+			const ref = temp[i];
+			ModelInit(ref, ref.getAttribute('name'));
 		}
 
 		delete internal.modelPending[name];
@@ -231,8 +232,10 @@ setTimeout(()=> {
 		try{
 			for(var keys in internal.modelPending){
 				var ref = internal.modelPending[keys];
-				for (var z = 0; z < ref.length; z++)
-					ModelInit(ref[z], ref[z].getAttribute('name'));
+				for (var z = 0; z < ref.length; z++){
+					const temp = ref[z];
+					ModelInit(temp, temp.getAttribute('name'));
+				}
 
 				delete internal.modelPending[keys];
 			}

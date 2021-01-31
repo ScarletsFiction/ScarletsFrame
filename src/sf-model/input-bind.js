@@ -144,9 +144,10 @@ var assignElementData = {
 
 		if(val.constructor !== Array){
 			for (var i = 0, n = list.length; i < n; i++) {
+				const temp = list[i];
 				if(typeData === String)
-					list[i].selected = list[i].value === val;
-				else list[i].selected = list[i].value == val;
+					temp.selected = temp.value === val;
+				else temp.selected = temp.value == val;
 			}
 		}
 		else for (var i = 0, n = list.length; i < n; i++)
@@ -286,13 +287,13 @@ export function bindInput(temp, modelLocal, mask, modelScope){
 	let element, oneWay, propertyName;
 
 	for (let i = 0; i < temp.length; i++) {
-		if(temp[i].getAttribute === void 0){
-			element = temp[i].el;
-			oneWay = temp[i].id === 1;
-			propertyName = temp[i].rule;
+		element = temp[i];
+		if(element.getAttribute === void 0){
+			oneWay = element.id === 1;
+			propertyName = element.rule;
+			element = element.el;
 		}
 		else{
-			element = temp[i];
 			oneWay = element.hasAttribute('sf-into');
 			propertyName = oneWay ? element.getAttribute('sf-into') : element.getAttribute('sf-bind');
 

@@ -69,11 +69,11 @@ function checkWaiting(name, namespace){
 
 	const upgrade = waitingHTML[name];
 	for (let i = upgrade.length - 1; i >= 0; i--) {
-		if(upgrade[i].namespace !== namespace)
+		let temp = upgrade[i];
+		if(temp.namespace !== namespace)
 			continue;
 
-		let { el } = upgrade[i];
-		el = component.new(name, el, upgrade[i].item, namespace, false, true);
+		let el = component.new(name, temp.el, temp.item, namespace, false, true);
 		if(el === void 0)
 			return;
 
@@ -270,10 +270,11 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		$item = {item:$item};
 
 	for (var i = 0; i < attr.length; i++) {
-		if(avoid.test(attr[i].nodeName))
+		const temp = attr[i];
+		if(avoid.test(temp.nodeName))
 			continue;
 
-		$item[attr[i].nodeName] = attr[i].value;
+		$item[temp.nodeName] = temp.value;
 	}
 
 	let useItem = true;

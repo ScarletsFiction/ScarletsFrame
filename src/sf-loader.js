@@ -118,8 +118,10 @@ function domLoadEvent(event){
 			const temp = document.body.querySelectorAll('img:not(onload)[src]');
 			for (let i = 0; i < temp.length; i++) {
 				loader.totalContent++;
-				temp[i].addEventListener('load', loader.f, {once:true});
-				temp[i].addEventListener('error', loader.f, {once:true});
+
+				const ref = temp[i];
+				ref.addEventListener('load', loader.f, {once:true});
+				ref.addEventListener('error', loader.f, {once:true});
 			}
 		}
 	}
@@ -166,8 +168,9 @@ function waitResources(){
 
 	const listener = document.querySelectorAll('script, link, img');
 	for (var i = 0; i < listener.length; i++) {
-		listener[i].removeEventListener('error', loader.f);
-		listener[i].removeEventListener('load', loader.f);
+		const ref = listener[i];
+		ref.removeEventListener('error', loader.f);
+		ref.removeEventListener('load', loader.f);
 	}
 
 	loader.DOMWasLoaded = true;

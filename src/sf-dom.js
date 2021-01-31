@@ -400,9 +400,8 @@ class DOMList{
 			return this.length !== 0 && this[0].$data ? this[0].$data[key] : void 0;
 
 		for (let i = 0; i < this.length; i++){
-			if(this[i].$data === void 0)
-				this[i].$data = {};
-			this[i].$data[key] = value;
+			const ref = this[i].$data ??= {};
+			ref[key] = value;
 		}
 		return this;
 	}

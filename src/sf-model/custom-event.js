@@ -220,8 +220,9 @@ function touchGesture(that, callback){
 		if(pointers.length === 2){
 			ev.stopPropagation();
 
-			const dx = pointers[1].clientX - pointers[0].clientX;
-			const dy = pointers[1].clientY - pointers[0].clientY;
+			const [p1, p2] = pointers;
+			const dx = p1.clientX - p2.clientX;
+			const dy = p1.clientY - p2.clientY;
 
 			lastScale = startScale = ((dx**2 + dy**2) ** 0.5) / 100;
 			lastAngle = startAngle = Math.atan2(dy, dx) * toDegree;

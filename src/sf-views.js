@@ -244,9 +244,8 @@ export function Views(selector, name){
 				temp = document.createElement('sf-page-view');
 				DOM.insertBefore(temp, firstChild);
 
-				for (let i = 1, n = DOM.childNodes.length; i < n; i++) {
-					temp.appendChild(DOM.childNodes[1]);
-				}
+				for (let i = 1, n = DOM.childNodes.length; i < n; i++)
+					temp.appendChild(DOM.childNodes.item(1));
 
 				temp.routePath = currentPath || Self.currentPath;
 				temp.routeCached = routes.findRoute(temp.routePath);
@@ -466,9 +465,12 @@ export function Views(selector, name){
 		if(found === false)
 			return;
 
-		for (var i = 0; i < rootDOM.children.length; i++) {
-			if(rootDOM.children[i].routePath.match(found))
-				rootDOM.children[i].remove();
+		const children = rootDOM.children;
+		for (var i = 0; i < children.length; i++) {
+			const temp = children[i];
+
+			if(temp.routePath.match(found))
+				temp.remove();
 		}
 
 		var i = routes.indexOf(found);

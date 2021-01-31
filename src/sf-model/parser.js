@@ -687,7 +687,8 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 
 		var attrs = targetNode.attributes;
 		for (var a = 0; a < attrs.length; a++) {
-			if(attrs[a].name.slice(0, 1) === '@' || attrs[a].value.includes('{{')){
+			const ref = attrs[a];
+			if(ref.name.slice(0, 1) === '@' || ref.value.includes('{{')){
 				temp.add(targetNode);
 				targetNode.sf$onlyAttribute = true;
 				break;
@@ -697,7 +698,7 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 
 	// Scan from last into first element
 	for (let i = childNodes.length - 1; i >= 0; i--) {
-		const currentNode = childNodes[i];
+		const currentNode = childNodes.item(i);
 
 		if(currentNode.nodeName in excludes)
 			continue;
@@ -734,7 +735,8 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 			}
 
 			for (var a = 0; a < attrs.length; a++) {
-				if(attrs[a].name.slice(0, 1) === '@' || attrs[a].value.includes('{{')){
+				const ref = attrs[a];
+				if(ref.name.slice(0, 1) === '@' || ref.value.includes('{{')){
 					temp.add(currentNode);
 					currentNode.sf$onlyAttribute = true;
 					break;
