@@ -12,9 +12,9 @@ model('model-binding', (My, root)=>{
 	}, 4000);
 
 	My.comp = {bind:{text:'comp bind'}};
-
 	My.onKeyUp = console.warn;
 
+	My.s$ymbol = 123;
 	My.bold = true;
 	My.pink = false;
 	My.inputBinding1 = ''+adder;
