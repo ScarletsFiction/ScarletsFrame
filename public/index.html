@@ -102,7 +102,7 @@
         title="Image only for testing, this is not part of distributable package. This image belongs to the respective owner. Watari Masahito, Eris, Konosuba."
         src="/tests/img.jpg"
         :style="transform:{{trans}}"
-        .@dragmove="dragmove"
+        @dragmove="dragmove"
         @click="console.log"
         @gesture="gesture(321, event)"
         @taphold="taphold(this, event)"

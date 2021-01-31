@@ -53,7 +53,7 @@ model('virtual-scroll', function(self, root){
 
 	var added = false;
 	self.on$list2 = self.on$list1 = {
-		hitFloor:function(){
+		hitFloor(){
 			console.log("✔️ Scroll hit floor");
 
 			// Test infinity load for static scroll
@@ -62,7 +62,7 @@ model('virtual-scroll', function(self, root){
 				self.list1.push({id:"Added on scroll end - 1"+adder}, {id:"Added on scroll end - 2"}, {id:"✔️ Added on scroll end - 3"});
 			}
 		},
-		hitCeiling:function(){
+		hitCeiling(){
 			console.log("✔️ Scroll hit ceiling");
 		}
 	}
@@ -222,6 +222,7 @@ $(function(){
 		list.list1.splice(3, 1); // remove index 3 (item-3)
 		list.list1.splice(5, 0, {id:"The removed item above is 'item-3'"}); // add as index 5
 		list.list1.push({id:"I'm inserted on last index (as item-50)"});
+		list.list1.splice(20, 2, {id:"item-20 a"}, {id:"item-21 a"}); // add as index 5
 
 		list.list1.unshift({id:"{{self.vul}}{{@exec console.error('something not gud')}}"});
 		setTimeout(function(){
