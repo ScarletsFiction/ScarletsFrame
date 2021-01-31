@@ -426,10 +426,8 @@ class DOMList{
 		return this;
 	}
 	prepend(element){
-		if(element.constructor === Array || element.constructor === DOMList){
-			for (let i = 0; i < element.length; i++)
-				this[0].prepend(element[i]);
-		}
+		if(element.constructor === Array || element.constructor === DOMList)
+			this[0].prepend(...element);
 		else{
 			if(element.constructor === String)
 				this[0].insertAdjacentHTML('afterBegin', element);

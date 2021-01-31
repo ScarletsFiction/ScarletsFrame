@@ -777,11 +777,7 @@ export function Views(selector, name){
 			if((url.html.constructor._ref || url.html.constructor) === HTMLTemplateElement){
 				const node = document.createElement('sf-page-view');
 				node.className = 'page-prepare';
-
-				const clone = url.html.cloneNode(true).content.childNodes;
-				for(let p=0, n=clone.length; p < n; p++){
-					node.insertBefore(clone[0], null);
-				}
+				node.append(...url.html.cloneNode(true).content.childNodes);
 
 				afterDOMLoaded(node);
 				return true;
@@ -817,22 +813,14 @@ export function Views(selector, name){
 			// Create new element
 			const dom = document.createElement('sf-page-view');
 			dom.className = 'page-prepare';
-
-			var elements = parseElement(html_content);
-			for(var p=0, n=elements.length; p < n; p++){
-				dom.insertBefore(elements[0], null);
-			}
+			dom.append(...parseElement(html_content));
 
 			// Same as above but without the component initialization
 			if(url.templateURL !== void 0){
 				internal.component.skip = true;
 				const temp = document.createElement('sf-page-view');
 				temp.className = 'page-prepare';
-
-				var elements = parseElement(html_content);
-				for(var p=0, n=elements.length; p < n; p++){
-					temp.insertBefore(elements[0], null);
-				}
+				temp.append(...parseElement(html_content));
 
 				cachedURL[url.templateURL] = temp;
 				internal.component.skip = false;

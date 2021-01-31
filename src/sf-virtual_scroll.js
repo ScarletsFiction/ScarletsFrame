@@ -47,9 +47,7 @@ export class VirtualScrollManipulator {
 		this.iRoot = root;
 		this.iBottom = this.iTop.cloneNode();
 
-		root.insertBefore(this.iTop, null);
-		root.appendChild(this.iBottom);
-		root.insertBefore(firstEl, this.iBottom);
+		root.append(this.iTop, firstEl, this.iBottom);
 
 		const that = this;
 		requestAnimationFrame(()=> {
