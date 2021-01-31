@@ -19,6 +19,8 @@ export var SFOptions = {
 	hotReload: false,
 };
 
+// In case if we need to support Japan/China/Korea character on Object property
+// Replace: "\w$_" with another regex that can ignore symbols like [^ ()]
 export var sfRegex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	getAttrQuotes:/=(\\['"])(?:\1|[\s\S]*?[^\\]\1)/g,
@@ -29,10 +31,10 @@ export var sfRegex = {
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 
 	repeatedList:/(.*?) in (.*?)$/,
-	itemsObserve:/\b(_model_|_modelScope)\.([\w\[\].]+)/g,
-	parsePropertyPath:/(?:\[([\w]+)\]|\.([\w]+))/g,
-	getSingleMask:['([^\\w.]|^)','([^\\w:]|$)'], //gm
-	getScopeList:['(?:[^\\w.]|^)(',')(?:[^\\w:]|$)'], //gm
+	itemsObserve:/\b(_model_|_modelScope)\.([\w$_\[\].]+)/g,
+	parsePropertyPath:/(?:\[([\w$_]+)\]|\.([\w$_]+))/g,
+	getSingleMask:['([^\\w$_.]|^)','([^\\w$_:]|$)'], //gm
+	getScopeList:['(?:[^\\w$_.]|^)(',')(?:[^\\w$_:]|$)'], //gm
 
 	inputAttributeType:['checkbox','radio','hidden'],
 	anyCurlyBracket:/{{.*?}}/,
