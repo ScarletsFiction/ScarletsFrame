@@ -395,8 +395,11 @@ export class VirtualScrollManipulator {
 
 		if(i === elList.length)
 			this.bottomHeight = 1;
-		else
-			this.bottomHeight = this.totalHeight - (last.sf$scrollPos + last.sf$heightPos);
+		else{
+			this.bottomHeight = this.totalHeight;
+			if(last != null)
+				this.bottomHeight -= last.sf$scrollPos + last.sf$heightPos;
+		}
 
 		if(this.bottomHeight < 0) this.bottomHeight = 2;
 
