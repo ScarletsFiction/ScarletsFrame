@@ -67,7 +67,7 @@ class DOMList extends Array{
 			return;
 		}
 
-	    super(...arguments);
+	    super(...elements);
 		return;
 	}
 	push(el){
