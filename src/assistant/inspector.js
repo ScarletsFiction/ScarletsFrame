@@ -97,6 +97,7 @@ var SFDevMode = SFDevSpace.component('sf-inspector', {
 	}
 
 	var locking = false;
+	var hasFocused = false;
 	$('body').on('pointermove', function(e){
 		if(locking) return;
 		if(e.ctrlKey && e.altKey){
@@ -123,8 +124,10 @@ var SFDevMode = SFDevSpace.component('sf-inspector', {
 			My.sideOpenLock = false;
 			My.message = "Inspecting Element";
 			scanElementFrame(e);
+
+			hasFocused = true;
 		}
-		else{
+		else if(hasFocused){
 			if(My.sideOpenLock === false)
 				clearArrays();
 
@@ -201,7 +204,7 @@ var SFDevMode = SFDevSpace.component('sf-inspector', {
 
 	My.init = function(){
 		setTimeout(()=> {
-			if(My.hasShadow) return;
+			if(My.hasShadow || My.haveList) return;
 			My.sideOpened = false;
 		}, 3000);
 	}
@@ -938,8 +941,7 @@ $(function(){
 		}
 	}
 
-	$('body')
-	.on('pointerdown', function(e){
+	$('body').on('pointerdown', function(e){
 		if(e.ctrlKey && e.altKey){
 			e.preventDefault();
 			e.stopImmediatePropagation();

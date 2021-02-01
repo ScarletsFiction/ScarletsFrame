@@ -267,7 +267,7 @@ sf-model-viewer .val-Boolean{
 
 .sf-model-list-hover{
 	filter: drop-shadow(0 0 17px #00d1ff);
-	display: block;
+	display: inherit;
 	animation: sf-model-list-anim 1s ease-in-out infinite;
 }
 
