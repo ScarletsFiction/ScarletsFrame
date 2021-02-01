@@ -70,7 +70,7 @@ model('model-binding', (My, root)=>{
 	My.prefix = 'i -> '+adder;
 	My.stuff = '(text from the model)'+adder;
 	My.stuffes = ' and stuff'+adder;
-	My.vuln = "{{My.vul}}{{@exec console.error('something not gud')}}"+adder;
+	My.vuln = "{{vul}}{{@exec console.error('something not gud')}}"+adder;
 	My.vul = adder;
 
 	My.testObj = {
