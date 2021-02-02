@@ -162,12 +162,12 @@ function addressAttributes(currentNode, template){
 		if(attr.name.slice(0, 1) === '@'){
 			// No template processing for this
 			if(found){
-				console.error("To avoid vulnerability, template can't be used inside event callback", currentNode);
+				console.error("To avoid vulnerability, template mustn't being used inside of a eval-able element attributes", currentNode);
 				continue;
 			}
 
 			if(template.modelRef_regex)
-				attr.value = attr.value.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
+				attr.nodeValue = attr.value.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
 
 			keys.push({
 				name:attr.name,
@@ -176,6 +176,10 @@ function addressAttributes(currentNode, template){
 			});
 
 			currentNode.removeAttribute(attr.name);
+		}
+		else if(attr.name.slice(0, 2) === 'on'){
+			console.error("To avoid vulnerability, template mustn't being used inside of a eval-able element attributes", currentNode);
+			continue;
 		}
 
 		if(found){
