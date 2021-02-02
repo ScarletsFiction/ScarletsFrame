@@ -377,7 +377,7 @@ function refreshLang(list, noPending, callback){
 			}
 
 			const target = elem.getAttribute('sf-lang');
-			const value = diveObject(defaultLang, target);
+			let value = diveObject(defaultLang, target);
 
 			if(value === void 0){
 			    if(noPending !== true){
@@ -391,6 +391,9 @@ function refreshLang(list, noPending, callback){
 				continue;
 			}
 
+			if(value.includes('{'))
+				value = value.replace(/{.*?}/g, full => `{${full}}`);
+
 			if(noPending === true)
 				list.splice(i, 1);
 
@@ -400,6 +403,7 @@ function refreshLang(list, noPending, callback){
 				const construct = (elem.constructor._ref || elem.constructor);
 				if(construct !== HTMLInputElement && construct !== HTMLTextAreaElement)
 					assignSquareBracket(value, elem);
+				else elem.setAttribute('value', value);
 			}
 		}
 
@@ -526,17 +530,6 @@ function assignSquareBracket(value, elem, template, eRef){
 	}
 
 	let found = template && true;
-
-	// Check if have a template
-	if(!found){
-		for (var i = 0; i < value.length; i++) {
-			if(value[i].includes('{'))
-				value[i] = value[i].replace(/{.*?}/g, function(full){
-					return `{${full}}`;
-				});
-		}
-	}
-
 	elem.textContent = value[0];
 
 	if(elem.firstChild !== null)
