@@ -54,20 +54,18 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 
 		// Replace text node
 		if(ref.nodeType === 3){
-			const refA = current;
-
 			changesReference.push({
-				textContent:refA,
+				textContent:current,
 				ref
 			});
 
 			if(ref.direct !== void 0){
-				refA.textContent = parsed[ref.direct]; //40ms
+				current.nodeValue = parsed[ref.direct]; //40ms
 				continue;
 			}
 
 			// Below is used for multiple/dynamic data
-			current.textContent = applyParseIndex(ref.value, ref.parse_index, parsed);
+			current.nodeValue = applyParseIndex(ref.value, ref.parse_index, parsed);
 			continue;
 		}
 
@@ -305,8 +303,8 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 
 		if(cRef.textContent !== void 0){ // Text only
 			if(cRef.ref.parse_index !== void 0){ // Multiple
-				if(cRef.textContent.textContent === temp) continue;
-				cRef.textContent.textContent = temp;
+				if(cRef.textContent.nodeValue === temp) continue;
+				cRef.textContent.nodeValue = temp;
 
 				haveChanges = true;
 				continue;
@@ -315,7 +313,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 			// Direct value
 			temp = parsed[cRef.ref.direct];
 			if(temp !== void 0){
-				if(cRef.textContent.textContent === temp) continue;
+				if(cRef.textContent.nodeValue === temp) continue;
 
 				const ref_ = cRef.textContent;
 				// Remove old element if exist
@@ -324,7 +322,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 						ref_.previousSibling.remove();
 				}
 
-				ref_.textContent = temp;
+				ref_.nodeValue = temp;
 				haveChanges = true;
 			}
 			continue;
@@ -362,7 +360,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}
 
-			cRef.attribute.value = temp;
+			cRef.attribute.nodeValue = temp;
 			haveChanges = true;
 			continue;
 		}

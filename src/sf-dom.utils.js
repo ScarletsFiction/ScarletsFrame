@@ -233,10 +233,12 @@ export function parseElement(html, elementOnly){
 	return emptyDOM.firstElementChild.content.childNodes || [];
 }
 
+const textEscaper = document.createElement('div');
+textEscaper.textContent = '.';
+const _textEscaper = textEscaper.firstChild;
 export function escapeText(text){
-	const tempDOM = emptyDOM;
-	tempDOM.textContent = text;
-	return tempDOM.innerHTML;
+	_textEscaper.nodeValue = text;
+	return textEscaper.innerHTML;
 }
 
 let documentElement = null;
@@ -290,6 +292,8 @@ export function getSelector(element, childIndexes, untilElement){
 	return names.join(" > ");
 }
 
+// ToDo: Improve this performance, or use document.createElement instead
+// of cloneNode then calling this function for obtaining the reactive element
 export function childIndexes(array, context){
 	if(array.length === 0) // 2ms
 		return context;
@@ -299,7 +303,7 @@ export function childIndexes(array, context){
 	if(array[0].constructor === String && element.id !== array[0].slice(1)) // 3.9ms
 		element = element.querySelector(array[0]);
 
-	for (let i = 0; i < array.length; i++) { // 36ms
+	for (let i = 0; i < array.length; i++) {
 		element = array[i] === 0
 			? element.firstChild
 			: element.childNodes.item(array[i]); // 37ms

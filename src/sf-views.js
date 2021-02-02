@@ -238,7 +238,7 @@ export function Views(selector, name){
 		// Bring the content to an sf-page-view element
 		if(DOM.childNodes.length !== 0){
 			const { firstChild } = DOM;
-			if(DOM.childNodes.length === 1 && (firstChild.constructor._ref || firstChild.constructor) === Text && firstChild.textContent.trim() === '')
+			if(DOM.childNodes.length === 1 && (firstChild.constructor._ref || firstChild.constructor) === Text && firstChild.nodeValue.trim() === '')
 				firstChild.remove();
 			else{
 				temp = document.createElement('sf-page-view');
@@ -576,8 +576,8 @@ export function Views(selector, name){
 		function insertLoadedElement(DOMReference, dom, pendingShowed){
 			dom.routerData = {};
 			const { firstChild } = dom;
-			if((firstChild.constructor._ref || firstChild.constructor) === Comment && firstChild.textContent.indexOf(' SF-View-Data') === 0){
-				dom.routerData = JSON.parse(firstChild.textContent.slice(14));
+			if((firstChild.constructor._ref || firstChild.constructor) === Comment && firstChild.nodeValue.indexOf(' SF-View-Data') === 0){
+				dom.routerData = JSON.parse(firstChild.nodeValue.slice(14));
 				firstChild.remove();
 
 				Object.assign(Self.data, dom.routerData);

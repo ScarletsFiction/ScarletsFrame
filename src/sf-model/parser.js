@@ -193,7 +193,7 @@ function addressAttributes(currentNode, template){
 					name:attr.name,
 					value:attr.value.trim()
 				};
-				attr.value = '';
+				attr.nodeValue = '';
 			}
 
 			indexes = [];
@@ -483,7 +483,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 		}
 
 		else if(temp.nodeType === 3){ // Text node
-			let innerHTML = ref.textContent;
+			let innerHTML = ref.nodeValue;
 			var indexes = [];
 
 			innerHTML.replace(/{{%%=([0-9]+)/gm, function(full, match){
@@ -496,7 +496,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 				for(var a = 0; a < innerHTML.length; a++)
 					innerHTML[a] = trimIndentation(innerHTML[a]).trim();
 
-				ref.textContent = innerHTML.shift();
+				const content = innerHTML.shift();
 
 				const parent = ref.parentNode;
 				const { nextSibling } = ref;
@@ -516,8 +516,9 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 					});
 				}
 
-				if(ref.textContent === '')
+				if(content.length === 0)
 					ref.remove();
+				else ref.nodeValue = content;
 
 				// Process the comment flag only
 				for (var a = commentFlag; a < addressed.length; a++) {
@@ -534,7 +535,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 				}
 
 				// Merge boundary address
-				if(ref.textContent === ''){
+				if(content.length === 0){
 					// Process the comment flag only
 					for (var a = commentFlag; a < addressed.length; a++) {
 						const addr = addressed[a];
@@ -545,13 +546,13 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 					}
 					continue;
 				}
-				else if(ref.textContent.search(/{{%=[0-9]+%/) === -1)
+				else if(ref.nodeValue.search(/{{%=[0-9]+%/) === -1)
 					continue;
 			}
 
 			// Check if it's only model value
 			indexes = [];
-			innerHTML = ref.textContent.replace(templateParser_regex, function(full, match){
+			innerHTML = ref.nodeValue.replace(templateParser_regex, function(full, match){
 				indexes.push(Number(match));
 				return '';
 			});
@@ -559,13 +560,13 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 			if(innerHTML === '' && indexes.length === 1)
 				temp.direct = indexes[0];
 			else{
-				temp.value = ref.textContent.replace(/[ \t]{2,}/g, ' ').split(templateParser_regex_split);
+				temp.value = ref.nodeValue.replace(/[ \t]{2,}/g, ' ').split(templateParser_regex_split);
 				parseIndexAllocate(temp.value);
 				temp.parse_index = indexes;
 			}
 
 			temp.address = getSelector(ref, true);
-			ref.textContent = '-';
+			ref.nodeValue = '-';
 		}
 
 		addressed.push(temp);
@@ -748,23 +749,25 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 		}
 
 		else if((currentNode.constructor._ref || currentNode.constructor) === Text){ // Text
-			if(currentNode.textContent.trim().length === 0){
-				if(currentNode.textContent.length === 0)
-					currentNode.remove();
-				else
-					currentNode.textContent = currentNode.textContent.slice(0, 2);
+			if(currentNode.length === 0){
+				currentNode.remove();
+				continue;
+			}
+
+			if(currentNode.nodeValue.trim().length === 0){
+				currentNode.nodeValue = currentNode.nodeValue.slice(0, 2);
 				continue;
 			}
 
 			// The scan is from bottom to first index
-			const enclosing = currentNode.textContent.indexOf('{[');
+			const enclosing = currentNode.nodeValue.indexOf('{[');
 			if(enclosing !== -1)
 				enclosedHTMLParse = false;
 			else if(enclosedHTMLParse === true)
 				continue;
 
 			// Start enclosed if closing pattern was found
-			const enclosed = currentNode.textContent.indexOf(']}');
+			const enclosed = currentNode.nodeValue.indexOf(']}');
 			if(enclosed !== -1 && (enclosing === -1 || enclosing > enclosed)){ // avoid {[ ... ]}
 				enclosedHTMLParse = true; // when ]} ...
 				continue;
@@ -772,12 +775,12 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 
 			// Continue here when enclosed template {[...]} was skipped
 
-			if(currentNode.textContent.includes('{{')){
+			if(currentNode.nodeValue.includes('{{')){
 				if(extracting === void 0){
 					const theParent = currentNode.parentNode;
 
 					// If it's not single/regular template
-					if(currentNode.textContent.includes('{{@') || enclosing !== -1)
+					if(currentNode.nodeValue.includes('{{@') || enclosing !== -1)
 						temp.add(theParent); // get the element (from current text node)
 					else temp.add(currentNode);
 
@@ -837,7 +840,7 @@ export function parsePreprocess(nodes, modelRef, modelKeysRegex){
 						if(_modelScoped === void 0)
 							template.scopes = _modelScoped = {_modelScope:modelRef};
 
-						attr.value = dataParser(attr.value, null, template, _modelScoped, preParsedRef);
+						attr.nodeValue = dataParser(attr.value, null, template, _modelScoped, preParsedRef);
 					}
 				}
 

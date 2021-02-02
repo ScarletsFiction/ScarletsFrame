@@ -475,7 +475,7 @@ function elementReferencesRefresh(elem){
 			// ToDo: fix value that fail/undefined if it's from ReactiveArray/PropertyList
 			if(elemRef.ref.name === 'value'){
 				const refB = elemRef.ref;
-				elemRef.attribute.value = applyParseIndex(refB.value, refB.parse_index, eRef.parsed, template.parse);
+				elemRef.attribute.nodeValue = applyParseIndex(refB.value, refB.parse_index, eRef.parsed, template.parse);
 			}
 			continue;
 		}
