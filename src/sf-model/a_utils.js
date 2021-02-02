@@ -328,10 +328,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 			continue;
 		}
 
-		const isValueInput = (refB.name === 'value' && ((current.constructor._ref || current.constructor) === HTMLTextAreaElement ||
-			((current.constructor._ref || current.constructor) === HTMLInputElement && sfRegex.inputAttributeType.includes(current.type) === false)
-		));
-
+		const { isValueInput } = refB;
 		var temp = {ref:refB};
 
 		if(SFOptions.devMode)
@@ -342,7 +339,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 		else if(refB.name === 'class')
 			temp.class = current.classList;
 		else{
-			temp.attribute = isValueInput === true
+			temp.attribute = isValueInput
 				? current : current.attributes[refB.name];
 		}
 
@@ -353,7 +350,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 
 		if(refB.direct !== void 0){
 			const val = parsed[refB.direct];
-			if(refB.name === 'value' && isValueInput === true){
+			if(refB.name === 'value' && isValueInput){
 				current.removeAttribute('value');
 				current.value = val;
 				continue;
@@ -366,7 +363,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 
 		// Below is used for multiple data
 		const val = applyParseIndex(refB.value, refB.parse_index, parsed);
-		if(refB.name === 'value' && isValueInput === true){
+		if(refB.name === 'value' && isValueInput){
 			var temp = current.value;
 			current.removeAttribute('value');
 			current.value = val;

@@ -156,6 +156,14 @@ function addressAttributes(currentNode, template){
 	const attrs = currentNode.attributes;
 	const keys = [];
 	let indexes = 0;
+
+	const construct = (currentNode.constructor._ref || currentNode.constructor);
+	const isValueInput = (construct === HTMLTextAreaElement
+	    || (construct === HTMLInputElement
+	        && sfRegex.inputAttributeType.includes(currentNode.type) === false
+	    )
+	);
+
 	for (let a = attrs.length - 1; a >= 0; a--) {
 		const attr = attrs[a];
 		let found = attr.value.includes('{{%=');
@@ -202,6 +210,8 @@ function addressAttributes(currentNode, template){
 					currentNode.removeAttribute(attr.name);
 				else attr.nodeValue = '';
 			}
+
+			key.isValueInput = isValueInput;
 
 			indexes = [];
 			found = key.value.replace(templateParser_regex, function(full, match){

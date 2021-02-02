@@ -362,7 +362,10 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 				if(cRef.attribute.value == temp) continue; // non-strict compare
 			}
 
-			cRef.attribute.nodeValue = temp;
+			if(cRef.ref.isValueInput)
+				cRef.attribute.value = temp;
+			else cRef.attribute.nodeValue = temp;
+
 			haveChanges = true;
 			continue;
 		}
