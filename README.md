@@ -51,6 +51,32 @@ But I recommend to use the default template that have Hot Reload enabled.
 <script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.min.js'></script>
 ```
 
+### Polyfill for older browser
+The `dist` file from the CDN link will only support Chrome >= 55, Firefox >= 68, and iOS >= 10.3.
+If you want to support some old browser, you need to add some polyfill before load the framework.<br>
+For Safari or iOS browser you may need to polyfill PointerEvent too<br>
+
+<details>
+  <summary>Click here to see the polyfills</summary>
+  ```html
+  <script type="text/javascript">
+    // Polyfill for Old Browser
+    (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
+      if(!window.PointerEvent) // Chrome < 55, Firefox 42
+        z('https://code.jquery.com/pep/0.4.3/pep.js');
+      if(!window.Reflect) // Chrome < 49
+        z('https://unpkg.com/core-js-bundle@latest/minified.js');
+      if(!window.customElements) // Chrome < 54, Firefox 63
+        z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
+
+      // From https://polyfill.io/v3/url-builder/
+      if(!window.ResizeObserver || !Element.prototype.append || !Element.prototype.matches || !Array.prototype.includes || !Object.assign || !window.MutationObserver)
+        z('https://polyfill.io/v3/polyfill.min.js?features=Element.prototype.append%2CElement.prototype.prepend%2CArray.prototype.includes%2CArray.from%2CElement.prototype.matches%2CElement.prototype.closest%2CIntersectionObserver%2CIntersectionObserverEntry%2CObject.assign%2CObject.create%2CResizeObserver%2CPromise%2CWeakMap%2CWeakSet%2CrequestAnimationFrame%2CMutationObserver');
+    })();
+  </script>
+  ```
+</details>
+
 ## Using the template
 For starting the development environment, let's use the [default template](https://github.com/StefansArya/scarletsframe-default).
 
@@ -76,38 +102,13 @@ $ npm i scarletsframe@0.34.x
 And include it on your project with webpack ([example](https://github.com/krausest/js-framework-benchmark/tree/master/frameworks/keyed/scarletsframe)) or browserify.
 ```js
 const sf = require('scarletsframe');
-// import sf from "scarletsframe";
+// import { model } from "scarletsframe";
 
-// You can use require to reference another model
+// You can use require to reference another model scope
 sf.model('things', function(My, require) {
   My.something = 123;
 });
 ```
-
-### Polyfill for older browser
-If you want to support some old browser, you need to add some polyfill before the framework.<br>
-For Safari or iOS browser you may need to polyfill PointerEvent too<br>
-Some feature not work on IE11.
-<details>
-  <summary>Click here to see the polyfills</summary>
-  ```html
-  <script type="text/javascript">
-    // Polyfill for Old Browser
-    (function(){function z(a){document.write('<script src="'+a+'"><\/script>')}
-      if(!window.PointerEvent) // Chrome < 55, Firefox 42
-        z('https://code.jquery.com/pep/0.4.3/pep.js');
-      if(!window.MutationObserver) // Chrome 26
-        window.MutationObserver = window.WebKitMutationObserver;
-      if(!window.Reflect) // Chrome < 49
-        z('https://unpkg.com/core-js-bundle@latest/minified.js');
-      if(!window.customElements) // Chrome < 54, Firefox 63
-        z('https://unpkg.com/@webcomponents/webcomponentsjs@latest/webcomponents-loader.js');
-      if(!window.ResizeObserver) // Chrome < 64, Firefox 69
-        z('https://polyfill.io/v3/polyfill.min.js?features=ResizeObserver%2CIntersectionObserver%2CIntersectionObserverEntry');
-    })();
-  </script>
-  ```
-</details>
 
 ## Contribution
 If you want to help in ScarletsFrame please fork this project and edit on your repository, then make a pull request to here. Otherwise, you can help with donation via [kofi](https://ko-fi.com/stefansarya).
