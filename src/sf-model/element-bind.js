@@ -158,6 +158,8 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 		return;
 
 	const deep = ref.sf$internal.deepBinding;
+	if(deep === void 0) return;
+
 	for(let path in deep){
 		const model = deepProperty(ref, path.split('%$'));
 		if(model !== void 0)
@@ -345,15 +347,16 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	}
 
 	if(originalPropertyName.constructor === Array){
-		if(originalModel.sf$internal === void 0){
-			Object.defineProperty(originalModel, 'sf$internal', {configurable:true, value:{
-				deepBinding:{}
-			}});
-		}
-
 		// Cache deep sf$bindingKey path
-		if(originalPropertyName.length !== 1)
+		if(originalPropertyName.length !== 1){
+			if(originalModel.sf$internal === void 0){
+				Object.defineProperty(originalModel, 'sf$internal', {configurable:true, value:{
+					deepBinding:{}
+				}});
+			}
+
 			originalModel.sf$internal.deepBinding[originalPropertyName.slice(0, -1).join('%$')] = true;
+		}
 
 		originalPropertyName = stringifyPropertyPath(originalPropertyName);
 	}
