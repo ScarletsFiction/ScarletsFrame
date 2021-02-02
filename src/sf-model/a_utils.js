@@ -352,21 +352,26 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 		changesReference.push(temp);
 
 		if(refB.direct !== void 0){
+			const val = parsed[refB.direct];
 			if(refB.name === 'value' && isValueInput === true){
-				current.value = parsed[refB.direct];
 				current.removeAttribute('value');
+				current.value = val;
 				continue;
 			}
-			current.setAttribute(refB.name, parsed[refB.direct]);
+
+			if(val !== '')
+				current.setAttribute(refB.name, val);
 			continue;
 		}
 
 		// Below is used for multiple data
+		const val = applyParseIndex(refB.value, refB.parse_index, parsed);
 		if(refB.name === 'value' && isValueInput === true){
 			var temp = current.value;
 			current.removeAttribute('value');
-			current.value = applyParseIndex(refB.value, refB.parse_index, parsed);
+			current.value = val;
 		}
-		else current.setAttribute(refB.name, applyParseIndex(refB.value, refB.parse_index, parsed));
+		else if(val !== '')
+			current.setAttribute(refB.name, val);
 	}
 }

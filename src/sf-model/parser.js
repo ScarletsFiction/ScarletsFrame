@@ -197,7 +197,10 @@ function addressAttributes(currentNode, template){
 					name:attr.name,
 					value:attr.value.trim()
 				};
-				attr.nodeValue = '';
+
+				if(key.name === 'class' || key.name === 'style')
+					currentNode.removeAttribute(attr.name);
+				else attr.nodeValue = '';
 			}
 
 			indexes = [];

@@ -29,8 +29,10 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 
 		// Assign attributes
 		const attr = html.attributes;
-		for (var i = 0; i < attr.length; i++)
-			copy.setAttribute(attr[i].name, attr[i].value);
+		for (var i = 0, n = attr.length; i < n; i++){
+			const val = attr[i];
+			copy.setAttribute(val.name, val.value);
+		}
 
 		html = copy;
 	}
