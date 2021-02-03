@@ -195,7 +195,7 @@ var SFDevMode = SFDevSpace.component('sf-inspector', {
 				name:parent.tagName.toLowerCase(),
 				path:current.routePath,
 				ref:current.routeCached,
-				data:current.routerData && (Object.assign({}, current.routerData)),
+				data:current.routerData && {...current.routerData},
 			};
 		}
 

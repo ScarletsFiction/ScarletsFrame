@@ -342,7 +342,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			template = extractPreprocess(element, mask, modelRef, container, modelKeysRegex, true, uniqPattern);
 
 			if(originalAddr !== void 0 && originalAddr.rule !== void 0){
-				originalAddr.template = Object.assign({}, template);
+				originalAddr.template = {...template};
 				const temp = originalAddr.template;
 				delete temp.bindList;
 
@@ -366,7 +366,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			var parses = template.parse = template.parse.slice(0);
 			for (let i = 0; i < parses.length; i++) {
 				let ref = parses[i] = Object.create(parses[i]);
-				ref.data = Object.assign({}, ref.data); // Don't use Object.create here
+				ref.data = {...ref.data}; // Don't use Object.create here
 				ref.data._modelScope = modelRef;
 			}
 		}

@@ -32,7 +32,7 @@ export function hotReload(mode){
 		hotReloadAll = SFOptions.hotReload = true;
 	if(proxyModel !== void 0) return;
 
-	backupTemplate = Object.assign({}, templates);
+	backupTemplate = {...templates};
 	HotReload.backupCompTempl = new WeakMap();
 	proxyModel = new WeakMap();
 	proxyComponent = new WeakMap();
@@ -52,7 +52,7 @@ export function hotReload(mode){
 	};
 
 	$(function(){
-		backupTemplate = Object.assign({}, templates);
+		backupTemplate = {...templates};
 
 		// Turn on the inspector assistant
 		Inspector();
@@ -197,7 +197,7 @@ export function hotReload(mode){
 			}
 		}
 
-		backupTemplate = Object.assign({}, templates);
+		backupTemplate = {...templates};
 	}
 
 	// Refresh component html
