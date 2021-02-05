@@ -1,3 +1,5 @@
+// This file contains code for sQuery (sf.$)
+
 import {internal} from "./shared.js";
 let {windowEv} = internal;
 
@@ -59,8 +61,10 @@ const DOMTokenListToggle = DOMTokenList.prototype.toggle;
 
 class DOMList extends Array{
 	constructor(elements){
-		if(elements === null)
+		if(elements === null){
+			super();
 			return;
+		}
 
 		if(elements.length === void 0 || elements === window){
 			super(elements);
