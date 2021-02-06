@@ -1,4 +1,4 @@
-import {internal, TemplatePending, SFOptions, HotReload} from "./shared.js";
+import {internal, TemplatePending, SFOptions, HotReload, NOOP} from "./shared.js";
 import {capitalizeLetters, proxyClass, getCallerFile} from "./utils.js";
 import {parseElement} from "./sf-dom.utils.js";
 import {model as Model} from "./sf-model.js";
