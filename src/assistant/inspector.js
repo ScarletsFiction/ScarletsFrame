@@ -16,12 +16,12 @@ if(window.SFDevSpace) return;
 void function(){
 	var path = $('script[src*="scarletsframe."]')[0];
 	if(path === void 0){
-		loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/inspector.css']);
+		loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/inspector.css'], 'low');
 		return;
 	}
 
 	path = path.src.split('scarletsframe.')[0];
-	loader.css([path+'inspector.css']);
+	loader.css([path+'inspector.css'], 'low');
 }();
 
 // For browser interface

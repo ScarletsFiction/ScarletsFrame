@@ -47,7 +47,7 @@ export class loader{
 			whenProgress[i](loader.loadedContent, loader.totalContent);
 	}
 
-	static css(list){
+	static css(list, priority){
 		if(loader.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
@@ -69,7 +69,9 @@ export class loader{
 	        s.addEventListener('error', loader.f, {once:true});
 		}
 
-        document.head.append(...temp);
+		if(priority === 'low')
+        	document.head.prepend(...temp);
+        else document.head.append(...temp);
 	}
 
 	static js(list, async){
