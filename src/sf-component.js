@@ -1,5 +1,5 @@
 import {internal, TemplatePending, SFOptions, HotReload, NOOP} from "./shared.js";
-import {capitalizeLetters, proxyClass, getCallerFile} from "./utils.js";
+import {capitalizeLetters, proxyClass, getCallerFile, isClass} from "./utils.js";
 import {parseElement} from "./sf-dom.utils.js";
 import {model as Model} from "./sf-model.js";
 import {Space} from "./sf-space.js";
@@ -90,7 +90,7 @@ component.for = function(name, options, func, namespace){
 		func = options;
 
 		// It's a class
-		if(func.prototype && func.prototype.init !== void 0){
+		if(isClass(func)){
 			internal.componentInherit[name] = func;
 			func = {class:func};
 		}

@@ -2,7 +2,7 @@ import {internal, forProxying, SFOptions, HotReload} from "./shared.js";
 import {$} from "./sf-dom.js";
 import {loader as Loader} from "./sf-loader.js";
 import {component as Component} from "./sf-component.js";
-import {getCallerFile, modelKeys, findBindListElement} from "./utils.js";
+import {getCallerFile, modelKeys, findBindListElement, isClass} from "./utils.js";
 import {ModelInit} from "./sf-model/a_model.js";
 import {ModelInternal} from "./sf-model/a_shared.js";
 import {removeModelBinding} from "./sf-model/element-bind.js";
@@ -69,8 +69,7 @@ model.for = function(name, options, func, namespace){
 	if(options.constructor === Function){
 		func = options;
 
-		// It's a class
-		if(func.prototype && func.prototype.init !== void 0){
+		if(isClass(func)){
 			internal.modelInherit[name] = func;
 			func = {class:func};
 		}
@@ -100,6 +99,13 @@ model.for = function(name, options, func, namespace){
 	// Call it it's a function
 	if(!SFOptions.hotReload && func.constructor === Function)
 		func(scopeTemp, scope);
+	else if(func.class){
+		const Class = func.class;
+		Object.setPrototypeOf(scopeTemp, Class.prototype);
+
+		if(Class.prototype.construct)
+			Class.prototype.construct.call(scopeTemp);
+	}
 
 	if(Loader.DOMWasLoaded && name in internal.modelPending){
 		const temp = internal.modelPending[name];

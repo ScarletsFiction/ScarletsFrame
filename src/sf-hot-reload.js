@@ -10,6 +10,7 @@ import {parseElement} from "./sf-dom.utils.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {templateParser} from "./sf-model/template.js";
 import {$} from "./sf-dom.js";
+import {isClass} from "./utils.js";
 
 let hotReloadAll = false; // All model property
 SFOptions.devMode = true;
@@ -269,6 +270,31 @@ export function hotReload(mode){
 
 		HotReload.backupCompTempl.set(registrar, registrar[3]);
 	}
+
+	window.sf$hotReload = {
+		replaceClass(old, now){
+			const oldStatic = Object.getOwnPropertyDescriptors(old);
+			const oldProto = Object.getOwnPropertyDescriptors(old.prototype);
+			const nowStatic = Object.getOwnPropertyDescriptors(now);
+			const nowProto = Object.getOwnPropertyDescriptors(now.prototype);
+
+			for(const key in oldProto)
+				if(!nowProto[key]) delete old.prototype[key];
+
+			for(const key in oldStatic)
+				if(!nowStatic[key]) delete old[key];
+
+			for(const key in nowProto){
+				if(!nowProto[key].writable || key === 'constructor') continue;
+				Object.defineProperty(old.prototype, key, nowProto[key]);
+			}
+
+			for(const key in nowStatic){
+				if(!nowStatic[key].writable || key === 'constructor') continue;
+				Object.defineProperty(old, key, nowStatic[key]);
+			}
+		}
+	};
 }
 
 const haveLoaded = new WeakSet();
@@ -329,8 +355,12 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 					return true;
 				}
 
-				if(val && val.constructor === Function)
-					refunction(prop, val);
+				if(val && val instanceof Function){
+					if(!isClass(val))
+						refunction(prop, val);
+					else
+						window.sf$hotReload.replaceClass(obj[prop], val);
+				}
 				else if(!(prop in obj) || hotReloadAll === true)
 					obj[prop] = val; // Reassign non-function value
 
