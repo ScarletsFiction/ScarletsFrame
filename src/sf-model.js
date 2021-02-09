@@ -99,13 +99,9 @@ model.for = function(name, options, func, namespace){
 	// Call it it's a function
 	if(!SFOptions.hotReload && func.constructor === Function)
 		func(scopeTemp, scope);
-	else if(func.class){
-		const Class = func.class;
-		Object.setPrototypeOf(scopeTemp, Class.prototype);
 
-		if(Class.prototype.construct)
-			Class.prototype.construct.call(scopeTemp);
-	}
+	if(func.class && scopeTemp.constructor === func.class)
+		Object.setPrototypeOf(scopeTemp, func.class.prototype);
 
 	if(Loader.DOMWasLoaded && name in internal.modelPending){
 		const temp = internal.modelPending[name];
