@@ -100,8 +100,9 @@ model.for = function(name, options, func, namespace){
 	if(!SFOptions.hotReload && func.constructor === Function)
 		func(scopeTemp, scope);
 
-	if(func.class && scopeTemp.constructor === func.class)
-		Object.setPrototypeOf(scopeTemp, func.class.prototype);
+	if(func.class && scopeTemp.constructor !== func.class){
+		return console.error(`Looks like the model for "${name}":`, scopeTemp, ` already being returned somewhere. For the example like using:\n>> let model = sf.model("${name}");\nor\n>> sf.model("other", (My, root)=>{\n  let model = root("${name}")\n});\n\nbefore the framework know if the model object for "${name}" must be constructed by`, {class: func.class},`: \n>> sf.model("${name}", class ${func.class.name}{})\n\nThis usually because late initialization. You may need to use setTimeout or obtain the model context only after every script already running.`);
+	}
 
 	if(Loader.DOMWasLoaded && name in internal.modelPending){
 		const temp = internal.modelPending[name];
@@ -242,7 +243,7 @@ setTimeout(()=> {
 				delete internal.modelPending[keys];
 			}
 		} catch(e) {
-			e.model = {name:ref[z].getAttribute('name'), scope:ref[z].model};
+			e.model = {Name:ref[z].getAttribute('name'), ModelContext:ref[z].model};
 			throw e;
 		}
 	});

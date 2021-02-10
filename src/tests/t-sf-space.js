@@ -32,15 +32,18 @@ var spaceComponent = testSpace.component('my-obj', function(My, root){
 	}
 });
 
-model('obj', function(My, root){
-	My.test = 321+adder;
-	My.list = [3,2,1+adder];
+model('obj', class {
+	test = 321+adder;
+	list = [3,2,1+adder];
 
-	My.inc = testIncrease.bind(My);
-	My.init = function(){
-		if(root('obj').test === 321+adder)
+	constructor(){
+		this.inc = testIncrease.bind(this);
+	}
+
+	init(){
+		if(model('obj').test === 321+adder)
 		 	console.log("✔️ Global model namespace OK");
-		My.list.push(My.test);
+		this.list.push(this.test);
 	}
 });
 
