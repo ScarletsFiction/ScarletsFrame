@@ -89,41 +89,43 @@ window.templates['route/lv2.html'] = '<div>This is nest 2\
 	<test-nest2></test-nest2>\
 </div>';
 
-setTimeout(function(){
-	window.templates['route/urlTemp.html'] = '<div>This is reloaded template page\
-		<sf-m name="test-page1"><div>html reloaded: {{ text }}</div></sf-m>\
-	    <nested-view>Raw Henlo</nested-view>\
-	</div>';
-	window.templates['route/lv1.html'] = '<div>This is reloaded nest 1\
-		<nested2-view>Default reloaded exist</nested2-view>\
-	</div>';
-	window.templates['route/lv2.html'] = '<div>This is reloaded nest 2\
-		<test-nest2></test-nest2>\
-	</div>';
-	window.templates = window.templates; // trigger hot reload
-
+$(function(){
 	setTimeout(function(){
-		model('test-page1', function(self){
-			self.text = 'scope reloaded page 1';
-		})
-		model('test-nest1', function(self){
-			self.text = 'scope reloaded nest 1';
-		})
-		component('test-nest2', {extend:TestPage}, function(self){
-			self.text = "scope reloaded nest 2";
-		});
-
-		component.html('test-nest2', '<div>html reloaded: {{ text }}</div>');
+		window.templates['route/urlTemp.html'] = '<div>This is reloaded template page\
+			<sf-m name="test-page1"><div>html reloaded: {{ text }}</div></sf-m>\
+		    <nested-view>Raw Henlo</nested-view>\
+		</div>';
+		window.templates['route/lv1.html'] = '<div>This is reloaded nest 1\
+			<nested2-view>Default reloaded exist</nested2-view>\
+		</div>';
+		window.templates['route/lv2.html'] = '<div>This is reloaded nest 2\
+			<test-nest2></test-nest2>\
+		</div>';
+		window.templates = window.templates; // trigger hot reload
 
 		setTimeout(function(){
-			var len = $('custom-view').html().split('reloaded').length;
-			var count = hotReloadLevel === 1 ? 6 : 8;
-			if(len !== count)
-				console.error("❌ Reloaded views is should be 8 but got", len);
-			else console.log("✔️ Reloaded views are working");
+			model('test-page1', function(self){
+				self.text = 'scope reloaded page 1';
+			})
+			model('test-nest1', function(self){
+				self.text = 'scope reloaded nest 1';
+			})
+			component('test-nest2', {extend:TestPage}, function(self){
+				self.text = "scope reloaded nest 2";
+			});
+
+			component.html('test-nest2', '<div>html reloaded: {{ text }}</div>');
+
+			setTimeout(function(){
+				var len = $('custom-view').html().split('reloaded').length;
+				var count = hotReloadLevel === 1 ? 6 : 8;
+				if(len !== count)
+					console.error("❌ Reloaded views is should be 8 but got", len);
+				else console.log("✔️ Reloaded views are working");
+			}, 500);
 		}, 500);
-	}, 500);
-}, 5000);
+	}, 5000);
+})
 
 class TestPage{}
 
