@@ -364,7 +364,22 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 
 			if(cRef.ref.isValueInput)
 				cRef.attribute.value = temp;
-			else cRef.attribute.nodeValue = temp;
+			else{
+				if(temp == null){
+					if(cRef.exist){
+						cRef.attributes.removeNamedItem(cRef.attribute.name);
+						cRef.exist = false;
+					}
+				}
+				else{
+					if(!cRef.exist){
+						cRef.attributes.setNamedItem(cRef.attribute);
+						cRef.exist = true;
+					}
+
+					cRef.attribute.nodeValue = temp;
+				}
+			}
 
 			haveChanges = true;
 			continue;

@@ -216,9 +216,7 @@ export function templateExec(parse, item, atIndex, parsed, repeatListIndex){
 			// Direct evaluation type
 			if(ref.type === REF_DIRECT){
 				temp = ref.get(item, ref.data._modelScope, _eP, repeatListIndex);
-				if(temp == null)
-					temp = '';
-				else{
+				if(temp != null){
 					if(temp.constructor === Object)
 						temp = JSON.stringify(temp);
 					else if(temp.constructor !== String)
@@ -339,6 +337,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 		else if(refB.name === 'class')
 			temp.class = current.classList;
 		else{
+			temp.attributes = current.attributes;
 			temp.attribute = isValueInput
 				? current : current.attributes[refB.name];
 		}
