@@ -1,4 +1,4 @@
-import {$, component, model, hotReload, Window, language, internal} from "../index.js";
+import {$, component, model, hotReload, Window, language, internal, watch, unwatch} from "../index.js";
 import {parsePreprocess, queuePreprocess} from "../sf-model/parser.js";
 import "./t-sf-model.js";
 import "./t-sf-component.js";
@@ -7,6 +7,7 @@ import "./t-sf-loader.js";
 import "./t-sf-space.js";
 import "./t-sf-views.js";
 import "./t-sf-virtual_scroll.js";
+import "./t-sf-watch.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 // Enable Development Mode, Development Assistant, and Hot Reload Level 1
@@ -16,7 +17,7 @@ Window.frameworkPath = 'https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/s
 // internal.async(false);
 
 window.$ = $;
-window.ssf = {component, model, language, Window};
+window.ssf = {component, model, language, Window, watch, unwatch};
 
 $(function(){console.log("✔️ Loading finished")});
 
