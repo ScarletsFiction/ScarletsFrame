@@ -201,6 +201,49 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 	}
 }
 
+export function watch(model, propertyName, callback){
+	if(propertyName.constructor === Object){
+		for(var key in propertyName){
+			callback = propertyName[key];
+			callback._sf = false;
+			watch(model, key, callback);
+		}
+		return;
+	}
+
+	callback._sf = false;
+	modelToViewBinding(model, propertyName, callback, void 0, void 0, 'callback');
+}
+
+export function unwatch(model, propertyName, callback){
+	let bindedKey = model.sf$bindedKey;
+	if(bindedKey === void 0) return;
+
+	if(propertyName.constructor === Array){
+		for (var i = 0; i < propertyName.length; i++)
+			unwatch(model, propertyName[i]);
+
+		return;
+	}
+
+	const callbacks = bindedKey[propertyName].callback;
+	if(callbacks === void 0) return;
+
+	if(callback === void 0){
+		for (var i = callbacks.length - 1; i >= 0; i--) {
+			if(callbacks[i]._sf === false)
+				callbacks.splice(i, 1);
+		}
+
+		return;
+	}
+
+	if(callbacks.includes(callback) === false)
+		return;
+
+	callbacks.splice(callbacks.indexOf(callback), 1);
+}
+
 export function modelToViewBinding(model, propertyName, callback, elementBind, type, bindName){
 	const originalModel = model;
 	let originalPropertyName = propertyName;
@@ -333,8 +376,10 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	// Proxy property
 	const desc = isALength !== false ? {set:true} : Object.getOwnPropertyDescriptor(model, propertyName);
+
+	let getter, setter;
 	if(desc !== void 0 && desc.set !== void 0){
-		if(!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex)
+		if(callback._sf === void 0 && (!callback.template || bindedKey._regex === callback.template.modelRefRoot_regex))
 			return;
 
 		if(desc.configurable === false)
@@ -342,7 +387,8 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 		// Proxy the setter
 		if(isALength === false && hasBindInit === false){
-			console.log('hello', desc);
+			getter = desc.get;
+			setter = desc.set;
 		}
 	}
 
@@ -401,6 +447,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			}
 
 			objValue = newValue !== void 0 ? newValue : val;
+			if(setter !== void 0) setter(objValue);
 
 			if(bindedKey.inputBound)
 				bindedKey.inputBound(objValue, bindedKey.input);
@@ -452,13 +499,15 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 		callback.model = originalModel;
 		callback.prop = originalPropertyName;
-		return;
+
+		if(getter === void 0)
+			return;
 	}
 
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,
-		get:()=> objValue,
+		get: getter || (()=> objValue),
 		set
 	});
 }
