@@ -537,7 +537,7 @@ export function bindElement(element, modelScope, template, localModel, modelKeys
 			if(element.tagName.includes('-')){
 				newElem.sf$componentIgnore = true;
 				element.sf$componentIgnore = true;
-				modelScope.$el[0] = newElem;
+				modelScope.$el = modelScope.$el.push(newElem);
 			}
 
 			element.parentNode.replaceChild(newElem, element);

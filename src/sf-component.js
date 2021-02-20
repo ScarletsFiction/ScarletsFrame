@@ -306,8 +306,8 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 				newObj = reusing;
 
 				let els = newObj.$el;
-				if(els[0] === void 0)
-					els[0] = element;
+				if(els.length === 0)
+					newObj.$el = els.push(element);
 				else {
 					if(els.length === 1){
 						if(els[0].isConnected === false)
@@ -509,7 +509,7 @@ class SFComponent extends HTMLElement{
 			delete this.sf$firstInit;
 
 			if(this.model.init){
-				if(this.model.$el.length !== 1){
+				if(this.model.$el.length > 1){
 					this.model.initClone && this.model.initClone(this.model.$el[this.model.$el.length-1]);
 					return;
 				}
@@ -545,11 +545,12 @@ class SFComponent extends HTMLElement{
 	sf$destroy(){
 		if(this.model === void 0) return;
 		const model = this.model;
+		const $el = model.$el;
+		const i = $el.indexOf(this);
 
-		if(model.$el.length !== 1){
-			const i = model.$el.indexOf(this);
+		if($el.length !== 1){
 			if(i !== -1){
-				model.$el = model.$el.splice(i, 1);
+				model.$el = $el.splice(i, 1);
 				model.destroyClone && model.destroyClone(this);
 			}
 
@@ -565,9 +566,8 @@ class SFComponent extends HTMLElement{
 		if(SFOptions.hotReload)
 			HotReload.ComponentRemove(this);
 
-		const $el = model.$el;
-		if($el[0] !== void 0 && $el[0].isConnected === false)
-			model.$el = $el.splice(0, 1);
+		if(i !== -1)
+			model.$el = $el.splice(i, 1);
 
 		removeModelBinding(model, void 0, true);
 	}
@@ -579,7 +579,7 @@ class SFComponent extends HTMLElement{
 		}
 
 		const model = this.model;
-		model.$el[i] = element;
+		model.$el = model.$el.push(element);
 	}
 }
 
