@@ -365,7 +365,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 			if(cRef.ref.isValueInput)
 				cRef.attribute.value = temp;
 			else{
-				if(temp == null){
+				if(temp === null){
 					if(cRef.exist){
 						cRef.attributes.removeNamedItem(cRef.attribute.name);
 						cRef.exist = false;

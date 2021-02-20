@@ -222,6 +222,8 @@ export function templateExec(parse, item, atIndex, parsed, repeatListIndex){
 					else if(temp.constructor !== String)
 						temp = String(temp);
 				}
+				else if(temp === void 0)
+					temp = 'undefined';
 
 				if(changed === false){
 					if(parsed[a] === temp) continue;
