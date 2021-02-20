@@ -24,7 +24,7 @@ export var SFOptions = {
 export var sfRegex = {
 	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
 	getAttrQuotes:/=(\\['"])(?:\1|[\s\S]*?[^\\]\1)/g,
-	scopeVar:'(^|[^.\\]\\w])',
+	scopeVar:'(^|[^.\\]\\w$])',
 	// escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
 
 	uniqueDataParser:/{{((@|#[\w])[\s\S]*?)}}/g,

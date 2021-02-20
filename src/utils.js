@@ -251,15 +251,31 @@ export function getScope(el, returnNode){
 	}
 };
 
-export function isClass(func){
-	// Class constructor is also a function
-	if(!(func && func.constructor === Function) || func.prototype === undefined)
-		return false;
+// Improvement from my answer https://stackoverflow.com/a/66120819/6563200
+export const isClass = (function(){
+  const classDefaultProp = {name:true, length:true, prototype:true, arguments:true, caller:true};
 
-	// This is a class that extends other class
-	if(Function.prototype !== Object.getPrototypeOf(func))
-		return true;
+  return function(func){
+    // Class constructor is also a function
+    if(!(func && func.constructor === Function) || func.prototype === undefined)
+      return false;
 
-	// Usually a function will only have 'constructor' in the prototype
-	return Object.getOwnPropertyNames(func.prototype).length > 1;
-}
+    // This is a class that extends other class
+    if(Function.prototype !== Object.getPrototypeOf(func))
+      return true;
+
+    // Usually a function will only have 'constructor' in the prototype
+    if(Object.getOwnPropertyNames(func.prototype).length > 1)
+      return true;
+
+    // Check if at least have one static property
+    let props = Object.getOwnPropertyNames(func);
+    for(let i=0; i<props.length; i++){
+      if(!(props[i] in classDefaultProp))
+        return true;
+    }
+
+    // Not recognized as a class object
+    return false;
+  }
+})();
