@@ -567,7 +567,7 @@ class SFComponent extends HTMLElement{
 
 		const $el = model.$el;
 		if($el[0] !== void 0 && $el[0].isConnected === false)
-			$el[0] = void 0;
+			model.$el = $el.splice(0, 1);
 
 		removeModelBinding(model, void 0, true);
 	}
