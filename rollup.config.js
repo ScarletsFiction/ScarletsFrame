@@ -6,20 +6,7 @@ const plugins = [sourcemaps(), babel({
   babelHelpers: 'bundled'
 })];
 
-if(process.env.production)
-  plugins.push(terser({ output: { comments: false } }));
-
-export default [{
-  input: "src/index.prod.js",
-  output: {
-    file: "dist/scarletsframe.min.js",
-    sourcemap: true,
-    sourcemapFile: "dist/scarletsframe.min.js.map",
-    format: "iife",
-    name: "sf"
-  },
-  plugins
-}, {
+const config = [{
   input: "src/index.dev.js",
   output: {
     file: "dist/scarletsframe.dev.js",
@@ -30,3 +17,21 @@ export default [{
   },
   plugins
 }];
+
+if(process.env.production){
+  plugins.push(terser({ output: { comments: false } }));
+
+  config.push({
+    input: "src/index.prod.js",
+    output: {
+      file: "dist/scarletsframe.min.js",
+      sourcemap: true,
+      sourcemapFile: "dist/scarletsframe.min.js.map",
+      format: "iife",
+      name: "sf"
+    },
+    plugins
+  });
+}
+
+export default config;
