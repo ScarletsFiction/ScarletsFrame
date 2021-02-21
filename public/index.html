@@ -242,7 +242,7 @@
        <input sf-lang="i'm.here" type="text" sf-bind="inputBinding1" placeholder="test"><br>
        <span id="test" sf-lang="custom.el.iB1">Variable Content: {{ inputBinding1 }} <b>hay</b> nyam {{inputBinding2.text}} <u>ahoy</u></span><br><br>
 
-       <span class="bold" style="
+       <span remove-on-null="{{ bold }}" style="
           font-weight: {{ bold ? 'bold' : 'unset' }};
           background-color: {{ pink ? 'pink' : '' }};
        ">Another one</span><br>
