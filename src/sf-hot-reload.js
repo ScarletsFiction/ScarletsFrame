@@ -13,25 +13,26 @@ import {$} from "./sf-dom.js";
 import {isClass} from "./utils.js";
 
 let hotReloadAll = false; // All model property
-SFOptions.devMode = true;
 
 export let proxyModel, proxySpace, proxyComponent, internalProp;
 export let backupTemplate;
 
-setTimeout(function(){
-	if(!SFOptions.hotReload){
-		SFOptions.devMode = false;
-		HotReload.proxyTemplate = void 0;
-	}
-	else console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
-}, 1);
-
 export function hotReload(mode){
-	if(mode === 1)
+	let info = '';
+
+	if(mode === 1){
 		SFOptions.hotReload = true;
-	else if(mode === 2)
+		info = "No state refresh"
+	}
+	else if(mode === 2){
 		hotReloadAll = SFOptions.hotReload = true;
+		info = "With state refresh";
+	}
+
 	if(proxyModel !== void 0) return;
+
+	SFOptions.devMode = true;
+	console.log('[ScarletsFrame] %cDevelopment mode: ' + info, 'color:yellow');
 
 	backupTemplate = {...templates};
 	HotReload.backupCompTempl = new WeakMap();
