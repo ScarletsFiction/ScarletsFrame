@@ -22,7 +22,7 @@ export function component(name, options, func, namespace){
 			return component.for(name, options, func, namespace);
 	}
 
-	const temp = component.registered[name];
+	const temp = (namespace || component).registered[name];
 	return temp ? temp[2] : [];
 }
 

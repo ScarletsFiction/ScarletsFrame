@@ -26,7 +26,7 @@ function getNamespace(name, id){
 function createRoot_(registered, id, space){
 	function SpaceScope(scope){
 		let temp = SpaceScope.components[scope];
-		if(temp) return temp[2];
+		if(temp) return temp;
 
 		temp = SpaceScope.root;
 		if(!(scope in temp)){
@@ -181,11 +181,13 @@ export class Space{
 			}
 		}
 
-		Model.for(name, options, func, this.default);
-		return this.modelList.default[name];
+		return Model(name, options, func, this.default);
 	}
 
 	component(name, options, func){
+		if(options === void 0)
+			return Component(name, options, func, this.default);
+
 		const temp = this.componentList.default;
 		temp[name] = Component(name, options, func, this.default);
 		return temp[name];

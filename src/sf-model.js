@@ -8,6 +8,16 @@ import {ModelInternal} from "./sf-model/a_shared.js";
 import {removeModelBinding} from "./sf-model/element-bind.js";
 import "./sf-space.js";
 
+var root_ = function(scope){
+	if(Component.registered[scope])
+		return Component(scope);
+
+	if(!(scope in model.root))
+		model.root[scope] = {};
+
+	return model.root[scope];
+}
+
 // Data save and HTML content binding
 export function model(name, options, func, namespace){
 	if(options !== void 0)
@@ -218,16 +228,6 @@ else forProxying.SFModel = SFModel._ref = SFModel;
 
 ModelInternal._ref = SFModel._ref;
 customElements.define('sf-m', SFModel);
-
-var root_ = function(scope){
-	if(Component.registered[scope])
-		return Component(scope);
-
-	if(!(scope in model.root))
-		model.root[scope] = {};
-
-	return model.root[scope];
-}
 
 // Let's check all pending model
 setTimeout(()=> {
