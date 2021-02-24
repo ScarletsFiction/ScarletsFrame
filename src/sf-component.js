@@ -290,7 +290,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 	let index = 0;
 	if(newObj.$el === void 0)
-		newObj.$el = $();
+		newObj.$el = $.callableList();
 	else index = newObj.$el.length;
 
 	let reusing = void 0;
@@ -342,7 +342,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 	registrar[4] ??= createModelKeysRegex(element, newObj, null);
 
-	let forceConnectCall = false;
+	let forceConnectCall = false, dontPushElement = false;
 	if(element.childNodes.length === 0){
 		let temp = registrar[3];
 		let { tempDOM } = temp;
@@ -404,6 +404,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 		if(element.sf$componentIgnore === true){
 			element = newObj.$el[0];
+			dontPushElement = true;
 
 			if(namespace !== void 0)
 				element.sf$space = namespace;
@@ -420,7 +421,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 			internal.initPendingComponentScope(specialElement.scope, element);
 	}
 
-	if(reusing === void 0)
+	if(reusing === void 0 && dontPushElement === false)
 		newObj.$el = newObj.$el.push(element);
 
 	if(namespace === void 0){
