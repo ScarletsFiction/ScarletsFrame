@@ -17,6 +17,16 @@ let hotReloadAll = false; // All model property
 export let proxyModel, proxySpace, proxyComponent, internalProp;
 export let backupTemplate;
 
+SFOptions.devMode = true;
+console.log('[ScarletsFrame] %cDevelopment mode', 'color:yellow');
+
+setTimeout(()=> {
+	if(SFOptions.hotReload !== true){
+		SFOptions.devMode = false;
+		console.log("[ScarletsFrame] %cHot reload mode was inactive", 'color:yellow');
+	}
+}, 5000);
+
 export function hotReload(mode){
 	let info = '';
 
@@ -31,8 +41,8 @@ export function hotReload(mode){
 
 	if(proxyModel !== void 0) return;
 
-	SFOptions.devMode = true;
-	console.log('[ScarletsFrame] %cDevelopment mode: ' + info, 'color:yellow');
+	// SFOptions.devMode = true;
+	console.log('[ScarletsFrame] %cHot reload mode: ' + info, 'color:yellow');
 
 	backupTemplate = {...templates};
 	HotReload.backupCompTempl = new WeakMap();
@@ -54,7 +64,7 @@ export function hotReload(mode){
 	};
 
 	$(function(){
-		backupTemplate = {...templates};
+		Object.assign(backupTemplate, templates);
 
 		// Turn on the inspector assistant
 		Inspector();
@@ -144,17 +154,35 @@ export function hotReload(mode){
 
 	// Refresh views html and component
 	HotReload.Template = function(templates){
-		const vList = Views.list;
-		const changes = {};
-
 		for(let path in templates){
-			if(!(path in backupTemplate) || backupTemplate[path] === templates[path])
+			if(!(path in backupTemplate)){
+				backupTemplate[path] = templates[path];
+				continue;
+			}
+
+			if(backupTemplate[path] === templates[path])
 				continue;
 
+			templates.replace(path, templates[path], true);
+		}
+	}
+
+	Object.defineProperty(window.templates, 'replace', {
+		value(path, content, force){
+			if(window.templates[path] === content && !force)
+				return;
+
+			if(!(path in backupTemplate)){
+				backupTemplate[path] = content;
+				return;
+			}
+
+			backupTemplate[path] = content;
 			const forComp = HotReload.proxyTemplate[path]; // [space, name]
+
+			// For Component Template
 			if(forComp !== void 0){
-				const _space = forComp[0];
-				const _name = forComp[1];
+				const [_space, _name] = forComp;
 				const registrar = _space.registered[_name];
 
 				if(registrar !== void 0 && registrar[3] !== void 0){
@@ -162,45 +190,37 @@ export function hotReload(mode){
 					Component.html(_name, {template:path}, _space);
 					const now = registrar[3].outerHTML;
 
-					if(now !== old
-					   || (HotReload.backupCompTempl.has(registrar)
-					       && now !== HotReload.backupCompTempl.get(registrar).outerHTML)
-					   )
+					if(now !== old || (HotReload.backupCompTempl.has(registrar)
+					&& now !== HotReload.backupCompTempl.get(registrar).outerHTML))
 						HotReload.ComponentTemplate(_space, _name);
 				}
-
-				continue;
 			}
 
-			// for views only
-			changes[path] = true;
-		}
+			// For Views Template
+			else{
+				const vList = Views.list;
+				for(let name in vList){
+					const sfPageViews = vList[name].rootDOM.getElementsByTagName('sf-page-view');
 
-		for(let name in vList){
-			const { routes } = vList[name];
-			const sfPageViews = vList[name].rootDOM.querySelectorAll('sf-page-view');
+					for (let i = sfPageViews.length-1; i >= 0; i--) {
+						const page = sfPageViews[i];
+						if(page.sf$templatePath !== path)
+							continue;
 
-			for (let i = 0; i < sfPageViews.length; i++) {
-				const page = sfPageViews[i];
-				const pageTemplate = page.sf$templatePath;
-				if(pageTemplate === void 0 || !(pageTemplate in changes))
-					continue;
+						page.innerHTML = content;
+						page.routeCached.html = parseElement(`<template>${content}</template>`, true)[0];
 
-				page.innerHTML = templates[pageTemplate];
-
-				page.routeCached.html = parseElement(`<template>${templates[pageTemplate]}</template>`, true)[0];
-
-				// Replace with the old nested view
-				const nesteds = page.sf$viewSelector;
-				for(let nested in nesteds){
-					const el = page.querySelector(nested);
-					el.parentNode.replaceChild(nesteds[nested], el);
+						// Replace with the old nested view
+						const nesteds = page.sf$viewSelector;
+						for(let nested in nesteds){
+							const el = page.querySelector(nested);
+							el.parentNode.replaceChild(nesteds[nested], el);
+						}
+					}
 				}
 			}
 		}
-
-		backupTemplate = {...templates};
-	}
+	});
 
 	// Refresh component html
 	HotReload.ComponentTemplate = function(scope, name){
