@@ -12,18 +12,10 @@ import {prevAll, onEvent, onceEvent, offEvent, parseElement, escapeText} from ".
 const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
 
 export function $(selector, context){
-	if(!selector){
-		if(selector === void 0){
-			const temp = sel=> temp.find(sel);
+	if(!selector)
+		throw new Error("First argument mustn't be falsy value, but got: " + selector);
 
-			if(IE11)
-				Object.defineProperty(temp, '_', {value:true});
-			return Object.setPrototypeOf(temp, DOMList.prototype);
-		}
-		return _DOMList([]);
-	}
-
-	if(selector.constructor === Function)
+	if(selector.constructor === Function && selector !== internal.WindowClass)
 		return Loader.onFinish(selector);
 
 	if(context){
@@ -48,6 +40,14 @@ export function $(selector, context){
 	return _DOMList(selector);
 }
 
+$.callableList = function(){
+	const temp = sel=> temp.find(sel);
+
+	if(IE11)
+		Object.defineProperty(temp, '_', {value:true});
+	return Object.setPrototypeOf(temp, DOMList.prototype);
+}
+
 $.get = (url, data, options, callback) => Request('GET', url, data, options, callback)
 $.post = (url, data, options, callback) => Request('POST', url, data, options, callback)
 $.getJSON = (url, data, options, callback) => Request('getJSON', url, data, options, callback)
@@ -66,7 +66,9 @@ class DOMList extends Array{
 			return;
 		}
 
-		if(elements.length === void 0 || elements === window){
+		if(elements.length === void 0
+		   || elements === window
+		   || elements === internal.WindowClass){
 			super(elements);
 			return;
 		}
@@ -75,6 +77,9 @@ class DOMList extends Array{
 		return;
 	}
 	push(el){
+		if(!(el instanceof HTMLElement))
+			throw new Error("The first parameter of sQuery.push(...) must be an instance of HTMLElement");
+
 		if(this._){
 			const news = recreateDOMList(this, this.length+1);
 			news[this.length] = el;
