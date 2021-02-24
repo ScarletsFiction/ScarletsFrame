@@ -337,7 +337,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		return;
 	}
 
-	scope.$el ??= $();
+	scope.$el ??= $.callableList();
 
 	var firstTime = scope.sf$bindedKey === void 0;
 	!firstTime && scope.hotReload && scope.hotReload(scope);

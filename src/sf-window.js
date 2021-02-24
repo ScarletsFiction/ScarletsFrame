@@ -232,6 +232,8 @@ export class Window{
 	}
 }
 
+internal.WindowClass = Window;
+
 function portComponentDefinition(linker, from, into){
 	for(let name in from){
 		const ref = into[name] = from[name].slice(0);

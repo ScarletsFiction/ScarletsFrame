@@ -306,7 +306,7 @@ function touchGesture(that, callback){
 
 	that['sf$eventDestroy_gesture'] = function(){
 		that.removeEventListener('pointerdown', callbackStart);
-		offEvent(internal.WindowList, 'keydown', keyStart);
+		offEvent(internal.WindowClass, 'keydown', keyStart);
 	}
 
 	const keyEnd = function(ev){
@@ -330,5 +330,5 @@ function touchGesture(that, callback){
 		view.addEventListener('keyup', keyEnd);
 	};
 
-	onEvent(internal.WindowList, 'keydown', keyStart);
+	onEvent(internal.WindowClass, 'keydown', keyStart);
 }

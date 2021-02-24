@@ -34,7 +34,7 @@ export function model(name, options, func, namespace){
 		else
 			scope.root[name] = {};
 
-		scope.root[name].$el = $();
+		scope.root[name].$el = $.callableList();
 	}
 
 	return scope.root[name];
@@ -89,7 +89,7 @@ model.for = function(name, options, func, namespace){
 			let root = (namespace || model).root;
 
 			if(!(name in root)){
-				options.$el = $();
+				options.$el = $.callableList();
 				root[name] = options;
 			}
 			else Object.assign(root[name], options);
@@ -125,7 +125,7 @@ model.for = function(name, options, func, namespace){
 	}
 
 	if(SFOptions.devMode){
-		scopeTemp.$el ??= $();
+		scopeTemp.$el ??= $.callableList();
 
 		if(scopeTemp.$el.$devData === void 0)
 			Object.defineProperty(scopeTemp.$el, '$devData', {

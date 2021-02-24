@@ -84,7 +84,7 @@ export function onEvent(element, event, selector, callback, options){
 	callback.selector = selector;
 	callback.options = options;
 
-	if(element === WindowList){
+	if(element === internal.WindowClass){
 		if(!(event in windowEv))
 			windowEv[event] = [];
 
@@ -158,7 +158,7 @@ export function offEvent(element, event, selector, callback, options){
 		selector = void 0;
 	}
 
-	if(element === WindowList){
+	if(element === internal.WindowClass){
 		if(!(event in windowEv) || windowEv[event].length === 0)
 			return;
 

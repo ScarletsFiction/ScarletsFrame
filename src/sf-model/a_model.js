@@ -27,7 +27,7 @@ export function ModelInit(el, modelName, namespace){
 		firstInit = true;
 	}
 
-	model.$el ??= $();
+	model.$el ??= $.callableList();
 	model.$el = model.$el.push(el);
 
 	if(model.sf$internal === void 0){

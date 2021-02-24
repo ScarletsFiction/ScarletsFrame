@@ -5,7 +5,8 @@ export const internal = {
 	virtualScrolling: false,
 	space: {empty:true},
 	windowEv: {},
-	WindowList: {}
+	WindowList: {},
+	WindowClass: {}
 };
 export var privateRoot = {};
 export var HotReload = {

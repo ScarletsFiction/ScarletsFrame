@@ -30,7 +30,7 @@ function createRoot_(registered, id, space){
 
 		temp = SpaceScope.root;
 		if(!(scope in temp)){
-			temp = temp[scope] = {$el:$()};
+			temp = temp[scope] = {$el:$.callableList()};
 
 			const func = modelFunc[scope];
 			if(func && func.constructor === Function)
