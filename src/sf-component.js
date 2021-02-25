@@ -118,9 +118,14 @@ component.for = function(name, options, func, namespace){
 	registrar[0] = func;
 
 	const construct = defineComponent(name);
+	const CompList = registrar[2];
 	registrar[1] = construct;
 
-	Object.defineProperty(registrar[2], 'root', {value:construct});
+	Object.defineProperty(CompList, 'root', {
+		configurable: true,
+		value:construct
+	});
+
 	window[`$${capitalizeLetters(name.split('-'))}`] = construct;
 
 	if(name in waitingHTML)
@@ -128,8 +133,8 @@ component.for = function(name, options, func, namespace){
 	else if(SFOptions.hotReload)
 		HotReload.ComponentRefresh(scope, name, func);
 
-	if(SFOptions.devMode && registrar[2].$devData === void 0){
-		Object.defineProperty(registrar[2], '$devData', {
+	if(SFOptions.devMode && CompList.$devData === void 0){
+		Object.defineProperty(CompList, '$devData', {
 			configurable: true,
 			value: {
 				func,
@@ -139,7 +144,7 @@ component.for = function(name, options, func, namespace){
 	}
 
 	// Return list of created component
-	return registrar[2];
+	return CompList;
 }
 
 component.html = function(name, outerHTML, namespace){
