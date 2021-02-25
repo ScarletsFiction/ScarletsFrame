@@ -811,7 +811,15 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 		const type = typeof model[key];
 		if(bindedKey[key] === true){
-			statelists.push(key);
+			let temp = model[key];
+			if(temp instanceof Map)
+				statelists.push({name:key, type:'Map'});
+			else if(temp instanceof Set)
+				statelists.push({name:key, type:'Set'});
+			else if(temp instanceof Array)
+				statelists.push({name:key, type:'Array'});
+			else
+				statelists.push({name:key, type:'Object'});
 			continue;
 		}
 
@@ -876,8 +884,16 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 	template += '</div><div class="statelist-list list">';
 
-	for (var i = 0; i < statelists.length; i++)
-		template += `<div class="statelist" @click="clickStatelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${statelists[i]}</span> : <div class="value">[...{{ model.${statelists[i]}.length }}]</div></div>`;
+	for (var i = 0; i < statelists.length; i++){
+		let {name, type} = statelists[i];
+		let prop = type === 'Map' || type === 'Set' ? 'size' : 'length';
+		let val = type === 'Object' ? '{...}' : `[...{{ model.${name}.${prop} }}]`;
+
+		if(prop === 'size')
+			val = type + val;
+
+		template += `<div class="statelist" @click="clickStatelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${name}</span> : <div class="value">${val}</div></div>`;
+	}
 
 	template += '</div><div class="object-list list"><div class="info" @click="refreshObject">Click here to refresh</div>';
 
