@@ -298,6 +298,9 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		newObj.$el = $.callableList();
 	else index = newObj.$el.length;
 
+	if(namespace !== void 0)
+		newObj.$space = namespace;
+
 	let reusing = void 0;
 	if(index === 0 && newObj.destroy !== false){
 		const func = registrar[0];

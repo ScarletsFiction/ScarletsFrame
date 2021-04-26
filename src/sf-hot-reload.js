@@ -61,6 +61,7 @@ export function hotReload(mode){
 		destroy:true,
 		destroyClone:true,
 		$el:true,
+		$space:true
 	};
 
 	$(function(){

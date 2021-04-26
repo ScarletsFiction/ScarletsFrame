@@ -16,7 +16,7 @@ export function ModelInit(el, modelName, namespace){
 
 	el.sf$controlled = modelName;
 	if(namespace !== void 0){
-		el.sf$namespace = namespace;
+		el.sf$space = namespace;
 		var model = el.model = namespace.root[modelName] || namespace(modelName);
 	}
 	else var model = el.model = Model.root[modelName] || Model(modelName);
@@ -29,6 +29,9 @@ export function ModelInit(el, modelName, namespace){
 
 	model.$el ??= $.callableList();
 	model.$el = model.$el.push(el);
+
+	if(namespace !== void 0)
+		model.$space = namespace;
 
 	if(model.sf$internal === void 0){
 		Object.defineProperty(model, 'sf$internal', {configurable:true, value:{
