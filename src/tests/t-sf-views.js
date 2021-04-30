@@ -16,14 +16,14 @@ views.addRoute([
 		'nested-view':[
 			{
 				path:'/:nest',
-				beforeRoute:function(data){
+				beforeRoute(data){
 					this.url = '/router/lv1/'+data.nest
 				},
 
 				'nested2-view':[
 					{
 						path:'/:nest',
-						beforeRoute:function(data){
+						beforeRoute(data){
 							this.url = '/router/lv2/'+data.nest
 						}
 					}
@@ -37,14 +37,14 @@ views.addRoute([
 		'nested-view':[
 			{
 				path:'/:nest',
-				beforeRoute:function(data){
+				beforeRoute(data){
 					this.url = '/router/lv1/'+data.nest
 				},
 
 				'nested2-view':[
 					{
 						path:'/:nest',
-						beforeRoute:function(data){
+						beforeRoute(data){
 							this.url = '/router/lv2/'+data.nest
 						}
 					}

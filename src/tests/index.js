@@ -1,4 +1,4 @@
-import {$, component, model, hotReload, Window, language, internal, watch, unwatch} from "../index.js";
+import {$, component, model, hotReload, Window, language, internal, watch, unwatch, Views} from "../index.js";
 import {parsePreprocess, queuePreprocess} from "../sf-model/parser.js";
 import "./t-sf-model.js";
 import "./t-sf-component.js";
@@ -17,7 +17,7 @@ Window.frameworkPath = 'https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/s
 // internal.async(false);
 
 window.$ = $;
-window.ssf = {component, model, language, Window, watch, unwatch};
+window.ssf = {component, model, language, Window, watch, unwatch, Views};
 
 $(function(){console.log("✔️ Loading finished")});
 
