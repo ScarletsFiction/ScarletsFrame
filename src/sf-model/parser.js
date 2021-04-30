@@ -9,6 +9,7 @@ import {sfRegex, internal, emptyArray} from "../shared.js";
 import {parseElement, getSelector} from "../sf-dom.utils.js";
 import {SFPageView} from "../sf-views-page.js";
 import {bindElement} from "./element-bind.js";
+import {loadSFTemplate} from "../sf-template.js";
 import {$} from "../sf-dom.js";
 import {ModelInternal, REF_DIRECT, REF_IF, REF_EXEC, templateParser_regex, templateParser_regex_split} from "./a_shared.js";
 import {parseIndexAllocate, modelScript, templateErrorInfo, escapeParse, trimIndentation, templateExec, parserForAttribute} from "./a_utils.js";
@@ -259,45 +260,11 @@ export function templateInjector(targetNode, modelScope, cloneDynamic){
 	const injectTemplate = targetNode.getElementsByTagName('sf-template');
 
 	if(injectTemplate.length !== 0){
-		var temp = window.templates;
-		if(temp === void 0)
-			throw new Error("<sf-template> need `window.templates` to be loaded first");
+		if(window.templates === void 0)
+			throw new Error("<sf-template> inside of model/component need `window.templates` to be loaded first");
 
-		for (var i = injectTemplate.length - 1; i >= 0; i--) {
-			var ref = injectTemplate[i];
-			let path = ref.getAttribute('path')
-			if(path === null){
-				path = ref.getAttribute('get-path');
-
-				if(path !== null) // below got undefined if not found
-					path = deepProperty(window, parsePropertyPath(path));
-			}
-
-			var serve;
-			if(path !== null){
-				if(path !== void 0) {
-					if(path.slice(0, 1) === '.' && targetNode.templatePath !== void 0)
-						path = path.replace('./', targetNode.templatePath);
-
-					serve = temp[path];
-				}
-			}
-			else {
-				path = ref.getAttribute('get-html');
-				serve = deepProperty(window, parsePropertyPath(path));
-			}
-
-			if(serve === void 0){
-				console.log(ref, 'Template path was not found', path);
-				ref.remove();
-				continue;
-			}
-
-			// Need a copy with Array.from
-			serve = toArray(parseElement(serve));
-			$(serve).insertBefore(ref.nextSibling || ref);
-			ref.remove();
-		}
+		for (var i = injectTemplate.length - 1; i >= 0; i--)
+			loadSFTemplate(injectTemplate[i], targetNode);
 	}
 
 	let isDynamic = reservedTemplate.length !== 0;

@@ -10,7 +10,7 @@ import {parseElement} from "./sf-dom.utils.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {templateParser} from "./sf-model/template.js";
 import {$} from "./sf-dom.js";
-import {isClass} from "./utils.js";
+import {toArray, isClass} from "./utils.js";
 
 let hotReloadAll = false; // All model property
 
@@ -153,9 +153,11 @@ export function hotReload(mode){
 	// The element will be destroyed and created a new one
 	// The scope will remain same, and hotReloaded will be called
 
+	let SFTemplateEl = document.getElementsByClassName('sf-h-tmplt');
+
 	// Refresh views html and component
 	HotReload.Template = function(templates){
-		for(let path in templates){
+		that:for(let path in templates){
 			if(!(path in backupTemplate)){
 				backupTemplate[path] = templates[path];
 				continue;
@@ -163,6 +165,30 @@ export function hotReload(mode){
 
 			if(backupTemplate[path] === templates[path])
 				continue;
+
+			for (var i = 0; i < SFTemplateEl.length; i++) {
+				let parent = SFTemplateEl[i];
+				let childs = parent.childNodes;
+				let foundNext = false;
+
+				for (var a = childs.length - 1; a >= 0; a--) {
+					if(childs[a].sf$templatePath === path){
+						let node = childs[a];
+						if(foundNext === false)
+							foundNext = node.nextSibling;
+
+						node.remove();
+					}
+				}
+
+				if(foundNext !== false){
+					let serve = toArray(parseElement(templates[path]));
+					for (var a = 0; a < serve.length; a++) {
+						serve[a].sf$templatePath = path;
+						parent.insertBefore(serve[a], foundNext);
+					}
+				}
+			}
 
 			templates.replace(path, templates[path], true);
 		}
