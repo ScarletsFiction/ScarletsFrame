@@ -48,9 +48,10 @@ const cachedURL = {};
 const knownKeys = ['path','url','template','templateURL','html','on','routes','beforeRoute','defaultData','cache'];
 
 internal.router = {};
-internal.router.parseRoutes = function(obj_, selectorList){
-	const routes = [];
+function parseRoutes(obj_, selectorList, routes, collection){
+	// collection will available for hot reload
 	const pattern = /\/:([^/]+)/g;
+	const {_cache} = routes;
 
 	function addRoutes(obj, addition, selector, parent){
 		if(selector !== '')
@@ -67,10 +68,17 @@ internal.router.parseRoutes = function(obj_, selectorList){
 
 			var keys = [];
 			const regex = current.replace(pattern, function(full, match){
-				keys.push(match);
+				if(keys.includes(match) === false)
+					keys.push(match);
 				return '/([^/]+)';
 			});
-			const route = RegExp(`^${regex}$`);
+
+			let route = _cache[regex];
+			let reuseOldRoute = route !== void 0;
+			if(reuseOldRoute === false){
+				route = RegExp(`^${regex}$`);
+				_cache[regex] = route;
+			}
 
 			if(ref.url !== void 0)
 				route.url = ref.url;
@@ -96,16 +104,51 @@ internal.router.parseRoutes = function(obj_, selectorList){
 				dom.className = 'page-prepare';
 			}
 
+			if(collection != null && (ref.template !== void 0 || ref.html !== void 0)){
+				for (var a = collection.length - 1; a >= 0; a--) {
+					let that = collection[a];
+					if(route.test(that.routePath)){
+						if(that.classList.contains('page-current')){
+							let sel = that.parentElement.tagName.toLowerCase();
+							if(sel === selector || sel === selectorList[0]){
+								// Replace the element
+								if(ref.template)
+									that.parentElement.replaceChild(ref.template, that);
+								else {
+									let node = route.html;
+									if((route.html.constructor._ref || route.html.constructor) === HTMLTemplateElement){
+										node = document.createElement('sf-page-view');
+										node.className = that.className;
+										node.append(...route.html.cloneNode(true).content.childNodes);
+									}
+
+									// Index-AB
+									// Find "insertLoadedElement" with text editor
+									node.routerData = that.routerData;
+									node.routeNoRemove = that.routeNoRemove;
+									node.routeCached = that.routeCached;
+									node.routePath = that.routePath;
+
+									that.parentElement.replaceChild(node, that);
+								}
+							}
+						}
+						else that.remove();
+					}
+				}
+			}
+
 			route.keys = keys;
 			route.beforeRoute = ref.beforeRoute;
 			route.defaultData = ref.defaultData || {};
 
 			if(selector !== ''){
-				route.selector = selectorList.indexOf(selector);
+				let temp = selector.trim();
+				route.selector = selectorList.indexOf(temp);
 
 				if(route.selector === -1){
 					route.selector = selectorList.length;
-					selectorList.push(selector.trim());
+					selectorList.push(temp);
 				}
 			}
 
@@ -133,7 +176,8 @@ internal.router.parseRoutes = function(obj_, selectorList){
             	route.forChild = RegExp(regex);
             }
 
-			routes.push(route);
+            if(reuseOldRoute === false)
+				routes.push(route);
 		}
 	}
 
@@ -141,7 +185,6 @@ internal.router.parseRoutes = function(obj_, selectorList){
 		obj_ = [obj_];
 
     addRoutes(obj_, '', '');
-	return routes;
 }
 
 internal.router.findRoute = function(url){
@@ -170,26 +213,40 @@ export function Views(selector, name){
 	if(this.Views === Views)
 		return console.error('sf.Views need to be constructed using "new sf.Views"');
 
+	if(Views.listSelector[selector] !== void 0){
+		let exist = Views.listSelector[selector];
+		exist.z_$cN(name);
+		return exist;
+	}
+
 	// If undefined then name set it as '/'
 	name ??= slash;
 
-	let Self = this
+	let Self = this;
 
-	// if have name and  not false
-	if(name)
-		Views.list[name] = this;
-
+	Views.listSelector[selector] = this;
 	let pendingAutoRoute = false;
 
-	// Init current URL as current View Path
-	if(name === slash)
-		Self.currentPath = URI.path;
-	else if(name === false)
-		Self.currentPath = '';
-	else{
-		Self.currentPath = '';
-		pendingAutoRoute = true;
+	// Change Name
+	Self.z_$cN = function(_name){
+		name = _name;
+
+		// if have name and not false
+		if(name)
+			Views.list[name] = Self;
+
+		// Init current URL as current View Path
+		if(name === slash)
+			Self.currentPath = URI.path;
+		else if(name === false)
+			Self.currentPath = '';
+		else{
+			Self.currentPath = '';
+			pendingAutoRoute = true;
+		}
 	}
+
+	Self.z_$cN(name);
 
 	let initialized = false;
 	let firstRouted = false;
@@ -216,14 +273,19 @@ export function Views(selector, name){
 			parent.sf$cachedDOM.shift().remove();
 	}
 
+	let selectorWaiting = '';
+
 	let rootDOM = Self.rootDOM = {};
 	function getSelector(selector_, isChild, currentPath){
 		let DOM = (isChild || (rootDOM.isConnected ? rootDOM : document.body)).getElementsByTagName(selector_ || selector);
+
+		selectorWaiting = selector_ || selector;
 		if(DOM.length === 0) return false;
 
 		DOM = DOM[0];
 		if(DOM.sf$viewInitialized) return false;
 
+		selectorWaiting = false;
 		initialized = true;
 
 		if(collection === null)
@@ -267,7 +329,7 @@ export function Views(selector, name){
 		return DOM;
 	}
 
-    const selectorList = [selector];
+    const selectorList = this.selectorList = [selector];
 	var routes = Self.routes = [];
 	routes.findRoute = internal.router.findRoute;
 
@@ -326,9 +388,11 @@ export function Views(selector, name){
 		return Self;
 	}
 
+	routes._cache = {};
+
 	var devAddLocked = 0;
-	Self.addRoute = function(obj){
-		routes.push(...internal.router.parseRoutes(obj, selectorList));
+	Self.addRoute = function(obj/*, hotReload? */){
+		parseRoutes(obj, selectorList, routes, arguments[1] && collection);
 
 		if(SFOptions.devMode && devAddLocked !== true){
 			if(Self.$devData === void 0)
@@ -489,7 +553,7 @@ export function Views(selector, name){
 			getSelector();
 
 			if(initialized === false)
-				return console.error("sf.Views haven't finished initializing, and waiting for related parent element");
+				return console.error("sf.Views haven't finished initializing, and still waiting for '<"+selectorWaiting+">' element to be exist on the DOM tree.");
 		}
 
 		if(_routeCount === void 0){
@@ -573,6 +637,8 @@ export function Views(selector, name){
 
 		const currentData = Self.data = url.data;
 
+		// When new dom.property added, please find "Index-AB" with text editor
+		// to replace on that section too
 		function insertLoadedElement(DOMReference, dom, pendingShowed){
 			dom.routerData = {};
 			const { firstChild } = dom;
@@ -920,6 +986,7 @@ export function Views(selector, name){
 };
 
 Views.list = {};
+Views.listSelector = {};
 Views.goto = function(url){
 	const parsed = URI.parse(url);
 	URI.data = parsed.data;
@@ -941,6 +1008,10 @@ Views.goto = function(url){
 		if(parsed.routes[list] !== views[list].currentPath)
 			views[list].goto(parsed.routes[list] || '/');
 	}
+}
+
+Views._$edit =  function(selector, routes) {
+	(Views.listSelector[selector] || new Views(selector)).addRoute(routes, true);
 }
 
 Views.resetCache = function(){
