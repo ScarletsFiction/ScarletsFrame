@@ -188,9 +188,31 @@ export function hotReload(mode){
 						parent.insertBefore(serve[a], foundNext);
 					}
 				}
+
+				reinitViews(parent);
 			}
 
 			templates.replace(path, templates[path], true);
+		}
+	}
+
+	$(function(){
+		setTimeout(()=> {
+			if(window._sf_internal !== void 0)
+				window._sf_internal.reinitViews = reinitViews;
+		}, 1000);
+	});
+
+	function reinitViews(el){
+		if(el instanceof Array)
+			return el.forEach(reinitViews);
+
+		let selectors = sf.Views.listSelector;
+		for(let key in selectors){
+			let newViewEl = el.getElementsByTagName(key)[0];
+			if(newViewEl === void 0) continue;
+
+			newViewEl.parentNode.replaceChild(selectors[key].rootDOM, newViewEl);
 		}
 	}
 
