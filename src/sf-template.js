@@ -19,10 +19,12 @@ export function loadSFTemplate(ref, targetNode){
 	let path = ref.getAttribute('path')
 	if(path === null){
 		path = ref.getAttribute('get-path');
+		ref.removeAttribute('get-path');
 
 		if(path !== null) // below got undefined if not found
 			path = deepProperty(window, parsePropertyPath(path));
 	}
+	else ref.removeAttribute('path');
 
 	var serve;
 	if(path !== null){
@@ -35,6 +37,7 @@ export function loadSFTemplate(ref, targetNode){
 	}
 	else {
 		path = ref.getAttribute('get-html');
+		ref.removeAttribute('get-html');
 		serve = deepProperty(window, parsePropertyPath(path));
 	}
 
@@ -46,17 +49,24 @@ export function loadSFTemplate(ref, targetNode){
 	}
 
 	// Need a copy with Array.from
-	serve = toArray(parseElement(serve));
+	serve = $(toArray(parseElement(serve)));
 
 	if(SFOptions.hotReload){
 		for (var i = 0; i < serve.length; i++)
 			serve[i].sf$templatePath = path;
 
 		ref.parentNode.classList.add('sf-h-tmplt');
+		ref._$list = serve;
 	}
 
-	$(serve).insertBefore(ref.nextSibling || ref);
+	serve.insertBefore(ref.nextSibling || ref);
 	ref.remove();
+
+	if(SFOptions.hotReload){
+		ref.remove = function(){
+			ref._$list.remove();
+		}
+	}
 }
 
 // Define sf-template element
