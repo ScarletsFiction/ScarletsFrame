@@ -276,6 +276,7 @@ export function Views(selector, name){
 	let selectorWaiting = '';
 
 	let rootDOM = Self.rootDOM = {};
+	Self._$gS = getSelector;
 	function getSelector(selector_, isChild, currentPath){
 		let DOM = (isChild || (rootDOM.isConnected ? rootDOM : document.body)).getElementsByTagName(selector_ || selector);
 
@@ -553,7 +554,7 @@ export function Views(selector, name){
 			getSelector();
 
 			if(initialized === false)
-				return console.error("sf.Views haven't finished initializing, and still waiting for '<"+selectorWaiting+">' element to be exist on the DOM tree.");
+				return console.error(`Routing view to '${path}' was failed, waiting for '<${selectorWaiting}>' element to be exist on the DOM tree.`);
 		}
 
 		if(_routeCount === void 0){

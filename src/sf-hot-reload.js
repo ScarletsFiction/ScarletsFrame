@@ -212,7 +212,10 @@ export function hotReload(mode){
 			let newViewEl = el.getElementsByTagName(key)[0];
 			if(newViewEl === void 0) continue;
 
-			newViewEl.parentNode.replaceChild(selectors[key].rootDOM, newViewEl);
+			let oldView = selectors[key];
+			if(oldView.rootDOM !== void 0)
+				newViewEl.parentNode.replaceChild(selectors[key].rootDOM, newViewEl);
+			else oldView._$gS();
 		}
 	}
 
@@ -408,7 +411,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 	scope.$el ??= $.callableList();
 
-	var firstTime = scope.sf$bindedKey === void 0;
+	var firstTime = scope.hotReloading === void 0;
 	!firstTime && scope.hotReload && scope.hotReload(scope);
 
 	if(func.constructor === Function){
