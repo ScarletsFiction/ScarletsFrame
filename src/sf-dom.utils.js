@@ -44,7 +44,7 @@ export function prevAll(element, selector, isNext, one){
  * @param  object			options     event options
  * @return null
  */
-export function onEvent(element, event, selector, callback, options){
+export function onEvent(element, event, selector, callback, options, _opt){
 	if(event.includes(' ')){
 		event = event.split(' ');
 		for (let i = 0; i < event.length; i++) {
@@ -69,6 +69,11 @@ export function onEvent(element, event, selector, callback, options){
 		selector = null;
 	}
 
+	if(_opt !== void 0){
+		if(options === void 0) options = _opt;
+		else Object.assign(options, _opt);
+	}
+
 	if(selector){
 		// Check the related callback from `$0.sf$eventListener[event][index].callback`
 
@@ -79,6 +84,31 @@ export function onEvent(element, event, selector, callback, options){
 				tempCallback.call(target, ev);
 		}
 		callback.callback = tempCallback;
+	}
+
+	if(options !== void 0){
+		if(options.prevent || options.outside || options.stop || options.stopAll){
+			const tempCallback = callback;
+			const tempEl = element;
+
+			if(options.outside)
+				element = internal.WindowClass;
+
+			callback = function(ev){
+				if(options.prevent) ev.preventDefault();
+				if(options.stopAll){
+					ev.stopPropagation();
+					ev.stopImmediatePropagation();
+				}
+				else if(options.stop) ev.stopPropagation();
+
+				if(options.outside && tempEl.contains(ev.target))
+					return;
+
+				tempCallback.call(ev.target, ev);
+			}
+			callback.callback = tempCallback;
+		}
 	}
 
 	callback.selector = selector;
@@ -121,8 +151,8 @@ function saveEvent(element, event, callback){
 }
 
 // Shorcut
-export function onceEvent(element, event, selector, callback){
-	onEvent(element, event, selector, callback, {once:true});
+export function onceEvent(element, event, selector, callback, options){
+	onEvent(element, event, selector, callback, options, {once:true});
 }
 
 /**
@@ -165,6 +195,8 @@ export function offEvent(element, event, selector, callback, options){
 		const list = windowEv[event];
 		if(callback){
 			var i = list.indexOf(callback);
+			if(i === -1)
+				deepScanEventCallback(list, callback);
 			if(i !== -1)
 				list.splice(i, 1);
 		}
@@ -184,6 +216,20 @@ export function offEvent(element, event, selector, callback, options){
 	removeEvent(element, event, selector, callback, options);
 }
 
+function deepScanEventCallback(list, callback){
+	for (var i = 0; i < list.length; i++) {
+		var temp = list[i];
+		while(temp.callback !== void 0){
+			if(temp.callback === callback)
+				return i;
+
+			temp = temp.callback;
+		}
+	}
+
+	return -1;
+}
+
 function removeEvent(element, event, selector, callback, options){
 	// Remove listener
 	if(element.sf$eventListener === void 0){
@@ -200,6 +246,9 @@ function removeEvent(element, event, selector, callback, options){
 			return;
 
 		var i = ref.indexOf(callback);
+
+		if(i === -1)
+			deepScanEventCallback(ref, callback);
 
 		if(i !== -1)
 			ref.splice(i, 1);

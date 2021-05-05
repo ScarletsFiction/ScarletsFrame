@@ -359,9 +359,9 @@ class DOMList extends Array{
 		}
 		return this;
 	}
-	once(event, selector, callback){
+	once(event, selector, callback, options){
 		for (let i = 0; i < this.length; i++)
-			$.once(this[i], event, selector, callback);
+			$.once(this[i], event, selector, callback, options);
 		return this;
 	}
 	trigger(events, data, direct) {

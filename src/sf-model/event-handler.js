@@ -226,6 +226,19 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		}, options);
 	}
 
+	if(keys.has('outside')){
+		let realThat = that;
+		let realFunc = script;
+
+		that = window;
+		script = function(ev){
+			if(realThat.contains(ev.target)) return;
+			realFunc.apply(this, arguments);
+		}
+
+		keys.delete('outside');
+	}
+
 	if(CustomEvent[eventName]){
 		CustomEvent[eventName]((rootHandler || that), script, keys, _modelScope);
 		return;
