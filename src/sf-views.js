@@ -1034,6 +1034,7 @@ Loader.onFinish(function(){
 			return Security.report && Security.report(1,ev);
 
 		const attr = this.getAttribute('href');
+		if(attr === '#') return;
 		if(attr.slice(0, 1) === '@'){ // ignore
 			const target = this.getAttribute('target');
 			if(target)
