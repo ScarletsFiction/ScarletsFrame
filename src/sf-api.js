@@ -27,17 +27,16 @@ export class API{
 	request(method, url, data, beforeSend){
 		data ??= {};
 
+		var options = {receiveType:'JSON'};
 		if(this.mask){
-			var options = {receiveType:'JSON'};
-
 			if(data.constructor === FormData)
 				data.append('_method', method.toUpperCase());
-			else{
-				options.sendType = 'JSON';
+			else
 				data._method = method.toUpperCase();
-			}
 		}
-		else var options = {};
+
+		if(data.constructor !== FormData)
+			options.sendType = 'JSON';
 
 		if(this.accessToken){
 			const { accessToken } = this;

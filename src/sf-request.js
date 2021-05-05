@@ -27,10 +27,14 @@ export function request(method, url, data, options, callback){
 const statusCode = request.statusCode = {};
 request.onerror = null;
 request.onsuccess = null;
+let middleware = request.middleware = {send: null, receive: null};
 
 function HttpRequest(method, url, data, options, callback){
 	const xhr = new XMLHttpRequest();
 	options.beforeOpen && options.beforeOpen(xhr);
+
+	let MS = middleware.send;
+	MS && MS(xhr, method, url, data, options, callback);
 
 	if(method === 'GET' || method === 'HEAD' || method === 'OPTIONS' || method === 'DELETE'){
 		const hasQuery = serializeQuery(data);
@@ -149,6 +153,7 @@ class ReqEventRegister extends XMLHttpRequest{
 		const xhr = this;
 		const callback = this._cb;
 		const options = this._opt;
+		let MR = middleware.receive;
 
 		if((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0){
 			if(options.receiveType === 'JSON'){
@@ -160,11 +165,14 @@ class ReqEventRegister extends XMLHttpRequest{
 				}
 
 				if(parsed !== void 0){
-					callback.done && callback.done(JSON.parse(xhr.responseText), xhr.status);
+					if(MR && MR(xhr, parsed)) return;
+
+					callback.done && callback.done(parsed, xhr.status);
 					request.onsuccess && request.onsuccess(xhr);
 				}
 			}
 			else{
+				if(MR && MR(xhr)) return;
 				callback.done && callback.done(xhr.response, xhr.status);
 				request.onsuccess && request.onsuccess(xhr);
 			}
@@ -172,12 +180,19 @@ class ReqEventRegister extends XMLHttpRequest{
 		else if(callback.fail){
 			if(options.receiveType === 'JSON'){
 				try{
-					callback.fail(xhr.status, JSON.parse(xhr.responseText));
+					let parsed = JSON.parse(xhr.responseText);
+					if(MR && MR(xhr, parsed)) return;
+
+					callback.fail(xhr.status, parsed);
 				}catch(e){
+					if(MR && MR(xhr)) return;
 					callback.fail(xhr.status, xhr.responseText);
 				}
 			}
-			else callback.fail(xhr.status, xhr.response);
+			else{
+				if(MR && MR(xhr)) return;
+				callback.fail(xhr.status, xhr.response);
+			}
 		}
 
 		statusCode[xhr.status] && statusCode[xhr.status](xhr);
