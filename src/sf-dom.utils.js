@@ -178,25 +178,46 @@ export function offEvent(element, event, selector, callback, options){
 	var events = event.split(' ');
 	if(events.length !== 1){
 		for (var i = 0; i < events.length; i++) {
-			offEvent(element, events[i]);
+			offEvent(element, events[i], selector, callback, options);
 		}
 		return;
 	}
 
-	if(selector !== void 0 && selector.constructor === Function){
-		callback = selector;
-		selector = void 0;
+	if(callback !== void 0 && callback.constructor === Object){
+		const temp = options;
+		options = callback;
+		callback = temp;
 	}
+
+	if(selector !== void 0){
+		if(selector.constructor === Function){
+			callback = selector;
+			selector = null;
+		}
+
+		else if(selector.constructor === Object){
+			options = selector;
+			selector = null;
+		}
+	}
+
+	if(options !== void 0 && options.outside)
+		element = internal.WindowClass;
 
 	if(element === internal.WindowClass){
 		if(!(event in windowEv) || windowEv[event].length === 0)
 			return;
 
+		// Remove from new window event registration
 		const list = windowEv[event];
 		if(callback){
 			var i = list.indexOf(callback);
-			if(i === -1)
-				deepScanEventCallback(list, callback);
+
+			if(i === -1){
+				i = deepScanEventCallback(list, callback);
+				callback = list[i];
+			}
+
 			if(i !== -1)
 				list.splice(i, 1);
 		}
@@ -247,8 +268,10 @@ function removeEvent(element, event, selector, callback, options){
 
 		var i = ref.indexOf(callback);
 
-		if(i === -1)
-			deepScanEventCallback(ref, callback);
+		if(i === -1){
+			i = deepScanEventCallback(ref, callback);
+			element.removeEventListener(event, ref[i], options);
+		}
 
 		if(i !== -1)
 			ref.splice(i, 1);
