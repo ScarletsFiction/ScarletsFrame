@@ -257,7 +257,8 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 	if(keys.has('shift')){ modsCode |= 4; keys.delete('shift'); }
 	if(keys.has('meta')){ modsCode |= 8; keys.delete('meta'); }
 
-	if(direct && keys.size === 0 && pointerCode === 0 && modsCode === 0)
+	let hasKeys = keys.size !== 0;
+	if(direct && !hasKeys && pointerCode === 0 && modsCode === 0)
 		var callback = script;
 	else{
 		var callback = function(ev){
@@ -277,7 +278,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 			}
 
 			if(ev.constructor === KeyboardEvent){
-				if(containSingleChar && !keys.has(ev.key))
+				if(hasKeys && !keys.has(ev.key.toLowerCase()))
 					return;
 			}
 
@@ -295,7 +296,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 			}
 
 			else if(ev.constructor === TouchEvent){
-				if(containSingleChar && !keys.has(ev.touches.length))
+				if(containSingleChar && !keys.has(''+ev.touches.length))
 					return;
 			}
 
