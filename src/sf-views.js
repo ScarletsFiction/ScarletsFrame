@@ -465,7 +465,7 @@ export function Views(selector, name){
 		const ref = onEvent.error;
 
 		if(ref.length === 0){
-			console.error('Unhandled router error:', statusCode, data);
+			console.error('Unhandled router error:', statusCode, data, ", router base element:", Self.rootDOM);
 			return;
 		}
 
@@ -547,6 +547,13 @@ export function Views(selector, name){
 
 	let routeTotal = 0;
 	Self.goto = function(path, data, method, callback, _routeCount){
+		// Extract for current route name only
+		if(path.includes('#')){
+			let temp = path.split(`#${name}/`);
+			if(temp.length === 1) return;
+			path = `/${temp[1].split('#')[0]}`;
+		}
+
 		if(Self.currentPath === path)
 			return;
 
