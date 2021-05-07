@@ -213,8 +213,8 @@ export function hotReload(mode){
 			if(newViewEl === void 0) continue;
 
 			let oldView = selectors[key];
-			if(oldView.rootDOM !== void 0)
-				newViewEl.parentNode.replaceChild(selectors[key].rootDOM, newViewEl);
+			if(oldView.rootDOM.constructor !== Object)
+				newViewEl.parentNode.replaceChild(oldView.rootDOM, newViewEl);
 			else oldView._$gS();
 		}
 	}
