@@ -13,7 +13,7 @@ export var HotReload = {
 	proxyTemplate: {},
 };
 export var forProxying = {};
-export var emptyArray = Object.freeze({length:0});
+export var emptyArray = Object.freeze([]);
 
 export var SFOptions = {
 	devMode: false,

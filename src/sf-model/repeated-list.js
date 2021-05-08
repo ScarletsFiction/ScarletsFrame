@@ -8,7 +8,7 @@ import {internal as Internal} from "../internal.js";
 import {$} from "../sf-dom.js";
 import {modelScript, initBindingInformation} from "./a_utils.js";
 import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";
-import {internal, SFOptions, sfRegex} from "../shared.js";
+import {internal, SFOptions, sfRegex, emptyArray} from "../shared.js";
 import {extractPreprocess} from "./parser.js";
 import {getScope, findBindListElement, avoidQuotes, hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
 import {getSelector} from "../sf-dom.utils.js";
@@ -238,8 +238,10 @@ function rangeFunction(begin, end, step){
 
 	if(step === void 0)
 		step = direction;
-	else if(Math.sign(step) !== direction)
-		throw `Infinity loop detected for sf-each: "range(${[...arguments].join(', ')})"`;
+	else if(Math.sign(step) !== direction){
+		this.remake(emptyArray, true);
+		return;
+	}
 
 	var arr = new Array(Math.ceil(direction*(end - begin) / Math.abs(step)));
 	if(direction === 1){
@@ -1731,7 +1733,13 @@ export class ElementManipulator{
 		if(this.template.modelRefRoot_path && this.template.modelRefRoot_path.length !== 0)
 			this.clearBinding(this.parentChilds || this.elements, 0);
 
-		this.parentNode.textContent = '';
+		if(this.bound_end === void 0)
+			this.parentNode.textContent = '';
+		else{
+			let els = this.elements;
+			for (var i = els.length-1; i >= 0; i--)
+				els[i].remove();
+		}
 
 		if(this.$VSM !== void 0)
 			this.$VSM.clear();
