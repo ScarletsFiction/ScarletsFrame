@@ -166,7 +166,6 @@ function listFromFunction(modelRef, pattern, list){
 	if(modelRef.sf$internal._regex === void 0)
 		modelRef.sf$internal._regex = modelRef.sf$internal.modelKeysRegex.modelRefRoot_regex;
 
-
 	let func = avoidQuotes(pattern.source, function(temp){
 		// Unescape HTML
 		temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
@@ -194,8 +193,6 @@ function listFromFunction(modelRef, pattern, list){
 
 			setTimeout(()=> {
 				debouncing = false;
-
-				console.log(567,list);
 
 				let ret = func(list, modelRef, rangeFunction);
 				if(ret === void 0) return;

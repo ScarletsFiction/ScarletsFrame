@@ -1,7 +1,7 @@
-import {model, component, internal, getScope, Obj} from "../index.js";
+import {model, component, internal, getScope, Obj} from "../index.dev.js";
 import {ModelInit} from "../sf-model/a_model.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
-import {$} from "../index.js";
+import {$} from "../index.dev.js";
 
 model('virtual-scroll', function(self, root){
 	window.test = self;

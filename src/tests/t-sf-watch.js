@@ -1,4 +1,4 @@
-import {$, watch, unwatch} from "../index.js";
+import {$, watch, unwatch} from "../index.dev.js";
 
 var bValue = 123;
 var obj = {

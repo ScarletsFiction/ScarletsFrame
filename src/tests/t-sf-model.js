@@ -1,4 +1,4 @@
-import {model, component, language} from "../index.js";
+import {model, component, language} from "../index.dev.js";
 import {ModelInit} from "../sf-model/a_model.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 

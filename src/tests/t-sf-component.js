@@ -1,4 +1,4 @@
-import {$, model, component, Views, Space, loader} from "../index.js";
+import {$, model, component, Views, Space, loader} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 // class InheritComponent{

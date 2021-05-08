@@ -1,4 +1,4 @@
-import {model, component, Space, Window} from "../index.js";
+import {model, component, Space, Window} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 var testSpace = new Space('test-space');

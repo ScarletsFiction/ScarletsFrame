@@ -1,4 +1,4 @@
-import {loader} from "../index.js";
+import {loader} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 if(minimalTest){

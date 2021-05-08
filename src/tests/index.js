@@ -1,4 +1,4 @@
-import {$, component, model, hotReload, Window, language, internal, watch, unwatch, Views} from "../index.js";
+import {$, component, model, hotReload, Window, language, internal, watch, unwatch, Views} from "../index.dev.js";
 import {parsePreprocess, queuePreprocess} from "../sf-model/parser.js";
 import "./t-sf-model.js";
 import "./t-sf-component.js";

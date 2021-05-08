@@ -2,7 +2,7 @@ sf-inspector{
 	position: fixed;
 	top: 0;
 	left: 0;
-	z-index: 1000;
+	z-index: 1000000;
 }
 
 sf-space[sf_devmode]{
@@ -80,7 +80,7 @@ sf-view-info{
 	position: fixed;
 	top: 0;
 	left: 0;
-	z-index: 1000;
+	z-index: 1000000;
 }
 
 sf-model-viewer{
@@ -127,6 +127,7 @@ sf-model-viewer .reactive{
 
 sf-model-viewer span{
 	cursor: default;
+	margin-top: -1px;
 	font-weight: 400;
 	font-size: 16px;
 }
@@ -139,8 +140,10 @@ sf-model-viewer .object .value{
 sf-model-viewer .list textarea{
 	position: relative;
 	background: none;
+	display: inline-block;
 	outline: none;
 	font-size: 16px;
+	font-family: "Calibri";
 	border: none;
 	color: #b3b3b3;
 	vertical-align: middle;
@@ -148,7 +151,7 @@ sf-model-viewer .list textarea{
 	padding: 0 0 0 5px;
 	top: 0;
 	left: 0;
-	height: 22px;
+	height: 24px;
 	font-weight: 400;
 }
 

@@ -1,4 +1,4 @@
-import {language} from "../index.js";
+import {language} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 language.default = 'en_US';
