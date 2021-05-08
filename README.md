@@ -16,6 +16,9 @@ This framework haven't reach v1.0.0. Every increment of `(v0.*.0)` may have a br
 
 <!-- Development mode -->
 <script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.dev.js"></script>
+
+<!-- sQuery only (sf.$) -->
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/squery.min.js"></script>
 ```
 
 ## Try it online like a project
