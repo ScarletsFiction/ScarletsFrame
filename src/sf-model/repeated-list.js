@@ -195,6 +195,8 @@ function listFromFunction(modelRef, pattern, list){
 			setTimeout(()=> {
 				debouncing = false;
 
+				console.log(567,list);
+
 				let ret = func(list, modelRef, rangeFunction);
 				if(ret === void 0) return;
 
@@ -238,10 +240,10 @@ function rangeFunction(begin, end, step){
 
 	if(step === void 0)
 		step = direction;
-	else if(Math.sign(step) !== direction){
-		this.remake(emptyArray, true);
-		return;
-	}
+	else if(direction === 0)
+		return this.remake([begin], true);
+	else if(Math.sign(step) !== direction)
+		return this.remake(emptyArray, true);
 
 	var arr = new Array(Math.ceil(direction*(end - begin) / Math.abs(step)));
 	if(direction === 1){
