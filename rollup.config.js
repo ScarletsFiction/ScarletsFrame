@@ -32,6 +32,18 @@ if(process.env.production){
     },
     plugins
   });
+
+  config.push({
+    input: "src/index.squery.js",
+    output: {
+      file: "dist/squery.min.js",
+      sourcemap: true,
+      sourcemapFile: "dist/squery.min.js.map",
+      format: "iife",
+      name: "sf"
+    },
+    plugins
+  });
 }
 
 export default config;

@@ -6,6 +6,7 @@
 /dist/inspector.css
 /dist/scarletsframe.min.js
 /dist/scarletsframe.dev.js
+/dist/squery.min.js
 mynote.md
 /tests/
 package-lock.json
