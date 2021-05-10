@@ -9,6 +9,7 @@ import {bindInput} from "./sf-model/input-bind.js";
 import {repeatedListBinding} from "./sf-model/repeated-list.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {$} from "./sf-dom.js";
+import {handleSFSlot} from "./sf-slot.js";
 
 export function component(name, options, func, namespace){
 	if(options !== void 0){
@@ -121,10 +122,19 @@ component.for = function(name, options, func, namespace){
 	const CompList = registrar[2];
 	registrar[1] = construct;
 
-	Object.defineProperty(CompList, 'root', {
-		configurable: true,
-		value:construct
-	});
+	if(CompList.root === void 0){
+		Object.defineProperties(CompList, {
+			space:{ value: scope },
+
+			root:{ value: construct }, // <HTMLElement>
+			new:{ value:{ // Create with current space
+				_space: scope,
+				_root: construct,
+				seed: seedCreator, // SFModel {...}
+				stem: stemCreator, // <HTMLElement>
+			}},
+		});
+	}
 
 	window[`$${capitalizeLetters(name.split('-'))}`] = construct;
 
@@ -145,6 +155,20 @@ component.for = function(name, options, func, namespace){
 
 	// Return list of created component
 	return CompList;
+}
+
+// Seed is the object for model
+// it's obtained from plant that already rise from a DOM space
+// it has detached stem in $el[0] and can be planted on different DOM space
+function seedCreator(item, asScope){
+	return this.stem.apply(this, arguments).model;
+}
+
+// Stem is the element of the component that was detached from the DOM
+// it already rise from it own space and can be planted on different DOM space
+// it also has .model property for storing data
+function stemCreator(item, asScope){
+	return new this._root(item, this._space, asScope);
 }
 
 component.html = function(name, outerHTML, namespace){
@@ -301,6 +325,8 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	if(namespace !== void 0)
 		newObj.$space = namespace;
 
+	handleSFSlot(newObj, element);
+
 	let reusing = void 0;
 	if(index === 0 && newObj.destroy !== false){
 		const func = registrar[0];
@@ -373,6 +399,13 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 				copy.parse[i] = Object.create(copy.parse[i]);
 				copy.parse[i].data = copy.scopes;
 			}
+		}
+
+		if(newObj.sf$internal === void 0){
+			Object.defineProperty(newObj, 'sf$internal', {configurable:true, value:{
+				modelKeysRegex:registrar[4],
+				deepBinding:{}
+			}});
 		}
 
 		if(tempDOM === true)

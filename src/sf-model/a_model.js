@@ -6,6 +6,7 @@ import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.j
 import {repeatedListBinding} from "./repeated-list.js";
 import {bindInput} from "./input-bind.js";
 import {$} from "../sf-dom.js";
+import {handleSFSlot} from "../sf-slot.js";
 
 export function ModelInit(el, modelName, namespace){
 	if(el.model !== void 0)
@@ -68,6 +69,7 @@ export function ModelInit(el, modelName, namespace){
 		return;
 	}
 
+	handleSFSlot(model, el);
 	model.init && model.init(el, firstInit);
 
 	if(model.constructor !== Object)
