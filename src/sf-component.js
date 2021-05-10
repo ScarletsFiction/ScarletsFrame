@@ -124,11 +124,11 @@ component.for = function(name, options, func, namespace){
 
 	if(CompList.root === void 0){
 		Object.defineProperties(CompList, {
-			space:{ value: scope },
+			space:{ value: namespace },
 
 			root:{ value: construct }, // <HTMLElement>
 			new:{ value:{ // Create with current space
-				_space: scope,
+				_space: namespace,
 				_root: construct,
 				seed: seedCreator, // SFModel {...}
 				stem: stemCreator, // <HTMLElement>
