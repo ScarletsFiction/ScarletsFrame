@@ -133,6 +133,36 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 	}
 }
 
+export function forceReactive(modelRef, property){
+	let that = modelRef[property];
+	const { constructor } = that;
+
+	let proto;
+	if(constructor === Array)
+		proto = ReactiveArray;
+	else if(constructor === Object)
+		proto = PropertyList;
+	else if(constructor === Map)
+		proto = ReactiveMap;
+	else if(constructor === Set)
+		proto = ReactiveSet;
+	else return;
+
+	Object.defineProperty(that, '_$pending', {
+		configurable: true,
+		value: true
+	});
+
+	Object.setPrototypeOf(that, proto.prototype);
+	proto.construct(modelRef, void 0, {
+		that,
+		target: modelRef,
+		prop: property,
+		pattern: {},
+		firstInit: true
+	});
+}
+
 const listFunctionHandle = {
 	generator(ret, list, modelRef){
 		let val = ret.next();
@@ -275,6 +305,10 @@ function parsePatternRule(modelRef, pattern, proto){
 		Object.setPrototypeOf(that, proto.prototype);
 		firstInit = true;
 	}
+	else if(that._$pending === true){
+		delete that._$pending;
+		firstInit = true;
+	}
 
 	// that = the list object
 	// target = model or the parent object of the list
@@ -296,14 +330,18 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	const {target, prop, pattern} = rule;
 	let callback = target[`on$${prop}`] || {};
 
-	const compTemplate = (namespace || Component).registered[element.tagName.toLowerCase()];
-	if(compTemplate !== void 0 && compTemplate[3] === void 0 && element.childNodes.length !== 0)
-		compTemplate[3] = element;
+	if(element === void 0 && this.$EM !== void 0){
+		console.error("Please fill an issue on GitHub with 'code: 12'");
+		return;
+	}
 
-	const isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
-	const EM = new ElementManipulator();
-
+	let EM = new ElementManipulator();
 	if(this.$EM === void 0){
+		if(element === void 0){
+			EM = new ElementManipulatorProxy();
+			EM.list = [];
+		}
+
 		hiddenProperty(this, '$EM', EM, true);
 
 		if(pattern.call === void 0){
@@ -314,13 +352,24 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			});
 		}
 	}
-	else if(this.$EM.constructor === ElementManipulatorProxy)
-		this.$EM.list.push(EM);
+	else if(this.$EM.constructor === ElementManipulatorProxy){
+		if(this.$EM.list.length !== 0)
+			this.$EM.list.push(EM);
+		else this.$EM = EM;
+	}
 	else{
 		const newList = [this.$EM, EM];
 		this.$EM = new ElementManipulatorProxy();
 		this.$EM.list = newList;
 	}
+
+	if(element === void 0) return;
+
+	const compTemplate = (namespace || Component).registered[element.tagName.toLowerCase()];
+	if(compTemplate !== void 0 && compTemplate[3] === void 0 && element.childNodes.length !== 0)
+		compTemplate[3] = element;
+
+	const isComponent = compTemplate !== void 0 ? compTemplate[1] : false;
 
 	let mask = pattern.props, uniqPattern;
 	if(mask.constructor === Array){
@@ -445,6 +494,8 @@ function afterConstruct(modelRef, element, rule, parentNode, namespace){
 	const { that } = rule;
 
 	const alone = prepareRepeated.apply(that, arguments);
+	if(element === void 0) return;
+
 	const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
 
 	if(alone === true){
@@ -888,8 +939,9 @@ export class ReactiveArray extends Array{
 		}
 
 		const alone = prepareRepeated.apply(that, arguments);
+		if(element === void 0) return;
+
 		const EM = that.$EM.constructor === ElementManipulatorProxy ? that.$EM.list[that.$EM.list.length-1] : that.$EM;
-		const { template } = EM;
 
 		if(parentNode.classList.contains('sf-virtual-list')){
 			hiddenProperty(that, '$virtual', new VirtualScroll(EM));
@@ -898,7 +950,7 @@ export class ReactiveArray extends Array{
 				console.warn("Virtual list was initialized when the container has another child that was not sf-repeated element.", parentNode);
 
 			EM.elements = new Array(that.length);
-			parentNode.$VSM = EM.$VSM = new VirtualScrollManipulator(parentNode, EM, template.html);
+			parentNode.$VSM = EM.$VSM = new VirtualScrollManipulator(parentNode, EM, EM.template.html);
 
 			// Put DOM element to the EM.elements only, and inject to the real DOM when ready
 			injectArrayElements(EM, parentNode, true, that, modelRef, parentNode, namespace);

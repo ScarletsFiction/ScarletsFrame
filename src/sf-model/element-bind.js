@@ -1,9 +1,9 @@
 import {internal, forProxying} from "../shared.js";
-import {stringifyPropertyPath, deepProperty} from "../utils.js";
+import {stringifyPropertyPath, deepProperty, parsePropertyPath} from "../utils.js";
 import {syntheticTemplate, templateParser, syntheticReactiveArray} from "./template.js";
 import {extractPreprocess, revalidateBindingPath} from "./parser.js";
 import {initBindingInformation} from "./a_utils.js";
-import {ReactiveArray, ReactiveMap, ReactiveSet, ElementManipulatorProxy} from "./repeated-list.js";
+import {ReactiveArray, ReactiveMap, ReactiveSet, ElementManipulatorProxy, forceReactive} from "./repeated-list.js";
 
 export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 	if(ref === void 0)
@@ -76,7 +76,16 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 				delete obj.$virtual;
 			}
 
-			delete obj.$EM;
+			if(obj.$EM !== void 0){
+				if(obj.$size === void 0 && obj.$length === void 0)
+					delete obj.$EM;
+				else if(obj.$EM.list === void 0) {
+					obj.$EM = new ElementManipulatorProxy();
+					obj.$EM.list = [];
+				}
+				else obj.$EM.list.length = 0;
+			}
+
 			if(isUniqList)
 				obj.length = 0;
 			else if(isLazy === void 0){
@@ -485,11 +494,28 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	}
 
 	if(isALength !== false && !(isALength in model)){
+		let propName = parsePropertyPath(originalPropertyName);
+		propName.pop();
+		let lastProp = propName.pop();
+		let lastModel = originalModel;
+
+		if(propName.length !== 0)
+			lastModel = deepProperty(propName);
+
+		if(lastModel.sf$bindedKey === void 0)
+			Object.defineProperty(lastModel, 'sf$bindedKey', {
+				value: {}
+			});
+
+		let bindedKey2 = lastModel.sf$bindedKey[lastProp] ??= {};
 		Object.defineProperty(model, isALength, {
 			value(){
 				set(model[propertyName]);
+				bindedKey2.inputBound && bindedKey2.inputBound(model, bindedKey2.input);
 			}
 		});
+
+		forceReactive(lastModel, lastProp);
 	}
 
 	// Add custom original because the creation was from different template

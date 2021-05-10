@@ -17,7 +17,7 @@ function callInputListener(ref, value){
 			if(v2m !== void 0)
 				v2mValue = v2m.call(ref.sfModel, value);
 
-			if(on !== void 0){
+			if(on !== void 0 && on.constructor === Function){
 				newValue = on.call(ref.sfModel, value, false);
 				if(newValue !== void 0)
 					ref.sfFeedback = true;
@@ -77,7 +77,8 @@ function inputCheckBoxBound(e){
 	ref.viewInputted = true;
 
 	const model = ref.sfModel;
-	const { constructor } = model[ref.sfBounded];
+	const modelData = model[ref.sfBounded];
+	const { constructor } = modelData;
 
 	let value;
 	if(constructor === Boolean || ref.typeData === Boolean)
@@ -97,13 +98,18 @@ function inputCheckBoxBound(e){
 		}
 	}
 
-	if(constructor === Array){
-		const i = model[ref.sfBounded].indexOf(value);
+	if(modelData.splice !== void 0){ // Array
+		const i = modelData.indexOf(value);
 
 		if(i === -1 && ref.checked === true)
-			model[ref.sfBounded].push(value);
+			modelData.push(value);
 		else if(i !== -1 && ref.checked === false)
-			model[ref.sfBounded].splice(i, 1);
+			modelData.splice(i, 1);
+	}
+	else if(modelData.add !== void 0){ // Set
+		if(ref.checked === true)
+			modelData.add(value);
+		else modelData.delete(value);
 	}
 	else model[ref.sfBounded] = value;
 }
@@ -142,7 +148,7 @@ var assignElementData = {
 		const list = element.options;
 		const { typeData } = element;
 
-		if(val.constructor !== Array){
+		if(val.splice === void 0){
 			for (var i = 0, n = list.length; i < n; i++) {
 				const temp = list[i];
 				if(typeData === String)
@@ -150,12 +156,18 @@ var assignElementData = {
 				else temp.selected = temp.value == val;
 			}
 		}
+		else if(val.add !== void 0){
+			for (var i = 0, n = list.length; i < n; i++)
+				list[i].selected = val.has(typeData === Number ? Number(list[i].value) : list[i].value);
+		}
 		else for (var i = 0, n = list.length; i < n; i++)
 			list[i].selected = val.includes(typeData === Number ? Number(list[i].value) : list[i].value);
 	},
 	checkbox(val, element){
-		if(val.constructor === Array)
+		if(val.splice !== void 0)
 			element.checked = val.includes(element.typeData === Number ? Number(element.value) : element.value);
+		else if(val.add !== void 0)
+			element.checked = val.has(element.typeData === Number ? Number(element.value) : element.value);
 		else if(val.constructor === Boolean)
 			element.checked = Boolean(val);
 		else{
