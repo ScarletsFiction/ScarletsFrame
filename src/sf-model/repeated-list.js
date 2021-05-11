@@ -305,7 +305,8 @@ function parsePatternRule(modelRef, pattern, proto){
 		Object.setPrototypeOf(that, proto.prototype);
 		firstInit = true;
 	}
-	else if(that._$pending === true){
+
+	if(that._$pending === true){
 		delete that._$pending;
 		firstInit = true;
 	}
@@ -1513,9 +1514,6 @@ export class ElementManipulator{
 
 					this.elementRef.set(ref, temp);
 				}
-
-				if(this.elements !== void 0)
-					exist[i] = temp;
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -1528,9 +1526,6 @@ export class ElementManipulator{
 
 						this.elementRef.set(ref, temp);
 					}
-
-					if(this.elements !== void 0)
-						exist[i] = temp;
 				}
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
@@ -1543,15 +1538,15 @@ export class ElementManipulator{
 				}
 			}
 
+			if(this.elements !== void 0)
+				exist[i] = temp;
+
 			if(this.$VSM === void 0){
 				if(this.bound_end !== void 0)
 					this.parentNode.insertBefore(temp, this.bound_end);
 				else pending[i - index] = temp;
 			}
-			else{
-				exist[i] = temp;
-				this.$VSM.newElementInit(temp, i-1);
-			}
+			else this.$VSM.newElementInit(temp, i-1);
 		}
 
 		if(pending !== false && pending.length !== 0)
@@ -1599,9 +1594,6 @@ export class ElementManipulator{
 
 					this.elementRef.set(ref, temp);
 				}
-
-				if(this.elements !== void 0)
-					exist[i] = temp;
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -1614,9 +1606,6 @@ export class ElementManipulator{
 
 						this.elementRef.set(ref, temp);
 					}
-
-					if(this.elements !== void 0)
-						exist[i] = temp;
 				}
 				else if(temp.sf$bindedBackup !== void 0){
 					RE_restoreBindedList(this.modelRef, temp.sf$bindedBackup);
@@ -1629,6 +1618,9 @@ export class ElementManipulator{
 				}
 			}
 
+			if(this.elements !== void 0)
+				exist[i] = temp;
+
 			if(this.$VSM){
 				this.$VSM.newElementInit(temp, i-1);
 				this.$VSM.update(i, temp);
@@ -1636,9 +1628,6 @@ export class ElementManipulator{
 			}
 
 			this.parentNode.replaceChild(temp, oldChild);
-
-			if(this.elements !== void 0)
-				exist[i] = temp;
 
 			if(this.callback.update)
 				this.callback.update(temp, 'replace');
