@@ -369,6 +369,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 					if(cRef.exist){
 						cRef.attributes.removeNamedItem(cRef.attribute.name);
 						cRef.exist = false;
+						cRef.attribute.nodeValue = '';
 					}
 				}
 				else{

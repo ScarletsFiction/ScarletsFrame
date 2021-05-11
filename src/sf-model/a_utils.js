@@ -357,8 +357,16 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 				continue;
 			}
 
-			if(val !== '')
+			if(val !== ''){
+				if(val === null && temp.attribute !== void 0){
+					temp.attribute.nodeValue = '';
+					current.removeAttribute(refB.name);
+					continue;
+				}
+
 				current.setAttribute(refB.name, val);
+			}
+
 			continue;
 		}
 
@@ -369,7 +377,10 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 			current.removeAttribute('value');
 			current.value = val;
 		}
-		else if(val !== '')
-			current.setAttribute(refB.name, val);
+		else if(val !== ''){
+			if(temp.attribute === void 0)
+				current.setAttribute(refB.name, val);
+			else temp.attribute.nodeValue = val;
+		}
 	}
 }
