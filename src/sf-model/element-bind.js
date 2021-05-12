@@ -1,9 +1,9 @@
-import {internal, forProxying} from "../shared.js";
+import {SFOptions, internal, forProxying} from "../shared.js";
 import {stringifyPropertyPath, deepProperty, parsePropertyPath} from "../utils.js";
 import {syntheticTemplate, templateParser, syntheticReactiveArray} from "./template.js";
 import {extractPreprocess, revalidateBindingPath} from "./parser.js";
 import {initBindingInformation} from "./a_utils.js";
-import {ReactiveArray, ReactiveMap, ReactiveSet, ElementManipulatorProxy, forceReactive} from "./repeated-list.js";
+import {ReactiveArray, ReactiveMap, ReactiveSet, PropertyList, ElementManipulatorProxy, forceReactive, RL_BindStatus} from "./repeated-list.js";
 
 export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 	if(ref === void 0)
@@ -15,6 +15,8 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 	const bindedKey = ref.sf$bindedKey;
 	for(let key in bindedKey){
 		const obj = ref[key];
+
+		let hasBindingKey = key in bindedKey;
 		if(obj !== void 0 && obj.$EM !== void 0){
 			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
 			if(obj.constructor === ReactiveArray){
@@ -47,6 +49,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 			}
 
 			// Clean ElementManipulator first
+			let onlyCleanEM = false;
 			if(obj.$EM.constructor === ElementManipulatorProxy){
 				const { list } = obj.$EM;
 				for (var i = list.length-1; i >= 0; i--) {
@@ -62,58 +65,66 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 					obj.$EM = obj.$EM.list[0];
 
 				if(list.length !== 0)
-					continue;
+					onlyCleanEM = true;
 			}
 			else if(obj.$EM.parentNode.isConnected === false){
 				if(!obj.$EM.isComponent)
 					repeatedRemoveDeepBinding(obj, obj.$EM.template.modelRef_path, isLazy);
 			}
-			else continue;
+			else onlyCleanEM = true;
 
-			// Clear virtual scroll
-			if(obj.$virtual){
-				obj.$virtual.destroy();
-				delete obj.$virtual;
-			}
-
-			if(obj.$EM !== void 0){
-				if(obj.$size === void 0 && obj.$length === void 0)
-					delete obj.$EM;
-				else if(obj.$EM.list === void 0) {
-					obj.$EM = new ElementManipulatorProxy();
-					obj.$EM.list = [];
+			if(onlyCleanEM === false){
+				// Clear virtual scroll
+				if(obj.$virtual){
+					obj.$virtual.destroy();
+					delete obj.$virtual;
 				}
-				else obj.$EM.list.length = 0;
-			}
 
-			if(isUniqList)
-				obj.length = 0;
-			else if(isLazy === void 0){
-				delete bindedKey[key];
-				delete ref[key];
-				ref[key] = obj;
-			}
-
-			// Reset prototype without copying the array to new reference
-			if(obj.constructor === ReactiveArray){
-				Object.setPrototypeOf(obj, Array.prototype);
-				continue;
-			}
-
-			// Reset object proxies
-			if(isLazy === void 0){
-				Object.setPrototypeOf(obj, Object.prototype);
-				for(let objKey in obj){
-					const temp = obj[objKey];
-					delete obj[objKey];
-					obj[objKey] = temp;
+				if(obj.$EM !== void 0){
+					if(obj.$size === void 0 && obj.$length === void 0)
+						delete obj.$EM;
+					else if(obj.$EM.list === void 0) {
+						obj.$EM = new ElementManipulatorProxy();
+						obj.$EM.list = [];
+					}
+					else obj.$EM.list.length = 0;
 				}
-			}
 
-			continue;
+				if(isUniqList)
+					obj.length = 0;
+				else if(isLazy === void 0){
+					delete bindedKey[key];
+					delete ref[key];
+					ref[key] = obj;
+				}
+
+				// Reset prototype without copying the array to new reference
+				if(obj.constructor === ReactiveArray)
+					Object.setPrototypeOf(obj, Array.prototype);
+				else if(obj.constructor === ReactiveSet)
+					Object.setPrototypeOf(obj, Set.prototype);
+				else if(obj.constructor === ReactiveMap)
+					Object.setPrototypeOf(obj, Map.prototype);
+				else if(obj.constructor === PropertyList)
+					Object.setPrototypeOf(obj, Object.prototype);
+				else if(isLazy === void 0){ // Reset object proxies
+					Object.setPrototypeOf(obj, Object.prototype);
+					for(let objKey in obj){
+						const temp = obj[objKey];
+						delete obj[objKey];
+						obj[objKey] = temp;
+					}
+				}
+
+				if(hasBindingKey === false)
+					continue;
+			}
 		}
 
-		const {elements, callback, bindList, input} = bindedKey[key];
+		let that = bindedKey[key];
+		if(that === RL_BindStatus) continue; // This just RepeatedList bind status
+
+		const {elements, callback, bindList, input} = that;
 		var bindLength = 0;
 		if(elements){
 			for (var i = elements.length-1; i >= 0; i--) {
@@ -304,6 +315,9 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 		if(bindName === 'inputBound'){
 			if(elementBind !== void 0){
+				if(bindedKey === RL_BindStatus)
+					bindedKey = {_RL: true}; // Unfreeze
+
 				if(bindedKey.input === void 0){
 					bindedKey.input = [elementBind];
 					bindedKey.input.type = type;
@@ -315,7 +329,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			bindedKey.inputBound = callback;
 		}
 		else{
-			let ref = bindedKey[bindName] ??= [];
+			let ref = bindedKey[bindName] ??= []; // ToDo: I forgot why I use Array
 
 			if(ref.includes(callback) === false){
 				const prop = stringifyPropertyPath(originalPropertyName);
@@ -529,6 +543,9 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		if(getter === void 0)
 			return;
 	}
+
+	if(SFOptions.devMode && objValue !== void 0 && objValue.$EM !== void 0)
+		return forceReactive(model, propertyName);
 
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
