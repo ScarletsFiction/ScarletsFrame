@@ -17,6 +17,7 @@ import {syntheticTemplate, templateParser} from "./template.js";
 
 var RE_Assign = false;
 var RE_ProcessIndex;
+export let RL_BindStatus = Object.freeze({ _RL: true });
 export function repeatedListBinding(elements, modelRef, namespace, modelKeysRegex){
 	// modelKeysRegex can be a template too
 	let element, script;
@@ -66,7 +67,7 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 					const that = ref[pattern.source] = [];
 					that.$data = pattern;
 
-					(ref.sf$bindedKey ??= {})[pattern.source] = true;
+					(ref.sf$bindedKey ??= {})[pattern.source] = RL_BindStatus;
 
 					listFromFunction(modelRef, pattern, that);
 					isDeep = pattern.source;
@@ -105,7 +106,10 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 			if(modelRef.sf$bindedKey === void 0)
 				initBindingInformation(modelRef);
 
-			modelRef.sf$bindedKey[pattern.source] = true;
+			let bindedKey = modelRef.sf$bindedKey;
+			if(pattern.source in bindedKey)
+				bindedKey[pattern.source]._RL = true;
+			else bindedKey[pattern.source] = RL_BindStatus;
 		}
 
 		const { constructor } = target;
@@ -328,13 +332,11 @@ function parsePatternRule(modelRef, pattern, proto){
 }
 
 function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
+	if(element === void 0 && this.$EM !== void 0)
+		return;
+
 	const {target, prop, pattern} = rule;
 	let callback = target[`on$${prop}`] || {};
-
-	if(element === void 0 && this.$EM !== void 0){
-		console.error("Please fill an issue on GitHub with 'code: 12'");
-		return;
-	}
 
 	let EM = new ElementManipulator();
 	if(this.$EM === void 0){

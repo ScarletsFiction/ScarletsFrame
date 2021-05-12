@@ -810,7 +810,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 		if(key.includes('sf$')) continue;
 
 		const type = typeof model[key];
-		if(bindedKey[key] === true){
+		if(bindedKey[key]._RL === true){
 			let temp = model[key];
 			if(temp instanceof Map)
 				statelists.push({name:key, type:'Map'});
