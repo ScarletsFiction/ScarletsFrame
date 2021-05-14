@@ -159,7 +159,8 @@ function addressAttributes(currentNode, template){
 	let indexes = 0;
 
 	const construct = (currentNode.constructor._ref || currentNode.constructor);
-	const isValueInput = (construct === HTMLTextAreaElement
+	const checkboxInput = construct === HTMLInputElement && currentNode.type === 'checkbox';
+	const isValueInput = checkboxInput === false && (construct === HTMLTextAreaElement
 	    || (construct === HTMLInputElement
 	        && sfRegex.inputAttributeType.includes(currentNode.type) === false
 	    )
@@ -192,27 +193,38 @@ function addressAttributes(currentNode, template){
 		}
 
 		if(found){
-			if(attr.name.slice(0, 1) === ':'){
-				var key = {
-					name:attr.name.slice(1),
-					value:attr.value.trim()
-				};
+			const key = {value: attr.value.trim()};
+			const symbol = attr.name.slice(0, 1);
+
+			// To avoid the browser from parsing the attribute
+			if(symbol === ':'){
+				key.name = attr.name.slice(1);
 
 				currentNode.removeAttribute(attr.name);
 				currentNode.setAttribute(key.name, '');
 			}
+			// Raw element property binding
+			else if(symbol === '_'){
+				key.name = attr.name;
+				key.raw = true;
+
+				currentNode.removeAttribute(attr.name);
+			}
 			else{
-				var key = {
-					name:attr.name,
-					value:attr.value.trim()
-				};
+				key.name = attr.name;
 
 				if(key.name === 'class' || key.name === 'style')
 					currentNode.removeAttribute(attr.name);
 				else attr.nodeValue = '';
 			}
 
-			key.isValueInput = isValueInput;
+			if(isValueInput)
+				key.isValueInput = isValueInput;
+
+			if(checkboxInput){
+				key.checkboxInput = checkboxInput;
+				currentNode.typeData = Object;
+			}
 
 			indexes = [];
 			found = key.value.replace(templateParser_regex, function(full, match){
@@ -223,6 +235,9 @@ function addressAttributes(currentNode, template){
 			if(found === '' && indexes.length === 1){
 				key.direct = indexes[0];
 				delete key.value;
+
+				if(key.raw === true)
+					template.parse[key.direct].type = REF_EXEC; // Raw data flag
 			}
 			else{
 				key.parse_index = indexes;
@@ -381,6 +396,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 	copy = uniqueDataParser(copy, template, template.scopes);
 	const preParsed = copy[1];
 	copy = dataParser(copy[0], null, template, template.scopes, preParsed);
+	template.parse = preParsed;
 
 	function findModelProperty(){
 		const _list = template.scopes._list;
@@ -652,7 +668,6 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 
 	// internal.language.refreshLang(copy);
 	template.html = copy;
-	template.parse = preParsed;
 	template.addresses = addressed;
 
 	if(preserveRegex === void 0 && modelRegex.parse !== void 0){

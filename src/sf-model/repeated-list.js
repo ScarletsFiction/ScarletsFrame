@@ -106,9 +106,13 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 			if(modelRef.sf$bindedKey === void 0)
 				initBindingInformation(modelRef);
 
-			let bindedKey = modelRef.sf$bindedKey;
-			if(pattern.source in bindedKey)
-				bindedKey[pattern.source]._RL = true;
+			const bindedKey = modelRef.sf$bindedKey;
+			if(pattern.source in bindedKey){
+				const val = bindedKey[pattern.source];
+
+				if(val !== RL_BindStatus)
+					val._RL = true;
+			}
 			else bindedKey[pattern.source] = RL_BindStatus;
 		}
 

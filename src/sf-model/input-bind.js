@@ -86,7 +86,7 @@ function inputCheckBoxBound(e){
 	else if(ref.typeData === Number)
 		value = Number(ref.value);
 	else
-		({ value } = ref);
+		value = ref.typeData === Object ? ref._value : ref.value;
 
 	const newValue = callInputListener(ref, value);
 	if(newValue !== void 0){
@@ -114,6 +114,7 @@ function inputCheckBoxBound(e){
 	else model[ref.sfBounded] = value;
 }
 
+// Could have raw value other than string/number
 function inputSelectBound(e){
 	if(e.fromSFFramework === true) return;
 
@@ -122,14 +123,16 @@ function inputSelectBound(e){
 	const { typeData } = ref;
 
 	let value;
+	const temp = ref.selectedOptions;
 	if(ref.multiple === true){
-		const temp = ref.selectedOptions;
 		value = new Array(temp.length);
 
 		for (let i = 0; i < temp.length; i++)
-			value[i] = typeData === Number ? Number(temp[i].value) : temp[i].value;
+			value[i] = typeData === Number ? Number(temp[i].value)
+				: (typeData === Object ? temp[i]._value : temp[i].value);
 	}
-	else value = typeData === Number ? Number(ref.selectedOptions[0].value) : ref.selectedOptions[0].value;
+	else value = typeData === Number ? Number(temp[0].value)
+			: (typeData === Object ? temp[0]._value : temp[0].value);
 
 	const newValue = callInputListener(ref, value);
 	if(newValue !== void 0){
@@ -158,23 +161,26 @@ var assignElementData = {
 		}
 		else if(val.add !== void 0){
 			for (var i = 0, n = list.length; i < n; i++)
-				list[i].selected = val.has(typeData === Number ? Number(list[i].value) : list[i].value);
+				list[i].selected = val.has(typeData === Number ? Number(list[i].value)
+				                    	: (typeData === Object ? list[i]._value : list[i].value));
 		}
 		else for (var i = 0, n = list.length; i < n; i++)
-			list[i].selected = val.includes(typeData === Number ? Number(list[i].value) : list[i].value);
+			list[i].selected = val.includes(typeData === Number ? Number(list[i].value)
+			                        	: (typeData === Object ? list[i]._value : list[i].value));
 	},
 	checkbox(val, element){
+		const { typeData } = element;
 		if(val.splice !== void 0)
-			element.checked = val.includes(element.typeData === Number ? Number(element.value) : element.value);
+			element.checked = val.includes(typeData === Number ? Number(element.value)
+			                        : (typeData === Object ? element._value : element.value));
 		else if(val.add !== void 0)
-			element.checked = val.has(element.typeData === Number ? Number(element.value) : element.value);
-		else if(val.constructor === Boolean)
+			element.checked = val.has(typeData === Number ? Number(element.value)
+			                		: (typeData === Object ? element._value : element.value));
+		else if(typeData === Boolean)
 			element.checked = Boolean(val);
-		else{
-			if(element.typeData === String)
-				element.checked = element.value === val;
-			else element.checked = element.value == val;
-		}
+		else if(typeData === String || typeData === Object)
+			element.checked = element.value === val;
+		else element.checked = element.value == val;
 	},
 	file(val, element){
 		if(!val || val.length === 0)
@@ -238,12 +244,12 @@ function elementBoundChanges(model, property, element, oneWay, modelLocal, prope
 
 	var type = 0;
 	let typeData = null;
-	if(val != null)
-		typeData = val.constructor;
 
 	const assignedType = (element.getAttribute('typedata') || '').toLowerCase();
 	if(assignedType === 'number')
 		typeData = Number;
+	else if(val != null)
+		typeData = typeof val === 'object' ? Object : val.constructor;
 
 	element.typeData = typeData;
 	onEvent(element, 'change', triggerInputEvent);

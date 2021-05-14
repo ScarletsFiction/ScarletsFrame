@@ -353,32 +353,40 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 		}
 
 		if(cRef.attribute !== void 0){ // Attributes
-			if(cRef.ref.parse_index !== void 0 && cRef.attribute.value === temp) // Multiple
+			const elem = cRef.attribute; // <- Can be Element/Attribute
+			const refB = cRef.ref;
+
+			if(refB.parse_index !== void 0 && elem.value === temp) // Multiple
 				continue;
 
 			// Direct value
-			else if(cRef.ref.direct in parsed){
-				temp = parsed[cRef.ref.direct];
-				if(cRef.attribute.value == temp) continue; // non-strict compare
+			else if(refB.direct in parsed){
+				temp = parsed[refB.direct];
+				if(refB.raw){
+					if(elem[refB.name] === temp) continue;
+				}
+				else if(elem.value == temp) continue; // non-strict compare
 			}
 
-			if(cRef.ref.isValueInput)
-				cRef.attribute.value = temp;
+			if(refB.raw)
+				elem[refB.name] = temp;
+			else if(refB.isValueInput)
+				elem.value = temp;
 			else{
 				if(temp === null){
 					if(cRef.exist){
-						cRef.attributes.removeNamedItem(cRef.attribute.name);
+						cRef.attributes.removeNamedItem(elem.name);
 						cRef.exist = false;
-						cRef.attribute.nodeValue = '';
+						elem.nodeValue = '';
 					}
 				}
 				else{
 					if(!cRef.exist){
-						cRef.attributes.setNamedItem(cRef.attribute);
+						cRef.attributes.setNamedItem(elem);
 						cRef.exist = true;
 					}
 
-					cRef.attribute.nodeValue = temp;
+					elem.nodeValue = temp;
 				}
 			}
 
