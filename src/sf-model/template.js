@@ -370,7 +370,7 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 
 			if(refB.raw)
 				elem[refB.name] = temp;
-			else if(refB.isValueInput)
+			else if(refB.isValueInput || refB.isCheckBox)
 				elem.value = temp;
 			else{
 				if(temp === null){

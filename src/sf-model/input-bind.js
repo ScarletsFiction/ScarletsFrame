@@ -86,7 +86,7 @@ function inputCheckBoxBound(e){
 	else if(ref.typeData === Number)
 		value = Number(ref.value);
 	else
-		value = ref.typeData === Object ? ref._value : ref.value;
+		value = ref._value || ref.value;
 
 	const newValue = callInputListener(ref, value);
 	if(newValue !== void 0){
@@ -150,32 +150,37 @@ var assignElementData = {
 	select(val, element){
 		const list = element.options;
 		const { typeData } = element;
+		var temp;
 
 		if(val.splice === void 0){
 			for (var i = 0, n = list.length; i < n; i++) {
-				const temp = list[i];
-				if(typeData === String)
+				temp = list[i];
+				if(typeData === String || typeData === Object)
 					temp.selected = temp.value === val;
 				else temp.selected = temp.value == val;
 			}
 		}
 		else if(val.add !== void 0){
-			for (var i = 0, n = list.length; i < n; i++)
-				list[i].selected = val.has(typeData === Number ? Number(list[i].value)
-				                    	: (typeData === Object ? list[i]._value : list[i].value));
+			for (var i = 0, n = list.length; i < n; i++){
+				temp = list[i];
+				temp.selected = val.has(typeData === Number ? Number(temp.value)
+				                    	: (temp._value || temp.value));
+			}
 		}
-		else for (var i = 0, n = list.length; i < n; i++)
-			list[i].selected = val.includes(typeData === Number ? Number(list[i].value)
-			                        	: (typeData === Object ? list[i]._value : list[i].value));
+		else for (var i = 0, n = list.length; i < n; i++){
+			temp = list[i];
+			temp.selected = val.includes(typeData === Number ? Number(temp.value)
+			                        	: (temp._value || temp.value));
+		}
 	},
 	checkbox(val, element){
 		const { typeData } = element;
 		if(val.splice !== void 0)
 			element.checked = val.includes(typeData === Number ? Number(element.value)
-			                        : (typeData === Object ? element._value : element.value));
+			                        : (element._value || element.value));
 		else if(val.add !== void 0)
 			element.checked = val.has(typeData === Number ? Number(element.value)
-			                		: (typeData === Object ? element._value : element.value));
+			                		: (element._value || element.value));
 		else if(typeData === Boolean)
 			element.checked = Boolean(val);
 		else if(typeData === String || typeData === Object)

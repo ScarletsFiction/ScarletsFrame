@@ -99,22 +99,22 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 				}
 
 				// Reset prototype without copying the array to new reference
-				if(obj.constructor === ReactiveArray)
-					Object.setPrototypeOf(obj, Array.prototype);
-				else if(obj.constructor === ReactiveSet)
-					Object.setPrototypeOf(obj, Set.prototype);
-				else if(obj.constructor === ReactiveMap)
-					Object.setPrototypeOf(obj, Map.prototype);
-				else if(obj.constructor === PropertyList)
-					Object.setPrototypeOf(obj, Object.prototype);
-				else if(isLazy === void 0){ // Reset object proxies
-					Object.setPrototypeOf(obj, Object.prototype);
-					for(let objKey in obj){
-						const temp = obj[objKey];
-						delete obj[objKey];
-						obj[objKey] = temp;
-					}
-				}
+				// if(obj.constructor === ReactiveArray)
+				// 	Object.setPrototypeOf(obj, Array.prototype);
+				// else if(obj.constructor === ReactiveSet)
+				// 	Object.setPrototypeOf(obj, Set.prototype);
+				// else if(obj.constructor === ReactiveMap)
+				// 	Object.setPrototypeOf(obj, Map.prototype);
+				// else if(obj.constructor === PropertyList)
+				// 	Object.setPrototypeOf(obj, Object.prototype);
+				// else if(isLazy === void 0){ // Reset object proxies
+				// 	Object.setPrototypeOf(obj, Object.prototype);
+				// 	for(let objKey in obj){
+				// 		const temp = obj[objKey];
+				// 		delete obj[objKey];
+				// 		obj[objKey] = temp;
+				// 	}
+				// }
 
 				if(hasBindingKey === false)
 					continue;

@@ -328,7 +328,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 			continue;
 		}
 
-		const { isValueInput, checkboxInput } = refB;
+		const { isValueInput, isCheckBox } = refB;
 		var temp = {ref: refB};
 
 		if(SFOptions.devMode)
@@ -340,7 +340,7 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 			temp.class = current.classList;
 		else{
 			temp.attributes = current.attributes;
-			temp.attribute = isValueInput || checkboxInput || refB.raw
+			temp.attribute = isValueInput || isCheckBox || refB.raw
 				? current : current.attributes[refB.name];
 		}
 
@@ -352,10 +352,10 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 		if(refB.direct !== void 0){
 			const val = parsed[refB.direct];
 			if(refB.name === 'value'){
-				if(checkboxInput || isValueInput){
+				if(isCheckBox || isValueInput){
 					current.removeAttribute('value');
 
-					if(checkboxInput)
+					if(isCheckBox)
 						current._value = val;
 					else current.value = val;
 

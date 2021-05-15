@@ -159,8 +159,8 @@ function addressAttributes(currentNode, template){
 	let indexes = 0;
 
 	const construct = (currentNode.constructor._ref || currentNode.constructor);
-	const checkboxInput = construct === HTMLInputElement && currentNode.type === 'checkbox';
-	const isValueInput = checkboxInput === false && (construct === HTMLTextAreaElement
+	const isCheckBox = construct === HTMLInputElement && currentNode.type === 'checkbox';
+	const isValueInput = isCheckBox === false && (construct === HTMLTextAreaElement
 	    || (construct === HTMLInputElement
 	        && sfRegex.inputAttributeType.includes(currentNode.type) === false
 	    )
@@ -209,6 +209,7 @@ function addressAttributes(currentNode, template){
 				key.raw = true;
 
 				currentNode.removeAttribute(attr.name);
+				currentNode.typeData = Object;
 			}
 			else{
 				key.name = attr.name;
@@ -221,8 +222,8 @@ function addressAttributes(currentNode, template){
 			if(isValueInput)
 				key.isValueInput = isValueInput;
 
-			if(checkboxInput){
-				key.checkboxInput = checkboxInput;
+			if(isCheckBox){
+				key.isCheckBox = isCheckBox;
 				currentNode.typeData = Object;
 			}
 
