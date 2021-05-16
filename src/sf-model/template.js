@@ -370,8 +370,17 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 
 			if(refB.raw)
 				elem[refB.name] = temp;
-			else if(refB.isValueInput || refB.isCheckBox)
+			else if(refB.isValueInput)
 				elem.value = temp;
+			else if(refB.isCheckBox){
+				if(elem.hasRL !== void 0) // ReactiveList
+					elem.checked = elem.hasRL.includes(temp);
+				else if(elem.hasRS !== void 0) // ReactiveSet
+					elem.checked = elem.hasRS.has(temp);
+				else elem.checked = elem.value === temp;
+
+				elem.value = temp;
+			}
 			else{
 				if(temp === null){
 					if(cRef.exist){

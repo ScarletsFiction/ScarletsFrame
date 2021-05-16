@@ -285,6 +285,13 @@ function elementBoundChanges(model, property, element, oneWay, modelLocal, prope
 			onEvent(element, 'input', inputCheckBoxBound);
 			type = 4;
 
+			if(typeData === Object){
+				if(val.has !== void 0) // ReactiveSet
+					element.hasRS = val;
+				else if(val.includes !== void 0) // ReactiveList
+					element.hasRL = val;
+			}
+
 			assignElementData.checkbox(val, element);
 		}
 		else if(type === 'file'){
