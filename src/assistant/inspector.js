@@ -3,15 +3,47 @@
 // When editing the inspector.css make sure it's hardlinked
 // ./inspector.css -> ../../dist/inspector.css
 
-import {getScope} from "../utils.js";
+import {getScope, deepProperty} from "../utils.js";
 import {Space} from "../sf-space.js";
 import {loader} from "../sf-loader.js";
 import {$} from "../sf-dom.js";
+import {internal} from "../shared.js";
 
 export function Inspector(){
 
 // Return if there are another installed inspector
 if(window.SFDevSpace) return;
+internal.reopenInspector = JSON.parse(localStorage.sf$inspectStore || '[]');
+let openedInspector = [];
+let pendingOpenInspector = [];
+
+internal.openInspector = function(saved){
+	internal.reopenInspector.splice(internal.reopenInspector.indexOf(saved), 1);
+	if(pendingOpenInspector !== false)
+		return pendingOpenInspector.push(saved);
+
+	if(saved.type === 'model'){
+		let model = deepProperty(sf.model.root, saved.source);
+		let ref = SFDevSpace.addDynamicView(saved.source, model, {
+			x: saved.x,
+			y: saved.y,
+		}, saved.type);
+
+		Object.assign(ref, saved.props)
+	}
+	else if(saved.type === 'component'){
+		let model = sf.component(saved.source[0]);
+		saved.source[0] = model[saved.index] === void 0 ? 0 : saved.index;
+		model = deepProperty(model, saved.source);
+
+		let ref = SFDevSpace.addDynamicView(saved.source, model, {
+			x: saved.x,
+			y: saved.y,
+		}, saved.type);
+
+		Object.assign(ref, saved.props)
+	}
+}
 
 void function(){
 	var path = $('script[src*="scarletsframe."]')[0];
@@ -230,6 +262,13 @@ setTimeout(()=> {
 		<sf-inspector></sf-inspector>
 		<div class="sf-viewer"></div>
 	</sf-space>`);
+
+		setTimeout(()=> {
+			let that = pendingOpenInspector;
+			pendingOpenInspector = false;
+
+			that.forEach(internal.openInspector);
+		}, 100);
 	});
 }, 1);
 
@@ -291,7 +330,7 @@ SFDevSpace.component('sf-model-info', {
 		My.leave();
 		setTimeout(()=> {
 			if(e.ctrlKey) return My.openEditor();
-			SFDevSpace.addDynamicView(My.name, My.model, e);
+			SFDevSpace.addDynamicView(My.name, My.model, e, 'model');
 		}, 20);
 	}
 
@@ -317,7 +356,7 @@ SFDevSpace.component('sf-component-info', {
 		My.leave();
 		setTimeout(()=> {
 			if(e.ctrlKey) return My.openEditor();
-			SFDevSpace.addDynamicView(My.name, My.model, e);
+			SFDevSpace.addDynamicView(My.name, My.model, e, 'component');
 		}, 20);
 	}
 
@@ -425,6 +464,9 @@ SFDevSpace.swallowObject = function(obj){
 	if(obj instanceof HTMLElement)
 		return '<'+obj.tagName.toLowerCase()+'>';
 
+	if(obj === null) return 'null';
+	if(obj === void 0) return 'undefined';
+
 	var text = '';
 	var isArray = obj instanceof Array;
 
@@ -437,19 +479,44 @@ SFDevSpace.swallowObject = function(obj){
 			if(typeof val === 'object')
 				return '{...}';
 			if(typeof val === 'function')
-				return 'Function()';
+				return 'Fn()';
 			return val;
 		});
+	}
+	else if(obj instanceof Set){
+		text += 'Set [';
+		isArray = true;
+		for(let val of obj){
+			if(val instanceof HTMLElement)
+				temp.push('<'+val.tagName.toLowerCase()+'>');
+			if(typeof val === 'object')
+				temp.push('{...}');
+			if(typeof val === 'function')
+				temp.push('Fn()');
+			temp.push(val);
+		}
+	}
+	else if(obj instanceof Map){
+		text += 'Map {';
+		for(let [key, val] of obj){
+			if(val instanceof HTMLElement)
+				temp.push(key+':<'+val.tagName.toLowerCase()+'>');
+			if(typeof val === 'object')
+				temp.push(key+':{...}');
+			if(typeof val === 'function')
+				temp.push(key+':Fn()');
+			temp.push(val);
+		}
 	}
 	else{
 		text += '{';
 		for(const key in obj){
 			if(obj[key] instanceof HTMLElement)
-				temp.push('<'+obj[key].tagName.toLowerCase()+'>');
+				temp.push(key+':<'+obj[key].tagName.toLowerCase()+'>');
 			else if(typeof obj[key] === 'object')
 				temp.push(key+':{...}');
 			else if(typeof obj[key] === 'function')
-				temp.push('Function()');
+				temp.push(key+':Fn()');
 			else temp.push(key+':'+obj[key]);
 		}
 	}
@@ -486,7 +553,11 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		My.x += e.movementX;
 		My.y += e.movementY;
 		My.currentActive.panel = My.isEmpty;
+
+		if(e.type === 'pointerup') saveInspector();
 	}
+
+	My.on$state = saveInspector;
 
 	My.init = function(){
 		My.currentActive.panel = My.isEmpty; // This will trigger z-index: 1
@@ -504,7 +575,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 	My.recreate = function(){
 		SFDevSpace.reusableShells.set(My.model, My);
-		SFDevSpace.addDynamicView(My.titles, My.model, {x:My.x, y:My.y});
+		SFDevSpace.addDynamicView(My.titles, My.model, {x:My.x, y:My.y}, My.viewerType);
 		SFDevSpace.reusableShells.delete(My.model);
 	}
 
@@ -612,6 +683,8 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	My.close = function(e){
 		e.target.parentNode.remove();
 		window.Q = void 0;
+		openedInspector.splice(openedInspector.indexOf(My), 1);
+		saveInspector();
 	}
 
 	function isInArray(val, arr){
@@ -728,12 +801,18 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 		window.Q = My.model[propName];
 		console.log('%cwindow.Q >>', 'color:yellow', My.model[propName]);
-		SFDevSpace.addDynamicView(My.titles.concat(propName), window.Q, e);
+		SFDevSpace.addDynamicView(My.titles.concat(propName), window.Q, e, My.viewerType);
 	}
 
-	My.clickObject = function(e){
-		var propName = $(e.target).prev('span').html();
-		var that = My.model[propName];
+	My.clickObject = function(e, isObject){
+		if(isObject){
+			var propName = '{temporary object}';
+			var that = e;
+		}
+		else {
+			var propName = $(e.target).prev('span').html();
+			var that = My.model[propName];
+		}
 
 		if(that instanceof HTMLElement){
 			console.log('%cwindow.Q >>', 'color:yellow', that);
@@ -743,7 +822,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		if(e.ctrlKey)
 			return SFDevSpace.openEditor(My.model, propName);
 
-		SFDevSpace.addDynamicView(My.titles.concat(propName), that, e);
+		SFDevSpace.addDynamicView(My.titles.concat(propName), that, e, My.viewerType);
 	}
 
 	My.preventDefault = function(e){
@@ -774,8 +853,10 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	for your production website, always make sure that the template
 	can't be created by your user. You must sanitize any user input!
 */
-SFDevSpace.addDynamicView = function(titles, model, ev){
+SFDevSpace.addDynamicView = function(titles, model, ev, viewerType){
 	if(model === void 0) return;
+
+	let isInsideData = model instanceof Set || model instanceof Array || model instanceof Map;
 
 	const parent = $('sf-space .sf-viewer');
 	var template = `<sf-model-viewer sf-as-scope style="
@@ -790,7 +871,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 		<div class="switcher">
 			<div class="item {{ state === 'reactive'}} {{ isEmpty.reactive }}" @click="state = 'reactive'">Reactive</div>
 			<div class="item {{ state === 'passive'}} {{ isEmpty.passive }}" @click="state = 'passive'">Passive</div>
-			<div class="item {{ state === 'statelist'}} {{ isEmpty.statelist }}" @click="state = 'statelist'">List</div>
+			<div class="item {{ state === 'statelist'}} {{ ${!isInsideData} && isEmpty.statelist }}" @click="state = 'statelist'">${isInsideData ? 'Content' : 'List'}</div>
 			<div class="item {{ state === 'object'}} {{ isEmpty.object }}" @click="state = 'object'">Object</div>
 			<div class="item {{ state === 'function'}} {{ isEmpty.function }}" @click="state = 'function'">Function</div>
 		</div>
@@ -806,12 +887,13 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 	if(!bindedKey.sf$passive)
 		bindedKey.sf$passive = {};
 
+	let deepBinding = bindedKey.sf$internal && bindedKey.sf$internal.deepBinding;
 	for(var key in model){
 		if(key.includes('sf$')) continue;
 
-		const type = typeof model[key];
-		if(key in bindedKey && bindedKey[key]._RL === true){
-			let temp = model[key];
+		let temp = model[key];
+		if((key in bindedKey && bindedKey[key]._RL === true)
+		   || (deepBinding && key in deepBinding)){
 			if(temp instanceof Map)
 				statelists.push({name:key, type:'Map'});
 			else if(temp instanceof Set)
@@ -823,7 +905,8 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 			continue;
 		}
 
-		const temp = isNaN(key[0]) ? '.'+key : `['${key.split("'").join("\\'")}']`;
+		const type = typeof temp;
+		temp = isNaN(key[0]) ? '.'+key : `['${key.split("'").join("\\'")}']`;
 
 		if(type === 'function')
 			functions.add(temp);
@@ -884,15 +967,30 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 	template += '</div><div class="statelist-list list">';
 
-	for (var i = 0; i < statelists.length; i++){
-		let {name, type} = statelists[i];
-		let prop = type === 'Map' || type === 'Set' ? 'size' : 'length';
-		let val = type === 'Object' ? '{...}' : `[...{{ model.${name}.${prop} }}]`;
+	if(isInsideData){
+		template += `<div style="text-align:center;display: {{ model.${model instanceof Array ? 'length':'size'} === 0 ? 'block' : 'none'}}">Empty content...</div><div>`;
+		template += `<div sf-each="key, val in model" class="statelist"><span>{{ key || '#' }}</span> : <div class="value" @click="clickObject(val, true)">{{ typeof val === "object" && val != null ? (
+			'{'+ (${model.$debugField ? 'val.'+model.$debugField+' || ' : '' }val.id || val._id || val.name || '...') + '}'
+		) : val }}</div></div>`;
+		template += '</div>';
+	}
+	else if(model){
+		for (var i = 0; i < statelists.length; i++){
+			let {name, type} = statelists[i];
+			let prop = type === 'Map' || type === 'Set' ? 'size' : 'length';
+			let val;
 
-		if(prop === 'size')
-			val = type + val;
+			if(type === 'Array')
+				val = `[...{{ model.${name}.length }}]`;
+			else if(type === 'Set')
+				val = `Set {...{{ model.${name}.size }}}`;
+			else if(type === 'Map')
+				val = `Map {...{{ model.${name}.size }}}`;
+			else
+				val = '{...}';
 
-		template += `<div class="statelist" @click="clickStatelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${name}</span> : <div class="value">${val}</div></div>`;
+			template += `<div class="statelist" @click="clickStatelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${name}</span> : <div class="value">${val}</div></div>`;
+		}
 	}
 
 	template += '</div><div class="object-list list"><div class="info" @click="refreshObject">Click here to refresh</div>';
@@ -924,7 +1022,7 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 	const el = $(template+"</div></sf-model-viewer>")[0];
 	parent.append(el);
-	el.sf$constructor({ titles, model }, SFDevSpace, true);
+	el.sf$constructor({ titles, model, viewerType }, SFDevSpace, true);
 	el.connectedCallback();
 
 	model = el.model;
@@ -945,6 +1043,47 @@ SFDevSpace.addDynamicView = function(titles, model, ev){
 
 	model.x = ev.x;
 	model.y = ev.y;
+
+	openedInspector.push(model);
+	saveInspector();
+
+	return model;
+}
+
+let _saveInspector = 0;
+function saveInspector(){
+	clearTimeout(_saveInspector);
+	setTimeout(()=> {
+		let list = [];
+		for (var i = 0; i < openedInspector.length; i++) {
+			let temp = openedInspector[i];
+			let title = temp.titles.slice(0);
+
+			if(temp.viewerType === 'model' || temp.viewerType === 'component'){
+				if(title[0].includes('. '))
+					title[0] = title[0].slice(title[0].indexOf('. ')+2);
+
+				if(title[0].slice(0, 1) === '{') continue; // Don't save dynamic template/object
+
+				let obj = {
+					type: temp.viewerType,
+					source: title,
+					x: temp.x,
+					y: temp.y,
+					props: {
+						state: temp.state
+					}
+				};
+
+				if(temp.viewerType === 'component')
+					obj.index = sf.component(title[0]).indexOf(temp.model);
+
+				list.push(obj);
+			}
+		}
+
+		localStorage.sf$inspectStore = JSON.stringify(list);
+	}, 1000);
 }
 
 // For browser console
