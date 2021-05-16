@@ -270,7 +270,7 @@ sf-model-viewer .val-Boolean{
 
 .sf-model-list-hover{
 	filter: drop-shadow(0 0 17px #00d1ff);
-	display: inherit;
+	/*display: inherit;*/
 	animation: sf-model-list-anim 1s ease-in-out infinite;
 }
 
@@ -279,6 +279,6 @@ sf-model-viewer .val-Boolean{
 		opacity: 1;
 	}
 	50% {
-		opacity: 0.5;
+		opacity: 0.3;
 	}
 }
