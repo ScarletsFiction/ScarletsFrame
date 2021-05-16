@@ -6,7 +6,8 @@ export const internal = {
 	space: {empty:true},
 	windowEv: {},
 	WindowList: {},
-	WindowClass: {}
+	WindowClass: {},
+	reopenInspector: []
 };
 export var privateRoot = {};
 export var HotReload = {

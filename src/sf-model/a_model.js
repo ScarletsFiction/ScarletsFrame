@@ -74,6 +74,17 @@ export function ModelInit(el, modelName, namespace){
 
 	if(model.constructor !== Object)
 		model.constructor.init && model.constructor.init.call(model, (namespace || Model), el);
+
+	if(internal.reopenInspector !== null){
+		let temp = internal.reopenInspector;
+		for (var i = temp.length-1; i >= 0; i--) {
+			let that = temp[i];
+			if(that.type !== 'model' || that.source[0] !== modelName)
+				continue;
+
+			internal.openInspector(that);
+		}
+	}
 }
 
 internal.initPendingComponentScope = initPendingComponentScope;

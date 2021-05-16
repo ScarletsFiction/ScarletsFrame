@@ -112,8 +112,10 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 
 				if(val !== RL_BindStatus)
 					val._RL = true;
+				else bindedKey[pattern.source] = RL_BindStatus;
 			}
 			else bindedKey[pattern.source] = RL_BindStatus;
+
 		}
 
 		const { constructor } = target;
@@ -160,6 +162,20 @@ export function forceReactive(modelRef, property){
 		configurable: true,
 		value: true
 	});
+
+	// Enable element binding
+	if(modelRef.sf$bindedKey === void 0)
+		initBindingInformation(modelRef);
+
+	const bindedKey = modelRef.sf$bindedKey;
+	if(property in bindedKey){
+		const val = bindedKey[property];
+
+		if(val !== RL_BindStatus)
+			val._RL = true;
+		else bindedKey[property] = RL_BindStatus;
+	}
+	else bindedKey[property] = RL_BindStatus;
 
 	Object.setPrototypeOf(that, proto.prototype);
 	proto.construct(modelRef, void 0, {
