@@ -511,6 +511,7 @@ SFDevSpace.swallowObject = function(obj){
 	else{
 		text += '{';
 		for(const key in obj){
+			if(key.includes('$')) continue;
 			if(obj[key] instanceof HTMLElement)
 				temp.push(key+':<'+obj[key].tagName.toLowerCase()+'>');
 			else if(typeof obj[key] === 'object')
