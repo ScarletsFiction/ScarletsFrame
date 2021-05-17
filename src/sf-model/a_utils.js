@@ -351,16 +351,10 @@ export function parserForAttribute(current, ref, item, modelRef, parsed, changes
 
 		if(refB.direct !== void 0){
 			const val = parsed[refB.direct];
-			if(refB.name === 'value'){
-				if(isCheckBox || isValueInput){
-					current.removeAttribute('value');
-
-					if(isCheckBox)
-						current._value = val;
-					else current.value = val;
-
-					continue;
-				}
+			if(refB.name === 'value' && isValueInput){
+				current.removeAttribute('value');
+				current.value = val;
+				continue;
 			}
 
 			if(refB.raw){
