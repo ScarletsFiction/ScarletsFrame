@@ -24,7 +24,7 @@ internal.openInspector = function(saved){
 
 	if(saved.type === 'model'){
 		let model = deepProperty(sf.model.root, saved.source);
-		let ref = SFDevSpace.addDynamicView(saved.source, model, {
+		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
 			y: saved.y,
 		}, saved.type);
@@ -36,7 +36,7 @@ internal.openInspector = function(saved){
 		saved.source[0] = model[saved.index] === void 0 ? 0 : saved.index;
 		model = deepProperty(model, saved.source);
 
-		let ref = SFDevSpace.addDynamicView(saved.source, model, {
+		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
 			y: saved.y,
 		}, saved.type);
@@ -330,7 +330,7 @@ SFDevSpace.component('sf-model-info', {
 		My.leave();
 		setTimeout(()=> {
 			if(e.ctrlKey) return My.openEditor();
-			SFDevSpace.addDynamicView(My.name, My.model, e, 'model');
+			SFDevSpace.addModelView(My.name, My.model, e, 'model');
 		}, 20);
 	}
 
@@ -356,7 +356,7 @@ SFDevSpace.component('sf-component-info', {
 		My.leave();
 		setTimeout(()=> {
 			if(e.ctrlKey) return My.openEditor();
-			SFDevSpace.addDynamicView(My.name, My.model, e, 'component');
+			SFDevSpace.addModelView(My.name, My.model, e, 'component');
 		}, 20);
 	}
 
@@ -576,7 +576,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 	My.recreate = function(){
 		SFDevSpace.reusableShells.set(My.model, My);
-		SFDevSpace.addDynamicView(My.titles, My.model, {x:My.x, y:My.y}, My.viewerType);
+		SFDevSpace.addModelView(My.titles, My.model, {x:My.x, y:My.y}, My.viewerType);
 		SFDevSpace.reusableShells.delete(My.model);
 	}
 
@@ -802,13 +802,14 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 		window.Q = My.model[propName];
 		console.log('%cwindow.Q >>', 'color:yellow', My.model[propName]);
-		SFDevSpace.addDynamicView(My.titles.concat(propName), window.Q, e, My.viewerType);
+		SFDevSpace.addModelView(My.titles.concat(propName), window.Q, e, My.viewerType);
 	}
 
-	My.clickObject = function(e, isObject){
-		if(isObject){
+	My.clickObject = function(e, obj){
+		if(obj){
+			if(typeof obj !== 'object' || obj === null) return;
 			var propName = '{temporary object}';
-			var that = e;
+			var that = obj;
 		}
 		else {
 			var propName = $(e.target).prev('span').html();
@@ -823,7 +824,20 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		if(e.ctrlKey)
 			return SFDevSpace.openEditor(My.model, propName);
 
-		SFDevSpace.addDynamicView(My.titles.concat(propName), that, e, My.viewerType);
+		SFDevSpace.addModelView(My.titles.concat(propName), that, e, My.viewerType);
+	}
+
+	My.getAnyField = function(val){
+		let data = '';
+		if(My.model.$debugField !== void 0)
+			data = My.model.$debugField + ':' + val[My.model.$debugField];
+		else if(val.name !== void 0)
+			data = 'name:' + val.name;
+		else if(val.id !== void 0)
+			data = 'id:' + val.id;
+		else if(val._id !== void 0)
+			data = '_id:' + val._id;
+		return data.slice(0, 20) + '...';
 	}
 
 	My.preventDefault = function(e){
@@ -854,7 +868,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	for your production website, always make sure that the template
 	can't be created by your user. You must sanitize any user input!
 */
-SFDevSpace.addDynamicView = function(titles, model, ev, viewerType){
+SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 	if(model === void 0) return;
 
 	let isInsideData = model instanceof Set || model instanceof Array || model instanceof Map;
@@ -970,8 +984,8 @@ SFDevSpace.addDynamicView = function(titles, model, ev, viewerType){
 
 	if(isInsideData){
 		template += `<div style="text-align:center;display: {{ model.${model instanceof Array ? 'length':'size'} === 0 ? 'block' : 'none'}}">Empty content...</div><div>`;
-		template += `<div sf-each="key, val in model" class="statelist"><span>{{ key || '#' }}</span> : <div class="value" @click="clickObject(val, true)">{{ typeof val === "object" && val != null ? (
-			'{'+ (${model.$debugField ? 'val.'+model.$debugField+' || ' : '' }val.id || val._id || val.name || '...') + '}'
+		template += `<div sf-each="key, val in model" class="statelist"><span>{{ key == null ? '#' : key }}</span> : <div class="value" @click="clickObject(event, val)">{{ typeof val === "object" && val != null ? (
+			'{'+ getAnyField(val) + '}'
 		) : val }}</div></div>`;
 		template += '</div>';
 	}
@@ -1056,7 +1070,7 @@ function saveInspector(){
 	clearTimeout(_saveInspector);
 	setTimeout(()=> {
 		let list = [];
-		for (var i = 0; i < openedInspector.length; i++) {
+		that:for (var i = 0; i < openedInspector.length; i++) {
 			let temp = openedInspector[i];
 			let title = temp.titles.slice(0);
 
@@ -1064,7 +1078,9 @@ function saveInspector(){
 				if(title[0].includes('. '))
 					title[0] = title[0].slice(title[0].indexOf('. ')+2);
 
-				if(title[0].slice(0, 1) === '{') continue; // Don't save dynamic template/object
+				for (var a = 0; a < title.length; a++)
+					if(title[a].slice(0, 1) === '{')
+						continue that; // Don't save dynamic template/object
 
 				let obj = {
 					type: temp.viewerType,
