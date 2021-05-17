@@ -731,11 +731,12 @@ export class ReactiveMap extends Map{
 		return this;
 	}
 	clear(){
+		this.$EM.clear();
 		super.clear();
-		this.$EM.hardRefresh(0);
 
-		if(this.$size !== void 0 && this.size !== 0)
+		if(this.$size !== void 0)
 			this.$size();
+
 		return this;
 	}
 	delete(key){
@@ -799,11 +800,12 @@ export class ReactiveSet extends Set{
 		return this;
 	}
 	clear(){
+		this.$EM.clear();
 		super.clear();
-		this.$EM.hardRefresh(0);
 
-		if(this.$size !== void 0 && this.size !== 0)
+		if(this.$size !== void 0)
 			this.$size();
+
 		return this;
 	}
 	delete(val){
@@ -1899,7 +1901,7 @@ export class ElementManipulator{
 	}
 
 	clearBinding(elemList, from, to){
-		to ??= this.list.length;
+		to ??= this.list.length || this.list.size;
 
 		const modelRoot = this.modelRef;
 		const binded = this.template.modelRefRoot_path;
