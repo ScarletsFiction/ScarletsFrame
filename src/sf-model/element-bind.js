@@ -12,11 +12,12 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 	if(window.sf$proxy !== void 0)
 		return window.sf$proxy.removeModelBinding.apply(null, arguments);
 
+	const hasIgnore = ignoreInElement !== void 0;
+
 	const bindedKey = ref.sf$bindedKey;
 	for(let key in bindedKey){
 		const obj = ref[key];
 
-		let hasBindingKey = key in bindedKey;
 		if(obj != null && obj.$EM !== void 0){
 			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
 			if(obj.constructor === ReactiveArray){
@@ -58,7 +59,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 						if(!temp.isComponent)
 							repeatedRemoveDeepBinding(obj, temp.template.modelRef_path, isLazy, isUniqList, ignoreInElement);
 
-						if(ignoreInElement !== void 0 && ignoreInElement.contains(temp.parentNode))
+						if(hasIgnore && ignoreInElement.contains(temp.parentNode))
 							continue;
 
 						list.splice(i, 1);
@@ -75,7 +76,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 				if(!obj.$EM.isComponent)
 					repeatedRemoveDeepBinding(obj, obj.$EM.template.modelRef_path, isLazy, isUniqList, ignoreInElement);
 
-				if(ignoreInElement !== void 0 && ignoreInElement.contains(obj.$EM.parentNode))
+				if(hasIgnore && ignoreInElement.contains(obj.$EM.parentNode))
 					onlyCleanEM = true;
 			}
 			else onlyCleanEM = true;
@@ -104,9 +105,6 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 					delete ref[key];
 					ref[key] = obj;
 				}
-
-				if(hasBindingKey === false)
-					continue;
 			}
 		}
 
@@ -119,7 +117,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 		if(elements){
 			for (var i = elements.length-1; i >= 0; i--) {
 				if(elements[i].element.isConnected === false){
-					if(ignoreInElement !== void 0 && ignoreInElement.contains(elements[i].element))
+					if(hasIgnore && ignoreInElement.contains(elements[i].element))
 						continue;
 
 					elements.splice(i, 1);
@@ -135,17 +133,17 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 			}
 
 			bindLength += bindList.length;
-		}
+		}console.log(11, input);
 		if(input){
 			for (var i = input.length-1; i >= 0; i--) {
 				if(input[i].isConnected === false){
-					if(ignoreInElement !== void 0 && ignoreInElement.contains(input[i]))
+					if(hasIgnore && ignoreInElement.contains(input[i]))
 						continue;
 
 					input.splice(i, 1);
 				}
 			}
-
+console.log(22, input.length);
 			if(input.length === 0)
 				delete bindedKey[key].inputBound;
 
@@ -156,12 +154,14 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 				const els = callback[i].element;
 
 				if(els && els.isConnected === false){
-					if(ignoreInElement !== void 0 && ignoreInElement.contains(els))
+					if(hasIgnore && ignoreInElement.contains(els))
 						continue;
 
 					callback.splice(i, 1);
 				}
 			}
+
+			bindLength += callback.length;
 		}
 
 		if(bindLength === 0 && isLazy === void 0 && !isUniqList && ignoreInElement === void 0){
@@ -516,7 +516,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		let lastModel = originalModel;
 
 		if(propName.length !== 0)
-			lastModel = deepProperty(propName);
+			lastModel = deepProperty(lastModel, propName);
 
 		if(lastModel.sf$bindedKey === void 0)
 			Object.defineProperty(lastModel, 'sf$bindedKey', {

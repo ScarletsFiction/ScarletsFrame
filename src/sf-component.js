@@ -599,7 +599,7 @@ class SFComponent extends HTMLElement{
 				model.destroyClone && model.destroyClone(this);
 			}
 
-			removeModelBinding(model, void 0, void 0, void 0, needGC === false && this);
+			removeModelBinding(model, void 0, void 0, void 0, needGC === false ? this : void 0);
 			return;
 		}
 
