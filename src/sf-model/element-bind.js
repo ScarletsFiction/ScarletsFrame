@@ -133,7 +133,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 			}
 
 			bindLength += bindList.length;
-		}console.log(11, input);
+		}
 		if(input){
 			for (var i = input.length-1; i >= 0; i--) {
 				if(input[i].isConnected === false){
@@ -143,7 +143,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 					input.splice(i, 1);
 				}
 			}
-console.log(22, input.length);
+
 			if(input.length === 0)
 				delete bindedKey[key].inputBound;
 
