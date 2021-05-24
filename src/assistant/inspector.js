@@ -921,7 +921,14 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 		}
 
 		const type = typeof temp;
-		temp = isNaN(key[0]) ? '.'+key : `['${key.split("'").join("\\'")}']`;
+
+		let firstChar = key.slice(0, 1);
+		if(isNaN(firstChar)){
+			if(/\w/.test(firstChar))
+				temp = '.'+key;
+			else temp = `['${key}']`;
+		}
+		else temp = `['${key.split("'").join("\\'")}']`;
 
 		if(type === 'function')
 			functions.add(temp);

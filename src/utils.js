@@ -109,11 +109,11 @@ export function hiddenProperty(obj, property, value, isWritable){
 }
 
 export function deepProperty(obj, path){
-  for(var i = 0; i < path.length; i++){
-	obj = obj[path[i]];
-	if(obj === void 0) return;
-  }
-  return obj;
+	for(var i = 0; i < path.length; i++){
+		obj = obj[path[i]];
+		if(obj === void 0) return;
+	}
+	return obj;
 }
 
 export function capitalizeLetters(name){
