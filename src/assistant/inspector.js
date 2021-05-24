@@ -1050,7 +1050,8 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 	model = el.model;
 
 	if(!model.registered){
-		if(reactive.length !== 0) model.state = 'reactive';
+		if(isInsideData) model.state = 'statelist';
+		else if(reactive.length !== 0) model.state = 'reactive';
 		else if(passive.length !== 0) model.state = 'passive';
 		else if(statelists.length !== 0) model.state = 'statelist';
 		else if(objects.length !== 0) model.state = 'object';
