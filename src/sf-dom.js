@@ -566,7 +566,7 @@ function _DOMList(list){
 	return list;
 }
 
-function queryElements(arr, selector){
+export function queryElements(arr, selector){
 	const list = [];
 	for (let i = 0; i < arr.length; i++)
 		list.push.apply(list, arr[i].querySelectorAll(selector));
