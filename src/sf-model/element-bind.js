@@ -5,7 +5,7 @@ import {extractPreprocess, revalidateBindingPath} from "./parser.js";
 import {initBindingInformation} from "./a_utils.js";
 import {ReactiveArray, ReactiveMap, ReactiveSet, PropertyList, ElementManipulatorProxy, forceReactive, RL_BindStatus} from "./repeated-list.js";
 
-export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
+export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElement){
 	if(ref === void 0)
 		return;
 
@@ -17,33 +17,33 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 		const obj = ref[key];
 
 		let hasBindingKey = key in bindedKey;
-		if(obj !== void 0 && obj.$EM !== void 0){
+		if(obj != null && obj.$EM !== void 0){
 			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
 			if(obj.constructor === ReactiveArray){
 				for (var i = 0; i < obj.length; i++){
 					if(typeof obj[i] === 'object')
-						removeModelBinding(obj[i], false, isLazy);
+						removeModelBinding(obj[i], false, isLazy, void 0, ignoreInElement);
 					else break;
 				}
 			}
 			else if(obj.constructor === ReactiveMap){
 				for(const [k, v] of obj){
 					if(typeof v === 'object')
-						removeModelBinding(v, false, isLazy);
+						removeModelBinding(v, false, isLazy, void 0, ignoreInElement);
 					else break;
 				}
 			}
 			else if(obj.constructor === ReactiveSet){
 				for(const v of obj){
 					if(typeof v === 'object')
-						removeModelBinding(v, false, isLazy);
+						removeModelBinding(v, false, isLazy, void 0, ignoreInElement);
 					else break;
 				}
 			}
 			else{
 				for(const k in obj){
 					if(typeof obj[k] === 'object')
-						removeModelBinding(obj[k], false, isLazy);
+						removeModelBinding(obj[k], false, isLazy, void 0, ignoreInElement);
 					else break;
 				}
 			}
@@ -53,9 +53,13 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 			if(obj.$EM.constructor === ElementManipulatorProxy){
 				const { list } = obj.$EM;
 				for (var i = list.length-1; i >= 0; i--) {
-					if(list[i].parentNode.isConnected === false){
-						if(!list[i].isComponent)
-							repeatedRemoveDeepBinding(obj, list[i].template.modelRef_path, isLazy);
+					let temp = list[i];
+					if(temp.parentNode.isConnected === false){
+						if(!temp.isComponent)
+							repeatedRemoveDeepBinding(obj, temp.template.modelRef_path, isLazy, isUniqList, ignoreInElement);
+
+						if(ignoreInElement !== void 0 && ignoreInElement.contains(temp.parentNode))
+							continue;
 
 						list.splice(i, 1);
 					}
@@ -69,7 +73,10 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 			}
 			else if(obj.$EM.parentNode.isConnected === false){
 				if(!obj.$EM.isComponent)
-					repeatedRemoveDeepBinding(obj, obj.$EM.template.modelRef_path, isLazy);
+					repeatedRemoveDeepBinding(obj, obj.$EM.template.modelRef_path, isLazy, isUniqList, ignoreInElement);
+
+				if(ignoreInElement !== void 0 && ignoreInElement.contains(obj.$EM.parentNode))
+					onlyCleanEM = true;
 			}
 			else onlyCleanEM = true;
 
@@ -81,40 +88,22 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 				}
 
 				if(obj.$EM !== void 0){
-					if(obj.$size === void 0 && obj.$length === void 0)
-						delete obj.$EM;
-					else if(obj.$EM.list === void 0) {
+					if(obj.$EM.list === void 0) {
 						obj.$EM = new ElementManipulatorProxy();
 						obj.$EM.list = [];
 					}
-					else obj.$EM.list.length = 0;
+					else if(obj.$EM.constructor === ElementManipulatorProxy)
+						obj.$EM.list.length = 0;
+					else if(obj.$size === void 0 && obj.$length === void 0)
+						delete obj.$EM;
 				}
 
 				if(isUniqList)
 					obj.length = 0;
 				else if(isLazy === void 0){
-					delete bindedKey[key];
 					delete ref[key];
 					ref[key] = obj;
 				}
-
-				// Reset prototype without copying the array to new reference
-				// if(obj.constructor === ReactiveArray)
-				// 	Object.setPrototypeOf(obj, Array.prototype);
-				// else if(obj.constructor === ReactiveSet)
-				// 	Object.setPrototypeOf(obj, Set.prototype);
-				// else if(obj.constructor === ReactiveMap)
-				// 	Object.setPrototypeOf(obj, Map.prototype);
-				// else if(obj.constructor === PropertyList)
-				// 	Object.setPrototypeOf(obj, Object.prototype);
-				// else if(isLazy === void 0){ // Reset object proxies
-				// 	Object.setPrototypeOf(obj, Object.prototype);
-				// 	for(let objKey in obj){
-				// 		const temp = obj[objKey];
-				// 		delete obj[objKey];
-				// 		obj[objKey] = temp;
-				// 	}
-				// }
 
 				if(hasBindingKey === false)
 					continue;
@@ -122,14 +111,19 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 		}
 
 		let that = bindedKey[key];
-		if(that === RL_BindStatus) continue; // This just RepeatedList bind status
+		if(that === RL_BindStatus || that == null)
+			continue; // This just RepeatedList bind status
 
 		const {elements, callback, bindList, input} = that;
 		var bindLength = 0;
 		if(elements){
 			for (var i = elements.length-1; i >= 0; i--) {
-				if(elements[i].element.isConnected === false)
+				if(elements[i].element.isConnected === false){
+					if(ignoreInElement !== void 0 && ignoreInElement.contains(elements[i].element))
+						continue;
+
 					elements.splice(i, 1);
+				}
 			}
 
 			bindLength += elements.length;
@@ -144,8 +138,12 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 		}
 		if(input){
 			for (var i = input.length-1; i >= 0; i--) {
-				if(input[i].isConnected === false)
+				if(input[i].isConnected === false){
+					if(ignoreInElement !== void 0 && ignoreInElement.contains(input[i]))
+						continue;
+
 					input.splice(i, 1);
+				}
 			}
 
 			if(input.length === 0)
@@ -156,15 +154,19 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 		if(callback){
 			for (var i = callback.length-1; i >= 0; i--) {
 				const els = callback[i].element;
-				if(els && els.isConnected === false)
+
+				if(els && els.isConnected === false){
+					if(ignoreInElement !== void 0 && ignoreInElement.contains(els))
+						continue;
+
 					callback.splice(i, 1);
+				}
 			}
 		}
 
-		if(bindLength === 0 && isLazy === void 0 && !isUniqList){
-			delete bindedKey[key];
-
-			if(obj === void 0 || Object.getOwnPropertyDescriptor(ref, key).set === void 0)
+		if(bindLength === 0 && isLazy === void 0 && !isUniqList && ignoreInElement === void 0){
+			let desc = Object.getOwnPropertyDescriptor(ref, key);
+			if(obj === void 0 || desc === void 0 || desc.set === void 0)
 				continue;
 
 			// Reconfigure / Remove property descriptor
@@ -183,7 +185,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 	for(let path in deep){
 		const model = deepProperty(ref, path.split('%$'));
 		if(model !== void 0)
-			removeModelBinding(model, true, isLazy, path === 'sf$uniqList');
+			removeModelBinding(model, true, isLazy, path === 'sf$uniqList', ignoreInElement);
 	}
 }
 
@@ -191,7 +193,7 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList){
 if(window.sf$proxy === void 0)
 	forProxying.removeModelBinding = removeModelBinding;
 
-function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
+function repeatedRemoveDeepBinding(obj, refPaths, isLazy, isUniqList, ignoreInElement){
 	if(refPaths.length === 0)
 		return;
 
@@ -206,7 +208,7 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 				if(deep === void 0)
 					continue;
 
-				removeModelBinding(deep, false, isLazy);
+				removeModelBinding(deep, false, isLazy, isUniqList, ignoreInElement);
 			}
 			continue that;
 		}
@@ -216,7 +218,7 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy){
 			if(deep === void 0)
 				continue;
 
-			removeModelBinding(deep, false, isLazy);
+			removeModelBinding(deep, false, isLazy, isUniqList, ignoreInElement);
 		}
 	}
 }
@@ -444,17 +446,17 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	if(_on)
 		Object.defineProperty(model, `on$${propertyName}`, {
-			set:(val)=> _on = val,
-			get:()=> _on
+			set:val => _on = val,
+			get:() => _on
 		});
 
 	if(_m2v)
 		Object.defineProperty(model, `m2v$${propertyName}`, {
-			set:(val)=>_m2v = val,
-			get:()=> _m2v
+			set:val =>_m2v = val,
+			get:() => _m2v
 		});
 
-	const set = (val)=> {
+	const set = val => {
 		if(objValue !== val){
 			let newValue, noFeedback;
 			if(internal.inputBoundRunning === false){

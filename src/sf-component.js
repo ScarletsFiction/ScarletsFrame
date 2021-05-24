@@ -168,7 +168,9 @@ function seedCreator(item, asScope){
 // it already rise from it own space and can be planted on different DOM space
 // it also has .model property for storing data
 function stemCreator(item, asScope){
-	return new this._root(item, this._space, asScope);
+	let elem = new this._root(item, this._space, asScope);
+	elem.sf$noGC = true;
+	return elem;
 }
 
 component.html = function(name, outerHTML, namespace){
@@ -589,29 +591,32 @@ class SFComponent extends HTMLElement{
 		const model = this.model;
 		const $el = model.$el;
 		const i = $el.indexOf(this);
+		const needGC = this.sf$noGC !== true;
 
 		if($el.length !== 1){
-			if(i !== -1){
+			if(needGC && i !== -1){
 				model.$el = $el.splice(i, 1);
 				model.destroyClone && model.destroyClone(this);
 			}
 
-			removeModelBinding(model);
+			removeModelBinding(model, void 0, void 0, void 0, needGC === false && this);
 			return;
 		}
 
-		model.destroy && model.destroy(this);
+		if(needGC){
+			model.destroy && model.destroy(this);
 
-		if(this.sf$collection !== void 0)
-			this.sf$collection.splice(this.sf$collection.indexOf(model), 1);
+			if(this.sf$collection !== void 0)
+				this.sf$collection.splice(this.sf$collection.indexOf(model), 1);
 
-		if(SFOptions.hotReload)
-			HotReload.ComponentRemove(this);
+			if(SFOptions.hotReload)
+				HotReload.ComponentRemove(this);
 
-		if(i !== -1)
-			model.$el = $el.splice(i, 1);
+			if(i !== -1)
+				model.$el = $el.splice(i, 1);
+		}
 
-		removeModelBinding(model, void 0, true);
+		removeModelBinding(model, void 0, true, void 0, needGC === false ? this : void 0);
 	}
 
 	sf$destroyReplace(i, element){
