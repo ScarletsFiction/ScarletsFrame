@@ -16,21 +16,21 @@ export function handleSFSlot(model, element){
 			set: val => {
 				if(val == null){ // Rollback to empty sf-slot element
 					if(ref == null) return;
-					parent.insertBefore(Slot,  usedElement);
+					parent.replaceChild(Slot, usedElement);
 					usedElement = Slot;
 				}
 				else if(val instanceof HTMLElement){ // Replace sf-slot element
-					parent.insertBefore(val, usedElement);
+					parent.replaceChild(val, usedElement);
 					usedElement = val;
 				}
-				else if(val.$el !== void 0){ // Replace with detached DOM element
+				else if(val.$el !== void 0){ // eplace with detached DOM element
 					let list = val.$el;
 					let found = false;
 
 					for (var a = 0; a < list.length; a++) {
 						if(list[a].isConnected === false){
 							let got = list[a];
-							parent.insertBefore(got, usedElement);
+							parent.replaceChild(got, usedElement);
 							usedElement = got;
 							found = true;
 							break;
@@ -39,7 +39,7 @@ export function handleSFSlot(model, element){
 
 					 // Replace with first DOM element if no detached element
 					if(found === false){
-						parent.insertBefore(list[0], usedElement);
+						parent.replaceChild(list[0], usedElement);
 						usedElement = list[0];
 					}
 				}
