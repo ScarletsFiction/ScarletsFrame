@@ -27,10 +27,12 @@ export function request(method, url, data, options, callback){
 const statusCode = request.statusCode = {};
 request.onerror = null;
 request.onsuccess = null;
+request.timeout = 0;
 let middleware = request.middleware = {send: null, receive: null};
 
 function HttpRequest(method, url, data, options, callback){
 	const xhr = new XMLHttpRequest();
+	xhr.timeout = options.timeout || request.timeout;
 	options.beforeOpen && options.beforeOpen(xhr);
 
 	let MS = middleware.send;
