@@ -207,7 +207,7 @@ export function hotReload(mode){
 		if(el instanceof Array)
 			return el.forEach(reinitViews);
 
-		let selectors = sf.Views.listSelector;
+		let selectors = Views.listSelector;
 		for(let key in selectors){
 			let newViewEl = el.getElementsByTagName(key)[0];
 			if(newViewEl === void 0) continue;

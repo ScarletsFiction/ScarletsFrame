@@ -1,6 +1,6 @@
 import {$, model, component, Views} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
-import {hotReloadLevel} from "./index.dev.js";
+import {hotReloadLevel} from "./index.js";
 
 Views.onCrossing = function(url){
   console.log("Cross domain catched:", url);
