@@ -511,6 +511,11 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	if(isALength !== false && !(isALength in model)){
 		let propName = parsePropertyPath(originalPropertyName);
+		if(propName.length === 1){
+			propName.unshift('_$self');
+			originalModel._$self = originalModel;
+		}
+
 		propName.pop();
 		let lastProp = propName.pop();
 		let lastModel = originalModel;

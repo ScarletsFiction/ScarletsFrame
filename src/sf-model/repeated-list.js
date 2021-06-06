@@ -145,6 +145,9 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 
 export function forceReactive(modelRef, property){
 	let that = modelRef[property];
+	if(!that)
+		return console.error(`Trying to make reactive element list from '${property}' in`, modelRef, "but got", that);
+
 	const { constructor } = that;
 
 	let proto;
