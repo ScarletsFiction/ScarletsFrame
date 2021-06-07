@@ -26,8 +26,12 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 		element = elements[i];
 
 		if(element.getAttribute === void 0){
+			if(element.model !== void 0)
+				modelRef = element.model;
+
 			script = element.rule;
 			element = element.el;
+
 			RE_ProcessIndex = i;
 		}
 		else{
@@ -37,6 +41,10 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 
 			script = element.getAttribute('sf-each');
 			element.removeAttribute('sf-each');
+
+			var mask = modelKeysRegex.modelRef_regex_mask;
+			if(mask !== void 0)
+				script = script.replace(` in ${mask}.`, ' in ');
 		}
 
 		element.sf$componentIgnore = true;
@@ -98,8 +106,10 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 					modelRef.sf$internal.deepBinding[isDeep.slice(0, -1).join('%$')] = true;
 			}
 
-			if(target === void 0)
-				modelRef[pattern.source] = target = [];
+			if(target === void 0){
+				console.log(modelKeysRegex, pattern);
+				return console.error(`Failed to bind sf-each '${pattern.source}' with undefined property\nModel:`, modelRef, '\nElement:', element, '\nParent:', element.parentNode);
+			}
 		}
 		else{
 			// Enable element binding

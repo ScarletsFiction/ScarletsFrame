@@ -635,12 +635,16 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 			var el = specialRepeat[i];
 			var rule = el.getAttribute('sf-each');
 
-			if(isDeep && rule.includes(temp))
+			let deepItem = false;
+			if(isDeep && rule.includes(temp)){
 				rule = rule.replace(temp, ' in ');
+				deepItem = true;
+			}
 
 			specialRepeat[i] = {
 				addr:getSelector(el, true),
-				rule
+				rule,
+				isDeep: deepItem
 			};
 
 			el.removeAttribute('sf-each');

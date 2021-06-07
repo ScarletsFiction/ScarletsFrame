@@ -118,15 +118,18 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 			// Process element for sf-each
 			const specialRepeat = template.specialElement.repeat;
 			const specialRepeat_ = new Array(specialRepeat.length);
+			const notDeep = (modelRef || item);
+
 			for (var i = 0; i < specialRepeat.length; i++) {
 				var ref = specialRepeat[i];
 				specialRepeat_[i] = {
 					el:childIndexes(ref.addr, html),
-					rule:ref.rule
+					rule: ref.rule,
+					model: ref.isDeep ? item : notDeep
 				};
 			}
 
-			repeatedListBinding(specialRepeat_, item, namespace, template);
+			repeatedListBinding(specialRepeat_, void 0, namespace, template);
 		}
 
 		// Process element for sf-scope
