@@ -222,6 +222,9 @@ model('repeattest', function(My){
 		}]
 	}];
 
+	My.other = {aa:11, bb:22};
+	My.dynamic = {aa:33, bb:44};
+
 	My.begin = 1;
 	My.end = 10;
 	My.step = 1;

@@ -454,6 +454,11 @@
             {{ key +'-'+ val3 +'-'+ hi + vul }}
           </span>
         </span>
+        <div sf-each="key2, val2 in other">
+          other {{key2}} {{val2}}
+          <!-- <input sf-bind="dynamic[key2]"> -->
+        </div>
+        <br>
       </div>
     </sf-m>
 
