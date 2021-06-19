@@ -1,12 +1,25 @@
 import {sfRegex} from "./shared.js";
+let unsupportedDynamic = "Dynamic input binding haven't been supported. Maybe you was trying to bind with 'function.call()' or 'obj[dynamicVal]' on your template. Please create new issue if you need this feature.\n\n";
+
 export function parsePropertyPath(str){
 	var temp = [];
+
+	if(str.includes('(')){
+		console.error(unsupportedDynamic, str);
+		return temp;
+	}
+
 	temp.unshift(str.replace(sfRegex.parsePropertyPath, function(full, g1, g2){
 		if(g1 !== void 0){
 			if(isNaN(g1) === false)
 				g1 = Number(g1);
 			else if(g1.slice(0, 1) === '"' || g1.slice(0, 1) === "'")
 				g1 = g1.slice(1, -1);
+			else{
+				console.error(unsupportedDynamic, str);
+				// temp.hasDynamic = true;
+				// g1 = `@${g1}`;
+			}
 
 			temp.push(g1);
 			return '';
@@ -109,6 +122,9 @@ export function hiddenProperty(obj, property, value, isWritable){
 }
 
 export function deepProperty(obj, path){
+	// obj.hasDynamic => has data[dynamic_prop].stuff
+	// ['data', '@dynamic_prop', 'stuff']
+
 	for(var i = 0; i < path.length; i++){
 		obj = obj[path[i]];
 		if(obj === void 0) return;
