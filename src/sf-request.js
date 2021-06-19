@@ -157,6 +157,9 @@ class ReqEventRegister extends XMLHttpRequest{
 		const options = this._opt;
 		let MR = middleware.receive;
 
+		if(this._cb.fail === void 0)
+			this._cb.fail = request.onerror;
+
 		if((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0){
 			if(options.receiveType === 'JSON'){
 				let parsed = void 0;
