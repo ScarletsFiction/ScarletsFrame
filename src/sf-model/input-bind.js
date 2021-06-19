@@ -337,7 +337,7 @@ export function bindInput(temp, modelLocal, mask, modelScope){
 			propertyName = element.getAttribute('name');
 
 		if(propertyName === null){
-			console.error("Property key to be bound wasn't be found", element);
+			console.error("Property key to be bound wasn't found", element);
 			continue;
 		}
 

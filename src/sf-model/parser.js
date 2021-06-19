@@ -219,12 +219,14 @@ function addressAttributes(currentNode, template){
 				else attr.nodeValue = '';
 			}
 
-			if(isValueInput)
-				key.isValueInput = isValueInput;
+			if(key.name === 'value'){
+				if(isValueInput)
+					key.isValueInput = isValueInput;
 
-			if(isCheckBox){
-				key.isCheckBox = isCheckBox;
-				currentNode.typeData = Object;
+				if(isCheckBox){
+					key.isCheckBox = isCheckBox;
+					currentNode.typeData = Object;
+				}
 			}
 
 			indexes = [];

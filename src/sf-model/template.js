@@ -240,6 +240,9 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 	const { parsed } = changesReference;
 	const repeatListIndex = element.sf$repeatListIndex;
 
+	if(repeatListIndex !== void 0)
+		item = element.model || item;
+
 	if(!asyncing
 	   && template.parse.length !== 0
 	   && templateExec(template.parse, item, changes, parsed, repeatListIndex) === false)
