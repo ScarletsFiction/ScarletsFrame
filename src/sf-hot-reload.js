@@ -5,7 +5,7 @@ import {loader as Loader} from "./sf-loader.js";
 import {component as Component, prepareComponentTemplate} from "./sf-component.js";
 import {model as Model} from "./sf-model.js";
 import {Views} from "./sf-views.js";
-import {ViewsHot} from "./sf-views.hot.js";
+import "./sf-views.hot.js";
 import {Inspector} from "./assistant/inspector.js";
 import {parseElement} from "./sf-dom.utils.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
