@@ -1018,10 +1018,6 @@ Views.goto = function(url){
 	}
 }
 
-Views._$edit =  function(selector, routes) {
-	(Views.listSelector[selector] || new Views(selector)).addRoute(routes, true);
-}
-
 Views.resetCache = function(){
 	cachedURL = {};
 }

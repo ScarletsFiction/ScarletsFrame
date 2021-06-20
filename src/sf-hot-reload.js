@@ -1,16 +1,17 @@
 // Allow direct function replacement to accelerate development
 // Note: This feature will allocate more small memory and small slow down
-import {SFOptions, internal, HotReload} from "./shared.js";
+import {SFOptions, internal, HotReload, sfRegex} from "./shared.js";
 import {loader as Loader} from "./sf-loader.js";
 import {component as Component, prepareComponentTemplate} from "./sf-component.js";
 import {model as Model} from "./sf-model.js";
 import {Views} from "./sf-views.js";
+import {ViewsHot} from "./sf-views.hot.js";
 import {Inspector} from "./assistant/inspector.js";
 import {parseElement} from "./sf-dom.utils.js";
 import {removeModelBinding, bindElement} from "./sf-model/element-bind.js";
 import {templateParser} from "./sf-model/template.js";
 import {$} from "./sf-dom.js";
-import {toArray, isClass} from "./utils.js";
+import {toArray, isClass, modelKeys as getModelKeys} from "./utils.js";
 
 let hotReloadAll = false; // All model property
 
@@ -443,6 +444,13 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 
 		scope.hotReloading = true;
 		func(internal.proxy, space, (scope.$el && scope.$el.$item) || {});
+
+		// Recreate model RegExp
+		if(scope.sf$internal && scope.sf$internal.modelKeysRegex){
+			let modelKeys = getModelKeys(scope, true);
+			scope.sf$internal.modelKeysRegex.v = RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g');
+		}
+
 		scope.hotReloading = false;
 	}
 	else Object.setPrototypeOf(scope, func.class.prototype);

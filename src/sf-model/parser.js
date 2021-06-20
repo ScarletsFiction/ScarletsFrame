@@ -30,7 +30,7 @@ function dataParser(html, _model_, template, _modelScoped, preParsedReference, j
 				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
 
 			// Mask model for variable
-			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
+			return temp_.replace(template.modelRefRoot_regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);
 		});
 
 		temp = temp.trim();
@@ -79,7 +79,7 @@ function uniqueDataParser(html, template, _modelScoped){
 				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
 
 			// Mask model for variable
-			return temp_.replace(template.modelRefRoot_regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
+			return temp_.replace(template.modelRefRoot_regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);
 		});
 
 		let check = false;
@@ -335,7 +335,7 @@ export function createModelKeysRegex(targetNode, modelScope, mask){
 	const obj = {};
 
 	// Don't match text inside quote, or object keys
-	obj.modelRefRoot_regex = RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g');
+	obj.modelRefRoot_regex = {v:RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g')};
 	if(mask !== null)
 		obj.modelRef_regex = RegExp(sfRegex.getSingleMask.join(mask), 'gm');
 

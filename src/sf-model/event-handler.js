@@ -26,7 +26,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 			direct = true;
 
 		// Replace variable to refer to current scope
-		return script_.replace(template.modelRefRoot_regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
+		return script_.replace(template.modelRefRoot_regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);
 	});
 
 	const name_ = data.name.slice(1);

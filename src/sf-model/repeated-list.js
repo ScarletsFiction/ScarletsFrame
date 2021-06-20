@@ -238,7 +238,7 @@ function listFromFunction(modelRef, pattern, list){
 		temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
 		// Mask model for variable
-		return temp.replace(modelRef.sf$internal._regex, (full, before, matched)=> `${before}_modelScope.${matched}`);
+		return temp.replace(modelRef.sf$internal._regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);
 	});
 
 	// Replace "range" into the internal function
@@ -493,7 +493,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			_list.push(modelKeysRegex.modelRef_regex_mask);
 
 		template.scopes = modelKeysRegex.scopes;
-		_list.regex = new RegExp(sfRegex.getScopeList.join(_list.join('|').split('$').join('\\$')), 'gm');
+		_list.regex = RegExp(sfRegex.getScopeList.join(_list.join('|').split('$').join('\\$')), 'gm');
 
 		originalAddr.template = template;
 	}
