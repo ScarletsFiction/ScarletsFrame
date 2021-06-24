@@ -39,22 +39,31 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		rootHandler.sf$listListenerLock.add(template);
 		const elementIndex = getSelector(that, true, rootHandler); // `rootHandler` may not the parent of `that`
 
+		// ToDo: $0.parentElement.sf$listListener
+		// I forgot why I put this ToDo
 		rootHandler.sf$listListener ??= {};
 
 		let withKey = false;
 		if(template.uniqPattern !== void 0)
 			withKey = true;
 
-		// ToDo today: $0.parentElement.sf$listListener
-		// I forgot why I put this ToDo
+		/*
+		The "Function(...)" here is for creating a custom function based on
+		the @event="..." that was made by the developer (you)
 
+		For the example, if you make a template on HTML like below
+		<div @click="clickMe('hi')">Click me</div>
+
+		This framework will create a custom function based on the content inside of @click="..."
+		Function(args, "clickMe('hi')")
+		*/
 		if(direct)
 			var func = getDirectReference(_modelScope, script);
 		else{
 			if(withKey)
-				var func = new Function('event', '_model_', '_modelScope', template.uniqPattern, script);
+				var func = Function('event', '_model_', '_modelScope', template.uniqPattern, script);
 			else
-				var func = new Function('event', '_model_', '_modelScope', script);
+				var func = Function('event', '_model_', '_modelScope', script);
 		}
 
 		let listener = rootHandler.sf$listListener[name_];
@@ -180,7 +189,9 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 			script = 'if(!event.isTrusted){Security.report&&Security.report(1,event);return};'+ script;
 		}
 
-		script = (new Function('_modelScope', 'event', script)).bind(that, _modelScope);
+		// Please search "Function(...)" from your text editor to see
+		// the explanation why this framework is using this
+		script = Function('_modelScope', 'event', script).bind(that, _modelScope);
 	}
 
 	let containSingleChar = false;

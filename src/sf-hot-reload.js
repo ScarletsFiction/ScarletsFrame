@@ -77,8 +77,17 @@ export function hotReload(mode){
 				const { socket } = window.___browserSync___;
 
 				function runScript(code){
+					/*
+						This feature is only being used for hot reload only, on development environment.
+
+						"code" is being send by the compiler/hot reload tools.
+
+						When the developer editing a project's source file
+						The file content (JavaScript) will be executed here
+					*/
+
 					HotReload.active = true;
-					new Function(code)();
+					Function(code)();
 					HotReload.active = false;
 				}
 

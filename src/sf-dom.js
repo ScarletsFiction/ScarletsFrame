@@ -575,14 +575,20 @@ export function queryElements(arr, selector){
 
 // Fix for IE11 and Safari, due to lack of writable length
 function recreateDOMList($el, length){
-	const args = new Array(length)
+	const args = new Array(length);
 	args[0] = 'sel';
 
 	for (var i = 1; i < length; i++)
 		args[i] = `a${i}`;
 
+	/*
+	"args" will can only contain [sel, a0, a1, a...]
+	It may not contain dangerous script evaluation.
+	And this is just for IE11 and Safari's polyfill.
+	*/
 	const obj = {};
 	const temp = Function('o', `return function(${args.join(',')}){return o.find(sel)}`)(obj);
+
 	for (var i = 0; i < length; i++)
 		temp[i] = $el[i];
 

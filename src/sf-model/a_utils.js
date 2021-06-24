@@ -71,10 +71,25 @@ export function modelScript(mask, script, repeatedListKey, _list){
 		script = `var/**/${temp_}\n${script}`;
 	}
 
+	/*
+	The "Function(...)" here is for creating a custom function based on
+	the HTML template that was made by the developer (you)
+
+	For the example, if you make a template on HTML like below
+	<div> {{ hello(text) }} </div>
+
+	This framework will create a custom function based on the content inside of {{ ... }}
+	Function(args, "hello(text)")
+
+	The developer itself must be aware and becareful if they're allowing their user
+	to create custom template dynamically on their project. The vulnerability is just
+	the same like parsing HTML elements out of a text/string.
+	*/
+
 	try{
 		if(repeatedListKey === void 0)
-			return new Function(args, script);
-		return new Function(args, repeatedListKey.key, script);
+			return Function(args, script);
+		return Function(args, repeatedListKey.key, script);
 	} catch(e){
 		console.log(script);
 		console.error(e);
