@@ -42,11 +42,13 @@ export var sfRegex = {
 	anyCurlyBracket:/{{.*?}}/,
 	allTemplateBracket:/{\[([\s\S]*?)\]}/g,
 	anyOperation:/[ =(+-]/,
+
+	jsSymbols: /['"`~!@#%^&*()\-+=\[\]{}\\|:;<>,. /?]/,
 };
 
 export var HTMLTemplates = window.templates || {};
 export var TemplatePending = [];
-Object.defineProperty(window, 'templates', {
+Object.defineProperty(Window.prototype, 'templates', {
 	set: val=> {
 		HTMLTemplates = val;
 		SFOptions.hotReload && HotReload.Template(val);

@@ -295,3 +295,37 @@ export const isClass = (function(){
     return false;
   }
 })();
+
+export function customProtoProperty(obj, property, config){
+	// If .get is not defined, then create a function that retrieving data from ._$d
+	if(config.get === void 0 && config.value === void 0)
+		config.get = Function(`return this._$d${escapeProperty(property)}`);
+
+	let proto = Object.getPrototypeOf(obj);
+	if(proto._$d === void 0){
+		Object.defineProperty(obj, '_$d', {
+			value:{}
+		}); // make it non-enumerable
+
+		Object.setPrototypeOf(proto, {});
+		proto = custom;
+		proto._$d = true;
+	}
+
+	// Move the data
+	obj._$d[property] = obj[property];
+	delete obj[property];
+
+	Object.defineProperty(proto, property, config);
+}
+
+export function escapeProperty(property){
+	if(sfRegex.jsSymbols.test(property)){
+		// When contain JS symbol
+		return `[${JSON.stringify(property)}]`;
+	}
+	else{
+		// When only contain alphanumeric, _, or $ character
+		return `.${property}`;
+	}
+}
