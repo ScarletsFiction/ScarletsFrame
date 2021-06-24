@@ -288,7 +288,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 					return;
 
 				if(Object.getOwnPropertyDescriptor(model, propertyName[i]).set === void 0){
-					Object.defineProperty(model, propertyName[i], {
+					customProtoProperty(model, propertyName[i], {
 						enumerable: true,
 						configurable: true,
 						get:()=> value,
@@ -445,13 +445,13 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	let _m2v = model[`m2v$${propertyName}`]; // Everytime value changed from script (not from View), callback value will only affect View
 
 	if(_on)
-		Object.defineProperty(model, `on$${propertyName}`, {
+		customProtoProperty(model, `on$${propertyName}`, {
 			set:val => _on = val,
 			get:() => _on
 		});
 
 	if(_m2v)
-		Object.defineProperty(model, `m2v$${propertyName}`, {
+		customProtoProperty(model, `m2v$${propertyName}`, {
 			set:val =>_m2v = val,
 			get:() => _m2v
 		});
@@ -554,10 +554,10 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(SFOptions.devMode && objValue !== void 0 && objValue.$EM !== void 0)
 		return forceReactive(model, propertyName);
 
-	Object.defineProperty(model, propertyName, {
+	customProtoProperty(model, propertyName, {
 		enumerable: true,
 		configurable: true,
-		get: getter || (()=> objValue),
+		get: getter || (()=> objValue), // Todo
 		set
 	});
 }

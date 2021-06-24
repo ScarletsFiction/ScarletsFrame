@@ -1,3 +1,5 @@
+import { customProtoProperty } from "./utils.js";
+
 export function handleSFSlot(model, element){
 	var slotList = element.getElementsByTagName('sf-slot');
 
@@ -11,7 +13,7 @@ export function handleSFSlot(model, element){
 		let usedElement = Slot;
 
 		let ref = model[target];
-		Object.defineProperty(model, target, {
+		customProtoProperty(model, target, {
 			get: ()=> ref,
 			set: val => {
 				if(val == null){ // Rollback to empty sf-slot element

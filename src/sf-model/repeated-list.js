@@ -10,7 +10,7 @@ import {modelScript, initBindingInformation} from "./a_utils.js";
 import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";
 import {internal, SFOptions, sfRegex, emptyArray} from "../shared.js";
 import {extractPreprocess} from "./parser.js";
-import {getScope, findBindListElement, avoidQuotes, hiddenProperty, parsePropertyPath, deepProperty, compareObject} from "../utils.js";
+import {getScope, findBindListElement, avoidQuotes, hiddenProperty, parsePropertyPath, deepProperty, compareObject, customProtoProperty} from "../utils.js";
 import {getSelector} from "../sf-dom.utils.js";
 import {modelToViewBinding, repeatedListBindRoot, bindElement} from "./element-bind.js";
 import {syntheticTemplate, templateParser} from "./template.js";
@@ -369,7 +369,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 		return;
 
 	const {target, prop, pattern} = rule;
-	let callback = target[`on$${prop}`] || {};
+	let callback = target[`on$${prop}`] ??= {};
 
 	let EM = new ElementManipulator();
 	if(this.$EM === void 0){
@@ -381,10 +381,11 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 		hiddenProperty(this, '$EM', EM, true);
 
 		if(pattern.call === void 0){
-			Object.defineProperty(target, `on$${prop}`, {
+			customProtoProperty(target, `on$${prop}`, {
 				configurable: true,
-				get:()=> callback,
-				set:(val)=> Object.assign(callback, val)
+				// get:()=> callback,
+				// set:(val)=> Object.assign(callback, val)
+				set: Function('v', `return Object.assign(this._$d${escapeProperty(`on$${prop}`)}, v)`)
 			});
 		}
 	}
@@ -582,10 +583,10 @@ export class PropertyList{ // extends Object
 		if(firstInit){
 			hiddenProperty(that, '_list', Object.keys(that), true);
 
-			Object.defineProperty(target, prop, {
+			customProtoProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
-				get:()=> that,
+				// get:()=> that,
 				set:(val)=> {
 					const olds = that._list;
 					const news = Object.keys(val);
@@ -709,7 +710,7 @@ export class ReactiveMap extends Map{
 
 		// Initialize property once
 		if(firstInit){
-			Object.defineProperty(target, prop, {
+			customProtoProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
 				get:()=> that,
@@ -773,7 +774,7 @@ export class ReactiveSet extends Set{
 
 		// Initialize property once
 		if(firstInit){
-			Object.defineProperty(target, prop, {
+			customProtoProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
 				get:()=> that,
@@ -836,7 +837,7 @@ function ProxyProperty(obj, prop, force){
 	if(force || Object.getOwnPropertyDescriptor(obj, prop).set === void 0){
 		let temp = obj[prop];
 
-		Object.defineProperty(obj, prop, {
+		customProtoProperty(obj, prop, {
 			configurable:true,
 			enumerable:true,
 			get:()=> temp,
@@ -962,7 +963,7 @@ export class ReactiveArray extends Array{
 
 		// Initialize property once
 		if(firstInit && pattern.call === void 0){
-			Object.defineProperty(target, prop, {
+			customProtoProperty(target, prop, {
 				enumerable: true,
 				configurable: true,
 				get:()=> that,
