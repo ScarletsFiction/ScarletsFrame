@@ -76,14 +76,8 @@ model.index = function(element, getProp){
 
 // Declare model for the name with a function
 model.for = function(name, options, func, namespace){
-	if(options.constructor === Function){
+	if(options.constructor === Function)
 		func = options;
-
-		if(isClass(func)){
-			internal.modelInherit[name] = func;
-			func = {class:func};
-		}
-	}
 	else{
 		if(func === void 0){
 			let root = (namespace || model).root;
@@ -99,6 +93,15 @@ model.for = function(name, options, func, namespace){
 
 		internal.modelInherit[name] = options.extend;
 	}
+
+	if(func !== void 0){
+		// It's a class
+		if(isClass(func)){
+			internal.componentInherit[name] = func;
+			func = {class:func};
+		}
+	}
+	else func = NOOP;
 
 	const scope = namespace || model;
 	if(SFOptions.hotReload)

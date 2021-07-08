@@ -87,15 +87,8 @@ function checkWaiting(name, namespace){
 }
 
 component.for = function(name, options, func, namespace){
-	if(options.constructor === Function){
+	if(options.constructor === Function)
 		func = options;
-
-		// It's a class
-		if(isClass(func)){
-			internal.componentInherit[name] = func;
-			func = {class:func};
-		}
-	}
 	else{
 		if(options.extend !== void 0)
 			internal.componentInherit[name] = options.extend;
@@ -103,7 +96,14 @@ component.for = function(name, options, func, namespace){
 			throw new Error("The second parameter of sf.component can't be a string. Maybe you want to use sf.component.html to define component's HTML template instead.");
 	}
 
-	func ??= NOOP;
+	if(func !== void 0){
+		// It's a class
+		if(isClass(func)){
+			internal.componentInherit[name] = func;
+			func = {class:func};
+		}
+	}
+	else func = NOOP;
 
 	// internal.component.tagName.add(name.toUpperCase());
 	const scope = namespace || component;
