@@ -16,6 +16,8 @@ $(function(){
 });
 
 export function loadSFTemplate(ref, targetNode){
+	if(ref.sf$processed) return;
+
 	let path = ref.getAttribute('path')
 	if(path === null){
 		path = ref.getAttribute('get-path');
@@ -37,6 +39,12 @@ export function loadSFTemplate(ref, targetNode){
 	}
 	else {
 		path = ref.getAttribute('get-html');
+
+		if(path === null){
+			console.error("Attribute 'path', 'get-path', 'get-html' was not found\nTarget:", ref, "\nParent Node:", targetNode);
+			throw "Error in <sf-template>";
+		}
+
 		ref.removeAttribute('get-html');
 		serve = deepProperty(window, parsePropertyPath(path));
 	}
@@ -58,6 +66,8 @@ export function loadSFTemplate(ref, targetNode){
 		ref.parentNode.classList.add('sf-h-tmplt');
 		ref._$list = serve;
 	}
+
+	ref.sf$processed = true;
 
 	serve.insertBefore(ref.nextSibling || ref);
 	ref.remove();
