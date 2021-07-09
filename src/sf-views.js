@@ -1013,19 +1013,23 @@ Views.goto = function(url){
 
 	const views = Views.list;
 
+	let promiseList = [];
 	for(let list in Views.list){
 		// For root path
 		if(list === slash){
-			if(views[slash].currentPath !== parsed.path)
-				views[slash].goto(parsed.path);
+			if(views[slash].currentPath !== parsed.path){
+				promiseList.push(views[slash].goto(parsed.path));
+			}
 
 			continue;
 		}
 
 		// For hash path
 		if(parsed.routes[list] !== views[list].currentPath)
-			views[list].goto(parsed.routes[list] || '/');
+			promiseList.push(views[list].goto(parsed.routes[list] || '/'));
 	}
+
+	return Promise.all(promiseList);
 }
 
 Views.resetCache = function(){

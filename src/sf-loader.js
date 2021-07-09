@@ -6,10 +6,10 @@ let whenProgress = [];
 var pendingOrderedJS = [];
 let lastState = '';
 
-let promiseResolver = null;
+let promiseResolver = false;
 function resolvePromise(){
-	promiseResolver();
-	promiseResolver = null;
+	promiseResolver && promiseResolver();
+	promiseResolver = false;
 }
 
 export class loader{
@@ -82,7 +82,7 @@ export class loader{
         	document.head.prepend(...temp);
         else document.head.append(...temp);
 
-        if(promiseResolver === null){
+        if(promiseResolver === false){
         	loader.task = new Promise(function(resolve){
         		promiseResolver = resolve;
         	});
@@ -122,7 +122,7 @@ export class loader{
 	        else pendingOrderedJS.push(s);
 		}
 
-        if(promiseResolver === null){
+        if(promiseResolver === false){
         	loader.task = new Promise(function(resolve){
         		promiseResolver = resolve;
         	});
