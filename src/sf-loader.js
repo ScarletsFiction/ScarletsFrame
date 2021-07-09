@@ -6,12 +6,19 @@ let whenProgress = [];
 var pendingOrderedJS = [];
 let lastState = '';
 
+let promiseResolver = null;
+function resolvePromise(){
+	promiseResolver();
+	promiseResolver = null;
+}
+
 export class loader{
 	static loadedContent = 0;
 	static totalContent = 0;
 	static DOMWasLoaded = false;
 	static DOMReady = false;
 	static turnedOff = true;
+	static task = false; // Promise
 
 	// Make event listener
 	static onFinish(func){
@@ -40,6 +47,8 @@ export class loader{
 	    	if(pendingOrderedJS.length + loader.loadedContent === loader.totalContent)
 	    		document.head.appendChild(pendingOrderedJS.shift());
 	    }
+		else if(loader.loadedContent === loader.totalContent)
+			resolvePromise();
 
 	    if(whenProgress === null) return;
 
@@ -72,6 +81,14 @@ export class loader{
 		if(priority === 'low')
         	document.head.prepend(...temp);
         else document.head.append(...temp);
+
+        if(promiseResolver === null){
+        	loader.task = new Promise(function(resolve){
+        		promiseResolver = resolve;
+        	});
+        }
+
+        return loader.task;
 	}
 
 	static js(list, async){
@@ -104,6 +121,14 @@ export class loader{
 	        	document.head.appendChild(s);
 	        else pendingOrderedJS.push(s);
 		}
+
+        if(promiseResolver === null){
+        	loader.task = new Promise(function(resolve){
+        		promiseResolver = resolve;
+        	});
+        }
+
+        return loader.task;
 	}
 
 	static waitImages(){
@@ -188,6 +213,7 @@ function waitResources(){
 	}
 
 	whenProgress = whenDOMReady = whenDOMLoaded = null;
+	resolvePromise();
 }
 
 if(window.sf$proxy)

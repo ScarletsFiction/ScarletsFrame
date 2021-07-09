@@ -81,12 +81,17 @@ export class events{
 
 	static when(name, callback){
 		if(events[name] === true)
-			return callback();
+			return callback && callback();
+
+		let promise = !callback && new Promise(v => {
+			callback = v
+		});
 
 		if(!(name in My._statusTrigger))
 			My._statusTrigger[name] = [];
 
 		My._statusTrigger[name].push(callback);
+		return promise;
 	}
 
 	static once(name, callback){

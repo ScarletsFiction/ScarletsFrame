@@ -7,7 +7,7 @@ import {getCallerFile} from "./utils.js";
 import {loader as Loader} from "./sf-loader.js";
 import {SFPageView} from "./sf-views-page.js";
 
-const rejectResponse = /<html/;
+const rejectResponse = /^<html/;
 
 // Save reference
 const slash = '/';
@@ -791,6 +791,8 @@ export function Views(selector, name){
 								Self.data = Object.assign(currentData, Self.data);
 
 							insertLoadedElement(DOMReference, dom);
+
+							if(promiseResolve) promiseResolve();
 							if(callback) return callback(dom);
 
 							if(dom.routerData)
@@ -813,6 +815,8 @@ export function Views(selector, name){
 			}
 
 			insertLoadedElement(DOMReference, dom, pendingShowed);
+
+			if(promiseResolve) promiseResolve();
 			if(callback) return callback(dom);
 
 			if(dom.routerData)
@@ -870,6 +874,11 @@ export function Views(selector, name){
 		for (var i = 0; i < onEvent.loading.length; i++)
 			if(onEvent.loading[i](_routeCount || 1, routeTotal)) return;
 
+		let promise = true;
+		var promiseResolve = false;
+		if(_routeCount === void 0)
+			promise = new Promise(r => {promiseResolve = r});
+
 		RouterLoading = Request(
 			method || 'GET',
 			window.location.origin + thePath,
@@ -905,7 +914,8 @@ export function Views(selector, name){
 			afterDOMLoaded(dom);
 		})
 		.fail(routeError_);
-		return true;
+
+		return promise;
 	}
 
 	// Use cache if exist
