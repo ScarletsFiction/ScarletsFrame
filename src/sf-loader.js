@@ -18,7 +18,9 @@ export class loader{
 	static DOMWasLoaded = false;
 	static DOMReady = false;
 	static turnedOff = true;
-	static task = false; // Promise
+	static task = new Promise(function(resolve){
+    	promiseResolver = resolve;
+    });
 
 	// Make event listener
 	static onFinish(func){
