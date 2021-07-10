@@ -107,8 +107,7 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 			}
 
 			if(target === void 0){
-				console.log(modelKeysRegex, pattern);
-				return console.error(`Failed to bind sf-each '${pattern.source}' with undefined property\nModel:`, modelRef, '\nElement:', element, '\nParent:', element.parentNode);
+				return console.error(`Failed to bind sf-each '${pattern.source}' with undefined property\nModel:`, modelRef, '\nElement:', element, '\nParent:', element.parentNode, '\nsf-each\'s Pattern:', pattern);
 			}
 		}
 		else{
