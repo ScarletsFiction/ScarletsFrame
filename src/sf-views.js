@@ -104,16 +104,20 @@ function parseRoutes(obj_, selectorList, routes, collection){
 				dom.className = 'page-prepare';
 			}
 
+			// For development mode only
 			if(collection != null && (ref.template !== void 0 || ref.html !== void 0)){
+				let selector_ = selector.trim();
 				for (var a = collection.length - 1; a >= 0; a--) {
 					let that = collection[a];
-					if(route.test(that.routePath)){
+					if(that.routeCached === route){
 						if(that.classList.contains('page-current')){
 							let sel = that.parentElement.tagName.toLowerCase();
-							if(sel === selector || sel === selectorList[0]){
+							if(sel === selector_ || sel === selectorList[0]){
 								// Replace the element
-								if(ref.template)
+								if(ref.template){
+									Views._$edit.reuseOldElem(ref.template, that);
 									that.parentElement.replaceChild(ref.template, that);
+								}
 								else {
 									let node = route.html;
 									if((route.html.constructor._ref || route.html.constructor) === HTMLTemplateElement){
@@ -129,6 +133,7 @@ function parseRoutes(obj_, selectorList, routes, collection){
 									node.routeCached = that.routeCached;
 									node.routePath = that.routePath;
 
+									Views._$edit.reuseOldElem(node, that);
 									that.parentElement.replaceChild(node, that);
 								}
 							}
@@ -392,8 +397,8 @@ export function Views(selector, name){
 	routes._cache = {};
 
 	var devAddLocked = 0;
-	Self.addRoute = function(obj/*, hotReload? */){
-		parseRoutes(obj, selectorList, routes, arguments[1] && collection);
+	Self.addRoute = function(obj, hotReload){
+		parseRoutes(obj, selectorList, routes, hotReload && collection);
 
 		if(SFOptions.devMode && devAddLocked !== true){
 			if(Self.$devData === void 0)
@@ -484,7 +489,7 @@ export function Views(selector, name){
 		window.history.go(routeDirection * -1);
 	}
 
-	function toBeShowed(element){
+	function toBeShowed(element, getChanges){
 		const relatedPage = [element];
 
 		let parent = element.parentNode;
@@ -500,21 +505,42 @@ export function Views(selector, name){
 
 		for (var i = 0; i < Self.relatedDOM.length; i++) {
 			if(relatedPage.includes(Self.relatedDOM[i]) === false){
+				let hiding = Self.relatedDOM[i];
 				if(lastSibling === null){
-					lastSibling = Self.relatedDOM[i];
+					lastSibling = hiding;
 					parentSimilarity = lastSibling.parentNode;
 				}
 
-				Self.relatedDOM[i].classList.remove('page-current');
+				hiding.classList.remove('page-current');
+				if(getChanges !== true && hiding.routeCached !== void 0 && hiding.routeCached.on !== void 0){
+					let events = hiding.routeCached.on;
+
+					if(events.hidden){
+						if(getChanges)
+							getChanges.hidden.push(hiding);
+						else events.hidden(element.routePath, element.routeCached);
+					}
+				}
 			}
 		}
 
 		let showedSibling = null;
 		for (var i = 0; i < relatedPage.length; i++) {
-			if(showedSibling === null && relatedPage[i].parentNode === parentSimilarity)
-				showedSibling = relatedPage[i];
+			let showing = relatedPage[i];
+			if(showedSibling === null && showing.parentNode === parentSimilarity)
+				showedSibling = showing;
 
-			relatedPage[i].classList.add('page-current');
+			showing.classList.add('page-current');
+
+			if(getChanges !== true && showing.routeCached !== void 0 && showing.routeCached.on !== void 0){
+				let events = showing.routeCached.on;
+
+				if(events.showed){
+					if(getChanges)
+						getChanges.showed.push(showing);
+					else events.showed(showing.routerData);
+				}
+			}
 		}
 
 		Self.showedSibling = showedSibling;
@@ -534,7 +560,7 @@ export function Views(selector, name){
 		for (var i = 0; i < children.length; i++) {
 			const temp = children[i];
 
-			if(temp.routePath.match(found))
+			if(temp.routeCached === found)
 				temp.remove();
 		}
 
@@ -702,7 +728,8 @@ export function Views(selector, name){
 			if(url.cache)
 				dom.routeNoRemove = true;
 
-			toBeShowed(dom);
+			let getChanges = {showed:[], hidden:[]};
+			toBeShowed(dom, getChanges);
 
 			if(pendingShowed !== void 0)
 				Self.relatedDOM.push(...pendingShowed);
@@ -723,13 +750,16 @@ export function Views(selector, name){
 			// Clear old cache
 			removeOldCache(dom);
 
-			if(url.on !== void 0 && url.on.showed)
-				url.on.showed(Self.data);
+			let _showed = getChanges.showed;
+			for (var i = 0; i < _showed.length; i++) {
+				let temp = _showed[i];
+				temp.routeCached.on.showed(temp.routerData);
+			}
 
-			if(tempDOM !== null){
-				// Old route
-				if(tempDOM.routeCached && tempDOM.routeCached.on !== void 0 && tempDOM.routeCached.on.hidden)
-					tempDOM.routeCached.on.hidden(path, url);
+			let _hidden = getChanges.hidden;
+			for (var i = 0; i < _hidden.length; i++) {
+				let temp = _hidden[i];
+				temp.routeCached.on.hidden(path, url);
 			}
 		}
 
