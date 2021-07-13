@@ -7,6 +7,7 @@ import {loader as Loader} from "./sf-loader.js";
 import {request as Request} from "./sf-request.js";
 import {CustomEvent} from "./sf-model/custom-event.js";
 import {toArray} from "./utils.js";
+import {beforeRepaint, afterRepaint} from "./utils/timing.js";
 import {prevAll, onEvent, onceEvent, offEvent, parseElement, escapeText} from "./sf-dom.utils.js";
 
 const IE11 = Object.getOwnPropertyDescriptor(Function.prototype, 'length').configurable === false;
@@ -39,6 +40,9 @@ export function $(selector, context){
 
 	return _DOMList(selector);
 }
+
+$.beforeRepaint = beforeRepaint;
+$.afterRepaint = afterRepaint;
 
 $.callableList = function(){
 	const temp = sel=> temp.find(sel);
