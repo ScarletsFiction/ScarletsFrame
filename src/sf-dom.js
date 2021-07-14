@@ -81,8 +81,8 @@ class DOMList extends Array{
 		return;
 	}
 	push(el){
-		if(!(el instanceof HTMLElement))
-			throw new Error("The first parameter of sQuery.push(...) must be an instance of HTMLElement");
+		if(el == null || el.querySelectorAll === void 0)
+			throw new Error("The first parameter of sQuery.push(...) must be an instance of HTMLElement, but got: "+el);
 
 		if(this._){
 			const news = recreateDOMList(this, this.length+1);
