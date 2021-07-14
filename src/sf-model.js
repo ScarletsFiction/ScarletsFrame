@@ -76,12 +76,13 @@ model.index = function(element, getProp){
 
 // Declare model for the name with a function
 model.for = function(name, options, func, namespace){
+	let { root } = (namespace || model);
+	let isExist = name in root;
+
 	if(options.constructor === Function)
 		func = options;
 	else{
 		if(func === void 0){
-			let root = (namespace || model).root;
-
 			if(!(name in root)){
 				options.$el = $.callableList();
 				root[name] = options;
@@ -114,7 +115,14 @@ model.for = function(name, options, func, namespace){
 		func(scopeTemp, scope);
 
 	if(func.class && scopeTemp.constructor !== func.class){
-		return console.error(`Looks like the model for "${name}":`, scopeTemp, ` already being returned somewhere. For the example like using:\n>> let model = sf.model("${name}");\nor\n>> sf.model("other", (My, root)=>{\n  let model = root("${name}")\n});\n\nbefore the framework know if the model object for "${name}" must be constructed by`, {class: func.class},`: \n>> sf.model("${name}", class ${func.class.name}{})\n\nThis usually because late initialization. You may need to use setTimeout or obtain the model context only after every script already running.`);
+		if(isExist === false){
+			let temp = scopeTemp;
+			root[name] = scopeTemp = new func.class();
+			Object.defineProperties(scopeTemp, Object.getOwnPropertyDescriptors(temp));
+		}
+		else {
+			return console.error(`Looks like the model for "${name}":`, scopeTemp, ` already being returned somewhere. For the example like using:\n>> let model = sf.model("${name}");\nor\n>> sf.model("other", (My, root)=>{\n  let model = root("${name}")\n});\n\nbefore the framework know if the model object for "${name}" must be constructed by`, {class: func.class},`: \n>> sf.model("${name}", class ${func.class.name}{})\n\nThis usually because late initialization. You may need to use setTimeout or obtain the model context only after every script already running.`);
+		}
 	}
 
 	if(Loader.DOMWasLoaded && name in internal.modelPending){
