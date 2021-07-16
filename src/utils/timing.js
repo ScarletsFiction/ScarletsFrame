@@ -4,17 +4,15 @@
 let before = false;
 let after = false;
 
-export async function beforeRepaint(){
+export function beforeRepaint(){
 	if(before === false) generate();
-
-	await before;
+	return before;
 }
 
-export async function afterRepaint(){
+export function afterRepaint(){
 	if(before === false || after === false)
 		generate();
-
-	await after;
+	return after;
 }
 
 let afterResolve = false;

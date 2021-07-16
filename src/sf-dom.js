@@ -703,7 +703,7 @@ $.animateKey = function(element, animationName, duration, callback){
 
 	style.webkitAnimation = style.animation = arrange;
 
-	setTimeout(function(){
+	Promise.resolve().then(function(){
 		if(element.isConnected === void 0){
 			if(callback !== void 0) callback.call(element);
 			return;
@@ -711,25 +711,29 @@ $.animateKey = function(element, animationName, duration, callback){
 
 		element.classList.add('anim-element');
 
-		if(element.parentNode !== null){
-			const origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
-			const parentStyle = element.parentNode.style;
-			element.parentNode.classList.add('anim-parent');
-			parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
-		}
-
-		$.once(element, animationEnd, function(){
-			setTimeout(function(){
-				if(element.parentNode !== null){
-					style.visibility = '';
-					element.classList.remove('anim-element');
-					style.webkitAnimation = style.animation = '';
-
+		$.afterRepaint().then(function(){
+			if(element.parentNode !== null){
+				Promise.resolve().then(function(){
+					const origin = (element.offsetLeft + element.offsetWidth/2)+'px' + (element.offsetTop + element.offsetHeight/2)+'px';
 					const parentStyle = element.parentNode.style;
-					parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+					element.parentNode.classList.add('anim-parent');
+					parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = origin;
+				});
+			}
 
-					if(callback !== void 0) callback.call(element);
-				}
+			$.once(element, animationEnd, function(){
+				Promise.resolve().then(function(){
+					if(element.parentNode !== null){
+						style.visibility = '';
+						element.classList.remove('anim-element');
+						style.webkitAnimation = style.animation = '';
+
+						const parentStyle = element.parentNode.style;
+						parentStyle.webkitPerspectiveOrigin = parentStyle.perspectiveOrigin = '';
+
+						if(callback !== void 0) callback.call(element);
+					}
+				});
 			});
 		});
 	});
