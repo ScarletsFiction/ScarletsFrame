@@ -2,9 +2,10 @@ import babel from "@rollup/plugin-babel";
 import sourcemaps from "rollup-plugin-sourcemaps";
 import { terser } from "rollup-plugin-terser";
 
-const plugins = [sourcemaps(), babel({
-  babelHelpers: 'bundled'
-})];
+const plugins = [sourcemaps()];
+
+if(process.env.production)
+  plugins.push(terser({ output: { comments: false } }));
 
 const config = [{
   input: "src/index.dev.js",
@@ -15,12 +16,23 @@ const config = [{
     format: "iife",
     name: "sf"
   },
-  plugins
+  plugins: plugins.slice(0) // Copy
 }];
 
 if(process.env.production){
-  plugins.push(terser({ output: { comments: false } }));
+  config.push({
+    input: "src/index.prod.js",
+    output: {
+      file: "dist/scarletsframe.modern.js",
+      sourcemap: true,
+      sourcemapFile: "dist/scarletsframe.modern.js.map",
+      format: "iife",
+      name: "sf"
+    },
+    plugins: plugins.slice(0) // Copy
+  });
 
+  plugins.push(babel({ babelHelpers: 'bundled' }));
   config.push({
     input: "src/index.prod.js",
     output: {
@@ -30,7 +42,7 @@ if(process.env.production){
       format: "iife",
       name: "sf"
     },
-    plugins
+    plugins: plugins.slice(0) // Copy
   });
 
   config.push({
@@ -42,7 +54,7 @@ if(process.env.production){
       format: "iife",
       name: "sf"
     },
-    plugins
+    plugins: plugins.slice(0) // Copy
   });
 }
 
