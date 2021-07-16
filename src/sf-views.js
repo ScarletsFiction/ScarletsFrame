@@ -1066,6 +1066,14 @@ Views.resetCache = function(){
 	cachedURL = {};
 }
 
+Views._$edit =  function(selector, routes) {
+	let view = (Views.listSelector[selector] || new Views(selector));
+	view.addRoute(routes, true);
+
+	if(Views._$edit.refresh !== void 0)
+		Views._$edit.refresh(selector, routes, view);
+}
+
 // Listen to every link click, capture mode
 Loader.onFinish(function(){
 	if(Views.onCrossing === void 0)

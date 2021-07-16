@@ -2,10 +2,7 @@
 import {Views} from "./sf-views.js";
 import {prevAll} from "./sf-dom.utils.js";
 
-Views._$edit =  function(selector, routes) {
-	let view = (Views.listSelector[selector] || new Views(selector));
-	view.addRoute(routes, true);
-
+Views._$edit.refresh =  function(selector, routes, view) {
 	let {children} = view.rootDOM;
 	let {relatedDOM} = view;
 
