@@ -4,7 +4,7 @@ let whenDOMReady = [];
 let whenDOMLoaded = [];
 let whenProgress = [];
 var pendingOrderedJS = [];
-let lastState = '';
+let ES6URLCache = {};
 
 let promiseResolver = false;
 function resolvePromise(){
@@ -42,8 +42,10 @@ export class loader{
 	static f(ev){
 		loader.loadedContent++;
 
-	    ev.target.removeEventListener('load', loader.f, {once:true});
-	    ev.target.removeEventListener('error', loader.f, {once:true});
+		if(ev){
+			ev.target.removeEventListener('load', loader.f, {once:true});
+			ev.target.removeEventListener('error', loader.f, {once:true});
+		}
 
 	    if(pendingOrderedJS.length !== 0){
 	    	if(pendingOrderedJS.length + loader.loadedContent === loader.totalContent)
@@ -69,7 +71,7 @@ export class loader{
 		}
 		loader.turnedOff = false;
 
-		loader.totalContent = loader.totalContent + list.length;
+		loader.totalContent += list.length;
 
 		let temp = new Array(list.length);
 		for(var i = 0; i < list.length; i++){
@@ -110,7 +112,7 @@ export class loader{
 			async = async.async;
 		}
 
-		loader.totalContent = loader.totalContent + list.length;
+		loader.totalContent += list.length;
 		for(var i = 0; i < list.length; i++){
 			const s = document.createElement('script');
 	        s.type = "text/javascript";
@@ -133,8 +135,39 @@ export class loader{
         return loader.task;
 	}
 
-	static waitImages(){
-		lastState = 'loading';
+	static async mjs(list){
+		loader.turnedOff = false;
+		let reduce = 0;
+
+		let modules = new Array(list);
+		for(var i = list.length; i >= 0; i--){
+			let exist = ES6URLCache[list[i]];
+			if(exist === void 0) continue;
+
+			modules[i] = exist;
+			list[i] = null;
+			reduce++;
+		}
+
+		loader.totalContent += list.length - reduce;
+
+        if(promiseResolver === false){
+        	loader.task = new Promise(function(resolve){
+        		promiseResolver = resolve;
+        	});
+        }
+
+		for(var i = 0; i < list.length; i++){
+			let url = list[i];
+			if(url === null) continue;
+
+			let module = await import(url);
+			modules[i] = ES6URLCache[url] = module;
+
+			loader.f(); // Call when finished
+		}
+
+        return modules;
 	}
 };
 
@@ -143,7 +176,7 @@ function domLoadEvent(event){
 	if(document.body){
 		document.removeEventListener('load', domLoadEvent, true);
 
-		if(lastState === 'loading'){ // Find images
+		if(loader.turnedOff === false){ // Find images
 			const temp = document.body.querySelectorAll('img:not(onload)[src]');
 			for (let i = 0; i < temp.length; i++) {
 				loader.totalContent++;
