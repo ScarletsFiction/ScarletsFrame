@@ -87,7 +87,7 @@ Views._$edit.reuseOldElem = function(now, old){
 		}
 
 		let last = same[same.length-1];
-		if(last.tagName === 'SF-M') continue;
+		if(last !== void 0 && last.tagName === 'SF-M') continue;
 
 		Views._$edit.reuseOldElem(temp, last);
 	}

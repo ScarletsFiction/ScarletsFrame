@@ -76,6 +76,7 @@ export function hotReload(mode){
 			if(window.___browserSync___ !== void 0){
 				const { socket } = window.___browserSync___;
 
+				const executor = (async ()=>{}).constructor;
 				function runScript(code){
 					/*
 						This feature is only being used for hot reload only, on development environment.
@@ -87,7 +88,7 @@ export function hotReload(mode){
 					*/
 
 					HotReload.active = true;
-					Function(code)();
+					executor(code)();
 					HotReload.active = false;
 				}
 
