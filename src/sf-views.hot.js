@@ -34,6 +34,8 @@ Views._$edit.refresh =  function(selector, routes, view) {
 			break;
 		}
 	}
+
+	Views._$edit.checkDetached();
 }
 
 Views._$edit.reuseOldElem = function(now, old){
@@ -90,5 +92,32 @@ Views._$edit.reuseOldElem = function(now, old){
 		if(last !== void 0 && last.tagName === 'SF-M') continue;
 
 		Views._$edit.reuseOldElem(temp, last);
+	}
+}
+
+Views._$edit.checkDetached = function(){
+	let { list } = sf.Views;
+
+	for(let key in list){
+		let val = list[key];
+		if(val.rootDOM != null && val.rootDOM.isConnected === false){
+			let el = document.body.getElementsByTagName(val.rootDOM.tagName)[0];
+			if(el === void 0)
+				continue;
+
+			el.parentNode.replaceChild(val.rootDOM, el);
+			if(_sf_internal !== void 0 && _sf_internal.body_map !== void 0){
+				let map = _sf_internal.body_map;
+				for(let key2 in map){
+					let val2 = map[key2];
+					let i = val2.indexOf(el);
+
+					if(i !== 0){
+						val2[i] = val.rootDOM;
+						break;
+					}
+				}
+			}
+		}
 	}
 }

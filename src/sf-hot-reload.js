@@ -89,6 +89,10 @@ export function hotReload(mode){
 
 					HotReload.active = true;
 					executor(code)();
+
+					if(code.includes('_sf_internal.'))
+						Views._$edit.checkDetached();
+
 					HotReload.active = false;
 				}
 
