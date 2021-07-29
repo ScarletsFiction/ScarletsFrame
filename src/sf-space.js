@@ -149,11 +149,11 @@ export class Space{
 				if(index_ && isNaN(index_) === false)
 					index_ = Number(index_) + 1;
 
-				index = index || index_ || false;
-				if(index)
+				index = index || index_ || '';
+				if(index !== '')
 					index = `="${index}"`;
 
-				return `<sf-space ${that.namespace}>`;
+				return `<sf-space ${that.namespace+index}>`;
 			}))[0];
 	}
 
