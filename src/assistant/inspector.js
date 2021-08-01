@@ -24,6 +24,9 @@ internal.openInspector = function(saved){
 
 	if(saved.type === 'model'){
 		let model = deepProperty(sf.model.root, saved.source);
+		if(model === void 0)
+			pendingOpenInspector.push(saved);
+
 		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
 			y: saved.y,
@@ -35,6 +38,9 @@ internal.openInspector = function(saved){
 		let model = sf.component(saved.source[0]);
 		saved.source[0] = model[saved.index] === void 0 ? 0 : saved.index;
 		model = deepProperty(model, saved.source);
+
+		if(model === void 0)
+			pendingOpenInspector.push(saved);
 
 		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
@@ -375,7 +381,7 @@ SFDevSpace.component('sf-component-info', {
 
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-space-info', {
-	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }}</div>`
+	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }} <span>({{ id }})</span></div>`
 }, function(My, root){
 	// My.name = $item.name;
 	My.clicked = function(){

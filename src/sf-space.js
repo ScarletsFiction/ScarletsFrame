@@ -30,7 +30,10 @@ function createRoot_(registered, id, space){
 
 		temp = SpaceScope.root;
 		if(!(scope in temp)){
-			temp = temp[scope] = {$el:$.callableList()};
+			temp = temp[scope] = {
+				$el: $.callableList(),
+				$space: SpaceScope
+			};
 
 			const func = modelFunc[scope];
 			if(func && func.constructor === Function)
@@ -50,7 +53,7 @@ function createRoot_(registered, id, space){
 
 	var modelFunc = space.modelFunc;
 	SpaceScope.Space = space;
-	SpaceScope.id = id;
+	SpaceScope.id = String(id);
 	SpaceScope.registered = registered;
 	SpaceScope.domList = [];
 	space.modelList[id] = SpaceScope.root = {};
@@ -139,7 +142,7 @@ export class Space{
 	}
 
 	getScope(index){
-		return getNamespace(this.namespace, index || 'default');
+		return getNamespace(this.namespace, index === void 0 ? 'default' : index);
 	}
 
 	createHTML(index){
@@ -149,7 +152,7 @@ export class Space{
 				if(index_ && isNaN(index_) === false)
 					index_ = Number(index_) + 1;
 
-				index = index || index_ || '';
+				index = index === void 0 ? (index_ || '') : index;
 				if(index !== '')
 					index = `="${index}"`;
 

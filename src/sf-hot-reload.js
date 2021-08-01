@@ -433,6 +433,9 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		if(scope.sf$internalData === void 0)
 			Object.defineProperty(scope, 'sf$internalData', {value:{}});
 
+		if(space.Space !== void 0)
+			scope.$space = space;
+
 		const internal = scope.sf$internalData;
 		if(internal.proxy === void 0){
 			internal.proxy = new Proxy(scope, {set(obj, prop, val){

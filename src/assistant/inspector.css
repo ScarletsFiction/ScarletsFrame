@@ -68,6 +68,10 @@ sf-space[sf_devmode]{
 	padding-top: 1px;
 }
 
+sf-space-info span{
+	color: gray;
+}
+
 sf-view-info{
 	margin-top: 5px;
 	margin-bottom: 5px;
