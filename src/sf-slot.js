@@ -1,3 +1,5 @@
+import { parsePropertyPath, deepProperty } from "./utils.js";
+
 export function handleSFSlot(model, element){
 	var slotList = element.getElementsByTagName('sf-slot');
 
@@ -10,7 +12,14 @@ export function handleSFSlot(model, element){
 		let parent = Slot.parentNode;
 		let usedElement = Slot;
 
+		target = parsePropertyPath(target);
+
+		model = deepProperty(model, target.slice(0, -1))
+		target = target.pop();
+
 		let ref = model[target];
+		let refCallback = model[`on$${target}`];
+
 		Object.defineProperty(model, target, {
 			get: ()=> ref,
 			set: val => {
@@ -23,7 +32,7 @@ export function handleSFSlot(model, element){
 					parent.replaceChild(val, usedElement);
 					usedElement = val;
 				}
-				else if(val.$el !== void 0){ // eplace with detached DOM element
+				else if(val.$el !== void 0){ // Replace with detached DOM element
 					let list = val.$el;
 					let found = false;
 
@@ -45,6 +54,7 @@ export function handleSFSlot(model, element){
 				}
 				else return Object.assign(model, val); // Assign all properties to model
 
+				refCallback !== void 0 && refCallback(val);
 				ref = val;
 			}
 		});
