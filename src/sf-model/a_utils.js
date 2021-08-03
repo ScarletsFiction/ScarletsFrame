@@ -50,7 +50,7 @@ export function modelScript(mask, script, repeatedListKey, _list){
 	if(which === null)
 		script = `return ${script}`;
 	else if(which[0] === '_result_')
-		script = `var _result_="";${script.split('@return').join('_result_+=')};return _result_`;
+		script = `var _result_="";${script.split('@return').join('_result_+=')}\nreturn _result_`;
 	else
 		script = script.split('@return').join('return');
 
