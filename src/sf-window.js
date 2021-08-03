@@ -103,6 +103,7 @@ export class Window{
 				throw new Error("Looks like ScarletsFrame.js can't be loaded from the other window.");
 
 			linker.sf.Space.list = Space.list;
+			linker.sf.Window.root = Window.root || window;
 
 			// Proxying
 			linker.sf.model.root = model.root;
@@ -172,6 +173,7 @@ export class Window{
 
 		options.title ??= "Untitled Space";
 
+		linker.console.log("Console output will be forwarded to main DevTools");
 		linker.console.log = function(){
 			console.log(`%c[${options.title}]`, "color: #9bff82", ...arguments);
 		}
