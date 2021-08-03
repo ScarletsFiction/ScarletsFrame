@@ -13,9 +13,21 @@ export function Inspector(){
 
 // Return if there are another installed inspector
 if(window.SFDevSpace) return;
-internal.reopenInspector = JSON.parse(localStorage.sf$inspectStore || '[]');
+
 let openedInspector = [];
 let pendingOpenInspector = [];
+let _saveInspector = 0;
+var SFDevMode, SFDevSpace;
+
+// Return if has root window
+if(sf.Window && sf.Window.root !== void 0){
+	SFDevSpace = window.SFDevSpace = sf.Window.root.SFDevSpace;
+	SFDevMode = SFDevSpace.component('sf-inspector');
+
+	return initElement();
+}
+
+internal.reopenInspector = JSON.parse(localStorage.sf$inspectStore || '[]');
 
 internal.openInspector = function(saved){
 	internal.reopenInspector.splice(internal.reopenInspector.indexOf(saved), 1);
@@ -25,7 +37,7 @@ internal.openInspector = function(saved){
 	if(saved.type === 'model'){
 		let model = deepProperty(sf.model.root, saved.source);
 		if(model === void 0)
-			pendingOpenInspector.push(saved);
+			return console.log("Failed to reopen inspector for", saved.source);
 
 		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
@@ -40,7 +52,7 @@ internal.openInspector = function(saved){
 		model = deepProperty(model, saved.source);
 
 		if(model === void 0)
-			pendingOpenInspector.push(saved);
+			return console.log("Failed to reopen inspector for", saved.source);
 
 		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
@@ -63,9 +75,8 @@ void function(){
 }();
 
 // For browser interface
-var SFDevSpace = new Space('sf_devmode');
-window.SFDevSpace = SFDevSpace;
-var SFDevMode = SFDevSpace.component('sf-inspector', {
+SFDevSpace = window.SFDevSpace = new Space('sf_devmode');
+SFDevMode = SFDevSpace.component('sf-inspector', {
 	html:`
 	<div class="sf-shadow-mark" style="
 		display: {{ hasShadow ? '' : 'none' }};
@@ -136,7 +147,7 @@ var SFDevMode = SFDevSpace.component('sf-inspector', {
 
 	var locking = false;
 	var hasFocused = false;
-	$('body').on('pointermove', function(e){
+	My.onBodyPointerMove = function(e){
 		if(locking) return;
 		if(e.ctrlKey && e.altKey){
 			const el = getScope(e.target, true);
@@ -177,7 +188,7 @@ var SFDevMode = SFDevSpace.component('sf-inspector', {
 
 			My.hasShadow = false;
 		}
-	});
+	}
 
 	function scanElementFrame(e){
 		var nested = 0;
@@ -257,26 +268,6 @@ var SFDevMode = SFDevSpace.component('sf-inspector', {
 		}, 1000);
 	}
 });
-
-// Add to body when DOM was finished loading
-setTimeout(()=> {
-	$(function(){
-		// Create sf-inspector component inside of sf_devmode space
-		// Then append it in the body
-		$('body').append(`
-	<sf-space sf_devmode style="display: none">
-		<sf-inspector></sf-inspector>
-		<div class="sf-viewer"></div>
-	</sf-space>`);
-
-		setTimeout(()=> {
-			let that = pendingOpenInspector;
-			pendingOpenInspector = false;
-
-			that.forEach(internal.openInspector);
-		}, 100);
-	});
-}, 1);
 
 SFDevSpace.modelListHover = function($dom){
 	if($dom[0] === void 0) return;
@@ -1079,7 +1070,6 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 	return model;
 }
 
-let _saveInspector = 0;
 function saveInspector(){
 	clearTimeout(_saveInspector);
 	setTimeout(()=> {
@@ -1117,54 +1107,83 @@ function saveInspector(){
 	}, 1000);
 }
 
-// For browser console
-$(function(){
-	function preventAltCtrlClick(e){
-		if(e.ctrlKey && e.altKey){
-			e.preventDefault();
-			e.stopImmediatePropagation();
-			e.stopPropagation();
-		}
-	}
+initElement();
+function initElement(){
+	// Add to body when DOM was finished loading
+	setTimeout(()=> {
+		$(function(){
+			// Create sf-inspector component inside of sf_devmode space
+			// Then append it in the body
+			$('body').append(`
+		<sf-space sf_devmode style="display: none">
+			<sf-inspector></sf-inspector>
+			<div class="sf-viewer"></div>
+		</sf-space>`);
 
-	$('body').on('pointerdown', function(e){
-		if(e.ctrlKey && e.altKey){
-			e.preventDefault();
-			e.stopImmediatePropagation();
-			e.stopPropagation();
+			setTimeout(()=> {
+				let that = pendingOpenInspector;
+				pendingOpenInspector = false;
 
-			var component = SFDevMode[0];
-			const frameList = new Array(component.models.length + component.components.length);
+				if(!internal.openInspector) return;
+				that.forEach(internal.openInspector);
+			}, 100);
 
-			let temp = component.models;
-			for (var i = 0; i < temp.length; i++)
-				frameList[temp[i].nested] = temp[i];
-
-			temp = component.components;
-			for (var i = 0; i < temp.length; i++)
-				frameList[temp[i].nested] = temp[i];
-
-			if(frameList.length !== 0)
-				component.locking();
-
-			for (var i = 0; i < frameList.length; i++) {
-				const frame = frameList[i];
-				const {name, nested, modelEl, model, ref} = frame;
-				console.groupCollapsed(
-				    (nested !== 0 ? `%c>> Parent frame (${nested})%c > ` : "%c>> Clicked frame%c > ") + name
-				    , 'color:yellow', 'color:lightgreen',
-					`\n${modelEl.sf$collection ? 'Component' : 'Model'}:`, model,
-					"\nElement:", modelEl,
-					"\nReferences:", ref
-				);
+			function preventAltCtrlClick(e){
+				if(e.ctrlKey && e.altKey){
+					e.preventDefault();
+					e.stopImmediatePropagation();
+					e.stopPropagation();
+				}
 			}
 
-			for (var i = 0; i < frameList.length; i++)
-				console.groupEnd();
-		}
-	}, {capture:true})
-	.on('pointerup', preventAltCtrlClick, {capture:true})
-	.on('click', preventAltCtrlClick, {capture:true});
-});
+			var component;
+			for (var i = 0; i < SFDevMode.length; i++) {
+				if(SFDevMode[i].$el[0].querySelector === Element.prototype.querySelector){
+					component = SFDevMode[i];
+					break;
+				}
+			}
+
+			$('body').on('pointermove', e => component.onBodyPointerMove(e))
+			.on('pointerdown', function(e){
+				if(e.ctrlKey && e.altKey){
+					e.preventDefault();
+					e.stopImmediatePropagation();
+					e.stopPropagation();
+
+					const frameList = new Array(component.models.length + component.components.length);
+
+					let temp = component.models;
+					for (var i = 0; i < temp.length; i++)
+						frameList[temp[i].nested] = temp[i];
+
+					temp = component.components;
+					for (var i = 0; i < temp.length; i++)
+						frameList[temp[i].nested] = temp[i];
+
+					if(frameList.length !== 0)
+						component.locking();
+
+					for (var i = 0; i < frameList.length; i++) {
+						const frame = frameList[i];
+						const {name, nested, modelEl, model, ref} = frame;
+						console.groupCollapsed(
+						    (nested !== 0 ? `%c>> Parent frame (${nested})%c > ` : "%c>> Clicked frame%c > ") + name
+						    , 'color:yellow', 'color:lightgreen',
+							`\n${modelEl.sf$collection ? 'Component' : 'Model'}:`, model,
+							"\nElement:", modelEl,
+							"\nReferences:", ref
+						);
+					}
+
+					for (var i = 0; i < frameList.length; i++)
+						console.groupEnd();
+				}
+			}, {capture:true})
+			.on('pointerup', preventAltCtrlClick, {capture:true})
+			.on('click', preventAltCtrlClick, {capture:true});
+		});
+	}, 1);
+}
 
 };
