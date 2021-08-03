@@ -102,10 +102,16 @@ export class Space{
 		if(namespace !== namespace.toLowerCase())
 			throw new Error('`namespace` must be lowercase');
 
-		forProxying.internalSpaceEmpty = internal.space.empty = false;
-		this.namespace = namespace;
+		if(Space[namespace] !== void 0)
+			return Space[namespace];
 
-		let scope = Space.list[namespace] ??= {};
+		forProxying.internalSpaceEmpty = internal.space.empty = false;
+
+		if(Space.list[namespace] !== void 0)
+			return Space.list[namespace].Space;
+
+		this.namespace = namespace;
+		let scope = this.list = Space.list[namespace] ??= {};
 
 		if(scope._pendingInit){
 			let temp = scope._pendingInit;
@@ -117,7 +123,7 @@ export class Space{
 			}
 			delete scope._pendingInit;
 		}
-		else{
+		else if(this.componentList === void 0){
 			this.modelList = {};
 			this.modelFunc = {};
 			this.componentList = {};
@@ -135,7 +141,6 @@ export class Space{
 		}
 
 		this.default = getNamespace(namespace, 'default');
-		this.list = Space.list[namespace];
 
 		if(options)
 			this.templatePath = options.templatePath;
