@@ -551,7 +551,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			return;
 	}
 
-	if(SFOptions.devMode && objValue !== void 0 && objValue.$EM !== void 0)
+	if(SFOptions.devMode && objValue != null && objValue.$EM !== void 0)
 		return forceReactive(model, propertyName);
 
 	Object.defineProperty(model, propertyName, {

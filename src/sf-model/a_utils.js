@@ -108,7 +108,7 @@ export function applyParseIndex(templateValue, indexes, parsed, templateParse, i
 			var ref = templateParse[a];
 			temp = ref.get(item, ref.data._modelScope, _eP, repeatListIndex);
 
-			templateValue[2*i+1] = temp.constructor === Object ? JSON.stringify(temp) : temp;
+			templateValue[2*i+1] = temp != null && temp.constructor === Object ? JSON.stringify(temp) : temp;
 		}
 	}
 
