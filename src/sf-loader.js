@@ -18,6 +18,7 @@ export class loader{
 	static DOMWasLoaded = false;
 	static DOMReady = false;
 	static turnedOff = true;
+	static loadPended = false;
 	static task = new Promise(function(resolve){
     	promiseResolver = resolve;
     });
@@ -60,7 +61,31 @@ export class loader{
 			whenProgress[i](loader.loadedContent, loader.totalContent);
 	}
 
-	static css(list, priority){
+	static pendingLoad(callback){
+		if(callback === void 0)
+			throw new Error("First parameter must be filled with a callback or false");
+
+		if(callback === false){
+			if(loader.loadPended)
+				loader.loadPended.resolve();
+
+			loader.loadPended = false;
+			return;
+		}
+
+		let pending;
+		loader.loadPended = new Promise(function(resolve, reject){
+			pending = [resolve, reject];
+		});
+
+		loader.loadPended.resolve = pending[0];
+		loader.loadPended.reject = pending[1];
+		loader.loadPended.callback = callback;
+
+		return loader.loadPended;
+	}
+
+	static async css(list, priority){
 		if(loader.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
@@ -69,9 +94,20 @@ export class loader{
 			}
 			if(list.length === 0) return;
 		}
-		loader.turnedOff = false;
 
+		loader.turnedOff = false;
 		loader.totalContent += list.length;
+
+        if(promiseResolver === false){
+        	loader.task = new Promise(function(resolve){
+        		promiseResolver = resolve;
+        	});
+        }
+
+		if(loader.loadPended !== false){
+			if(loader.loadPended.callback(list) !== true)
+				await loader.loadPended;
+		}
 
 		let temp = new Array(list.length);
 		for(var i = 0; i < list.length; i++){
@@ -86,16 +122,10 @@ export class loader{
         	document.head.prepend(...temp);
         else document.head.append(...temp);
 
-        if(promiseResolver === false){
-        	loader.task = new Promise(function(resolve){
-        		promiseResolver = resolve;
-        	});
-        }
-
         return loader.task;
 	}
 
-	static js(list, async){
+	static async js(list, async){
 		if(loader.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
@@ -113,6 +143,18 @@ export class loader{
 		}
 
 		loader.totalContent += list.length;
+
+        if(promiseResolver === false){
+        	loader.task = new Promise(function(resolve){
+        		promiseResolver = resolve;
+        	});
+        }
+
+		if(loader.loadPended !== false){
+			if(loader.loadPended.callback(list) !== true)
+				await loader.loadPended;
+		}
+
 		for(var i = 0; i < list.length; i++){
 			const s = document.createElement('script');
 	        s.type = "text/javascript";
@@ -125,12 +167,6 @@ export class loader{
 	        	document.head.appendChild(s);
 	        else pendingOrderedJS.push(s);
 		}
-
-        if(promiseResolver === false){
-        	loader.task = new Promise(function(resolve){
-        		promiseResolver = resolve;
-        	});
-        }
 
         return loader.task;
 	}
@@ -156,6 +192,11 @@ export class loader{
         		promiseResolver = resolve;
         	});
         }
+
+		if(loader.loadPended !== false){
+			if(loader.loadPended.callback(list) !== true)
+				await loader.loadPended;
+		}
 
 		for(var i = 0; i < list.length; i++){
 			let url = list[i];
