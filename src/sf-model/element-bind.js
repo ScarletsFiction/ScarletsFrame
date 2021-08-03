@@ -438,8 +438,8 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		model.sf$internal._regex = bindedKey._regex;
 
 	let objValue = model[propertyName]; // Object value
-	if(objValue == null)
-		objValue = '';
+	// if(objValue == null)
+	// 	objValue = '';
 
 	let _on = model[`on$${propertyName}`]; // Everytime value's going changed, callback value will assigned as new value
 	let _m2v = model[`m2v$${propertyName}`]; // Everytime value changed from script (not from View), callback value will only affect View
