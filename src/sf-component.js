@@ -527,7 +527,7 @@ class SFComponent extends HTMLElement{
 		if(internal.space.empty === false){
 			let haveSpace = namespace || this.closest('sf-space');
 			if(haveSpace !== null){
-				if(haveSpace.constructor === Space)
+				if(haveSpace.namespace !== void 0 && haveSpace.default !== void 0)
 					haveSpace = haveSpace.default;
 
 				internal.space.initComponent(haveSpace, tagName, this, $item, asScope);

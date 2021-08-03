@@ -870,7 +870,7 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 
 	let isInsideData = model instanceof Set || model instanceof Array || model instanceof Map;
 
-	const parent = $('sf-space .sf-viewer');
+	const parent = $('sf-space .sf-viewer', ev.view.document.body);
 	var template = `<sf-model-viewer sf-as-scope style="
 		transform: translate({{ x }}px, {{ y }}px);
 		z-index: {{ isEmpty === currentActive.panel ? 1 : 0 }};
