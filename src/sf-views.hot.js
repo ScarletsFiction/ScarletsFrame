@@ -96,7 +96,7 @@ Views._$edit.reuseOldElem = function(now, old){
 }
 
 Views._$edit.checkDetached = function(){
-	let { list } = sf.Views;
+	let { list } = Views;
 
 	for(let key in list){
 		let val = list[key];

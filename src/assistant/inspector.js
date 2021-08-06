@@ -20,11 +20,13 @@ let _saveInspector = 0;
 var SFDevMode, SFDevSpace;
 
 // Return if has root window
-if(sf.Window && sf.Window.root !== void 0){
-	SFDevSpace = window.SFDevSpace = sf.Window.root.SFDevSpace;
-	SFDevMode = SFDevSpace.component('sf-inspector');
+if(sf.Window && sf.Window.root){
+	SFDevSpace = window.SFDevSpace = sf.Window.root.window.SFDevSpace;
 
-	return initElement();
+	if(SFDevSpace !== void 0){
+		SFDevMode = SFDevSpace.component('sf-inspector');
+		return initElement();
+	}
 }
 
 internal.reopenInspector = JSON.parse(localStorage.sf$inspectStore || '[]');
