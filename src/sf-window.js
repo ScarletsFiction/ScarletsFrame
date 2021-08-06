@@ -31,6 +31,7 @@ const reqAnimFrame = window.requestAnimationFrame;
 function firstInitSFWindow(){
 	window.addEventListener('focus', function(){
 		window.requestAnimationFrame = reqAnimFrame;
+		Window.root.focus = window;
 	});
 }
 
@@ -103,7 +104,7 @@ export class Window{
 				throw new Error("Looks like ScarletsFrame.js can't be loaded from the other window.");
 
 			linker.sf.Space.list = Space.list;
-			linker.sf.Window.root = Window.root || window;
+			linker.sf.Window.root = Window.root;
 
 			// Proxying
 			linker.sf.model.root = model.root;
@@ -146,11 +147,14 @@ export class Window{
 				firstInitSFWindow = void 0;
 			}
 
-			if(document.hasFocus() === false)
+			if(document.hasFocus() === false){
 				window.requestAnimationFrame = linker.requestAnimationFrame;
+				Window.root.focus = linker;
+			}
 
 			linker.addEventListener('focus', function(){
 				window.requestAnimationFrame = linker.requestAnimationFrame;
+				Window.root.focus = linker;
 			});
 
 			onLoaded && onLoaded({
@@ -216,13 +220,13 @@ export class Window{
 		window.requestAnimationFrame = reqAnimFrame;
 	}
 	static source(lists, ev){
-		ev ??= window.event;
+		ev ??= Window.root.focus.event || Window.window.event;
 
 		if(ev === void 0)
 			throw new Error("Can't capture event, please add event data on parameter 2 of sf.Window.source");
 
 		if(lists === void 0)
-			return lists.view;
+			return ev.view;
 
 		const doc = ev.view.document;
 		for (let i = 0; i < lists.length; i++) {
@@ -232,9 +236,20 @@ export class Window{
 
 		return null;
 	}
+
+	static withElement(element, ev){
+		ev ??= Window.root.focus.event || Window.window.event;
+
+		if(ev === void 0)
+			throw new Error("Can't capture event, please add event data on parameter 2 of sf.Window.source");
+
+		return element.ownerDocument === ev.view.document;
+	}
 }
 
 internal.WindowClass = Window;
+Window.root ??= Window;
+Window.window = window;
 
 function portComponentDefinition(linker, from, into){
 	for(let name in from){
