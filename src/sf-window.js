@@ -250,6 +250,7 @@ export class Window{
 internal.WindowClass = Window;
 Window.root ??= Window;
 Window.window = window;
+Window.focus ??= window;
 
 function portComponentDefinition(linker, from, into){
 	for(let name in from){
