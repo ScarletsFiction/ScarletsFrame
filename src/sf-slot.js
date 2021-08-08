@@ -3,7 +3,7 @@ import { parsePropertyPath, deepProperty } from "./utils.js";
 export function handleSFSlot(model, element){
 	var slotList = element.getElementsByTagName('sf-slot');
 
-	for (var i = 0; i < slotList.length; i++) {
+	for (var i = slotList.length - 1; i >= 0; i--) {
 		let Slot = slotList[i];
 
 		let target = Slot.getAttribute('for');

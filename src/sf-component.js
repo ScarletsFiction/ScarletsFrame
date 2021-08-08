@@ -327,8 +327,6 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	if(namespace !== void 0)
 		newObj.$space = namespace;
 
-	handleSFSlot(newObj, element);
-
 	let reusing = void 0;
 	if(index === 0 && newObj.destroy !== false){
 		const func = registrar[0];
@@ -463,6 +461,8 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		if(specialElement.scope !== void 0)
 			internal.initPendingComponentScope(specialElement.scope, element);
 	}
+
+	handleSFSlot(newObj, element);
 
 	if(reusing === void 0 && dontPushElement === false)
 		newObj.$el = newObj.$el.push(element);
