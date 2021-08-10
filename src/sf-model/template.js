@@ -94,6 +94,7 @@ export function templateParser(template, item, original, modelRef, rootHandler, 
 		changesReference.template = template;
 		html.sf$elementReferences = changesReference;
 	}
+	else html.sf$elementReferences = { template };
 
 	// html.sf$modelParsed = parsed;
 
