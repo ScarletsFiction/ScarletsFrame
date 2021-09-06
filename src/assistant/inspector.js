@@ -923,9 +923,9 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 
 		let firstChar = key.slice(0, 1);
 		if(isNaN(firstChar)){
-			if(/\w/.test(firstChar))
-				temp = '.'+key;
-			else temp = `['${key}']`;
+			if(/[^\p{L}\p{N}]/u.test(firstChar))
+				temp = `['${key}']`;
+			else temp = '.'+key;
 		}
 		else temp = `['${key.split("'").join("\\'")}']`;
 
