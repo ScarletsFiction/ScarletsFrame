@@ -1090,11 +1090,10 @@ Loader.onFinish(function(){
 
 		const attr = this.getAttribute('href');
 		if(attr === '#') return;
-		if(attr.slice(0, 1) === '@'){ // ignore
-			const target = this.getAttribute('target');
-			if(target)
-				window.open(attr.slice(1), target);
-			else window.location = attr.slice(1);
+
+		const target = this.getAttribute('target');
+		if(target != null){
+			window.open(attr, target);
 			return;
 		}
 
