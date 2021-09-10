@@ -112,11 +112,11 @@ export class loader{
 		let temp = new Array(list.length);
 		for(var i = 0; i < list.length; i++){
 			const s = temp[i] = document.createElement('link');
-	        s.rel = 'stylesheet';
-	        s.href = list[i];
 	        s.addEventListener('load', loader.f, {once:true});
 	        s.addEventListener('error', loader.f, {once:true});
-		}
+	        s.rel = 'stylesheet';
+	        s.href = list[i];
+	    }
 
 		if(priority === 'low')
         	document.head.prepend(...temp);
@@ -157,11 +157,11 @@ export class loader{
 
 		for(var i = 0; i < list.length; i++){
 			const s = document.createElement('script');
+	        s.addEventListener('load', loader.f, {once:true});
+	        s.addEventListener('error', loader.f, {once:true});
 	        s.type = "text/javascript";
 	        if(async) s.async = true;
 	        s.src = list[i];
-	        s.addEventListener('load', loader.f, {once:true});
-	        s.addEventListener('error', loader.f, {once:true});
 
 	        if(!ordered)
 	        	document.head.appendChild(s);
