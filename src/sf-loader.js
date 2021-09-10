@@ -198,16 +198,18 @@ export class loader{
 				await loader.loadPended;
 		}
 
-		for(var i = 0; i < list.length; i++){
+		let waits = new Array(list.length);
+		for(let i = 0; i < list.length; i++){
 			let url = list[i];
 			if(url === null) continue;
 
-			let module = await import(url);
-			modules[i] = ES6URLCache[url] = module;
-
-			loader.f(); // Call when finished
+			waits[i] = async function(){
+				modules[i] = ES6URLCache[url] = await import(url);
+				loader.f(); // Call when finished
+			}();
 		}
 
+		await Promise.all(waits);
         return modules;
 	}
 };
