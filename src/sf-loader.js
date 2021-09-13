@@ -36,6 +36,7 @@ export class loader{
 	}
 	static onProgress(func){
 		if(loader.DOMWasLoaded) return func(loader.loadedContent, loader.totalContent);
+		if(whenProgress === null) whenProgress = [];
 		if(whenProgress.includes(func)) return;
 		whenProgress.push(func);
 	}
@@ -52,13 +53,21 @@ export class loader{
 	    	if(pendingOrderedJS.length + loader.loadedContent === loader.totalContent)
 	    		document.head.appendChild(pendingOrderedJS.shift());
 	    }
-		else if(loader.loadedContent === loader.totalContent)
-			resolvePromise();
 
-	    if(whenProgress === null) return;
+	    if(whenProgress === null){
+	    	if(loader.loadedContent === loader.totalContent)
+				resolvePromise();
+
+	    	return;
+	    }
 
 		for (let i = 0; i < whenProgress.length; i++)
 			whenProgress[i](loader.loadedContent, loader.totalContent);
+
+		if(loader.loadedContent === loader.totalContent){
+			resolvePromise();
+			whenProgress = null;
+		}
 	}
 
 	static pendingLoad(callback){
@@ -204,12 +213,18 @@ export class loader{
 			if(url === null) continue;
 
 			waits[i] = async function(){
-				modules[i] = ES6URLCache[url] = await import(url);
-				loader.f(); // Call when finished
+				try{
+					modules[i] = ES6URLCache[url] = await import(url);
+				} finally {
+					loader.f(); // Call when finished
+				}
 			}();
 		}
 
 		await Promise.all(waits);
+		if(loader.loadedContent === loader.totalContent)
+			resolvePromise();
+
         return modules;
 	}
 };
