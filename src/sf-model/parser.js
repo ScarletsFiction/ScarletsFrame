@@ -57,16 +57,16 @@ function uniqueDataParser(html, template, _modelScoped){
 	// Build script preparation
 	html = html.replace(sfRegex.allTemplateBracket, function(full, matched){ // {[ ... ]}
 		if(sfRegex.anyCurlyBracket.test(matched) === false) // {{ ... }}
-			return `_result_ += ${JSON.stringify(matched.trim())}`;
+			return `_result_ += ${JSON.stringify(matched.trim())};`;
 
 		const vars = [];
 		matched = JSON.stringify(dataParser(matched, null, template, _modelScoped, vars, true));
 
 		if(vars.length !== 0)
-			return `_result_ += "${escapeParse(matched.slice(1, -1), vars)}"`;
+			return `_result_ += "${escapeParse(matched.slice(1, -1), vars)}";`;
 
 		return `_result_ += ${matched};`;
-	});
+	}).replace(/;{2,}/g, ';');
 
 	const preParsedReference = [];
 	const prepared = html.replace(sfRegex.uniqueDataParser, function(actual, temp){
