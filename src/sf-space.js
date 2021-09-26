@@ -89,13 +89,14 @@ if(window.sf$proxy === void 0)
 export class Space{
 	// { name:{ default:{}, id:{}, ... } }
 	static list = {};
-	inherit = {};
 
 	// modelList = {default:{model-name:{ model here }}};
 	// modelFunc = {};
 	// componentList = {default:{comp-name:[ comp list here ]}};
 
 	constructor(namespace, options){
+		this.inherit = {};
+
 		if(namespace === void 0)
 			throw new Error('`namespace` parameter need to be specified');
 

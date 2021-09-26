@@ -30,7 +30,7 @@ export function model(name, options, func, namespace){
 	const scope = namespace || model;
 	if(!(name in scope.root)){
 		if(name in internal.modelInherit)
-			scope.root[name] = new internal.modelInherit[name]();
+			scope.root[name] = new internal.modelInherit[name]((namespace || root_));
 		else
 			scope.root[name] = {};
 

@@ -48,7 +48,7 @@ export function ModelInit(el, modelName, namespace){
 			model.sf$internal.proxied = true;
 		}
 
-		model.constructor.construct && model.constructor.construct.call(model, (namespace || Model), el);
+		model.$constructor && model.$constructor.call(model, (namespace || Model), el);
 	}
 
 	var specialElement = {};

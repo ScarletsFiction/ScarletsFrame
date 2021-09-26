@@ -316,7 +316,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	}
 
 	let newObj = element.model || (asScope && useItem ? $item : (
-		inherit !== void 0 ? new inherit() : {}
+		inherit !== void 0 ? new inherit((namespace || Model), $item) : {}
 	));
 
 	let index = 0;
@@ -364,7 +364,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 		if(newObj.constructor !== Object){
 			proxyClass(newObj);
-			newObj.constructor.construct && newObj.constructor.construct.call(newObj, (namespace || Model), $item);
+			newObj.$constructor && newObj.$constructor.call(newObj, (namespace || Model), $item);
 		}
 
 		// Save the item for hot reloading
