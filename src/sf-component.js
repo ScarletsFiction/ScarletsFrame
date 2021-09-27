@@ -315,8 +315,9 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		useItem = false;
 	}
 
+	let scopeFunc = (namespace || Model);
 	let newObj = element.model || (asScope && useItem ? $item : (
-		inherit !== void 0 ? new inherit((namespace || Model), $item) : {}
+		inherit !== void 0 ? new inherit($item, scopeFunc) : {}
 	));
 
 	let index = 0;
@@ -335,7 +336,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 				Object.setPrototypeOf(newObj, inherit.prototype);
 
 			// Call function that handle scope
-			reusing = func(newObj, (namespace || Model), $item);
+			reusing = func(newObj, scopeFunc, $item);
 			if(reusing !== void 0){
 				newObj = reusing;
 
@@ -364,7 +365,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 		if(newObj.constructor !== Object){
 			proxyClass(newObj);
-			newObj.$constructor && newObj.$constructor.call(newObj, (namespace || Model), $item);
+			newObj.$constructor && newObj.$constructor.call(newObj, $item, scopeFunc);
 		}
 
 		// Save the item for hot reloading

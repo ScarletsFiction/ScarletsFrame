@@ -42,13 +42,14 @@ export function ModelInit(el, modelName, namespace){
 	}
 	else model.sf$internal.modelKeysRegex ??= createModelKeysRegex(el, model, null);
 
+	let scopeFunc = (namespace || Model);
 	if(model.constructor !== Object){
 		if(model.sf$internal.proxied === void 0){
 			proxyClass(model);
 			model.sf$internal.proxied = true;
 		}
 
-		model.$constructor && model.$constructor.call(model, (namespace || Model), el);
+		model.$constructor && model.$constructor.call(model, scopeFunc, el);
 	}
 
 	var specialElement = {};
@@ -73,7 +74,7 @@ export function ModelInit(el, modelName, namespace){
 	model.init && model.init(el, firstInit);
 
 	if(model.constructor !== Object)
-		model.constructor.init && model.constructor.init.call(model, (namespace || Model), el);
+		model.constructor.init && model.constructor.init.call(model, scopeFunc, el);
 
 	if(internal.reopenInspector !== null){
 		let temp = internal.reopenInspector;

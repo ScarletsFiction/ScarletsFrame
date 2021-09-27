@@ -191,7 +191,10 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 
 		// Please search "Function(...)" from your text editor to see
 		// the explanation why this framework is using this
-		script = Function('_modelScope', 'event', script).bind(that, _modelScope);
+		let realFunc = Function('_modelScope', 'event', script);
+		script = function(ev){
+			realFunc.call(that, _modelScope, ev);
+		};
 	}
 
 	let containSingleChar = false;
@@ -230,9 +233,10 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		keys.delete('capture');
 	}
 
+	let _rootHandler = (rootHandler || that);
 	if(keys.has('right') && (eventName.includes('mouse') || eventName.includes('pointer'))){
 		// Prevent context menu on mouse event
-		(rootHandler || that).addEventListener('contextmenu', function(ev){
+		_rootHandler.addEventListener('contextmenu', function(ev){
 			ev.preventDefault();
 		}, options);
 	}
@@ -251,7 +255,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 	}
 
 	if(CustomEvent[eventName]){
-		CustomEvent[eventName]((rootHandler || that), script, keys, _modelScope);
+		CustomEvent[eventName](_rootHandler, script, keys, _modelScope);
 		return;
 	}
 
@@ -320,14 +324,14 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		callback.listener = script;
 	}
 
-	(rootHandler || that).addEventListener(eventName, callback, options);
+	_rootHandler.addEventListener(eventName, callback, options);
 
 	// ToDo: Check if there are unused event attachment on detached element
 	// console.error(231, rootHandler, that, eventName, callback, options);
 
 	if(options.once === void 0){
-		(rootHandler || that)[`sf$eventDestroy_${eventName}`] = function(){
-			(rootHandler || that).removeEventListener(eventName, callback, options);
+		_rootHandler[`sf$eventDestroy_${eventName}`] = function(){
+			_rootHandler.removeEventListener(eventName, callback, options);
 		}
 	}
 

@@ -76,7 +76,8 @@ model.index = function(element, getProp){
 
 // Declare model for the name with a function
 model.for = function(name, options, func, namespace){
-	let { root } = (namespace || model);
+	const scope = namespace || model;
+	let { root } = scope;
 	let isExist = name in root;
 
 	if(options.constructor === Function)
@@ -104,7 +105,6 @@ model.for = function(name, options, func, namespace){
 	}
 	else func = NOOP;
 
-	const scope = namespace || model;
 	if(SFOptions.hotReload)
 		HotReload.Model(scope, name, func);
 
