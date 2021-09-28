@@ -103,12 +103,10 @@ export class Space{
 		if(namespace !== namespace.toLowerCase())
 			throw new Error('`namespace` must be lowercase');
 
-		if(Space[namespace] !== void 0)
-			return Space[namespace];
-
 		forProxying.internalSpaceEmpty = internal.space.empty = false;
 
-		if(Space.list[namespace] !== void 0)
+		let temp = Space.list[namespace];
+		if(temp !== void 0 && temp._waiting === void 0)
 			return Space.list[namespace].Space;
 
 		this.namespace = namespace;
