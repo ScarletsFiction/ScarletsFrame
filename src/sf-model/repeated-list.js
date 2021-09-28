@@ -383,7 +383,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			Object.defineProperty(target, `on$${prop}`, {
 				configurable: true,
 				get:()=> callback,
-				set:(val)=> Object.assign(callback, val)
+				set:val=> Object.assign(callback, val)
 			});
 		}
 	}
@@ -585,7 +585,7 @@ export class PropertyList{ // extends Object
 				enumerable: true,
 				configurable: true,
 				get:()=> that,
-				set:(val)=> {
+				set:val=> {
 					const olds = that._list;
 					const news = Object.keys(val);
 
@@ -712,7 +712,7 @@ export class ReactiveMap extends Map{
 				enumerable: true,
 				configurable: true,
 				get:()=> that,
-				set:(val)=> {
+				set:val=> {
 					// Delete first
 					for(const [key, v] of that)
 						!val.has(key) && that.delete(key);
@@ -776,7 +776,7 @@ export class ReactiveSet extends Set{
 				enumerable: true,
 				configurable: true,
 				get:()=> that,
-				set:(val)=> {
+				set:val=> {
 					// If an Set
 					if(val.has !== void 0){
 						for(const v of that) // Delete first
@@ -839,7 +839,7 @@ function ProxyProperty(obj, prop, force){
 			configurable:true,
 			enumerable:true,
 			get:()=> temp,
-			set:(val)=> {
+			set:val=> {
 				temp = val;
 				obj.refresh(prop);
 			}
@@ -965,7 +965,7 @@ export class ReactiveArray extends Array{
 				enumerable: true,
 				configurable: true,
 				get:()=> that,
-				set:(val)=> {
+				set:val=> {
 					if(val.length === 0)
 						that.splice(0);
 					else if(RE_Assign)

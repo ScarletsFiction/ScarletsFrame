@@ -164,15 +164,15 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 			bindLength += callback.length;
 		}
 
-		if(bindLength === 0 && isLazy === void 0 && !isUniqList && ignoreInElement === void 0){
-			let desc = Object.getOwnPropertyDescriptor(ref, key);
-			if(obj === void 0 || desc === void 0 || desc.set === void 0)
-				continue;
+		// if(bindLength === 0 && isLazy === void 0 && !isUniqList && ignoreInElement === void 0){
+		// 	let desc = Object.getOwnPropertyDescriptor(ref, key);
+		// 	if(obj === void 0 || desc === void 0 || desc.set === void 0)
+		// 		continue;
 
-			// Reconfigure / Remove property descriptor
-			delete ref[key];
-			ref[key] = obj;
-		}
+		// 	// Reconfigure / Remove property descriptor
+		// 	delete ref[key];
+		// 	ref[key] = obj;
+		// }
 	}
 
 	// Check for deeper sf$bindingKey
@@ -275,10 +275,6 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		if(propertyName.length === 1)
 			propertyName = propertyName[0];
 		else{
-			const deep = deepProperty(model, propertyName.slice(0, -1));
-			if(deep === void 0)
-				return;
-
 			// Register every path as fixed object (where any property replacement will being assigned)
 			for (let i = 0, n = propertyName.length-1; i < n; i++) {
 				let temp = propertyName[i];
@@ -305,6 +301,9 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			propertyName = propertyName[propertyName.length-1];
 		}
 	}
+
+	if(model.splice !== void 0 && propertyName.constructor === Number)
+		return;
 
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
@@ -397,8 +396,6 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(model.splice !== void 0){
 		if(propertyName === 'length')
 			isALength = '$length'; // Array
-		else if(propertyName.constructor === Number)
-			return;
 	}
 	else if(model.entries !== void 0 && propertyName === 'size' && (model.add !== void 0 || model.set !== void 0)){
 		isALength = '$size'; // Set/Map
