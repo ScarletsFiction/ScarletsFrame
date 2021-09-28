@@ -371,7 +371,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 		if(newObj.constructor !== Object){
 			proxyClass(newObj);
-			newObj.$constructor && newObj.$constructor(scopeFunc, $item);
+			// newObj.$constructor && newObj.$constructor(scopeFunc, $item);
 		}
 
 		// Save the item for hot reloading
