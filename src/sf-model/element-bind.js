@@ -281,14 +281,15 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 			// Register every path as fixed object (where any property replacement will being assigned)
 			for (let i = 0, n = propertyName.length-1; i < n; i++) {
-				let value = model[propertyName[i]];
+				let temp = propertyName[i];
+				let value = model[temp];
 
 				// Return if this not an object
 				if(typeof value !== 'object')
 					return;
 
-				if(Object.getOwnPropertyDescriptor(model, propertyName[i]).set === void 0){
-					Object.defineProperty(model, propertyName[i], {
+				if(Object.getOwnPropertyDescriptor(model, temp).set === void 0){
+					Object.defineProperty(model, temp, {
 						enumerable: true,
 						configurable: true,
 						get:()=> value,
@@ -393,8 +394,12 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	var isALength = false;
 
 	// We can't redefine length on array
-	if(model.splice !== void 0 && propertyName === 'length')
-		isALength = '$length'; // Array
+	if(model.splice !== void 0){
+		if(propertyName === 'length')
+			isALength = '$length'; // Array
+		else if(propertyName.constructor === Number)
+			return;
+	}
 	else if(model.entries !== void 0 && propertyName === 'size' && (model.add !== void 0 || model.set !== void 0)){
 		isALength = '$size'; // Set/Map
 	}
