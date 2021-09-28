@@ -2,7 +2,7 @@ import {internal, forProxying, SFOptions, HotReload} from "./shared.js";
 import {$} from "./sf-dom.js";
 import {loader as Loader} from "./sf-loader.js";
 import {component as Component} from "./sf-component.js";
-import {getCallerFile, modelKeys, findBindListElement, isClass} from "./utils.js";
+import {getCallerFile, modelKeys, findBindListElement, isClass, proxyClass} from "./utils.js";
 import {ModelInit} from "./sf-model/a_model.js";
 import {ModelInternal} from "./sf-model/a_shared.js";
 import {removeModelBinding} from "./sf-model/element-bind.js";
@@ -99,8 +99,20 @@ model.for = function(name, options, func, namespace){
 	if(func !== void 0){
 		// It's a class
 		if(isClass(func)){
+			if(!(func.prototype instanceof Model))
+				throw new Error("sf.model> Class must extend sf.Model");
+
 			internal.componentInherit[name] = func;
 			func = {class:func};
+		}
+		else if(options.extend !== void 0){
+			if(isExist)
+				Model.reuse = root[name];
+
+			let temp = root[name] = new options.extend(scope);
+
+			if(isExist) // This need to be here
+				Object.setPrototypeOf(temp, options.extend.prototype);
 		}
 	}
 	else func = NOOP;
@@ -115,15 +127,19 @@ model.for = function(name, options, func, namespace){
 		func(scopeTemp, scope);
 
 	if(func.class && scopeTemp.constructor !== func.class){
-		if(isExist === false){
-			let temp = scopeTemp;
-			root[name] = scopeTemp = new func.class();
-			Object.defineProperties(scopeTemp, Object.getOwnPropertyDescriptors(temp));
-		}
-		else {
-			return console.error(`Looks like the model for "${name}":`, scopeTemp, ` already being returned somewhere. For the example like using:\n>> let model = sf.model("${name}");\nor\n>> sf.model("other", (My, root)=>{\n  let model = root("${name}")\n});\n\nbefore the framework know if the model object for "${name}" must be constructed by`, {class: func.class},`: \n>> sf.model("${name}", class ${func.class.name}{})\n\nThis usually because late initialization. You may need to use setTimeout or obtain the model context only after every script already running.`);
-		}
+		let temp = scopeTemp;
+		if(isExist)
+			Model.reuse = root[name];
+
+		scopeTemp = root[name] = new func.class(scope);
+
+		if(isExist) // This need to be here
+			Object.setPrototypeOf(scopeTemp, func.class.prototype);
+
+		// Class combine, non-enumerable
+		// Object.defineProperties(scopeTemp, Object.getOwnPropertyDescriptors(temp));
 	}
+	else proxyClass(scopeTemp);
 
 	if(Loader.DOMWasLoaded && name in internal.modelPending){
 		const temp = internal.modelPending[name];
@@ -239,6 +255,29 @@ else forProxying.SFModel = SFModel._ref = SFModel;
 
 ModelInternal._ref = SFModel._ref;
 customElements.define('sf-m', SFModel);
+
+let Super = {
+	get(obj, prop){
+		if(!(prop in obj.prototype))
+			return;
+		obj.prototype[prop];
+	}
+};
+
+export class Model {
+	static reuse;
+	constructor(){
+		if(Model.reuse !== void 0){
+			let temp = Model.reuse;
+			Model.reuse = void 0;
+
+			if(!(temp.constructor.prototype instanceof Model))
+				Object.setPrototypeOf(temp, Model.prototype);
+
+			return temp;
+		}
+	}
+}
 
 // Let's check all pending model
 setTimeout(()=> {

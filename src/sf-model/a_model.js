@@ -1,7 +1,7 @@
 import {internal, SFOptions, HotReload} from "../shared.js";
 import {model as Model, SFModel} from "../sf-model.js";
 import {escapeText, childIndexes} from "../sf-dom.utils.js";
-import {proxyClass, parsePropertyPath, deepProperty} from "../utils.js";
+import {parsePropertyPath, deepProperty} from "../utils.js";
 import {parsePreprocess, queuePreprocess, createModelKeysRegex} from "./parser.js";
 import {repeatedListBinding} from "./repeated-list.js";
 import {bindInput} from "./input-bind.js";
@@ -42,15 +42,15 @@ export function ModelInit(el, modelName, namespace){
 	}
 	else model.sf$internal.modelKeysRegex ??= createModelKeysRegex(el, model, null);
 
-	let scopeFunc = (namespace || Model);
-	if(model.constructor !== Object){
-		if(model.sf$internal.proxied === void 0){
-			proxyClass(model);
-			model.sf$internal.proxied = true;
-		}
+	// let scopeFunc = (namespace || Model);
+	// if(model.constructor !== Object){
+	// 	if(model.sf$internal.proxied === void 0){
+	// 		proxyClass(model);
+	// 		model.sf$internal.proxied = true;
+	// 	}
 
-		model.$constructor && model.$constructor.call(model, scopeFunc, el);
-	}
+	// 	// model.$constructor && model.$constructor(scopeFunc, el);
+	// }
 
 	var specialElement = {};
 
@@ -72,9 +72,6 @@ export function ModelInit(el, modelName, namespace){
 
 	handleSFSlot(model, el);
 	model.init && model.init(el, firstInit);
-
-	if(model.constructor !== Object)
-		model.constructor.init && model.constructor.init.call(model, scopeFunc, el);
 
 	if(internal.reopenInspector !== null){
 		let temp = internal.reopenInspector;

@@ -1,7 +1,7 @@
 import {internal, TemplatePending, SFOptions, HotReload, NOOP} from "./shared.js";
 import {capitalizeLetters, proxyClass, getCallerFile, isClass} from "./utils.js";
 import {parseElement} from "./sf-dom.utils.js";
-import {model as Model} from "./sf-model.js";
+import {model as _model, Model} from "./sf-model.js";
 import {Space} from "./sf-space.js";
 import {templateParser} from "./sf-model/template.js";
 import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreprocess, queuePreprocess} from "./sf-model/parser.js";
@@ -99,6 +99,9 @@ component.for = function(name, options, func, namespace){
 	if(func !== void 0){
 		// It's a class
 		if(isClass(func)){
+			if(!(func.prototype instanceof Model))
+				throw new Error("sf.model> Class must extend sf.Model");
+
 			internal.componentInherit[name] = func;
 			func = {class:func};
 		}
@@ -315,7 +318,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		useItem = false;
 	}
 
-	let scopeFunc = (namespace || Model);
+	let scopeFunc = (namespace || _model);
 	let newObj = element.model || (asScope && useItem ? $item : (
 		inherit !== void 0 ? new inherit($item, scopeFunc) : {}
 	));
@@ -332,8 +335,11 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	if(index === 0 && newObj.destroy !== false){
 		const func = registrar[0];
 		if(func.constructor === Function){
-			if(inherit !== void 0 && asScope)
+			if(inherit !== void 0 && asScope){
+				Model.reuse = newObj;
+				newObj = new inherit(scopeFunc);
 				Object.setPrototypeOf(newObj, inherit.prototype);
+			}
 
 			// Call function that handle scope
 			reusing = func(newObj, scopeFunc, $item);
@@ -365,7 +371,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 		if(newObj.constructor !== Object){
 			proxyClass(newObj);
-			newObj.$constructor && newObj.$constructor.call(newObj, $item, scopeFunc);
+			newObj.$constructor && newObj.$constructor(scopeFunc, $item);
 		}
 
 		// Save the item for hot reloading
@@ -558,9 +564,6 @@ class SFComponent extends HTMLElement{
 					this.model.initClone && this.model.initClone(this.model.$el[this.model.$el.length-1]);
 					return;
 				}
-
-				if(this.model.constructor !== Object)
-					this.model.constructor.init && this.model.constructor.init.call(this.model, (this.sf$space || Model));
 
 				this.model.init(this);
 			}
