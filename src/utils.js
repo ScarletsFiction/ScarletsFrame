@@ -149,7 +149,7 @@ export function getStaticMethods(keys, clas){
 }
 
 export function getPrototypeMethods(keys, clas){
-	if(clas.prototype === void 0)
+	if(clas.prototype === void 0 || clas === Function || clas === Object)
 		return;
 
 	var keys2 = Object.getOwnPropertyNames(clas.prototype);
