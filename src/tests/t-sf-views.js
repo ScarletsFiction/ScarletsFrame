@@ -1,4 +1,4 @@
-import {$, model, component, Views} from "../index.dev.js";
+import {$, model, component, Model, Views} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 import {hotReloadLevel} from "./index.js";
 
@@ -104,14 +104,14 @@ $(function(){
 		window.templates = window.templates; // trigger hot reload
 
 		setTimeout(function(){
-			model('test-page1', function(self){
-				self.text = 'scope reloaded page 1';
+			model('test-page1', function(My){
+				My.text = 'scope reloaded page 1';
 			})
-			model('test-nest1', function(self){
-				self.text = 'scope reloaded nest 1';
+			model('test-nest1', function(My){
+				My.text = 'scope reloaded nest 1';
 			})
-			component('test-nest2', {extend:TestPage}, function(self){
-				self.text = "scope reloaded nest 2";
+			component('test-nest2', {extend: TestPage}, function(My){
+				My.text = "scope reloaded nest 2";
 			});
 
 			component.html('test-nest2', '<div>html reloaded: {{ text }}</div>');
@@ -127,18 +127,19 @@ $(function(){
 	}, 5000);
 })
 
-class TestPage{}
+let _temp = model('test-page1'); // dummy early model obtain
+class TestPage extends Model {}
 
-model('test-page1', {extend:TestPage}, function(self){
-	self.text = "Hello from template";
+model('test-page1', {extend: TestPage}, function(My){
+	My.text = "Hello from template";
 });
 
-model('test-nest1', {extend:TestPage}, function(self){
-	self.text = "Hello from nest 1";
+model('test-nest1', {extend: TestPage}, function(My){
+	My.text = "Hello from nest 1";
 });
 
-component('test-nest2', {extend:TestPage}, function(self){
-	self.text = "Hello from nest 2";
+component('test-nest2', {extend: TestPage}, function(My){
+	My.text = "Hello from nest 2";
 });
 
 component.html('test-nest2', '<div>{{ text }}</div>');

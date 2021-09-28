@@ -20,8 +20,8 @@ let _saveInspector = 0;
 var SFDevMode, SFDevSpace;
 
 // Return if has root window
-if(sf.Window && sf.Window.root){
-	SFDevSpace = window.SFDevSpace = sf.Window.root.window.SFDevSpace;
+if(window.sf && window.sf.Window && window.sf.Window.root){
+	SFDevSpace = window.SFDevSpace = window.sf.Window.root.window.SFDevSpace;
 
 	if(SFDevSpace !== void 0){
 		SFDevMode = SFDevSpace.component('sf-inspector');

@@ -1,4 +1,4 @@
-import {$, component, model, hotReload, Window, language, internal, watch, unwatch, Views} from "../index.dev.js";
+import {$, component, model, Model, hotReload, Window, language, internal, watch, unwatch, Views} from "../index.dev.js";
 import {parsePreprocess, queuePreprocess} from "../sf-model/parser.js";
 import "./t-sf-model.js";
 import "./t-sf-component.js";
@@ -21,9 +21,11 @@ window.ssf = {component, model, language, Window, watch, unwatch, Views};
 
 $(function(){console.log("✔️ Loading finished")});
 
-class ImgModel{
-	static construct(){
-		console.warn('✔️ ImgModel construct was called', this);
+let _temp = model('image'); // dummy early model obtain
+class ImgModel extends Model {
+	constructor(root, item){
+		super();
+		console.warn('✔️ ImgModel constructor was called', this);
 	}
 
 	taphold(el, ev){

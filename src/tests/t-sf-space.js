@@ -1,4 +1,4 @@
-import {model, component, Space, Window} from "../index.dev.js";
+import {model, component, Model, Space, Window} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
 var testSpace = new Space('test-space');
@@ -32,11 +32,13 @@ var spaceComponent = testSpace.component('my-obj', function(My, root){
 	}
 });
 
-model('obj', class {
+let _temp = model('obj'); // dummy early model obtain
+model('obj', class extends Model {
 	test = 321+adder;
 	list = [3,2,1+adder];
 
 	constructor(){
+		super();
 		this.inc = testIncrease.bind(this);
 	}
 
@@ -59,7 +61,7 @@ component('my-obj', function(My, root){
 	}
 });
 
-setTimeout(function(){
+setTimeout(function(){return;
 	testSpace.model('obj', function(My, root){
 		My.list = ['refreshed',2,3+adder];
 	});

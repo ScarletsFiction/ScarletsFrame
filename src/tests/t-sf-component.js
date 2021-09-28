@@ -1,17 +1,5 @@
-import {$, model, component, Views, Space, loader} from "../index.dev.js";
+import {$, model, component, Model, Views, Space, loader} from "../index.dev.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
-
-// class InheritComponent{
-// 	static construct(root, item){
-// 		this.nyam = true;
-// 	}
-// 	static init(root, item){
-// 		this.nyam2 = true;
-// 	}
-// 	select(item){
-// 		return item;
-// 	}
-// }
 
 window.templates = {
 	'test/reserved.html':`
@@ -26,11 +14,13 @@ from window.templates?`,
 	'test/relative.html':'(2. {{ binds }})',
 };
 
-class InheritComponent{
-	static construct(root, item){
+let _temp = component('comp-test'); // dummy early component obtain
+class InheritComponent extends Model {
+	constructor(root, item){
+		super();
 		this.nyam = true;
 	}
-	static init(root, item){
+	init(root, item){
 		this.nyam2 = true;
 	}
 
@@ -51,10 +41,12 @@ component('comp-test', {extend: InheritComponent}, (My, root, item)=>{
 	}
 
 	My.init = function(){
+		My.super(); //-> super.init()
+
 		console.warn('comp-test', item, My.$el[0], My, My.tries.constructor !== Array && My.tries.getElement(0));
 
 		if(!this.nyam || !this.nyam2)
-			console.error("❌ inherited construct or init was not working");
+			console.error("❌ inherited constructor or init was not working");
 
 		// document.firstElementChild.scrollTop = document.firstElementChild.scrollHeight;
 	}
@@ -221,9 +213,12 @@ component('ful-test', function(My){
 	My.ful = '1'+adder;
 });
 
-class myself{
+_temp = model('clastest'); // dummy early model obtain
+_temp = component('clas-test'); // dummy early component obtain
+class myself extends Model{
 	nyam = "Fail";
 	constructor(){
+		super();
 		this.nyam = 'OK';
 	}
 }
