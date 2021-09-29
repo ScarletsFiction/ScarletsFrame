@@ -1,9 +1,64 @@
+## Breaking changes since 0.35.0
+Maybe you haven't use this feature yet..
+
+```js
+// For sf.model and sf.component if you use class
+// then it must extends sf.Model
+sf.model('stuff', class extends sf.Model {
+  // Before breaking changes
+  static construct(){
+    // ...
+  }
+
+  // Now you can use this instead
+  constructor(){
+    super();
+    // this == My
+  }
+
+  // ---
+
+  // Before breaking changes if you use this
+  static init(){
+    // ...
+  }
+
+  // Please change it to this
+  init(){
+    // this == My
+  }
+});
+
+
+// For sf.model and sf.component if you use options to extends a class
+// with function as a scope, and the class has init function, then you need to call My.super()
+class extendMe extends sf.Model {
+  init(el){
+    return 'ok';
+  }
+
+  otherStuff(param){
+    return param + 2;
+  }
+}
+
+sf.model('stuff', {extend: extendMe}, function(My){
+  My.init = function(el){
+    My.super(el); // === 'ok'
+  }
+
+  My.otherStuff = function(){
+    My.super(123); // === 125
+  }
+});
+```
+
 ## Breaking changes since 0.34.0
 From this version, the framework was using ES6 module.<br>
 Because of it there are some changes for the API to make it tree shakeable and more easy to understand.
 
 You can just use feature like "Replace All" from your text editor.
-```rust
+```js
 // Helper for getting model/component scope from an element
 sf(element) -> sf.getScope(element)
 
