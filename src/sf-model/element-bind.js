@@ -302,8 +302,9 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		}
 	}
 
-	if(model.splice !== void 0 && propertyName.constructor === Number)
-		return;
+	if(model.splice !== void 0
+	   && propertyName.constructor === Number
+	   && model[propertyName] === void 0) return;
 
 	// Enable multiple element binding
 	if(model.sf$bindedKey === void 0)
