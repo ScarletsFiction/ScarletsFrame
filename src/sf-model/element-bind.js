@@ -289,9 +289,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 						enumerable: true,
 						configurable: true,
 						get:()=> value,
-						set:(val)=>{
-							Object.assign(value, val)
-						}
+						set:val=> Object.assign(value, val)
 					});
 				}
 

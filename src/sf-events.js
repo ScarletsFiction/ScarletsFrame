@@ -42,7 +42,7 @@ export class events{
 				enumerable:true,
 				configurable:true,
 				get:()=> active,
-				set:(val)=> {
+				set:val=> {
 					if(active === val)
 						return;
 

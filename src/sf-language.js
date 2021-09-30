@@ -298,10 +298,10 @@ function diveObject(obj, path, setValue){
 		const key = parts[i];
 
 		if(setValue === void 0){ // get only
-	    	if(!(key in obj))
-	    		return;
+			if(!(key in obj))
+				return;
 
-	    	obj = obj[key];
+			obj = obj[key];
 		}
 		else{ // set
 			if(i === n){
@@ -310,12 +310,12 @@ function diveObject(obj, path, setValue){
 			}
 
 			if(!(key in obj))
-                obj = obj[key] = {};
-            else obj = obj[key];
+				obj = obj[key] = {};
+			else obj = obj[key];
 		}
-    }
+	}
 
-    return obj;
+	return obj;
 }
 
 internal.language.refreshLang = function(el){
@@ -380,13 +380,13 @@ function refreshLang(list, noPending, callback){
 			let value = diveObject(defaultLang, target);
 
 			if(value === void 0){
-			    if(noPending !== true){
+				if(noPending !== true){
 					if(pending === false)
-				    	pending = {};
+						pending = {};
 
-				    diveObject(pending, target, 1);
+					diveObject(pending, target, 1);
 					pendingElement.push(elem);
-			    }
+				}
 
 				continue;
 			}

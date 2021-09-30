@@ -106,7 +106,7 @@ export function initPendingComponentScope(list, html){
 			enumerabe:true,
 			configurable:true,
 			get:()=> obj,
-			set:(val)=>{
+			set:val=> {
 				Object.assign(obj, val)
 				obj.reinit !== void 0 && obj.reinit();
 			}
