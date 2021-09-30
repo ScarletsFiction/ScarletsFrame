@@ -50,7 +50,7 @@ export function prepareComponentTemplate(temp, tempDOM, name, newObj, registrar)
 }
 
 internal.component = {};
-internal.componentInherit = {};
+internal.componentInherit = {}; // ToDo: avoid conflict if has duplicated name
 
 setTimeout(()=> {
 	$(function(){
@@ -320,7 +320,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 	let scopeFunc = (namespace || _model);
 	let newObj = element.model || (asScope && useItem ? $item : (
-		inherit !== void 0 ? new inherit($item, scopeFunc) : {}
+		inherit !== void 0 ? new inherit(scopeFunc, $item) : {}
 	));
 
 	let index = 0;
@@ -335,9 +335,12 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	if(index === 0 && newObj.destroy !== false){
 		const func = registrar[0];
 		if(func.constructor === Function){
-			if(inherit !== void 0 && asScope){
-				Model.reuse = newObj;
-				newObj = new inherit(scopeFunc);
+			if(inherit !== void 0){
+				if(asScope){
+					Model.reuse = newObj;
+					newObj = new inherit(scopeFunc);
+				}
+
 				Object.setPrototypeOf(newObj, inherit.prototype);
 			}
 
