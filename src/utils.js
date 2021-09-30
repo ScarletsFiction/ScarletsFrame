@@ -288,7 +288,7 @@ export const isClass = (function(){
     let props = Object.getOwnPropertyNames(func);
     for(let i=0; i<props.length; i++){
       let prop = props[i];
-      if(!(prop in classDefaultProp) || prop.slice(0, 1) === '_')
+      if(!(prop in classDefaultProp) && prop.slice(0, 1) !== '_')
         return true;
     }
 
