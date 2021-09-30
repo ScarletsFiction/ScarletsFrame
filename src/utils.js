@@ -287,7 +287,8 @@ export const isClass = (function(){
     // Check if at least have one static property
     let props = Object.getOwnPropertyNames(func);
     for(let i=0; i<props.length; i++){
-      if(!(props[i] in classDefaultProp))
+      let prop = props[i];
+      if(!(prop in classDefaultProp) || prop.slice(0, 1) === '_')
         return true;
     }
 
