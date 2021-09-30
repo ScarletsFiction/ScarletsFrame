@@ -5,6 +5,7 @@ let whenDOMLoaded = [];
 let whenProgress = [];
 var pendingOrderedJS = [];
 let ES6URLCache = {};
+let traceResources = false;
 
 let promiseResolver = false;
 function resolvePromise(){
@@ -20,8 +21,10 @@ export class loader{
 	static turnedOff = true;
 	static loadPended = false;
 	static task = new Promise(function(resolve){
-    	promiseResolver = resolve;
-    });
+		promiseResolver = resolve;
+	});
+
+	static pendingResources = new Set;
 
 	// Make event listener
 	static onFinish(func){
@@ -45,21 +48,31 @@ export class loader{
 		loader.loadedContent++;
 
 		if(ev){
-			ev.target.removeEventListener('load', loader.f, {once:true});
-			ev.target.removeEventListener('error', loader.f, {once:true});
+			let target = ev.target;
+			let url = ev;
+			if(target !== void 0){
+				target.removeEventListener('load', loader.f, {once:true});
+				target.removeEventListener('error', loader.f, {once:true});
+				url = target.src || target.href;
+			}
+
+			if(!loader.pendingResources.has(url))
+				console.log('Loaded but not found in sf.loader\'s resource list:', ev.target);
+
+			loader.pendingResources.delete(url);
 		}
 
-	    if(pendingOrderedJS.length !== 0){
-	    	if(pendingOrderedJS.length + loader.loadedContent === loader.totalContent)
-	    		document.head.appendChild(pendingOrderedJS.shift());
-	    }
+		if(pendingOrderedJS.length !== 0){
+			if(pendingOrderedJS.length + loader.loadedContent === loader.totalContent)
+				document.head.appendChild(pendingOrderedJS.shift());
+		}
 
-	    if(whenProgress === null){
-	    	if(loader.loadedContent === loader.totalContent)
+		if(whenProgress === null){
+			if(loader.loadedContent === loader.totalContent)
 				resolvePromise();
 
-	    	return;
-	    }
+			return;
+		}
 
 		for (let i = 0; i < whenProgress.length; i++)
 			whenProgress[i](loader.loadedContent, loader.totalContent);
@@ -98,7 +111,8 @@ export class loader{
 		if(loader.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if(document.querySelectorAll(`link[href*="${list[i]}"]`).length !== 0)
+				if(document.querySelectorAll(`link[href*="${list[i]}"]`).length !== 0
+				   || loader.pendingResources.has(list[i]))
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
@@ -107,38 +121,39 @@ export class loader{
 		loader.turnedOff = false;
 		loader.totalContent += list.length;
 
-        if(promiseResolver === false){
-        	loader.task = new Promise(function(resolve){
-        		promiseResolver = resolve;
-        	});
-        }
-
-		if(loader.loadPended !== false){
-			if(loader.loadPended.callback(list) !== true)
-				await loader.loadPended;
+		if(promiseResolver === false){
+			loader.task = new Promise(function(resolve){
+				promiseResolver = resolve;
+			});
 		}
+
+		if(loader.loadPended !== false && loader.loadPended.callback(list) !== true)
+			await loader.loadPended;
 
 		let temp = new Array(list.length);
 		for(var i = 0; i < list.length; i++){
 			const s = temp[i] = document.createElement('link');
-	        s.addEventListener('load', loader.f, {once:true});
-	        s.addEventListener('error', loader.f, {once:true});
-	        s.rel = 'stylesheet';
-	        s.href = list[i];
-	    }
+			s.addEventListener('load', loader.f, {once:true});
+			s.addEventListener('error', loader.f, {once:true});
+			s.rel = 'stylesheet';
+			s.href = list[i];
+
+			loader.pendingResources.add((list[i].slice(0,1) === '/' ? location.origin:'') + list[i]);
+		}
 
 		if(priority === 'low')
-        	document.head.prepend(...temp);
-        else document.head.append(...temp);
+			document.head.prepend(...temp);
+		else document.head.append(...temp);
 
-        return loader.task;
+		return loader.task;
 	}
 
 	static async js(list, async){
 		if(loader.DOMWasLoaded){
 			// check if some list was loaded
 			for (var i = list.length - 1; i >= 0; i--) {
-				if(document.querySelectorAll(`script[src*="${list[i]}"]`).length !== 0)
+				if(document.querySelectorAll(`script[src*="${list[i]}"]`).length !== 0
+				   || loader.pendingResources.has(list[i]))
 					list.splice(i, 1);
 			}
 			if(list.length === 0) return;
@@ -153,31 +168,31 @@ export class loader{
 
 		loader.totalContent += list.length;
 
-        if(promiseResolver === false){
-        	loader.task = new Promise(function(resolve){
-        		promiseResolver = resolve;
-        	});
-        }
-
-		if(loader.loadPended !== false){
-			if(loader.loadPended.callback(list) !== true)
-				await loader.loadPended;
+		if(promiseResolver === false){
+			loader.task = new Promise(function(resolve){
+				promiseResolver = resolve;
+			});
 		}
+
+		if(loader.loadPended !== false && loader.loadPended.callback(list) !== true)
+			await loader.loadPended;
 
 		for(var i = 0; i < list.length; i++){
 			const s = document.createElement('script');
-	        s.addEventListener('load', loader.f, {once:true});
-	        s.addEventListener('error', loader.f, {once:true});
-	        s.type = "text/javascript";
-	        if(async) s.async = true;
-	        s.src = list[i];
+			s.addEventListener('load', loader.f, {once:true});
+			s.addEventListener('error', loader.f, {once:true});
+			s.type = "text/javascript";
+			if(async) s.async = true;
+			s.src = list[i];
 
-	        if(!ordered)
-	        	document.head.appendChild(s);
-	        else pendingOrderedJS.push(s);
+			loader.pendingResources.add((list[i].slice(0,1) === '/' ? location.origin:'') + list[i]);
+
+			if(!ordered)
+				document.head.appendChild(s);
+			else pendingOrderedJS.push(s);
 		}
 
-        return loader.task;
+		return loader.task;
 	}
 
 	static async mjs(list){
@@ -196,27 +211,29 @@ export class loader{
 
 		loader.totalContent += list.length - reduce;
 
-        if(promiseResolver === false){
-        	loader.task = new Promise(function(resolve){
-        		promiseResolver = resolve;
-        	});
-        }
-
-		if(loader.loadPended !== false){
-			if(loader.loadPended.callback(list) !== true)
-				await loader.loadPended;
+		if(promiseResolver === false){
+			loader.task = new Promise(function(resolve){
+				promiseResolver = resolve;
+			});
 		}
+
+		if(loader.loadPended !== false && loader.loadPended.callback(list) !== true)
+			await loader.loadPended;
 
 		let waits = new Array(list.length);
 		for(let i = 0; i < list.length; i++){
 			let url = list[i];
 			if(url === null) continue;
 
+			loader.pendingResources.add((url.slice(0,1) === '/' ? location.origin:'') + url);
+
 			waits[i] = async function(){
 				try{
 					modules[i] = ES6URLCache[url] = await import(url);
+				} catch(e) {
+					console.error("Failed to load:", url, e);
 				} finally {
-					loader.f(); // Call when finished
+					loader.f(url); // Call when finished
 				}
 			}();
 		}
@@ -225,7 +242,7 @@ export class loader{
 		if(loader.loadedContent === loader.totalContent)
 			resolvePromise();
 
-        return modules;
+		return modules;
 	}
 };
 
@@ -238,8 +255,9 @@ function domLoadEvent(event){
 			const temp = document.body.querySelectorAll('img:not(onload)[src]');
 			for (let i = 0; i < temp.length; i++) {
 				loader.totalContent++;
-
 				const ref = temp[i];
+				loader.pendingResources.add((ref.src.slice(0,1) === '/' ? location.origin:'') + ref.src);
+
 				ref.addEventListener('load', loader.f, {once:true});
 				ref.addEventListener('error', loader.f, {once:true});
 			}
