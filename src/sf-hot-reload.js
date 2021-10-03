@@ -467,11 +467,14 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 			let modelKeys = getModelKeys(scope, true);
 			scope.sf$internal.modelKeysRegex.v = RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g');
 		}
-
-		scope.hotReloading = false;
 	}
-	else Object.setPrototypeOf(scope, func.class.prototype);
+	else{
+		firstTime = false;
+		scope.hotReload && scope.hotReload(scope);
+		Object.setPrototypeOf(scope, func.class.prototype);
+	}
 
+	scope.hotReloading = false;
 	if(!firstTime || forceHaveLoaded){
 		scope.sf$refresh && scope.sf$refresh.forEach(v=>v());
 		scope.hotReloaded && scope.hotReloaded();
