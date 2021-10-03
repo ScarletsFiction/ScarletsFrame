@@ -56,9 +56,6 @@ export class loader{
 				url = target.src || target.href;
 			}
 
-			if(!loader.pendingResources.has(url))
-				console.log('Loaded but not found in sf.loader\'s resource list:', ev.target);
-
 			loader.pendingResources.delete(url);
 		}
 
@@ -230,8 +227,6 @@ export class loader{
 			waits[i] = async function(){
 				try{
 					modules[i] = ES6URLCache[url] = await import(url);
-				} catch(e) {
-					console.error("Failed to load:", url, e);
 				} finally {
 					loader.f(url); // Call when finished
 				}
