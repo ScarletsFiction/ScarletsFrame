@@ -233,6 +233,12 @@ export function watch(model, propertyName, callback){
 		return;
 	}
 
+	if(propertyName.constructor === Array){
+		for (var i = 0; i < propertyName.length; i++)
+			watch(model, propertyName[i], callback);
+		return;
+	}
+
 	callback._sf = false;
 	modelToViewBinding(model, propertyName, callback, void 0, void 0, 'callback');
 }
@@ -442,34 +448,22 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	// if(objValue == null)
 	// 	objValue = '';
 
-	let _on = model[`on$${propertyName}`]; // Everytime value's going changed, callback value will assigned as new value
-	let _m2v = model[`m2v$${propertyName}`]; // Everytime value changed from script (not from View), callback value will only affect View
-
-	if(_on)
-		Object.defineProperty(model, `on$${propertyName}`, {
-			set:val => _on = val,
-			get:() => _on
-		});
-
-	if(_m2v)
-		Object.defineProperty(model, `m2v$${propertyName}`, {
-			set:val =>_m2v = val,
-			get:() => _m2v
-		});
+	let _on = `on$${propertyName}`; // Everytime value's going changed, callback value will assigned as new value
+	let _m2v = `m2v$${propertyName}`; // Everytime value changed from script (not from View), callback value will only affect View
 
 	const set = val => {
 		if(objValue !== val){
 			let newValue, noFeedback;
 			if(internal.inputBoundRunning === false){
-				if(_m2v !== void 0){
-					newValue = _m2v.call(model, val);
+				if(_m2v in model){
+					newValue = model[_m2v](val);
 
 					if(newValue !== void 0)
 						noFeedback = true;
 				}
 
-				if(_on !== void 0)
-					newValue = _on.call(model, val, true);
+				if(_on in model)
+					newValue = model[_on](val, true);
 			}
 
 			objValue = newValue !== void 0 ? newValue : val;
@@ -481,7 +475,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			if(bindedKey.callback){
 				const {callback} = bindedKey;
 				for (var i = 0; i < callback.length; i++)
-					callback[i]();
+					callback[i].call(this, propertyName, val);
 			}
 
 			var temp;
