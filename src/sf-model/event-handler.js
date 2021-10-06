@@ -16,6 +16,7 @@ function getDirectReference(_modelScope, script){
 	return deepProperty(window, script);
 }
 
+var evFuncCache = new Map();
 export function eventHandler(that, data, _modelScope, rootHandler, template){
 	const modelKeys = _modelKeys(_modelScope, true);
 
@@ -60,10 +61,19 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		if(direct)
 			var func = getDirectReference(_modelScope, script);
 		else{
-			if(withKey)
-				var func = Function('event', '_model_', '_modelScope', template.uniqPattern, script);
-			else
-				var func = Function('event', '_model_', '_modelScope', script);
+			let saveStr = withKey ? template.uniqPattern+script : script;
+			let hasCache = evFuncCache.get(saveStr);
+
+			if(hasCache !== void 0)
+				var func = hasCache;
+			else{
+				if(withKey)
+					var func = Function('event', '_model_', '_modelScope', template.uniqPattern, script);
+				else
+					var func = Function('event', '_model_', '_modelScope', script);
+
+				evFuncCache.set(saveStr, func);
+			}
 		}
 
 		let listener = rootHandler.sf$listListener[name_];
@@ -191,7 +201,12 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 
 		// Please search "Function(...)" from your text editor to see
 		// the explanation why this framework is using this
-		let realFunc = Function('_modelScope', 'event', script);
+		let hasCache = evFuncCache.get(script);
+		let realFunc = hasCache || Function('_modelScope', 'event', script);
+
+		if(hasCache === void 0)
+			evFuncCache.set(script, realFunc);
+
 		script = function(ev){
 			realFunc.call(that, _modelScope, ev);
 		};
