@@ -504,8 +504,9 @@ export function Views(selector, name){
 		let parentSimilarity = null;
 
 		for (var i = 0; i < Self.relatedDOM.length; i++) {
-			if(relatedPage.includes(Self.relatedDOM[i]) === false){
-				let hiding = Self.relatedDOM[i];
+			let hiding = Self.relatedDOM[i];
+
+			if(relatedPage.includes(hiding) === false){
 				if(Self.currentDOM === hiding) continue;
 				if(lastSibling === null){
 					lastSibling = hiding;
@@ -528,7 +529,13 @@ export function Views(selector, name){
 		let showedSibling = null;
 		for (var i = 0; i < relatedPage.length; i++) {
 			let showing = relatedPage[i];
-			if(Self.currentDOM === showing) continue;
+			if(Self.currentDOM === showing){
+				if(showing.parentNode === parentSimilarity)
+					showedSibling = showing;
+
+				continue;
+			}
+
 			if(showedSibling === null && showing.parentNode === parentSimilarity)
 				showedSibling = showing;
 
