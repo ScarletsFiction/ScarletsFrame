@@ -663,6 +663,8 @@ export class PropertyList{ // extends Object
 					elemList[i] = newElem;
 			}
 		}
+
+		this.$EM.inputBoundCheck();
 	}
 }
 
@@ -740,6 +742,7 @@ export class ReactiveMap extends Map{
 
 		super.set.apply(this, arguments);
 		this.$EM.append(key, val, true);
+		this.$EM.inputBoundCheck();
 		return this;
 	}
 	clear(){
@@ -808,6 +811,7 @@ export class ReactiveSet extends Set{
 		super.add(val);
 		this.$EM.append(void 0, val,  false);
 
+		this.$EM.inputBoundCheck();
 		if(this.$size !== void 0) this.$size();
 		return this;
 	}
@@ -1031,6 +1035,7 @@ export class ReactiveArray extends Array{
 			this.$EM.append(lastLength);
 		else this.$EM.hardRefresh(lastLength);
 
+		this.$EM.inputBoundCheck();
 		if(this.$length !== void 0) this.$length();
 		return this.length;
 	}
@@ -1066,6 +1071,8 @@ export class ReactiveArray extends Array{
 
 			for (var i = 1; i <= limit; i++)
 				this.$EM.insertAfter(index + i);
+
+			this.$EM.inputBoundCheck();
 		}
 
 		if(this.$length !== void 0) this.$length();
@@ -1088,6 +1095,7 @@ export class ReactiveArray extends Array{
 		else for (let i = arguments.length - 1; i >= 0; i--)
 			this.$EM.prepend(i);
 
+		this.$EM.inputBoundCheck();
 		if(this.$length !== void 0) this.$length();
 		return this.length;
 	}
@@ -1256,6 +1264,7 @@ export class ReactiveArray extends Array{
 		if(withArray.length > this.length){
 			super.push(...withArray.slice(this.length));
 			this.$EM.hardRefresh(lastLength);
+			this.$EM.inputBoundCheck();
 		}
 		else{
 			super.splice(withArray.length);
@@ -1309,6 +1318,7 @@ export class ReactiveArray extends Array{
 		if(lastLength === 0){
 			super.push(...newList);
 			this.$EM.hardRefresh(0);
+			this.$EM.inputBoundCheck();
 
 			if(this.$length !== void 0) this.$length();
 			return;
@@ -1342,6 +1352,7 @@ export class ReactiveArray extends Array{
 			this.$EM.hardRefresh(c);
 		}
 
+		this.$EM.inputBoundCheck();
 		if(this.$length !== void 0) this.$length();
 		return this;
 	}
@@ -1431,6 +1442,7 @@ export class ReactiveArray extends Array{
 			// Create element if not exist
 			if(!(i in elems)){
 				this.$EM.hardRefresh(i);
+				this.$EM.inputBoundCheck();
 				return;
 			}
 
@@ -1444,6 +1456,7 @@ export class ReactiveArray extends Array{
 		}
 
 		forceRefreshKeyData(this);
+		this.$EM.inputBoundCheck();
 	}
 }
 
@@ -1956,6 +1969,18 @@ export class ElementManipulator{
 			}
 		}
 	}
+
+	inputBoundCheck(){
+		let parentNode = this.parentNode;
+		if(parentNode.sfBounded === void 0) return;
+
+		// Currently the select input that need to be recheck
+		if(parentNode.tagName === 'SELECT'){
+			let { sfBounded, sfModel } = parentNode;
+			let binding = sfModel.sf$bindedKey[sfBounded];
+			binding.inputBound(sfModel[sfBounded], binding.input);
+		}
+	}
 }
 
 export class ElementManipulatorProxy{
@@ -2097,6 +2122,12 @@ export class ElementManipulatorProxy{
 		const { list } = this;
 		for (let i = 0; i < list.length; i++)
 			EM_Proto.reverse.apply(list[i], arguments);
+	}
+
+	inputBoundCheck(){
+		const { list } = this;
+		for (let i = 0; i < list.length; i++)
+			EM_Proto.inputBoundCheck.apply(list[i], arguments);
 	}
 }
 
