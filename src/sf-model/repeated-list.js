@@ -336,6 +336,9 @@ function parsePatternRule(modelRef, pattern, proto){
 	let prop = pattern.source;
 	const that = prop.constructor === String ? modelRef[prop] : deepProperty(modelRef, prop);
 
+	if(pattern.props.constructor !== Array && (proto === PropertyList || proto === ReactiveMap))
+		pattern.props = ['_k_', pattern.props];
+
 	var firstInit;
 	if(that.constructor !== proto){
 		Object.setPrototypeOf(that, proto.prototype);
@@ -809,7 +812,7 @@ export class ReactiveSet extends Set{
 	add(val){
 		if(super.has(val)) return this;
 		super.add(val);
-		this.$EM.append(void 0, val,  false);
+		this.$EM.append(void 0, val, false);
 
 		this.$EM.inputBoundCheck();
 		if(this.$size !== void 0) this.$size();
@@ -1751,11 +1754,18 @@ export class ElementManipulator{
 	remove(index, item, isMap){
 		const exist = this.parentChilds || this.elements;
 		if(isMap !== void 0){
-			let key = isMap === true ? index : void 0;
-			for (index = 0; index < exist.length; index++) {
-				const el = exist[index];
-				if(el.model === item && (key === void 0 || el.sf$repeatListIndex === key))
-					break;
+			if(isMap === true){
+				let key = index;
+				for (index = 0; index < exist.length; index++) {
+					if(exist[index].sf$repeatListIndex === key)
+						break;
+				}
+			}
+			else{
+				for (index = 0; index < exist.length; index++) {
+					if(exist[index].model === item)
+						break;
+				}
 			}
 		}
 
