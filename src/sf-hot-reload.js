@@ -414,7 +414,8 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	// Keep component's original scope for first time only
 	if(func === void 0){
 		for(let prop in scope){
-			if(internalProp[prop] === true) // Skip function that related with framework
+			// Skip function that related with framework or with underscore
+			if(internalProp[prop] === true || prop.slice(0, 1) === '_')
 				continue;
 
 			const temp = scope[prop];
