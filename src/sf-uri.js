@@ -6,7 +6,7 @@ let listener = {query:[], hash:[], path:[], data:[]};
 
 function isURLSimilar(){
 	const now = parseURI();
-	if(now === location.origin + location.href) return;
+	if(now === location.href) return;
 	return now;
 }
 
@@ -15,11 +15,13 @@ function validateURLData(dat){
 	if(dat.constructor === Array){
 		for (var i = 0; i < dat.length; i++) {
 			const data = dat[i];
-			if(data.constructor === Number) continue;
+
+			if(data == null || data.constructor === Number)
+				continue;
 
 			if(URLDataValidator.test(data)){
 				console.log('URLData got:', dat);
-				throw new Error("URL data must not contain , : or ; symbol");
+				throw new Error("URL data must not contain ',', ':', or ';' symbol");
 			}
 		}
 		return;
@@ -27,7 +29,7 @@ function validateURLData(dat){
 
 	if(URLDataValidator.test(dat)){
 		console.log('URLData got:', dat);
-		throw new Error("URL data must not contain , : or ; symbol");
+		throw new Error("URL data must not contain ',', ':', or ';' symbol");
 	}
 }
 
