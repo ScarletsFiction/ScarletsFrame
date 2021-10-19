@@ -104,7 +104,7 @@ export const CustomEvent = {
 			view = ev.view === null ? ev.target.ownerDocument : ev.view.document;
 
 			if(isTouchDevice())
-				that.addEventListener('touchmove', prevent, {passive:false, once:true});
+				that.addEventListener('touchmove', prevent, {passive:false, capture:true});
 
 			view.addEventListener('pointermove', callbackMove);
 			view.addEventListener('pointerup', callbackEnd, {once:true});
@@ -122,7 +122,7 @@ export const CustomEvent = {
 			script.lock && script.lock(false);
 
 			if(isTouchDevice())
-				that.removeEventListener('touchmove', prevent, {passive:false, once:true});
+				that.removeEventListener('touchmove', prevent, {passive:false, capture:true});
 
 			view.removeEventListener('pointermove', callbackMove);
 			view.removeEventListener('pointercancel', callbackEnd, {once:true});
@@ -276,7 +276,6 @@ function touchGesture(that, callback){
 			}
 
 			that.style.touchAction = actionBackup;
-
 			view.removeEventListener('pointermove', callbackMove);
 
 			ev.scale = ev.angle = 0;
