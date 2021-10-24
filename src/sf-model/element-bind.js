@@ -451,7 +451,8 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	let _on = `on$${propertyName}`; // Everytime value's going changed, callback value will assigned as new value
 	let _m2v = `m2v$${propertyName}`; // Everytime value changed from script (not from View), callback value will only affect View
 
-	const set = val => {
+	// Must use function, and don't use ()=> {}
+	const set = function(val){
 		if(objValue !== val){
 			let newValue, noFeedback;
 			if(internal.inputBoundRunning === false){
@@ -467,7 +468,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			}
 
 			objValue = newValue !== void 0 ? newValue : val;
-			if(setter !== void 0) setter(objValue);
+			if(setter !== void 0) setter.call(this, objValue);
 
 			if(bindedKey.inputBound)
 				bindedKey.inputBound(objValue, bindedKey.input);
@@ -548,6 +549,8 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	if(SFOptions.devMode && objValue != null && objValue.$EM !== void 0)
 		return forceReactive(model, propertyName);
+
+	if(setter !== void 0) set.cache = setter;
 
 	Object.defineProperty(model, propertyName, {
 		enumerable: true,
