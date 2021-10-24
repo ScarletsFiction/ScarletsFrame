@@ -44,7 +44,7 @@ internal.openInspector = function(saved){
 		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
 			y: saved.y,
-		}, saved.type);
+		}, saved.type, true);
 
 		Object.assign(ref, saved.props)
 	}
@@ -59,7 +59,7 @@ internal.openInspector = function(saved){
 		let ref = SFDevSpace.addModelView(saved.source, model, {
 			x: saved.x,
 			y: saved.y,
-		}, saved.type);
+		}, saved.type, true);
 
 		Object.assign(ref, saved.props)
 	}
@@ -75,6 +75,10 @@ void function(){
 	path = path.src.split('scarletsframe.')[0];
 	loader.css([path+'inspector.css'], 'low');
 }();
+
+function sanitizeQuotes(text){
+	return JSON.stringify(text).slice(1, -1);
+}
 
 // For browser interface
 SFDevSpace = window.SFDevSpace = new Space('sf_devmode');
@@ -794,7 +798,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	}
 
 	My.clickStatelist = function(e){
-		var propName = $(e.target).prev('span').html();
+		var propName = $(e.target).prev('.key').text();
 
 		if(e.ctrlKey)
 			return SFDevSpace.openEditor(My.model, propName);
@@ -811,7 +815,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 			var that = obj;
 		}
 		else {
-			var propName = $(e.target).prev('span').html();
+			var propName = $(e.target).prev('.key').text();
 			var that = My.model[propName];
 		}
 
@@ -867,12 +871,12 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	for your production website, always make sure that the template
 	can't be created by your user. You must sanitize any user input!
 */
-SFDevSpace.addModelView = function(titles, model, ev, viewerType){
+SFDevSpace.addModelView = function(titles, model, ev, viewerType, dontSave=false){
 	if(model === void 0) return;
 
 	let isInsideData = model instanceof Set || model instanceof Array || model instanceof Map;
 
-	const parent = $('sf-space .sf-viewer', ev.view.document.body);
+	const parent = $('sf-space .sf-viewer', ev.view?.document?.body || document.body);
 	var template = `<sf-model-viewer sf-as-scope style="
 		transform: translate({{ x }}px, {{ y }}px);
 		z-index: {{ isEmpty === currentActive.panel ? 1 : 0 }};
@@ -880,7 +884,8 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 		<div class="title" @dragmove="dragmove">
 			<span sf-each="val in titles">{{ val }}</span>
 		</div>
-		<div class="transfer" @click="transferToConsole">🧐</div>
+		<div class="transfer" @click="transferToConsole" title="Transfer to console, bring this object to browser console to let you inspect">🧐</div>
+		<!--div class="transfer" title="Micro inspector, log any reactive data changes of this object's property to the console">🔬</div-->
 		<div class="sf-close" @click="close">x</div>
 		<div class="switcher">
 			<div class="item {{ state === 'reactive'}} {{ isEmpty.reactive }}" @click="state = 'reactive'">Reactive</div>
@@ -967,8 +972,15 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 
 	getDeepPrototype(model.constructor);
 
-	passive = [...passive];
-	functions = [...functions];
+	// Sanitize it, to avoid being attacked if someone use
+	// the development inspector on production environment
+	passive = [...passive].map($.escapeText);
+	functions = [...functions].map($.escapeText);
+	reactive = reactive.map($.escapeText);
+	objects = objects.map($.escapeText);
+
+	for (var i = 0; i < statelists.length; i++)
+		statelists[i][0] = $.escapeText(statelists[i][0]);
 
 	function cleanPropName(key){
 		if(key[0] === '.')
@@ -978,28 +990,31 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 
 	template += '<div class="reactive-list list">';
 
-	for (var i = 0; i < reactive.length; i++)
-		template += `<div class="reactive" @click="clickToEditor" title="Type: {{ types${reactive[i]} }}"><span @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span> : <textarea sf-bind="model${reactive[i]}"></textarea><div class="val-type val-{{ types${reactive[i]} }}"></div></div>`;
+	for (var i = 0; i < reactive.length; i++){
+		let sanitized = sanitizeQuotes(reactive[i]);
+		template += `<div class="reactive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key" @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span><span>:</span><textarea sf-bind="model${sanitized}"></textarea><div class="val-type val-{{ types${sanitized} }}"></div></div>`;
+	}
 
 	template += '</div><div class="passive-list list">';
 
-	for (var i = 0; i < passive.length; i++)
-		template += `<div class="passive" @click="clickToEditor" title="Type: {{ types${passive[i]} }}"><span>${cleanPropName(passive[i])}</span> : <div class="value">{{ model${passive[i]} }}</div><div class="val-type val-{{ types${passive[i]} }}"></div></div>`;
+	for (var i = 0; i < passive.length; i++){
+		let sanitized = sanitizeQuotes(passive[i]);
+		template += `<div class="passive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key">${cleanPropName(passive[i])}</span><span>:</span><div class="value">{{ model${sanitized} }}</div><div class="val-type val-{{ types${sanitized} }}"></div></div>`;
+	}
 
 	template += '</div><div class="statelist-list list">';
 
 	if(isInsideData){
 		template += `<div style="text-align:center;display: {{ model.${model instanceof Array ? 'length':'size'} === 0 ? 'block' : 'none'}}">Empty content...</div><div>`;
-		template += `<div sf-each="key, val in model" class="statelist"><span>{{ key == null ? '#' : key }}</span> : <div class="value" @click="clickObject(event, val)">{{ typeof val === "object" && val != null ? (
+		template += `<div sf-each="key, val in model" class="statelist"><span class="key">{{ key == null ? '#' : key }}</span><span>:</span><div class="value" @click="clickObject(event, val)">{{ typeof val === "object" && val != null ? (
 			'{'+ getAnyField(val) + '}'
 		) : val }}</div></div>`;
 		template += '</div>';
 	}
 	else if(model){
+		var val;
 		for (var i = 0; i < statelists.length; i++){
 			let {name, type} = statelists[i];
-			let prop = type === 'Map' || type === 'Set' ? 'size' : 'length';
-			let val;
 
 			if(type === 'Array')
 				val = `[...{{ model.${name}.length }}]`;
@@ -1010,7 +1025,7 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 			else
 				val = '{...}';
 
-			template += `<div class="statelist" @click="clickStatelist"><span @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${name}</span> : <div class="value">${val}</div></div>`;
+			template += `<div class="statelist" @click="clickStatelist"><span class="key" @pointerleave="hoverLeaving" @pointerenter="hoverStatelist">${name}</span><span>:</span><div class="value">${val}</div></div>`;
 		}
 	}
 
@@ -1018,7 +1033,8 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 
 	for (var i = 0; i < objects.length; i++){
 		if(objects[i].includes('(')) continue;
-		template += `<div class="object" @click="clickObject"><span>${cleanPropName(objects[i])}</span> : <div class="value">{{ objects${objects[i]} || '{}' }}</div></div>`;
+		let sanitized = sanitizeQuotes(objects[i]);
+		template += `<div class="object" @click="clickObject"><span class="key">${cleanPropName(objects[i])}</span><span>:</span><div class="value">{{ objects${sanitized} || '{}' }}</div></div>`;
 	}
 
 	template += '</div><div class="function-list list"><div class="info" title="Ctrl + Click to open your editor">Shift+Click to execute</div>';
@@ -1066,8 +1082,10 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType){
 	model.x = ev.x;
 	model.y = ev.y;
 
-	openedInspector.push(model);
-	saveInspector();
+	if(!dontSave){
+		openedInspector.push(model);
+		saveInspector();
+	}
 
 	return model;
 }

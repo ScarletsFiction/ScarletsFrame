@@ -129,11 +129,17 @@ sf-model-viewer .reactive{
 	white-space: pre-wrap;
 }
 
+sf-model-viewer > span{
+	font-size: 16px;
+}
 sf-model-viewer span{
 	cursor: default;
 	margin-top: -1px;
 	font-weight: 400;
 	font-size: 16px;
+	white-space: nowrap;
+	display: inline-flex;
+	padding-right: 5px;
 }
 
 sf-model-viewer .statelist .value,
@@ -152,7 +158,7 @@ sf-model-viewer .list textarea{
 	color: #b3b3b3;
 	vertical-align: middle;
 	width: -webkit-fill-available;
-	padding: 0 0 0 5px;
+	padding: 0;
 	top: 0;
 	left: 0;
 	height: 24px;
@@ -246,6 +252,7 @@ sf-model-viewer .function-list .function{
 }
 sf-model-viewer .function-list .function > span{
 	color: gray;
+	padding: 0;
 }
 
 sf-model-viewer .val-type{
