@@ -12,6 +12,8 @@ import {parseElement} from "./sf-dom.utils.js";
 let {windowEv} = internal;
 let headerTags = '';
 
+let consoleStyle = "background: yellow;border-radius: 0.5em;color: black;font-weight: bold;padding: 2px 4px;"; // #00BCD4
+
 function winDestroy(win){
 	const opt = win.winOptions;
 	if(opt.onclose && opt.onclose() === false){
@@ -24,7 +26,7 @@ function winDestroy(win){
 	delete Window.list[opt.id];
 	win.document.body.remove();
 	win.close();
-	console.log(`%c[${opt.title}]`, "color: #9bff82", "Closed!");
+	console.log(`%c${opt.title}`, consoleStyle, "Closed!");
 }
 
 const reqAnimFrame = window.requestAnimationFrame;
@@ -33,6 +35,18 @@ function firstInitSFWindow(){
 		window.requestAnimationFrame = reqAnimFrame;
 		Window.root.focus = window;
 	});
+}
+
+function restyleConsoleOutput(message, style, args){
+	let first = args[0];
+	if(first != null && first.constructor === String){
+		args[0] = message + `%c ${first}`;
+		args.splice(1, 0, style, '');
+		return args;
+	}
+
+	args.unshift(message, style);
+	return args;
 }
 
 export class Window{
@@ -176,18 +190,18 @@ export class Window{
 		}
 
 		options.title ??= "Untitled Space";
-
 		linker.console.log("Console output will be forwarded to main DevTools");
+
 		linker.console.log = function(){
-			console.log(`%c[${options.title}]`, "color: #9bff82", ...arguments);
+			console.log(...restyleConsoleOutput(`%c${options.title}`, consoleStyle, [...arguments]));
 		}
 
 		linker.console.warn = function(){
-			console.warn(`%c[${options.title}]`, "color: #9bff82", ...arguments);
+			console.warn(...restyleConsoleOutput(`%c${options.title}`, consoleStyle, [...arguments]));
 		}
 
 		linker.console.error = function(){
-			console.error(`%c[${options.title}]`, "color: #9bff82", ...arguments);
+			console.error(...restyleConsoleOutput(`%c${options.title}`, consoleStyle, [...arguments]));
 		}
 
 		linker.sf$proxy = forProxying;
