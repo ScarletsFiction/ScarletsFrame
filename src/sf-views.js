@@ -514,7 +514,7 @@ export function Views(selector, name){
 				}
 
 				hiding.classList.remove('page-current');
-				if(getChanges !== true && hiding.routeCached !== void 0 && hiding.routeCached.on !== void 0){
+				if(getChanges !== void 0 && hiding.routeCached !== void 0 && hiding.routeCached.on !== void 0){
 					let events = hiding.routeCached.on;
 
 					if(events.hidden){
@@ -541,7 +541,7 @@ export function Views(selector, name){
 
 			showing.classList.add('page-current');
 
-			if(getChanges !== true && showing.routeCached !== void 0 && showing.routeCached.on !== void 0){
+			if(getChanges !== void 0 && showing.routeCached !== void 0 && showing.routeCached.on !== void 0){
 				let events = showing.routeCached.on;
 
 				if(events.showed){
@@ -740,7 +740,7 @@ export function Views(selector, name){
 			let getChanges = {showed:[], hidden:[]};
 			toBeShowed(dom, getChanges);
 
-			if(pendingShowed !== void 0)
+			if(pendingShowed)
 				Self.relatedDOM.push(...pendingShowed);
 
 			if(tempDOM !== null){
@@ -758,12 +758,16 @@ export function Views(selector, name){
 
 			// Clear old cache
 			removeOldCache(dom);
+			let zz = Date.now();
 
 			let _showed = getChanges.showed;
 			for (var i = 0; i < _showed.length; i++) {
 				let temp = _showed[i];
 				temp.routeCached.on.showed(temp.routerData);
 			}
+
+			if(pendingShowed === void 0 && url.on !== void 0 && url.on.showed)
+				url.on.showed(Self.data);
 
 			let _hidden = getChanges.hidden;
 			for (var i = 0; i < _hidden.length; i++) {
@@ -779,8 +783,9 @@ export function Views(selector, name){
 			if(SFOptions.devMode && url.template !== void 0)
 				dom.sf$templatePath = url.template;
 
+			var pendingShowed = false;
 			if(url.hasChild){
-				var pendingShowed = [];
+				pendingShowed = [];
 				for (var i = 0; i < url.hasChild.length; i++) {
 					selectorElement[url.hasChild[i]] = getSelector(url.hasChild[i], dom, path);
 					const tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
@@ -790,9 +795,8 @@ export function Views(selector, name){
 				}
 
 				if(pendingShowed.length === 0)
-					pendingShowed = void 0;
+					pendingShowed = false;
 			}
-			else var pendingShowed = void 0;
 
 			if(url.selector === void 0)
 				var DOMReference = rootDOM;
