@@ -720,6 +720,31 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		if(e.ctrlKey) return SFDevSpace.openEditor(My.model, propName);
 	}
 
+	let tracked = new Map();
+	My.traceChanges = function(e){
+		let el = $(e.target);
+		var propName = el.prev('.key').text();
+
+		// Unwatch
+		if(tracked.has(propName)){
+			sf.unwatch(My.model, propName, tracked.get(propName));
+			tracked.delete(propName);
+			el.removeClass('tracked').attr('title', '');
+		}
+		else{ // watch
+			let oldVal = My.model[propName];
+			let modelName = My.titles[My.titles.length-1];
+			let handle = function(name, value){
+				onTracedChanges(modelName, propName, oldVal, value);
+				oldVal = value;
+			}
+
+			tracked.set(propName, handle);
+			sf.watch(My.model, propName, handle);
+			el.addClass('tracked').attr('title', 'This property is tracked, you can view the data changes from the browser console.');
+		}
+	}
+
 	My.hoverReactive = function(e){
 		var propName = e.target.innerHTML;
 		var bindedKey = My.model.sf$bindedKey[propName];
@@ -885,7 +910,6 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType, dontSave=false
 			<span sf-each="val in titles">{{ val }}</span>
 		</div>
 		<div class="transfer" @click="transferToConsole" title="Transfer to console, bring this object to browser console to let you inspect">🧐</div>
-		<!--div class="transfer" title="Micro inspector, log any reactive data changes of this object's property to the console">🔬</div-->
 		<div class="sf-close" @click="close">x</div>
 		<div class="switcher">
 			<div class="item {{ state === 'reactive'}} {{ isEmpty.reactive }}" @click="state = 'reactive'">Reactive</div>
@@ -992,14 +1016,14 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType, dontSave=false
 
 	for (var i = 0; i < reactive.length; i++){
 		let sanitized = sanitizeQuotes(reactive[i]);
-		template += `<div class="reactive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key" @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span><span>:</span><textarea sf-bind="model${sanitized}"></textarea><div class="val-type val-{{ types${sanitized} }}"></div></div>`;
+		template += `<div class="reactive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key" @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span><span>:</span><textarea sf-bind="model${sanitized}"></textarea><div class="val-type-c" @click.stop.capture="traceChanges"><div class="val-type val-{{ types${sanitized} }}"></div></div></div>`;
 	}
 
 	template += '</div><div class="passive-list list">';
 
 	for (var i = 0; i < passive.length; i++){
 		let sanitized = sanitizeQuotes(passive[i]);
-		template += `<div class="passive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key">${cleanPropName(passive[i])}</span><span>:</span><div class="value">{{ model${sanitized} }}</div><div class="val-type val-{{ types${sanitized} }}"></div></div>`;
+		template += `<div class="passive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key">${cleanPropName(passive[i])}</span><span>:</span><div class="value">{{ model${sanitized} }}</div><div class="val-type-c" @click.stop.capture="traceChanges"><div class="val-type val-{{ types${sanitized} }}"></div></div></div>`;
 	}
 
 	template += '</div><div class="statelist-list list">';
@@ -1125,6 +1149,25 @@ function saveInspector(){
 
 		localStorage.sf$inspectStore = JSON.stringify(list);
 	}, 1000);
+}
+
+function onTracedChanges(name, property, old, now){
+	console.groupCollapsed(`%c${name} %c> ${property}:`, 'color:yellow', 'color:lightgreen',  old, '->', now);
+
+	let stack = (new Error(1)).stack.split('\n');
+	stack.splice(0, 2);
+
+	for (var i = 0; i < stack.length; i++) {
+		stack.splice(0, 1);
+
+		if(stack[0].includes('.set ')){
+			stack.splice(0, 1);
+			break;
+		}
+	}
+
+	console.log(`Errorless: stack trace\n${stack.join('\n')}`);
+	console.groupEnd();
 }
 
 initElement();
