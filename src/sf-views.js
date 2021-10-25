@@ -514,10 +514,10 @@ export function Views(selector, name){
 				}
 
 				hiding.classList.remove('page-current');
-				if(getChanges !== void 0 && hiding.routeCached !== void 0 && hiding.routeCached.on !== void 0){
+				if(hiding.routeCached !== void 0 && hiding.routeCached.on !== void 0){
 					let events = hiding.routeCached.on;
 
-					if(events.hidden){
+					if(events.hidden !== void 0){
 						if(getChanges)
 							getChanges.hidden.push(hiding);
 						else events.hidden(element.routePath, element.routeCached);
@@ -541,10 +541,10 @@ export function Views(selector, name){
 
 			showing.classList.add('page-current');
 
-			if(getChanges !== void 0 && showing.routeCached !== void 0 && showing.routeCached.on !== void 0){
+			if(showing.routeCached !== void 0 && showing.routeCached.on !== void 0){
 				let events = showing.routeCached.on;
 
-				if(events.showed){
+				if(events.showed !== void 0){
 					if(getChanges)
 						getChanges.showed.push(showing);
 					else events.showed(showing.routerData);
@@ -725,7 +725,6 @@ export function Views(selector, name){
 				}
 			}
 
-			// ToDo: Maybe need to wait if there are some component that being initialized
 			const tempDOM = Self.currentDOM;
 			Self.lastDOM = tempDOM;
 			Self.currentDOM = dom;
@@ -786,9 +785,10 @@ export function Views(selector, name){
 			if(url.hasChild){
 				pendingShowed = [];
 				for (var i = 0; i < url.hasChild.length; i++) {
-					selectorElement[url.hasChild[i]] = getSelector(url.hasChild[i], dom, path);
-					const tempPageView = selectorElement[url.hasChild[i]].firstElementChild;
+					let temp = url.hasChild[i];
+					temp = selectorElement[temp] = getSelector(temp, dom, path);
 
+					const tempPageView = temp.firstElementChild;
 					if(tempPageView)
 						pendingShowed.unshift(tempPageView);
 				}
@@ -994,8 +994,8 @@ export function Views(selector, name){
 			return false;
 
 		Self.lastDOM = Self.currentDOM;
-		if(Self.currentDOM.routeCached.on !== void 0 && Self.currentDOM.routeCached.on.leaving)
-			Self.currentDOM.routeCached.on.leaving();
+		if(Self.lastDOM.routeCached.on !== void 0 && Self.lastDOM.routeCached.on.leaving)
+			Self.lastDOM.routeCached.on.leaving();
 
 		Self.currentDOM = cachedDOM;
 
