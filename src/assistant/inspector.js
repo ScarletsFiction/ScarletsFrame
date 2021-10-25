@@ -723,6 +723,9 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	let tracked = new Map();
 	My.traceChanges = function(e){
 		let el = $(e.target);
+		if(el.hasClass('val-type'))
+			el = el.parent();
+
 		var propName = el.prev('.key').text();
 
 		// Unwatch
@@ -1016,14 +1019,14 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType, dontSave=false
 
 	for (var i = 0; i < reactive.length; i++){
 		let sanitized = sanitizeQuotes(reactive[i]);
-		template += `<div class="reactive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key" @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span><span>:</span><textarea sf-bind="model${sanitized}"></textarea><div class="val-type-c" @click.stop.capture="traceChanges"><div class="val-type val-{{ types${sanitized} }}"></div></div></div>`;
+		template += `<div class="reactive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key" @pointerleave="hoverLeaving" @pointerenter="hoverReactive">${cleanPropName(reactive[i])}</span><span>:</span><textarea sf-bind="model${sanitized}"></textarea><div class="val-type-c" @click.stop="traceChanges"><div class="val-type val-{{ types${sanitized} }}"></div></div></div>`;
 	}
 
 	template += '</div><div class="passive-list list">';
 
 	for (var i = 0; i < passive.length; i++){
 		let sanitized = sanitizeQuotes(passive[i]);
-		template += `<div class="passive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key">${cleanPropName(passive[i])}</span><span>:</span><div class="value">{{ model${sanitized} }}</div><div class="val-type-c" @click.stop.capture="traceChanges"><div class="val-type val-{{ types${sanitized} }}"></div></div></div>`;
+		template += `<div class="passive" @click="clickToEditor" title="Type: {{ types${sanitized} }}"><span class="key">${cleanPropName(passive[i])}</span><span>:</span><div class="value">{{ model${sanitized} }}</div><div class="val-type-c" @click.stop="traceChanges"><div class="val-type val-{{ types${sanitized} }}"></div></div></div>`;
 	}
 
 	template += '</div><div class="statelist-list list">';
