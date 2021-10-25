@@ -168,6 +168,7 @@ Internal.async = function(mode){
 	animFrameMode = disableAsync = !mode;
 }
 
+// Improve this to O(2) if possible
 export function syntheticReactiveArray(template, property, modelScope){
 	const { bindList } = template;
 	let elements = bindList.$EM.elements || bindList.$EM.parentChilds;

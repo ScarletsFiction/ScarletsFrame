@@ -468,7 +468,11 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			}
 
 			objValue = newValue !== void 0 ? newValue : val;
-			if(setter !== void 0) setter.call(this, objValue);
+
+			if(setter !== void 0){
+				setter.call(this, objValue);
+				objValue = getter.call(this);
+			}
 
 			if(bindedKey.inputBound)
 				bindedKey.inputBound(objValue, bindedKey.input);
@@ -476,7 +480,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			if(bindedKey.callback){
 				const {callback} = bindedKey;
 				for (var i = 0; i < callback.length; i++)
-					callback[i].call(this, propertyName, val);
+					callback[i].call(this, propertyName, objValue);
 			}
 
 			var temp;
