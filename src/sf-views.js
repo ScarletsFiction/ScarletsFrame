@@ -758,7 +758,6 @@ export function Views(selector, name){
 
 			// Clear old cache
 			removeOldCache(dom);
-			let zz = Date.now();
 
 			let _showed = getChanges.showed;
 			for (var i = 0; i < _showed.length; i++) {
