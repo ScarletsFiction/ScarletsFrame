@@ -194,11 +194,13 @@ function parseRoutes(obj_, selectorList, routes, collection){
 
 internal.router.findRoute = function(url){
 	for(let i=0; i<this.length; i++){
-		const found = url.match(this[i]);
+		let temp = this[i];
+		const found = url.match(temp);
+
 		if(found !== null){
-			const { keys } = this[i];
+			const { keys } = temp;
 			if(keys !== void 0){
-				const data = this[i].data = {};
+				const data = temp.data = {};
 				found.shift();
 
 				for (let a = 0; a < keys.length; a++) {
@@ -206,7 +208,7 @@ internal.router.findRoute = function(url){
 				}
 			}
 
-			return this[i];
+			return temp;
 		}
 	}
 
@@ -683,8 +685,9 @@ export function Views(selector, name){
 		// When new dom.property added, please find "Index-AB" with text editor
 		// to replace on that section too
 		function insertLoadedElement(DOMReference, dom, pendingShowed){
-			dom.routerData = {};
+			dom.routerData = Object.assign({}, currentData); // copy
 			const { firstChild } = dom;
+
 			if((firstChild.constructor._ref || firstChild.constructor) === Comment && firstChild.nodeValue.indexOf(' SF-View-Data') === 0){
 				dom.routerData = JSON.parse(firstChild.nodeValue.slice(14));
 				firstChild.remove();
