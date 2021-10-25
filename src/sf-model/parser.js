@@ -257,6 +257,10 @@ function addressAttributes(currentNode, template){
 function toObserve(full, model, properties){
 	const place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
 
+	// Simplify: model['stuff'] => model.stuff
+	if(properties.includes('['))
+		properties = stringifyPropertyPath(parsePropertyPath(properties));
+
 	// Get property name
 	if(!(properties in place)){
 		place[properties] = [toObserve.template.i];
