@@ -24,8 +24,8 @@ export var SFOptions = {
 // In case if we need to support Japan/China/Korea character on Object property
 // Replace: "\w$_" with another regex that can ignore symbols like [^ ()]
 export var sfRegex = {
-	getQuotes:/(['"])(?:\1|[\s\S]*?[^\\]\1)/g,
-	getAttrQuotes:/=(\\['"])(?:\1|[\s\S]*?[^\\]\1)/g,
+	getQuotes:/(['"`])(?:\1|[\s\S]*?[^\\]\1)/g,
+	getAttrQuotes:/=(\\['"`])(?:\1|[\s\S]*?[^\\]\1)/g,
 	scopeVar:'(^|[^.\\]\\w$])',
 	// escapeHTML:/(?!&#.*?;)[\u00A0-\u9999<>\&]/gm,
 
@@ -33,8 +33,8 @@ export var sfRegex = {
 	dataParser:/{{([^@%][\s\S]*?)}}/g,
 
 	repeatedList:/(.*?) in (.*?)$/,
-	itemsObserve:/\b(_model_|_modelScope)\.([\w$_\[\].]+)/g,
-	parsePropertyPath:/(?:\[(['"\w$_]+)\]|\.([\w$_]+))/g,
+	itemsObserve:/\b(_model_|_modelScope)\.([\w$_\['"`\].]+)/g,
+	parsePropertyPath:/(?:\[(['"`\w$_]+)\]|\.([\w$_]+))/g,
 	getSingleMask:['([^\\w$_.]|^)','([^\\w$_:]|$)'], //gm
 	getScopeList:['(?:[^\\w$_.]|^)(',')(?:[^\\w$_:]|$)'], //gm
 
