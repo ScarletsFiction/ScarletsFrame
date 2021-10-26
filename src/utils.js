@@ -231,10 +231,8 @@ export function modelKeys(modelRef, toString, cache, force){
 					temp += `|${key}`;
 				}
 
-				if(cache !== void 0){
+				if(cache !== void 0)
 					cache.keys = [...keys];
-					cache.str = temp;
-				}
 
 				return temp;
 			}
@@ -252,12 +250,8 @@ export function modelKeys(modelRef, toString, cache, force){
 	}
 	else keys = cache.keys;
 
-	if(toString){
-		if(cache.str !== void 0)
-			return cache.str;
-
-		return cache.str = keys = keys.join('|');
-	}
+	if(toString)
+		return keys.join('|');
 
 	return keys;
 }

@@ -1,5 +1,5 @@
 import {CustomEvent} from "./custom-event.js";
-import {avoidQuotes, parsePropertyPath, deepProperty, modelKeys as _modelKeys, findBindListElement} from "../utils.js";
+import {avoidQuotes, parsePropertyPath, deepProperty, findBindListElement} from "../utils.js";
 import {childIndexes, getSelector} from "../sf-dom.utils.js";
 import {internal, sfRegex} from "../shared.js";
 
@@ -18,8 +18,6 @@ function getDirectReference(_modelScope, script){
 
 var evFuncCache = new Map();
 export function eventHandler(that, data, _modelScope, rootHandler, template){
-	const modelKeys = _modelKeys(_modelScope, true, template.modelRefRoot_regex);
-
 	let direct = data.cacheDirect ?? false;
 	let script = data.cacheScript ?? data.value;
 	if(data.cacheScript === void 0){
