@@ -327,8 +327,7 @@ export function templateInjector(targetNode, modelScope, cloneDynamic){
 }
 
 export function createModelKeysRegex(targetNode, modelScope, mask){
-	let cache = {};
-	let modelKeys = getModelKeys(modelScope, true, cache);
+	let modelKeys = getModelKeys(modelScope, true);
 	if(modelKeys.length === 0){
 		console.error(modelScope, $(targetNode.outerHTML)[0]);
 		throw new Error("Model has no property instead of '$el', maybe some script haven't been loaded");
@@ -340,8 +339,7 @@ export function createModelKeysRegex(targetNode, modelScope, mask){
 	const obj = {};
 
 	// Don't match text inside quote, or object keys
-	obj.modelRefRoot_regex = cache;
-	cache.v = RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g');
+	obj.modelRefRoot_regex = {v: RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g')};
 
 	if(mask !== null)
 		obj.modelRef_regex = RegExp(sfRegex.getSingleMask.join(mask), 'gm');

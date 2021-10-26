@@ -466,8 +466,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		// Recreate model RegExp
 		if(scope.sf$internal && scope.sf$internal.modelKeysRegex){
 			let { modelKeysRegex } = scope.sf$internal;
-			let modelKeys = getModelKeys(scope, true, modelKeysRegex, true); // force update cache
-			modelKeysRegex.v = RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g');
+			modelKeysRegex.v = RegExp(`${sfRegex.scopeVar}(${getModelKeys(scope, true)})`, 'g');
 		}
 	}
 	else{

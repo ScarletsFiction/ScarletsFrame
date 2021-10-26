@@ -204,51 +204,36 @@ export function getCallerFile(step){
 }
 
 // Get property of the model
-export function modelKeys(modelRef, toString, cache, force){
-	var keys;
+export function modelKeys(modelRef, toString){
+	// it maybe custom class
+	if(modelRef.constructor !== Object && modelRef.constructor !== Array){
+		var keys = new Set();
+		for(var key in modelRef)
+			keys.add(key);
 
-	if(force || cache === void 0 || cache.proto !== modelRef.constructor){
-		if(cache !== void 0)
-			cache.proto = modelRef.constructor;
+		getStaticMethods(keys, modelRef.constructor);
+		getPrototypeMethods(keys, modelRef.constructor);
 
-		// it maybe custom class
-		if(modelRef.constructor !== Object && modelRef.constructor !== Array){
-			var keys = new Set();
-			for(var key in modelRef)
-				keys.add(key);
-
-			getStaticMethods(keys, modelRef.constructor);
-			getPrototypeMethods(keys, modelRef.constructor);
-
-			if(toString){
-				let temp = '';
-				for(var key of keys){
-					if(temp.length === 0){
-						temp += key;
-						continue;
-					}
-
-					temp += `|${key}`;
+		if(toString){
+			let temp = '';
+			for(var key of keys){
+				if(temp.length === 0){
+					temp += key;
+					continue;
 				}
 
-				if(cache !== void 0)
-					cache.keys = [...keys];
-
-				return temp;
+				temp += `|${key}`;
 			}
 
-			keys = [...keys];
-			if(cache !== void 0) cache.keys = keys;
-			return keys;
+			return temp;
 		}
 
-		keys = [];
-		for(var key in modelRef)
-			keys.push(key);
-
-		if(cache !== void 0) cache.keys = keys;
+		return [...keys];
 	}
-	else keys = cache.keys;
+
+	var keys = [];
+	for(var key in modelRef)
+		keys.push(key);
 
 	if(toString)
 		return keys.join('|');
