@@ -464,10 +464,8 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 		func(internal.proxy, space, (scope.$el && scope.$el.$item) || {});
 
 		// Recreate model RegExp
-		if(scope.sf$internal && scope.sf$internal.modelKeysRegex){
-			let { modelKeysRegex } = scope.sf$internal;
-			modelKeysRegex.v = RegExp(`${sfRegex.scopeVar}(${getModelKeys(scope, true)})`, 'g');
-		}
+		if(scope.sf$internal && scope.sf$internal.modelKeysRegex)
+			scope.sf$internal.modelKeysRegex.v = RegExp(`${sfRegex.scopeVar}(${getModelKeys(scope, true)})`, 'g');
 	}
 	else{
 		firstTime = false;
