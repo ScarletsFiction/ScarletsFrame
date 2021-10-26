@@ -18,17 +18,22 @@ function getDirectReference(_modelScope, script){
 
 var evFuncCache = new Map();
 export function eventHandler(that, data, _modelScope, rootHandler, template){
-	const modelKeys = _modelKeys(_modelScope, true);
+	const modelKeys = _modelKeys(_modelScope, true, template.modelRefRoot_regex);
 
-	let direct = false;
-	let script = data.value;
-	script = avoidQuotes(script, function(script_){
-		if(sfRegex.anyOperation.test(script_) === false)
-			direct = true;
+	let direct = data.cacheDirect ?? false;
+	let script = data.cacheScript ?? data.value;
+	if(data.cacheScript === void 0){
+		script = avoidQuotes(script, function(script_){
+			if(sfRegex.anyOperation.test(script_) === false)
+				direct = true;
 
-		// Replace variable to refer to current scope
-		return script_.replace(template.modelRefRoot_regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);
-	});
+			// Replace variable to refer to current scope
+			return script_.replace(template.modelRefRoot_regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);
+		});
+
+		data.cacheDirect = direct;
+		data.cacheScript = script;
+	}
 
 	const name_ = data.name.slice(1);
 	let wantTrusted = name_.includes('.trusted') || internal.rejectUntrusted;
