@@ -277,7 +277,10 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 				if(cRef.dynamicFlag.currentHTML === temp2)
 					continue;
 
-				const tDOM = parseElement(cRef.dynamicFlag.currentHTML = temp2);
+				let tDOM = temp2.nodeType === 1
+					? temp2
+					: parseElement(cRef.dynamicFlag.currentHTML = temp2);
+
 				const tDOMLength = tDOM.length;
 				const currentDOM = prevAll(cRef.dynamicFlag, cRef.startFlag);
 
