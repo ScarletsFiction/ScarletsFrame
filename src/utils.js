@@ -45,6 +45,7 @@ export function stringifyPropertyPath(properties){
 }
 
 var _es = '%@~';
+var _esRegexp = /%@~(\d+)%@~/g;
 export function avoidQuotes(str, func, onQuotes, isAttr){
 	str = str.split(_es).join('-');
 
@@ -60,12 +61,14 @@ export function avoidQuotes(str, func, onQuotes, isAttr){
 	str = func(str);
 
 	if(onQuotes !== void 0){
-		for (var i = 0; i < temp.length; i++)
-			str = str.replace(_es+i+_es, onQuotes(temp[i]));
+		str = str.replace(_esRegexp, function(full, i){
+			return onQuotes(temp[+i]);
+		});
 	}
 	else{
-		for (var i = 0; i < temp.length; i++)
-			str = str.replace(_es+i+_es, temp[i]);
+		str = str.replace(_esRegexp, function(full, i){
+			return temp[+i];
+		});
 	}
 
 	return str;
