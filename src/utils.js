@@ -174,15 +174,21 @@ export function proxyClass(scope){
 	getPrototypeMethods(list, parent);
 
 	for(var key of list){
+		let tempProto = proto[key];
+		if(tempProto == null || tempProto.constructor !== Function)
+			continue;
+
+		let tempScope = scope[key];
+
 		// Proxy only when child method has similar name with the parent
-		if(scope[key] !== proto[key] && scope[key].ref === void 0){
+		if(tempScope !== tempProto && tempScope.ref === void 0){
 			let tempProxy = function(){
 				scope.super = tempProxy.protoFunc;
 				return tempProxy.ref.apply(scope, arguments);
 			}
 
-			tempProxy.ref = scope[key];
-			tempProxy.protoFunc = proto[key];
+			tempProxy.ref = tempScope;
+			tempProxy.protoFunc = tempProto;
 
 			scope[key] = tempProxy;
 		}
