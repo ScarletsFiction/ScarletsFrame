@@ -109,6 +109,16 @@ export function onEvent(element, event, selector, callback, options, _opt){
 			}
 			callback.callback = tempCallback;
 		}
+
+		if(options.slot !== void 0){
+			let exist = element.sf$eventListener[event];
+
+			for (var i = exist.length - 1; i >= 0; i--) {
+				let temp = exist[i].options;
+				if(temp !== void 0 && temp.slot === options.slot)
+					offEvent(element, event, selector, exist[i], options);
+			}
+		}
 	}
 
 	callback.selector = selector;
