@@ -53,7 +53,7 @@ export function onEvent(element, event, selector, callback, options, _opt){
 		return;
 	}
 
-	if(callback !== void 0 && callback.constructor === Object){
+	if(callback != null && callback.constructor === Object){
 		const temp = options;
 		options = callback;
 		callback = temp;
@@ -69,8 +69,8 @@ export function onEvent(element, event, selector, callback, options, _opt){
 		selector = null;
 	}
 
-	if(_opt !== void 0){
-		if(options === void 0) options = _opt;
+	if(_opt != null){
+		if(options == null) options = _opt;
 		else Object.assign(options, _opt);
 	}
 
@@ -86,7 +86,7 @@ export function onEvent(element, event, selector, callback, options, _opt){
 		callback.callback = tempCallback;
 	}
 
-	if(options !== void 0){
+	if(options != null){
 		if(options.prevent || options.outside || options.stop || options.stopAll){
 			const tempCallback = callback;
 			const tempEl = element;
@@ -110,12 +110,12 @@ export function onEvent(element, event, selector, callback, options, _opt){
 			callback.callback = tempCallback;
 		}
 
-		if(options.slot !== void 0){
+		if(options.slot != null && element.sf$eventListener != null){
 			let exist = element.sf$eventListener[event];
 
 			for (var i = exist.length - 1; i >= 0; i--) {
 				let temp = exist[i].options;
-				if(temp !== void 0 && temp.slot === options.slot)
+				if(temp != null && temp.slot === options.slot)
 					offEvent(element, event, selector, exist[i], options);
 			}
 		}
@@ -175,7 +175,7 @@ export function onceEvent(element, event, selector, callback, options){
  */
 export function offEvent(element, event, selector, callback, options){
 	// Remove all event
-	if(event === void 0){
+	if(event == null){
 		if(element.sf$eventListener === void 0)
 			return;
 
@@ -193,13 +193,13 @@ export function offEvent(element, event, selector, callback, options){
 		return;
 	}
 
-	if(callback !== void 0 && callback.constructor === Object){
+	if(callback != null && callback.constructor === Object){
 		const temp = options;
 		options = callback;
 		callback = temp;
 	}
 
-	if(selector !== void 0){
+	if(selector != null){
 		if(selector.constructor === Function){
 			callback = selector;
 			selector = null;
@@ -211,7 +211,7 @@ export function offEvent(element, event, selector, callback, options){
 		}
 	}
 
-	if(options !== void 0 && options.outside)
+	if(options != null && options.outside)
 		element = internal.WindowClass;
 
 	if(element === internal.WindowClass){
