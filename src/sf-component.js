@@ -176,6 +176,8 @@ function stemCreator(item, asScope){
 	return elem;
 }
 
+component.waitingTemplate = {};
+
 component.html = function(name, outerHTML, namespace){
 	const scope = namespace || component;
 	let templatePath = false;
@@ -196,6 +198,7 @@ component.html = function(name, outerHTML, namespace){
 						delete window.templates[outerHTML.template];
 				}
 				else{
+					component.waitingTemplate[name] = outerHTML.template;
 					TemplatePending.push(function(){
 						component.html(name, outerHTML, namespace, true);
 					});
@@ -208,6 +211,7 @@ component.html = function(name, outerHTML, namespace){
 		else return;
 
 		if(template === void 0){
+			component.waitingTemplate[name] = '[no template]';
 			TemplatePending.push(function(){
 				component.html(name, outerHTML, namespace, true);
 			});
@@ -216,6 +220,8 @@ component.html = function(name, outerHTML, namespace){
 
 		outerHTML = template;
 	}
+
+	delete component.waitingTemplate[name];
 
 	// 0=Function for scope, 1=DOM Contructor, 2=elements, 3=Template, 4=ModelRegex
 	let registrar = scope.registered[name];
