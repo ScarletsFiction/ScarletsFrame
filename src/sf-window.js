@@ -29,11 +29,13 @@ function winDestroy(win){
 	console.log(`%c${opt.title}`, consoleStyle, "Closed!");
 }
 
-const reqAnimFrame = window.requestAnimationFrame;
+let reqAnimFrame = window.requestAnimationFrame;
 function firstInitSFWindow(){
 	window.addEventListener('focus', function(){
-		window.requestAnimationFrame = reqAnimFrame;
 		Window.root.focus = window;
+
+		if(!Window.disableFocusLinker)
+			window.requestAnimationFrame = reqAnimFrame;
 	});
 }
 
@@ -50,6 +52,9 @@ function restyleConsoleOutput(message, style, args){
 }
 
 export class Window{
+	// false = requestAnimationFrame/performance.now will be transfered
+	static disableFocusLinker = false;
+
 	static frameworkPath = "";
 	// id = ...
 
@@ -161,14 +166,20 @@ export class Window{
 				firstInitSFWindow = void 0;
 			}
 
+			linker.sf.Window._changeTiming(performance.now() - linker.performance.now());
+
 			if(document.hasFocus() === false){
-				window.requestAnimationFrame = linker.requestAnimationFrame;
 				Window.root.focus = linker;
+
+				if(!Window.disableFocusLinker)
+					Window.root.window.requestAnimationFrame = linker.requestAnimationFrame;
 			}
 
 			linker.addEventListener('focus', function(){
-				window.requestAnimationFrame = linker.requestAnimationFrame;
 				Window.root.focus = linker;
+
+				if(!Window.disableFocusLinker)
+					Window.root.window.requestAnimationFrame = linker.requestAnimationFrame;
 			});
 
 			onLoaded && onLoaded({
@@ -258,6 +269,16 @@ export class Window{
 			throw new Error("Can't capture event, please add event data on parameter 2 of sf.Window.source");
 
 		return element.ownerDocument === ev.view.document;
+	}
+
+	static _changeTiming(time){
+		let temp = reqAnimFrame;
+		requestAnimationFrame = reqAnimFrame = function(callback){
+			if(callback.length === 0)
+				return temp(callback);
+
+			return temp(t => callback(t + time));
+		}
 	}
 }
 
