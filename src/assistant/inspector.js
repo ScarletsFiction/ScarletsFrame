@@ -8,6 +8,9 @@ import {Space} from "../sf-space.js";
 import {loader} from "../sf-loader.js";
 import {$} from "../sf-dom.js";
 import {internal} from "../shared.js";
+import {model as Model} from "../sf-model.js";
+import {component as Component} from "../sf-component.js";
+import {watch, unwatch} from "../sf-model/element-bind.js";
 
 export function Inspector(){
 
@@ -37,7 +40,7 @@ internal.openInspector = function(saved){
 		return pendingOpenInspector.push(saved);
 
 	if(saved.type === 'model'){
-		let model = deepProperty(sf.model.root, saved.source);
+		let model = deepProperty(Model.root, saved.source);
 		if(model === void 0)
 			return console.log("Failed to reopen inspector for", saved.source);
 
@@ -49,7 +52,7 @@ internal.openInspector = function(saved){
 		Object.assign(ref, saved.props)
 	}
 	else if(saved.type === 'component'){
-		let model = sf.component(saved.source[0]);
+		let model = Component(saved.source[0]);
 		saved.source[0] = model[saved.index] === void 0 ? 0 : saved.index;
 		model = deepProperty(model, saved.source);
 
@@ -730,7 +733,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 		// Unwatch
 		if(tracked.has(propName)){
-			sf.unwatch(My.model, propName, tracked.get(propName));
+			unwatch(My.model, propName, tracked.get(propName));
 			tracked.delete(propName);
 			el.removeClass('tracked').attr('title', '');
 		}
@@ -743,7 +746,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 			}
 
 			tracked.set(propName, handle);
-			sf.watch(My.model, propName, handle);
+			watch(My.model, propName, handle);
 			el.addClass('tracked').attr('title', 'This property is tracked, you can view the data changes from the browser console.');
 		}
 	}
@@ -1144,7 +1147,7 @@ function saveInspector(){
 				};
 
 				if(temp.viewerType === 'component')
-					obj.index = sf.component(title[0]).indexOf(temp.model);
+					obj.index = Component(title[0]).indexOf(temp.model);
 
 				list.push(obj);
 			}
