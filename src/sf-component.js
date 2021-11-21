@@ -139,7 +139,22 @@ component.for = function(name, options, func, namespace){
 		});
 	}
 
-	window[`$${capitalizeLetters(name.split('-'))}`] = construct;
+	// Put the element on global once, and avoid conflict
+	// Throw error on conflict, to notify the developer
+	let globalName = `$${capitalizeLetters(name.split('-'))}`;
+	if(window[globalName] !== void 0){
+		if(!window[globalName]._sfc)
+			throw new Error("Name conflict detected for "+globalName);
+	}
+	else{
+		construct._sfc = true;
+		Object.defineProperty(window, globalName, {
+			enumerable: false,
+			writable: false,
+			configurable: false,
+			value: construct
+		});
+	}
 
 	if(name in waitingHTML)
 		checkWaiting(name, namespace);
