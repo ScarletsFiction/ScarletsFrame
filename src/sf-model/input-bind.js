@@ -230,6 +230,7 @@ function inputBoundRun(val, elements){
 
 // For dynamic reference checking
 inputBoundRun.inputBoundRun = true;
+inputBoundRun._sf = true; // flag as internal
 
 function triggerInputEvent(e){
 	if(e.fromSFFramework === true) return;
