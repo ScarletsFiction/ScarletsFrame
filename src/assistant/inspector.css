@@ -58,6 +58,9 @@ sf-space[sf_devmode]{
 	color: gray;
 	font-weight: bold;
 }
+.sf-side-info .list-title span{
+	font-weight: normal;
+}
 .sf-side-info .list-title.true{
 	display: block;
 }

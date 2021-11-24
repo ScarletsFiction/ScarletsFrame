@@ -109,19 +109,19 @@ SFDevMode = SFDevSpace.component('sf-inspector', {
 			display: {{ haveList ? '' : 'none'}}
 		">x</div>
 		<div class="title" title="Ctrl + Click on the list to open the source on your editor">{{ message }}</div>
-		<div class="list-title {{ !!spaces.length }}" title="Registered model and component in this space will be different from global or other space">Space List 🍱</div>
+		<div class="list-title {{ !!spaces.length }}" title="Registered model and component in this space will be different from global or other space">Space List <span>🍱</span></div>
 		<div class="space-list list {{ !!spaces.length }}">
 			<sf-space-info sf-each="val in spaces" sf-as-scope></sf-space-info>
 		</div>
-		<div class="list-title {{ !!models.length }}" title="Shared model that can be used in multiple template">Model List ☘️🍀🌿</div>
+		<div class="list-title {{ !!models.length }}" title="Shared model that can be used in multiple template">Model List <span>☘️🍀🌿</span></div>
 		<div class="model-list list {{ !!models.length }}">
 			<sf-model-info sf-each="val in models" sf-as-scope></sf-model-info>
 		</div>
-		<div class="list-title {{ !!components.length }}" title="Similar like model, instead of shared this will create new model scope for each component element. This can act like an empty shell, can be disposed or reused if being saved somewhere.">Component List 🌳💐🎄</div>
+		<div class="list-title {{ !!components.length }}" title="Similar like model, instead of shared this will create new model scope for each component element. This can act like an empty shell, can be disposed or reused if being saved somewhere.">Component List <span>🌳💐🎄</span></div>
 		<div class="component-list list {{ !!components.length }}">
 			<sf-component-info sf-each="val in components" sf-as-scope></sf-component-info>
 		</div>
-		<div class="list-title {{ !!views.length }}" title="An element that have a router, this can be routed from the URL or script. Can be nested or created on any possible element.">Views Info 🍱⛺️🍂</div>
+		<div class="list-title {{ !!views.length }}" title="An element that have a router, this can be routed from the URL or script. Can be nested or created on any possible element.">Views Info <span>🍱⛺️🍂</span></div>
 		<div class="view-list list {{ !!views.length }}">
 			<sf-view-info sf-each="val in views" sf-as-scope></sf-view-info>
 		</div>
