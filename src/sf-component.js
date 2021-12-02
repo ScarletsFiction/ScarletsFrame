@@ -340,9 +340,18 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	}
 
 	let scopeFunc = (namespace || _model);
-	let newObj = element.model || (asScope && useItem ? $item : (
-		inherit !== void 0 ? new inherit(scopeFunc, $item) : {}
-	));
+	let newObj;
+
+	try{
+		newObj = element.model || (asScope && useItem ? $item : (
+			inherit !== void 0 ? new inherit(scopeFunc, $item) : {}
+		));
+	} catch(e) {
+		if(!e._sf_component) throw e;
+
+		// Use early return object
+		newObj = e._sf_obj;
+	}
 
 	let index = 0;
 	if(newObj.$el === void 0)
