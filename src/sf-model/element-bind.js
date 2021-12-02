@@ -407,7 +407,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	}
 
 	// Proxy property
-	const desc = isALength !== false ? {set:true} : Object.getOwnPropertyDescriptor(model, propertyName);
+	const desc = isALength !== false ? {set:true} : findDescriptor(model, propertyName);
 
 	let getter, setter;
 	if(desc !== void 0 && desc.set !== void 0){
@@ -562,6 +562,14 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		get: getter || (()=> objValue),
 		set
 	});
+}
+
+function findDescriptor(object, propertyName){
+	let desc = Object.getOwnPropertyDescriptor(object, propertyName);
+	if(desc !== void 0) return desc;
+
+	if(object.constructor !== Object && object.constructor !== Function)
+		return findDescriptor(Object.getPrototypeOf(object), propertyName);
 }
 
 export function repeatedListBindRoot(template, modelScope){
