@@ -383,7 +383,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	else{
 		var hasBindInit = false;
 
-		// For contributor: don't delete sf$bindedKey from model because can cause memory leak
+		// Don't delete sf$bindedKey from model because can cause memory leak
 		bindedKey = bindedKey[propertyName] = {
 			[bindName]: (bindName !== 'inputBound' ? [callback] : callback)
 		};
@@ -541,11 +541,13 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 
 	// Add custom original because the creation was from different template
 	if(desc !== void 0 && desc.set !== void 0){
-		if(callback.prop && callback.prop !== originalPropertyName)
-			console.error(`Key already has bind information '${callback.prop}' but being replaced with ${originalPropertyName}`);
+		if(callback._sf === void 0){
+			if(callback.prop && callback.prop !== originalPropertyName)
+				console.error(`Key already has bind information '${callback.prop}' but being replaced with ${originalPropertyName}`, {model, propertyName, callback, bindedKey, bindName});
 
-		callback.model = originalModel;
-		callback.prop = originalPropertyName;
+			callback.model = originalModel;
+			callback.prop = originalPropertyName;
+		}
 
 		if(getter === void 0)
 			return;
