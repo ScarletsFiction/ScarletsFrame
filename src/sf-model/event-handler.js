@@ -297,7 +297,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		var callback = function(ev){
 			if(keys.has('stop'))
 				ev.stopPropagation();
-			else if(keys.has('stopAll')){
+			else if(keys.has('stopall')){
 				ev.stopImmediatePropagation();
 				ev.stopPropagation();
 			}
