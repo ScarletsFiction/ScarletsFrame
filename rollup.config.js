@@ -13,7 +13,7 @@ const config = [{
     file: "dist/scarletsframe.dev.js",
     sourcemap: true,
     sourcemapFile: "dist/scarletsframe.dev.js.map",
-    format: "iife",
+    format: "umd",
     name: "sf"
   },
   plugins: plugins.slice(0) // Copy
@@ -26,7 +26,7 @@ if(process.env.production){
       file: "dist/scarletsframe.modern.js",
       sourcemap: true,
       sourcemapFile: "dist/scarletsframe.modern.js.map",
-      format: "iife",
+      format: "umd",
       name: "sf"
     },
     plugins: plugins.slice(0) // Copy
@@ -39,7 +39,7 @@ if(process.env.production){
       file: "dist/scarletsframe.min.js",
       sourcemap: true,
       sourcemapFile: "dist/scarletsframe.min.js.map",
-      format: "iife",
+      format: "umd",
       name: "sf"
     },
     plugins: plugins.slice(0) // Copy
@@ -51,7 +51,7 @@ if(process.env.production){
       file: "dist/squery.min.js",
       sourcemap: true,
       sourcemapFile: "dist/squery.min.js.map",
-      format: "iife",
+      format: "umd",
       name: "sf"
     },
     plugins: plugins.slice(0) // Copy
