@@ -7,6 +7,7 @@ sf-inspector{
 
 sf-space[sf_devmode]{
 	display: block !important;
+	touch-action: none;
 }
 
 .sf-shadow-mark{

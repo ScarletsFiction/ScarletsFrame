@@ -1255,4 +1255,23 @@ function initElement(){
 	}, 1);
 }
 
+SFDevSpace._listenAllEvent = listenAllEvent;
+function listenAllEvent(el, callback){
+	let list = [];
+	for (let key in el) {
+	    if(key.startsWith('on')) {
+	        let name = key.slice(2);
+	        el.addEventListener(name, callback);
+	        list.push(name);
+	    }
+	}
+
+	// Unlistener
+	return function(){
+		for (var i = 0; i < list.length; i++) {
+			el.removeEventListener(list[i], callback);
+		}
+	}
+}
+
 };
