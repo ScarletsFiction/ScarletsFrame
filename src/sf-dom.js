@@ -523,12 +523,13 @@ class DOMList extends Array{
 			return this.length !== 0 ? this[0].value : '';
 
 		if(this.length === 1){
-			this[0].text = text;
+			this[0].value = text;
 			return this;
 		}
 
 		for (let i = 0; i < this.length; i++)
-			this[i].text = text;
+			this[i].value = text;
+
 		return this;
 	}
 
