@@ -2068,7 +2068,10 @@ export class ElementManipulatorProxy{
 		return got;
 	}
 
-	$el(selector){
+	$el(selector, item){
+		if(item != null)
+			return $(selector, this.getElements(item));
+
 		const list = [];
 		const $EMs = this.list;
 		for (let i = 0; i < $EMs.length; i++) {
@@ -2169,10 +2172,14 @@ function RE_getBindedList(modelRoot, binded){
 	const RE_Prototype = {
 		// For PropertyList, ReactiveArray, ReactiveMap, ReactiveSet
 		$el:{
-			value(selector){
+			value(selector, item){
 				const { $EM } = this;
 				if($EM.constructor === ElementManipulatorProxy)
-					return $EM.$el(selector)
+					return $EM.$el(selector, item)
+
+				if(item != null)
+					return $(selector, this.getElements(item));
+
 				return $(queryElements(($EM.parentChilds || $EM.elements), selector));
 			}
 		},
