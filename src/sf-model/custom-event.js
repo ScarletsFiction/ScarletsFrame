@@ -231,6 +231,7 @@ function touchGesture(that, callback){
 			ev.angle =
 			ev.totalScale =
 			ev.totalAngle = 0;
+			ev.pointerEvents = pointers;
 
 			// Lock sf-each target if exist
 			script.lock && script.lock(true);
@@ -258,6 +259,7 @@ function touchGesture(that, callback){
 		ev.angle = currentAngle - lastAngle;
 		ev.totalScale = currentScale - startScale;
 		ev.totalAngle = currentAngle - startAngle;
+		ev.pointerEvents = pointers;
 
 		callback(ev);
 
@@ -281,6 +283,7 @@ function touchGesture(that, callback){
 			ev.scale = ev.angle = 0;
 			ev.totalScale = lastScale - startScale;
 			ev.totalAngle = lastAngle - startAngle;
+			ev.pointerEvents = pointers;
 
 			// Lock sf-each target if exist
 			script.lock && script.lock(true);
@@ -293,6 +296,7 @@ function touchGesture(that, callback){
 			if(pointers.length === 2){
 				view.removeEventListener('pointermove', callbackMove);
 				ev.scale = ev.angle = 0;
+				ev.pointerEvents = pointers;
 
 				// Lock sf-each target if exist
 				script.lock && script.lock(true);
