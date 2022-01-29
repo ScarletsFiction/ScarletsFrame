@@ -192,9 +192,10 @@ export class loader{
 		return loader.task;
 	}
 
-	static async mjs(list){
+	static async mjs(list, options){
 		loader.turnedOff = false;
 		let reduce = 0;
+		options ??= {};
 
 		let modules = new Array(list);
 		for(var i = list.length; i >= 0; i--){
@@ -231,9 +232,14 @@ export class loader{
 					loader.f(url); // Call when finished
 				}
 			}();
+
+			if(options.ordered)
+				await waits[i]();
 		}
 
-		await Promise.all(waits);
+		if(!options.ordered)
+			await Promise.all(waits);
+
 		if(loader.loadedContent === loader.totalContent)
 			resolvePromise();
 
