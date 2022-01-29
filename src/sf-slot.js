@@ -28,7 +28,7 @@ export function handleSFSlot(model, element){
 					parent.replaceChild(Slot, usedElement);
 					usedElement = Slot;
 				}
-				else if(val instanceof HTMLElement){ // Replace sf-slot element
+				else if(val instanceof Node){ // Replace sf-slot element
 					parent.replaceChild(val, usedElement);
 					usedElement = val;
 				}
