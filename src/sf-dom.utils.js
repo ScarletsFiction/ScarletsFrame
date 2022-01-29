@@ -134,6 +134,7 @@ export function onEvent(element, event, selector, callback, options, _opt){
 
 		// Also listen for other window
 		windowEv[event].push(callback);
+
 		const winList = WindowList;
 		for(let key in winList){
 			winList[key].addEventListener(event, callback, callback.options);
@@ -150,6 +151,7 @@ export function onEvent(element, event, selector, callback, options, _opt){
 	saveEvent(element, event, callback);
 }
 
+let memoryLeakNotify = false;
 function saveEvent(element, event, callback){
 	// Save event listener
 	element.sf$eventListener ??= {};
@@ -157,7 +159,13 @@ function saveEvent(element, event, callback){
 	if(!(event in element.sf$eventListener))
 		element.sf$eventListener[event] = [];
 
-	element.sf$eventListener[event].push(callback);
+	let temp = element.sf$eventListener[event];
+	temp.push(callback);
+
+	if(memoryLeakNotify && temp.length > 100){
+		memoryLeakNotify = true;
+		console.error(`"${event}" has more than 100 event listener, maybe it was a memory leak because the event haven't been unlistened?`);
+	}
 }
 
 // Shorcut
@@ -180,7 +188,7 @@ export function offEvent(element, event, selector, callback, options){
 			return;
 
 		for(var events in element.sf$eventListener) {
-			offEvent(element, events);
+			offEvent(element, events, selector, callback, options);
 		}
 		return;
 	}
@@ -204,7 +212,6 @@ export function offEvent(element, event, selector, callback, options){
 			callback = selector;
 			selector = null;
 		}
-
 		else if(selector.constructor === Object){
 			options = selector;
 			selector = null;
@@ -225,6 +232,7 @@ export function offEvent(element, event, selector, callback, options){
 
 			if(i === -1){
 				i = deepScanEventCallback(list, callback);
+				if(i === -1) return;
 				callback = list[i];
 			}
 
@@ -270,7 +278,7 @@ function removeEvent(element, event, selector, callback, options){
 		return;
 	}
 
-	if(callback){
+	if(callback !== void 0){
 		element.removeEventListener(event, callback, options);
 		var ref = element.sf$eventListener[event];
 		if(ref === void 0)
@@ -280,6 +288,8 @@ function removeEvent(element, event, selector, callback, options){
 
 		if(i === -1){
 			i = deepScanEventCallback(ref, callback);
+			if(i === -1) return;
+
 			element.removeEventListener(event, ref[i], options);
 		}
 
