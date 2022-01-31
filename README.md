@@ -12,13 +12,13 @@ This framework haven't reach v1.0.0. Every increment of `(v0.*.0)` may have a br
 
 ```xml
 <!-- Production mode -->
-<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.35.x/dist/scarletsframe.min.js"></script>
 
 <!-- Development mode -->
-<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.dev.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.35.x/dist/scarletsframe.dev.js"></script>
 
 <!-- sQuery only (sf.$) -->
-<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/squery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/scarletsframe@0.35.x/dist/squery.min.js"></script>
 ```
 
 ## Try it online like a project
@@ -52,7 +52,7 @@ Example with file and folder structure
 This is optional if you prefer using CDN link.
 But I recommend to use the default template that have Hot Reload enabled.
 ```html
-<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.34.x/dist/scarletsframe.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/scarletsframe@0.35.x/dist/scarletsframe.min.js'></script>
 ```
 
 ### Polyfill for older browser
@@ -100,7 +100,7 @@ $ npm start
 ## Install with with NPM
 This is optional if you prefer for using webpack, parcel, rollup, etc.
 ```sh
-$ npm i scarletsframe@0.34.x
+$ npm i scarletsframe@0.35.x
 ```
 
 And include it on your project with webpack ([example](https://github.com/krausest/js-framework-benchmark/tree/master/frameworks/keyed/scarletsframe)) or browserify.
