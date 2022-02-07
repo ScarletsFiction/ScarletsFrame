@@ -179,6 +179,7 @@ export class loader{
 			s.addEventListener('load', loader.f, {once:true});
 			s.addEventListener('error', loader.f, {once:true});
 			s.type = "text/javascript";
+			s.crossOrigin = "anonymous";
 			if(async) s.async = true;
 			s.src = list[i];
 
