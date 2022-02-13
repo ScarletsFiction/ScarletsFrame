@@ -28,18 +28,19 @@ export class loader{
 
 	// Make event listener
 	static onFinish(func){
-		if(loader.DOMWasLoaded) return func();
+		if(loader.DOMWasLoaded || !whenDOMLoaded) return func();
 		if(whenDOMLoaded.includes(func)) return;
 		whenDOMLoaded.push(func);
 	}
 	static domReady(func){
-		if(loader.DOMReady) return func();
+		if(loader.DOMReady || !whenDOMReady) return func();
 		if(whenDOMReady.includes(func)) return;
 		whenDOMReady.push(func);
 	}
 	static onProgress(func){
-		if(loader.DOMWasLoaded) return func(loader.loadedContent, loader.totalContent);
-		if(whenProgress === null) whenProgress = [];
+		if(loader.DOMWasLoaded || !whenDOMLoaded)
+			return func(loader.loadedContent, loader.totalContent);
+
 		if(whenProgress.includes(func)) return;
 		whenProgress.push(func);
 	}
