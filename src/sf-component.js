@@ -90,6 +90,12 @@ component.for = function(name, options, func, namespace){
 	if(options.constructor === Function)
 		func = options;
 	else{
+		if(options.constructor === Object && func == null){
+			return function(claz){
+				component.for(name, options, claz, namespace);
+			}
+		}
+
 		if(options.extend !== void 0)
 			internal.componentInherit[name] = options.extend;
 		else if(options.constructor === String)

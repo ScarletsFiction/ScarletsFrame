@@ -83,6 +83,12 @@ model.for = function(name, options, func, namespace){
 	if(options.constructor === Function)
 		func = options;
 	else{
+		if(options.constructor === Object && func == null){
+			return function(claz){
+				model.for(name, options, claz, namespace);
+			}
+		}
+
 		if(func === void 0){
 			if(!(name in root)){
 				options.$el = $.callableList();

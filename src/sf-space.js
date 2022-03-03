@@ -168,8 +168,15 @@ export class Space{
 		if(options !== void 0){
 			if(options.constructor === Function)
 				func = options;
-			else
+			else{
+				if(options.constructor === Object && func == null){
+					return claz => {
+						this.model(name, options, claz);
+					}
+				}
+
 				internal.modelInherit[name] = options.extend;
+			}
 
 			const old = this.modelFunc[name];
 			this.modelFunc[name] = func;
@@ -194,6 +201,12 @@ export class Space{
 	component(name, options, func){
 		if(options === void 0)
 			return Component(name, options, func, this.default);
+
+		if(options.constructor === Object && func == null){
+			return claz => {
+				this.model(name, options, claz);
+			}
+		}
 
 		const temp = this.componentList.default;
 		temp[name] = Component(name, options, func, this.default);
