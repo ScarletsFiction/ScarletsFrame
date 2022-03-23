@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: 'View list of files that will be published before the real release'
+        required: true
+        default: 'true' ## Dry run
+  release:
+    # This specifies that the build will be triggered when we publish a release
+    types: [published]
+
+jobs:
+  build:
+    name: Build and release module
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: ⚙ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: https://registry.npmjs.org/
+
+      - name: 🔃 Setup PNPM modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
+      - uses: pnpm/action-setup@v2.2.1
+        with:
+          version: 6.0.2
+          run_install: true
+
+      - name: 🛠 Compiling Module
+        run: npm run build-prod
+
+      - run: npm version ${{ github.event.release.tag_name }}
+
+      # - name: 🔥 Run Tests
+      #   run: npm test
+
+      - name: 📦 Dry Run
+        if: github.event.inputs.dryRun == 'true'
+        run: npm publish --dry-run
+
+      # If you want to publish to NPM, make sure to put your NPM token to repository settings
+      - name: 📦 Publish Packages
+        if: github.event.inputs.dryRun != 'true'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
