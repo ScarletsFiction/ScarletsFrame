@@ -65,7 +65,8 @@ internal.openInspector = function(saved){
 
 void function(){
 	var path = $('script[src*="scarletsframe."]')[0];
-	if(path === void 0){
+
+	if(path === void 0 || path.src.includes('/scarletsframe@')){
 		loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/src/assistant/inspector.css'], 'low');
 		return;
 	}
