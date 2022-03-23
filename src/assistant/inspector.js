@@ -1,8 +1,3 @@
-
-// -- Only for ScarletsFiction Members --
-// When editing the inspector.css make sure it's hardlinked
-// ./inspector.css -> ../../dist/inspector.css
-
 import {getScope, deepProperty} from "../utils.js";
 import {Space} from "../sf-space.js";
 import {loader} from "../sf-loader.js";
@@ -71,7 +66,7 @@ internal.openInspector = function(saved){
 void function(){
 	var path = $('script[src*="scarletsframe."]')[0];
 	if(path === void 0){
-		loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/dist/inspector.css'], 'low');
+		loader.css(['https://cdn.jsdelivr.net/npm/scarletsframe@latest/src/assistant/inspector.css'], 'low');
 		return;
 	}
 
@@ -769,7 +764,28 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 
 				if(current.template.html !== void 0){
 					const elRefs = current.element.sf$elementReferences;
-					current = (current.template.modelRef && current.template.modelRef[propName]) || current.template.modelRefRoot[propName];
+					let temp = (current.template.modelRef && current.template.modelRef[propName]) || current.template.modelRefRoot[propName];
+
+					if(temp != null)
+						current = temp;
+					else {
+						['modelRef', 'modelRefRoot'].forEach(v => {
+							if(temp != null) return;
+
+							let path = v+'_path';
+							if(current.template[path] != null){
+								let list = current.template[path];
+	
+								for (let i = 0; i < list.length; i++) {
+									let item = list[i];
+									if(item[item.length-1] === propName){
+										current = current.template[v][item.join('.')];
+										break;
+									}
+								}
+							}
+						});
+					}
 
 					for (var j = 0; j < elRefs.length; j++) {
 						const ref = elRefs[j];
