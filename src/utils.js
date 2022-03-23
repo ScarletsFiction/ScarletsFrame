@@ -155,10 +155,12 @@ export function getPrototypeMethods(keys, clas){
 	if(clas.prototype === void 0 || clas === Function || clas === Object)
 		return;
 
-	var keys2 = Object.getOwnPropertyNames(clas.prototype);
-	for (var i = keys2.length - 1; i >= 0; i--) {
-		if(keys2[i] !== 'constructor')
-			keys.add(keys2[i]);
+	var keys2 = Object.getOwnPropertyDescriptors(clas.prototype);
+	for (let key in keys2) {
+		if(key === 'constructor') continue;
+		if(keys2[key].get != null) continue;
+
+		keys.add(key);
 	}
 
 	var deep = Object.getPrototypeOf(clas);
