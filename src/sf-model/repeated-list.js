@@ -653,12 +653,27 @@ export class PropertyList{ // extends Object
 		if(elemList === void 0)
 			return;
 
+		let values = Object.values(this);
+		let isArray = elemList.constructor === Array;
+
+		// Remove element first
+		for (let i = elemList.length-1; i >= 0; i--) {
+			const elem = elemList[i];
+			if(values.includes(elem.model)) continue;
+
+			elem.remove();
+			if(isArray) elemList.splice(i, 1);
+		}
+
 		// If single RepeatedElement instance
 		const list = this._list;
 		for (let i = 0; i < list.length; i++) {
 			const elem = elemList[i];
+			let item = this[list[i]];
 
-			if(this[list[i]] !== elem.model){
+			if(item == null) continue;
+
+			if(item !== elem.model){
 				const newElem = this.$EM.createElement(list[i]);
 				this.$EM.parentNode.replaceChild(newElem, elem);
 

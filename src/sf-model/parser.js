@@ -255,6 +255,8 @@ function addressAttributes(currentNode, template){
 }
 
 function toObserve(full, model, properties){
+	if(properties === 'constructor') return full;
+	
 	const place = model === '_model_' ? toObserve.template.modelRef : toObserve.template.modelRefRoot;
 
 	// Simplify: model['stuff'] => model.stuff

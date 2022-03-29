@@ -336,6 +336,9 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			bindedKey.inputBound = callback;
 		}
 		else{
+			if(bindedKey === RL_BindStatus)
+				bindedKey = {_RL: true}; // Unfreeze
+
 			let ref = bindedKey[bindName] ??= []; // ToDo: I forgot why I use Array
 
 			if(ref.includes(callback) === false){
