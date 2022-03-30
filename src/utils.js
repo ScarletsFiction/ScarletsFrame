@@ -151,21 +151,21 @@ export function getStaticMethods(keys, clas){
 	}
 }
 
-export function getPrototypeMethods(keys, clas){
+export function getPrototypeMethods(keys, clas, isProxy){
 	if(clas.prototype === void 0 || clas === Function || clas === Object)
 		return;
 
 	var keys2 = Object.getOwnPropertyDescriptors(clas.prototype);
 	for (let key in keys2) {
 		if(key === 'constructor') continue;
-		if(keys2[key].get != null) continue;
+		if(isProxy && keys2[key].get != null) continue;
 
 		keys.add(key);
 	}
 
 	var deep = Object.getPrototypeOf(clas);
 	if(deep.prototype !== void 0)
-		getPrototypeMethods(keys, deep);
+		getPrototypeMethods(keys, deep, isProxy);
 }
 
 export function proxyClass(scope){
@@ -173,7 +173,7 @@ export function proxyClass(scope){
 	var proto = parent.prototype;
 
 	var list = new Set();
-	getPrototypeMethods(list, parent);
+	getPrototypeMethods(list, parent, true);
 
 	for(var key of list){
 		let tempProto = proto[key];
