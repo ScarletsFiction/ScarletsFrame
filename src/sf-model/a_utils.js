@@ -44,11 +44,8 @@ var modelScript_ = /_result_|return/;
 export function modelScript(mask, script, repeatedListKey, _list){
 	var which = script.match(modelScript_);
 
-	if(repeatedListKey !== void 0){
-		if(!repeatedListKey.test(script))
-			repeatedListKey = void 0;
-		else repeatedListKey.lastIndex = 0;
-	}
+	if(repeatedListKey !== void 0 && !repeatedListKey.test(script))
+		repeatedListKey = void 0;
 
 	if(which === null)
 		script = `return ${script}`;

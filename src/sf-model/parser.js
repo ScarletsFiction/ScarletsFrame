@@ -396,7 +396,7 @@ export function extractPreprocess(targetNode, mask, modelScope, container, model
 	let copy = targetNode.outerHTML.replace(/[ \t]{2,}/g, ' ');
 
 	if(repeatedListKey !== void 0){
-		const temp = RegExp(sfRegex.getSingleMask.join(repeatedListKey), 'gm');
+		const temp = RegExp(sfRegex.getSingleMask.join(repeatedListKey), 'm');
 		temp.key = repeatedListKey;
 		repeatedListKey = temp;
 	}
