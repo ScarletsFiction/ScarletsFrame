@@ -20,7 +20,6 @@ function validateURLData(dat){
 				continue;
 
 			if(URLDataValidator.test(data)){
-				URLDataValidator.lastIndex = 0;
 				console.log('URLData got:', dat);
 				throw new Error("URL data must not contain ',', ':', or ';' symbol");
 			}
@@ -29,7 +28,6 @@ function validateURLData(dat){
 	}
 
 	if(URLDataValidator.test(dat)){
-		URLDataValidator.lastIndex = 0;
 		console.log('URLData got:', dat);
 		throw new Error("URL data must not contain ',', ':', or ';' symbol");
 	}

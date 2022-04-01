@@ -58,7 +58,6 @@ function uniqueDataParser(html, template, _modelScoped){
 	html = html.replace(sfRegex.allTemplateBracket, function(full, matched){ // {[ ... ]}
 		if(sfRegex.anyCurlyBracket.test(matched) === false) // {{ ... }}
 			return `_result_ += ${JSON.stringify(matched.trim())};`;
-		else sfRegex.anyCurlyBracket.lastIndex = 0;
 
 		const vars = [];
 		matched = JSON.stringify(dataParser(matched, null, template, _modelScoped, vars, true));
