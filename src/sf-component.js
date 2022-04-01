@@ -2,7 +2,6 @@ import {internal, TemplatePending, SFOptions, HotReload, NOOP} from "./shared.js
 import {capitalizeLetters, proxyClass, getCallerFile, isClass} from "./utils.js";
 import {parseElement} from "./sf-dom.utils.js";
 import {model as _model, Model} from "./sf-model.js";
-import {Space} from "./sf-space.js";
 import {templateParser} from "./sf-model/template.js";
 import {templateInjector, createModelKeysRegex, extractPreprocess, parsePreprocess, queuePreprocess} from "./sf-model/parser.js";
 import {bindInput} from "./sf-model/input-bind.js";
