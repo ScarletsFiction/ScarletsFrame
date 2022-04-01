@@ -818,15 +818,18 @@ export function queuePreprocess(targetNode, extracting, collectOther, temp){
 	return temp;
 }
 
-export function parsePreprocess(nodes, modelRef, modelKeysRegex){
+export function parsePreprocess(nodes, modelRef, modelKeysRegex, temporaryTemplate){
 	const binded = new Set();
 	var _modelScoped = modelKeysRegex && modelKeysRegex.bindList !== void 0 ? modelKeysRegex.scopes : void 0;
 
-	var template, current;
+	var template, current, wrapText = false;
 	try{
 		for(current of nodes){
 			if(current.nodeType === 3 && binded.has(current.parentNode) === false){
-				if(current.parentNode.constructor._ref === ModelInternal._ref){
+				if(temporaryTemplate != null && wrapText === false && current.parentNode !== temporaryTemplate)
+					wrapText = true;
+
+				if(current.parentNode.constructor._ref === ModelInternal._ref || (current.parentNode === temporaryTemplate && wrapText)){
 					// Auto wrap element if parent is 'SF-M'
 					const replace = document.createElement('span');
 					current.parentNode.insertBefore(replace, current);

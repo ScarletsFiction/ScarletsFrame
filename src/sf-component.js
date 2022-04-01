@@ -480,7 +480,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		};
 
 		templateInjector(element, newObj, false);
-		parsePreprocess(queuePreprocess(element, true, specialElement), newObj, registrar[4]);
+		parsePreprocess(queuePreprocess(element, true, specialElement), newObj, registrar[4], element);
 
 		if(specialElement.input !== void 0)
 			bindInput(specialElement.input, newObj);

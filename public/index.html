@@ -375,18 +375,30 @@
         <!--{{@exec @return {[<barbar-test></barbar-test>]} }}-->
         {{ test }} - <span id="ningen" sf-each="num in list" @click="inc">{{num}}.</span>
         <input id="iyi" sf-bind="test"></input> - {{ test }}
+        <span> - {{ test }} - </span>
+        <span>{{@exec {[ {{ test }} ]} }}</span>
       </sf-m>
-      <my-obj id="1">{{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
-        <input sf-bind="test"></input> - {{ test }}</my-obj>
+      <my-obj id="1">
+        {{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
+        <input sf-bind="test"></input> - {{ test }}
+        <span> - {{ test }} - </span>
+        <span>{{@exec {[ {{ test }} ]} }}</span>
+      </my-obj>
     </sf-space><br>
     <sf-space test-space="zxc">
       Inner namespace 2 testing
       <sf-m name="obj" id="obj1">
         {{ test }} - <span sf-each="num in list" @click="inc">{{num}}.</span>
         <input sf-bind="test"></input> - {{ test }}
+        <span> - {{ test }} - </span>
+        <span>{{@exec {[ {{ test }} ]} }}</span>
       </sf-m>
-      <my-obj id="1">{{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
-        <input sf-bind="test"></input> - {{ test }}</my-obj>
+      <my-obj id="1">
+        {{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
+        <span> - {{ test }} - </span>
+        <span>{{@exec {[ {{ test }} ]} }}</span>
+        <input sf-bind="test"></input> - {{ test }}
+      </my-obj>
     </sf-space>
 
     <div>
@@ -394,9 +406,15 @@
       <sf-m name="obj" id="obj2">
         {{ test }} - <span sf-each="num in list" @click="inc">{{num}}.</span>
         <input sf-bind="test"></input> - {{ test }}
+        <span> - {{ test }} - </span>
+        <span>{{@exec {[ {{ test }} ]} }}</span>
       </sf-m>
-      <my-obj id="2">{{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
-        <input sf-bind="test"></input> - {{ test }}</my-obj>
+      <my-obj id="2">
+        {{ test }} - <span sf-each="num in list" @click="inc">{{num}},</span>
+        <input sf-bind="test"></input> - {{ test }}
+        <span> - {{ test }} - </span>
+        <span>{{@exec {[ {{ test }} ]} }}</span>
+      </my-obj>
     </div>
 
     <sf-m name="deep-property" class="container">
@@ -422,6 +440,11 @@
                 {{key}}. {{ item.four + ' ' + item.text.three }}
                 <span testval="{{key}}. {{ today.deep.two }} {{ one }}"> - </span>
                 {{key}}. {{ today.deep.two }} {{ one }}
+                <div>
+                  {{@if key === 0:
+                    return key;
+                  }}
+                </div>
               </label>
             </div>
           </li>
@@ -484,7 +507,7 @@
         {{@exec
           for (var i = 1; i <= 5; i++) {
             if(i > stars) break;
-            {[ <span>{{stars+vul}}</span>- ]}
+            {[ <span>{{ i + vul }}</span>- ]}
           }
           for (; i <= 5; i++) {
             {[ <span>k</span>- ]}
@@ -494,7 +517,7 @@
         {{@exec
           for (var i = 1; i <= 5; i++) {
             if(i > stars) break;
-            {[ <span>i {{vul}}</span>- ]}
+            {[ <span>i {{ i + vul }}</span>- ]}
           }
         }}
       </div>
