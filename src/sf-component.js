@@ -332,8 +332,10 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 
 	for (var i = 0; i < attr.length; i++) {
 		const temp = attr[i];
-		if(avoid.test(temp.nodeName))
+		if(avoid.test(temp.nodeName)){
+			avoid.lastIndex = 0;
 			continue;
+		}
 
 		$item[temp.nodeName] = temp.value;
 	}

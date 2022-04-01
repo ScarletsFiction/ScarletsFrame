@@ -24,6 +24,7 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		script = avoidQuotes(script, function(script_){
 			if(sfRegex.anyOperation.test(script_) === false)
 				direct = true;
+			else sfRegex.anyOperation.lastIndex = 0;
 
 			// Replace variable to refer to current scope
 			return script_.replace(template.modelRefRoot_regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);

@@ -356,6 +356,7 @@ export function getSelector(element, childIndexes, untilElement){
 			break;
 		}
 		else{
+			haveSymbol.lastIndex = 0;
 			if(element === untilElement)
 				break;
 			else {

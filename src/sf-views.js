@@ -933,6 +933,7 @@ export function Views(selector, name){
 		)
 		.done(function(html_content){
 			if(rejectResponse.test(html_content)){
+				rejectResponse.lastIndex = 0;
 				return routeError_({status:403}, {
 					path,
 					requestURL:window.location.origin + thePath,

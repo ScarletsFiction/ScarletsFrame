@@ -44,8 +44,11 @@ var modelScript_ = /_result_|return/;
 export function modelScript(mask, script, repeatedListKey, _list){
 	var which = script.match(modelScript_);
 
-	if(repeatedListKey !== void 0 && !repeatedListKey.test(script))
-		repeatedListKey = void 0;
+	if(repeatedListKey !== void 0){
+		if(!repeatedListKey.test(script))
+			repeatedListKey = void 0;
+		else repeatedListKey.lastIndex = 0;
+	}
 
 	if(which === null)
 		script = `return ${script}`;
@@ -85,6 +88,8 @@ export function modelScript(mask, script, repeatedListKey, _list){
 	to create custom template dynamically on their project. The vulnerability is just
 	the same like parsing HTML elements out of a text/string.
 	*/
+
+	if(script.includes('/*debug*/')) debugger;
 
 	try{
 		if(repeatedListKey === void 0)

@@ -661,5 +661,6 @@ export function findScrollerElement(el){
 			return null;
 	};
 
+	isScroller.lastIndex = 0;
 	return el;
 }
