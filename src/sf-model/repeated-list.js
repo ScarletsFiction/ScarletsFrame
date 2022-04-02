@@ -452,18 +452,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			if(SFOptions.devMode === true)
 				template.rootIndex = getSelector(parentNode, true, getScope(parentNode, true));
 		}
-		else{
-			template = Object.create(originalAddr.template);
-
-			// Deep Copy
-			var parses = template.parse = template.parse.slice(0);
-			for (let i = 0; i < parses.length; i++) {
-				let ref = parses[i] = Object.create(parses[i]);
-				ref.data = {...ref.data}; // Don't use Object.create here
-
-				ref.data._modelScope = rootModelScope;
-			}
-		}
+		else template = Object.create(originalAddr.template);
 
 		template.bindList = this;
 
