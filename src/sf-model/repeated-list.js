@@ -456,7 +456,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			for (let i = 0; i < parses.length; i++) {
 				let ref = parses[i] = Object.create(parses[i]);
 				ref.data = {...ref.data}; // Don't use Object.create here
-				ref.data._modelScope = modelRef;
+				ref.data._modelScope = ref.data._modelScope || modelRef;
 			}
 		}
 
