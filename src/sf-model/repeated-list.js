@@ -484,25 +484,38 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 	if(pattern.call !== void 0)
 		pattern.call.bindList = this;
 
+	if(uniqPattern !== void 0)
+		EM.template.uniqPattern = uniqPattern;
+
 	// Check if this was nested repeated element
 	if(originalAddr && modelKeysRegex.bindList !== void 0){
 		template.parentTemplate = modelKeysRegex;
 		var _list = modelKeysRegex.scopes._list ??= [];
+		let hasChanges = false;
 
-		if(modelKeysRegex.uniqPattern !== void 0)
-			_list.push(modelKeysRegex.uniqPattern);
+		if(!modelKeysRegex._keyListAdded){
+			if(modelKeysRegex.uniqPattern !== void 0)
+				_list.push(modelKeysRegex.uniqPattern);
 
-		if(modelKeysRegex.modelRef_regex_mask !== void 0)
-			_list.push(modelKeysRegex.modelRef_regex_mask);
+			if(modelKeysRegex.modelRef_regex_mask !== void 0)
+				_list.push(modelKeysRegex.modelRef_regex_mask);
+		}
+		else if(!template._keyListAdded) {
+			if(template.uniqPattern !== void 0)
+				_list.push(template.uniqPattern);
 
+			if(template.modelRef_regex_mask !== void 0)
+				_list.push(template.modelRef_regex_mask);
+		}
+
+		modelKeysRegex._keyListAdded = true;
 		template.scopes = modelKeysRegex.scopes;
-		_list.regex = RegExp(sfRegex.getScopeList.join(_list.join('|').split('$').join('\\$')), 'gm');
+
+		if(hasChanges)
+			_list.regex = RegExp(sfRegex.getScopeList.join(_list.join('|').split('$').join('\\$')), 'gm');
 
 		originalAddr.template = template;
 	}
-
-	if(uniqPattern !== void 0)
-		EM.template.uniqPattern = uniqPattern;
 
 	const { nextSibling } = element;
 	element.remove();
