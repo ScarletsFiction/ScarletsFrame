@@ -341,7 +341,7 @@ export function createModelKeysRegex(targetNode, modelScope, mask){
 	const obj = {};
 
 	// Don't match text inside quote, or object keys
-	obj.modelRefRoot_regex = {v: RegExp(`${sfRegex.scopeVar}(${modelKeys})`, 'g')};
+	obj.modelRefRoot_regex = {v: RegExp(sfRegex.scopeVar.join(modelKeys), 'g')};
 
 	if(mask !== null)
 		obj.modelRef_regex = RegExp(sfRegex.getSingleMask.join(mask), 'gm');
