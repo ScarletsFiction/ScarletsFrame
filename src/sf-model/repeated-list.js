@@ -420,8 +420,12 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 
 	let template, originalAddr;
 	if(!isComponent){
-		if(modelKeysRegex.specialElement !== void 0)
+		let rootModelScope = modelRef;
+
+		if(modelKeysRegex.specialElement !== void 0){
 			originalAddr = modelKeysRegex.specialElement.repeat[RE_ProcessIndex];
+			rootModelScope = modelKeysRegex.scopes._modelScope;
+		}
 
 		if(!originalAddr || originalAddr.template === void 0){
 			let container;
@@ -456,14 +460,15 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			for (let i = 0; i < parses.length; i++) {
 				let ref = parses[i] = Object.create(parses[i]);
 				ref.data = {...ref.data}; // Don't use Object.create here
-				ref.data._modelScope = ref.data._modelScope || modelRef;
+
+				ref.data._modelScope = rootModelScope;
 			}
 		}
 
 		template.bindList = this;
 
 		if(this.constructor === ReactiveArray)
-			repeatedListBindRoot(template, modelRef);
+			repeatedListBindRoot(template, rootModelScope);
 	}
 	else if(element.hasAttribute('sf-as-scope'))
 		EM.asScope = true;
