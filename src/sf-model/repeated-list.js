@@ -232,10 +232,11 @@ function listFromFunction(modelRef, pattern, list){
 	if(modelRef.sf$internal._regex === void 0)
 		modelRef.sf$internal._regex = modelRef.sf$internal.modelKeysRegex.modelRefRoot_regex;
 
-	let func = avoidQuotes(pattern.source, function(temp){
-		// Unescape HTML
-		temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+	let temp = pattern.source;
+	// Unescape HTML
+	temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
+	let func = avoidQuotes(pattern.source, function(temp){
 		// Mask model for variable
 		return temp.replace(modelRef.sf$internal._regex.v, (full, before, matched)=> `${before}_modelScope.${matched}`);
 	});

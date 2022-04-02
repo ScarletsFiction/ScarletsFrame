@@ -21,10 +21,10 @@ function dataParser(html, _model_, template, _modelScoped, preParsedReference, j
 	const lastParsedIndex = preParsedReference.length;
 
 	const prepared = html.replace(sfRegex.dataParser, function(actual, temp){
-		temp = avoidQuotes(temp, function(temp_){
-			// Unescape HTML
-			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+		// Unescape HTML
+		temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
+		temp = avoidQuotes(temp, function(temp_){
 			// Mask item variable
 			if(template.modelRef_regex !== void 0)
 				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
@@ -70,10 +70,10 @@ function uniqueDataParser(html, template, _modelScoped){
 
 	const preParsedReference = [];
 	const prepared = html.replace(sfRegex.uniqueDataParser, function(actual, temp){
-		temp = avoidQuotes(temp, function(temp_){
-			// Unescape HTML
-			temp_ = temp_.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
+		// Unescape HTML
+		temp = temp.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>');
 
+		temp = avoidQuotes(temp, function(temp_){
 			// Mask item variable
 			if(template.modelRef_regex !== void 0)
 				temp_ = temp_.replace(template.modelRef_regex, (full, left, right)=> `${left}_model_${right}`);
