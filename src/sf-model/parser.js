@@ -698,6 +698,11 @@ const excludes = {HTML:1,HEAD:1,STYLE:1,LINK:1,META:1,SCRIPT:1,OBJECT:1,IFRAME:1
 export function queuePreprocess(targetNode, extracting, collectOther, temp){
 	const { childNodes } = targetNode;
 
+	/* Modify `queuePreprocess` to use TreeWalker if possible
+		let node, walk = document.createTreeWalker(targetNode, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_COMMENT, null, false);
+		while((node = walk.nextNode()) != null) {...};
+	 */
+
 	if(temp === void 0){
 		temp = new Set();
 

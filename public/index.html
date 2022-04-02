@@ -472,9 +472,9 @@
     <br>ReactiveList inside of ReactiveList:
     <sf-m name="repeattest">
       <div sf-each="key, val in lv1">
-        lv1 <span sf-each="key2, val2 in val.lv2">
-          <br> -- lv2 <span sf-each="key3, val3 in val2.lv3">
-            {{ key +'-'+ val3 +'-'+ hi + vul }}
+        lv1 {{ key }}a <span sf-each="key2, val2 in val.lv2">
+          <br> -- lv2 {{ key2 }}b <span sf-each="key3, val3 in val2.lv3">
+            | {{ key +'a- '+ key2 +'b- '+ val3 +' - '+ key3 +'c > '+hi + vul }}
           </span>
         </span>
         <div sf-each="key2, val2 in other">

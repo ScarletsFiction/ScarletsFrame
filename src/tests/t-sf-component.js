@@ -123,9 +123,10 @@ setTimeout(function(){
 	});
 
 	component.html('comp-test', `<div sf-lang="translated">1. translated {{ data }}</div>
-		<input type="text" sf-bind="data">
+		<input type="text" sf-bind="data"> - {{ data }}
 		<div class="sf-virtual-list"><span sf-each="num in tries"><a @click="select(num)">{{num}}</a>,</span></div>
 		<div>refreshed: {{ item }}</div>
+		<div>{{@exec {[ {{ data }} ]} }}</div>
 	<br>`);
 
 	templates['test/reserved.html'] = `
