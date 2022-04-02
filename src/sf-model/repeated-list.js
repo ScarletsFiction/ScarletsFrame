@@ -452,7 +452,21 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 			if(SFOptions.devMode === true)
 				template.rootIndex = getSelector(parentNode, true, getScope(parentNode, true));
 		}
-		else template = Object.create(originalAddr.template);
+		else {
+			template = Object.create(originalAddr.template);
+			
+			if(template.parse.length !== 0){
+				let parses = template.parse = template.parse.slice(0);
+				template.scopes = Object.create(template.scopes);
+				template.scopes._modelScope = rootModelScope;
+
+				// Create from the original to new object
+				for (let i = 0; i < parses.length; i++) {
+					let ref = parses[i] = Object.create(parses[i]);
+					ref.data = template.scopes;
+				}
+			}
+		}
 
 		template.bindList = this;
 
