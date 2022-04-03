@@ -696,12 +696,13 @@ export class PropertyList { // extends Object
 
 			if(item == null){
 				delete this[list[i]];
+				list.splice(i--, 1);
 				continue;
 			}
 
-			if(elem == null) continue;
-
-			if(item !== elem.model){
+			if(elem == null)
+				this.$EM.append(list[i]);
+			else if(item !== elem.model){
 				const newElem = this.$EM.createElement(list[i]);
 				this.$EM.parentNode.replaceChild(newElem, elem);
 
@@ -714,8 +715,8 @@ export class PropertyList { // extends Object
 			if(this[key] == null || list.includes(key))
 				continue;
 
-			ProxyProperty(this, key, false);
 			this.$EM.append(key);
+			ProxyProperty(this, key, false);
 			list.push(key);
 		}
 
@@ -740,6 +741,14 @@ export const Obj = {
 		}
 
 		if(!(prop in obj)){
+			let oldIndex = obj._list.indexOf(prop);
+			if(oldIndex !== -1){
+				obj[prop] = val;
+				ProxyProperty(obj, prop, false);
+				obj.$EM.update(oldIndex);
+				return;
+			}
+
 			obj[prop] = val;
 			ProxyProperty(obj, prop, false);
 

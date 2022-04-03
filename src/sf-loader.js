@@ -5,7 +5,6 @@ let whenDOMLoaded = [];
 let whenProgress = [];
 var pendingOrderedJS = [];
 let ES6URLCache = {};
-let traceResources = false;
 
 let promiseResolver = false;
 function resolvePromise(){
@@ -20,6 +19,7 @@ export class loader{
 	static DOMReady = false;
 	static turnedOff = true;
 	static loadPended = false;
+	static _whenProgress = whenProgress;
 	static task = new Promise(function(resolve){
 		promiseResolver = resolve;
 	});
@@ -37,9 +37,12 @@ export class loader{
 		if(whenDOMReady.includes(func)) return;
 		whenDOMReady.push(func);
 	}
-	static onProgress(func){
-		if(loader.DOMWasLoaded || !whenDOMLoaded)
+	static onProgress(func, persistent){
+		if(!persistent && (loader.DOMWasLoaded || !whenDOMLoaded))
 			return func(loader.loadedContent, loader.totalContent);
+
+		if(persistent != null)
+			func._persistent = persistent;
 
 		if(whenProgress.includes(func)) return;
 		whenProgress.push(func);
@@ -65,7 +68,7 @@ export class loader{
 				document.head.appendChild(pendingOrderedJS.shift());
 		}
 
-		if(whenProgress === null){
+		if(whenProgress.length === 0){
 			if(loader.loadedContent === loader.totalContent)
 				resolvePromise();
 
@@ -77,7 +80,11 @@ export class loader{
 
 		if(loader.loadedContent === loader.totalContent){
 			resolvePromise();
-			whenProgress = null;
+
+			for (let i = whenProgress.length-1; i >= 0; i--){
+				if(whenProgress[i]._persistent) continue;
+				whenProgress.splice(i, 1);
+			}
 		}
 	}
 
@@ -326,7 +333,13 @@ function waitResources(){
 		}
 	}
 
-	whenProgress = whenDOMReady = whenDOMLoaded = null;
+	whenDOMReady = whenDOMLoaded = null;
+
+	for (let i = whenProgress.length-1; i >= 0; i--){
+		if(whenProgress[i]._persistent) continue;
+		whenProgress.splice(i, 1);
+	}
+
 	resolvePromise();
 }
 
