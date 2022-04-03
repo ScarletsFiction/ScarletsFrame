@@ -598,7 +598,7 @@ function refreshKeyFromEM(EM){
 	}
 }
 
-export class PropertyList{ // extends Object
+export class PropertyList { // extends Object
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -668,6 +668,7 @@ export class PropertyList{ // extends Object
 	}
 
 	refresh(){
+		// Check if not a single RepeatedElement instance
 		if(this.$EM.constructor === ElementManipulatorProxy)
 			return this.$EM.refresh_RP(this);
 
@@ -687,13 +688,17 @@ export class PropertyList{ // extends Object
 			if(isArray) elemList.splice(i, 1);
 		}
 
-		// If single RepeatedElement instance
 		const list = this._list;
 		for (let i = 0; i < list.length; i++) {
 			const elem = elemList[i];
 			let item = this[list[i]];
 
-			if(item == null) continue;
+			if(item == null){
+				delete this[list[i]];
+				continue;
+			}
+
+			if(elem == null) continue;
 
 			if(item !== elem.model){
 				const newElem = this.$EM.createElement(list[i]);
@@ -702,6 +707,15 @@ export class PropertyList{ // extends Object
 				if(this.$EM.elements !== void 0)
 					elemList[i] = newElem;
 			}
+		}
+
+		for (let key in this) {
+			if(this[key] == null || list.includes(key))
+				continue;
+
+			ProxyProperty(this, key, false);
+			this.$EM.append(key);
+			list.push(key);
 		}
 
 		this.$EM.inputBoundCheck();
