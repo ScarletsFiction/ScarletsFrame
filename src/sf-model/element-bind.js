@@ -562,7 +562,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(setter !== void 0) set.cache = setter;
 
 	Object.defineProperty(model, propertyName, {
-		enumerable: true,
+		enumerable: desc?.enumerable ?? true,
 		configurable: true,
 		get: getter || (()=> objValue),
 		set
