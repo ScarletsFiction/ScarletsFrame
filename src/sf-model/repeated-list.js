@@ -127,23 +127,24 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 
 		}
 
-		const { constructor } = target;
+		const { constructor, _$sfReactive } = target;
 		let proto;
-		if(constructor === Array || constructor === ReactiveArray)
-			proto = ReactiveArray;
-		else if(constructor === Object || constructor === PropertyList)
-			proto = PropertyList;
-		else if(constructor === Map || constructor === ReactiveMap)
-			proto = ReactiveMap;
-		else if(constructor === Set || constructor === ReactiveSet)
-			proto = ReactiveSet;
-		else if(constructor === WeakSet || constructor === WeakMap){
-			console.error(pattern.source, target, "WeakMap or WeakSet is not supported");
-			continue;
-		}
+
+		if(_$sfReactive !== void 0)
+			proto = _$sfReactive;
 		else{
-			console.error(pattern.source, target, "should be an array or object but got", constructor);
-			continue;
+			if(constructor === Array) proto = ReactiveArray;
+			else if(constructor === Object) proto = PropertyList;
+			else if(constructor === Map) proto = ReactiveMap;
+			else if(constructor === Set) proto = ReactiveSet;
+			else if(constructor === WeakSet || constructor === WeakMap){
+				console.error(pattern.source, target, "WeakMap or WeakSet is not supported");
+				continue;
+			}
+			else{
+				console.error(pattern.source, target, "should be an array or object but got", constructor);
+				continue;
+			}
 		}
 
 		// Parse the sf-each="rule in pattern"
@@ -157,7 +158,8 @@ export function forceReactive(modelRef, property){
 	if(!that)
 		return console.error(`Trying to make reactive element list from '${property}' in`, modelRef, "but got", that);
 
-	const { constructor } = that;
+	const { constructor, _$sfReactive } = that;
+	if(_$sfReactive != null) return;
 
 	let proto;
 	if(constructor === Array)
@@ -168,7 +170,6 @@ export function forceReactive(modelRef, property){
 		proto = ReactiveMap;
 	else if(constructor === Set)
 		proto = ReactiveSet;
-	else return;
 
 	Object.defineProperty(that, '_$pending', {
 		configurable: true,
@@ -341,7 +342,7 @@ function parsePatternRule(modelRef, pattern, proto){
 		pattern.props = ['_k_', pattern.props];
 
 	var firstInit;
-	if(that.constructor !== proto){
+	if(that._$sfReactive !== proto){
 		Object.setPrototypeOf(that, proto.prototype);
 		firstInit = true;
 	}
@@ -439,14 +440,14 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 				const temp = originalAddr.template;
 				delete temp.bindList;
 
-				if(this.constructor === ReactiveArray)
+				if(this._$sfReactive === ReactiveArray)
 					originalAddr.template.repeatedList ??= true;
 
 				if(SFOptions.devMode === true)
 					originalAddr.template.rootIndex = getSelector(parentNode, true, getScope(parentNode, true));
 			}
 
-			if(this.constructor === ReactiveArray)
+			if(this._$sfReactive === ReactiveArray)
 				template.repeatedList ??= true;
 
 			if(SFOptions.devMode === true)
@@ -470,7 +471,7 @@ function prepareRepeated(modelRef, element, rule, parentNode, namespace, modelKe
 
 		template.bindList = this;
 
-		if(this.constructor === ReactiveArray)
+		if(this._$sfReactive === ReactiveArray)
 			repeatedListBindRoot(template, rootModelScope);
 	}
 	else if(element.hasAttribute('sf-as-scope'))
@@ -581,7 +582,7 @@ function refreshKeyFromEM(EM){
 	if(template.modelRef._sfkey_ === void 0) return;
 	const elements = EM.elements || EM.parentChilds;
 
-	if(list.constructor === ReactiveArray){
+	if(list._$sfReactive === ReactiveArray){
 		for (var i = 0; i < list.length; i++) {
 			const temp = elements[i];
 			temp.sf$repeatListIndex = i;
@@ -722,6 +723,11 @@ export class PropertyList { // extends Object
 	}
 }
 
+Object.defineProperties(PropertyList.prototype, {
+	constructor: {value: Object},
+	_$sfReactive: {value: PropertyList},
+});
+
 // Only for Object or PropertyList
 export const Obj = {
 	set(obj, prop, val){
@@ -758,7 +764,7 @@ export const Obj = {
 	}
 };
 
-export class ReactiveMap extends Map{
+export class ReactiveMap extends Map {
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -784,7 +790,6 @@ export class ReactiveMap extends Map{
 
 		afterConstruct.apply(this, arguments);
 	}
-	constructor(arg){return new Map(arg)}
 	set(key, val){
 		if(super.has(key)){
 			const oldVal = super.get(key);
@@ -823,7 +828,12 @@ export class ReactiveMap extends Map{
 	}
 }
 
-export class ReactiveSet extends Set{
+Object.defineProperties(ReactiveMap.prototype, {
+	constructor: {value: Map},
+	_$sfReactive: {value: ReactiveMap},
+});
+
+export class ReactiveSet extends Set {
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit} = rule;
 
@@ -859,7 +869,6 @@ export class ReactiveSet extends Set{
 
 		afterConstruct.apply(this, arguments);
 	}
-	constructor(arg){return new Set(arg)}
 	add(val){
 		if(super.has(val)) return this;
 		super.add(val);
@@ -889,6 +898,11 @@ export class ReactiveSet extends Set{
 	}
 }
 
+Object.defineProperties(ReactiveSet.prototype, {
+	constructor: {value: Set},
+	_$sfReactive: {value: ReactiveSet},
+});
+
 function ProxyProperty(obj, prop, force){
 	if(force || Object.getOwnPropertyDescriptor(obj, prop).set === void 0){
 		let temp = obj[prop];
@@ -915,7 +929,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	if(hasChild)
 		scopes = template.scopes;
 
-	if(that.constructor === ReactiveMap || that.constructor === ReactiveSet){
+	if(that._$sfReactive === ReactiveMap || that._$sfReactive === ReactiveSet){
 		const isMap = that instanceof Map;
 		let i = -1;
 		let pending = beforeChild === void 0 ? [] : false;
@@ -961,7 +975,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 		return;
 	}
 
-	if(that.constructor === PropertyList){
+	if(that._$sfReactive === PropertyList){
 		temp = that;
 		that = Object.values(that);
 	}
@@ -1013,7 +1027,7 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 	}
 }
 
-export class ReactiveArray extends Array{
+export class ReactiveArray extends Array {
 	static construct(modelRef, element, rule, parentNode, namespace, modelKeysRegex){
 		const {that, target, prop, firstInit, pattern} = rule;
 
@@ -1154,7 +1168,6 @@ export class ReactiveArray extends Array{
 		return this.length;
 	}
 
-	constructor(arr){return new Array(arr)}
 	assign(fromIndex, withArray, removes, putLast){
 		if(fromIndex.constructor !== Number){
 			if(removes === void 0 || removes.constructor === Boolean)
@@ -1513,6 +1526,11 @@ export class ReactiveArray extends Array{
 		this.$EM.inputBoundCheck();
 	}
 }
+
+Object.defineProperties(ReactiveArray.prototype, {
+	constructor: {value: Array},
+	_$sfReactive: {value: ReactiveArray},
+});
 
 export class ElementManipulator{
 	createElement(index, item, isMap){

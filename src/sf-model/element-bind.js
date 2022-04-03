@@ -20,21 +20,21 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 
 		if(obj != null && obj.$EM !== void 0){
 			// Deep remove for repeated element, only if it's object data type (primitive don't have sf$bindedKey)
-			if(obj.constructor === ReactiveArray){
+			if(obj._$sfReactive === ReactiveArray){
 				for (var i = 0; i < obj.length; i++){
 					if(typeof obj[i] === 'object')
 						removeModelBinding(obj[i], false, isLazy, void 0, ignoreInElement);
 					else break;
 				}
 			}
-			else if(obj.constructor === ReactiveMap){
+			else if(obj._$sfReactive === ReactiveMap){
 				for(const [k, v] of obj){
 					if(typeof v === 'object')
 						removeModelBinding(v, false, isLazy, void 0, ignoreInElement);
 					else break;
 				}
 			}
-			else if(obj.constructor === ReactiveSet){
+			else if(obj._$sfReactive === ReactiveSet){
 				for(const v of obj){
 					if(typeof v === 'object')
 						removeModelBinding(v, false, isLazy, void 0, ignoreInElement);
@@ -202,7 +202,7 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy, isUniqList, ignoreInEl
 			continue;
 
 		const ref = refPaths[a].slice(0, -1);
-		if(obj.constructor === ReactiveArray){
+		if(obj._$sfReactive === ReactiveArray){
 			for (let i = 0; i < obj.length; i++) {
 				var deep = deepProperty(obj[i], ref);
 				if(deep === void 0)
