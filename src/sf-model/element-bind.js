@@ -290,9 +290,10 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 				if(typeof value !== 'object')
 					return;
 
-				if(Object.getOwnPropertyDescriptor(model, temp).set === void 0){
+				let desc = Object.getOwnPropertyDescriptor(model, temp);
+				if(desc.set === void 0){
 					Object.defineProperty(model, temp, {
-						enumerable: true,
+						enumerable: desc.enumerable ?? false,
 						configurable: true,
 						get:()=> value,
 						set:val=> Object.assign(value, val)
@@ -562,7 +563,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(setter !== void 0) set.cache = setter;
 
 	Object.defineProperty(model, propertyName, {
-		enumerable: desc?.enumerable ?? true,
+		enumerable: desc?.enumerable ?? false,
 		configurable: true,
 		get: getter || (()=> objValue),
 		set
