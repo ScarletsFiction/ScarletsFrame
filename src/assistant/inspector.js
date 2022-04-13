@@ -647,9 +647,14 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 	}
 
 	My.refreshTypes = function(){
-		const list = My.types;
-		for(var key in list){
-			const val = My.model[key];
+		let list = My.types;
+		let names = Object.getOwnPropertyNames(list);
+
+		for (let i = 0; i < names.length; i++) {
+			let key = names[i];
+			if(key === 'sf$bindedKey') continue;
+
+			let val = My.model[key];
 			if(val == null){
 				list[key] = '';
 				continue;
