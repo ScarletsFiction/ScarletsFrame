@@ -180,7 +180,7 @@ export class URI{
 	}
 
 	static on(name, options, callback){
-		if(options.constructor === Function)
+		if(options instanceof Function)
 			callback = options;
 		else callback.path = options.path;
 
@@ -188,7 +188,7 @@ export class URI{
 	}
 
 	static once(name, options, callback){
-		(options.constructor === Function ? options : callback).once = true;
+		(options instanceof Function ? options : callback).once = true;
 		URI.on(name, options, callback);
 	}
 

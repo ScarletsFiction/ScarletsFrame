@@ -177,7 +177,7 @@ export function proxyClass(scope){
 
 	for(var key of list){
 		let tempProto = proto[key];
-		if(tempProto == null || tempProto.constructor !== Function)
+		if(tempProto == null || (tempProto instanceof Function) === false)
 			continue;
 
 		let tempScope = scope[key];
@@ -284,7 +284,7 @@ export const isClass = (function(){
 
   return function(func){
     // Class constructor is also a function
-    if(!(func && func.constructor === Function) || func.prototype === undefined)
+    if(!(func && func instanceof Function) || func.prototype === undefined)
       return false;
 
     // This is a class that extends other class

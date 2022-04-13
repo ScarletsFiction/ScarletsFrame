@@ -80,7 +80,7 @@ model.for = function(name, options, func, namespace){
 	let { root } = scope;
 	let isExist = name in root;
 
-	if(options.constructor === Function)
+	if(options instanceof Function)
 		func = options;
 	else{
 		if(options.constructor === Object && func == null){
@@ -129,7 +129,7 @@ model.for = function(name, options, func, namespace){
 	let scopeTemp = scope(name);
 
 	// Call it it's a function
-	if(!SFOptions.hotReload && func.constructor === Function)
+	if(!SFOptions.hotReload && func instanceof Function)
 		func(scopeTemp, scope);
 
 	if(func.class && scopeTemp.constructor !== func.class){

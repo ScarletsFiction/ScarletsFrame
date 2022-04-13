@@ -119,7 +119,7 @@ export class language{
 	}
 
 	static get(path, obj, callback){
-		if(obj !== void 0 && obj.constructor === Function){
+		if(obj !== void 0 && obj instanceof Function){
 			callback = obj;
 			obj = void 0;
 		}
@@ -137,7 +137,7 @@ export class language{
 		if(!(language.default in language.list))
 			language.list[language.default] = {};
 
-		if(obj !== void 0 && obj.constructor === Function){
+		if(obj !== void 0 && obj instanceof Function){
 			callback = obj;
 			obj = void 0;
 		}
@@ -166,10 +166,10 @@ function interpolate(text, obj){
 		}
 
 		if(match in obj)
-			return obj[match].constructor === Function ? obj[match]() : obj[match];
+			return obj[match] instanceof Function ? obj[match]() : obj[match];
 
 		if(match in language.interpolate)
-			return language.interpolate[match].constructor === Function ? language.interpolate[match]() : language.interpolate[match];
+			return language.interpolate[match] instanceof Function ? language.interpolate[match]() : language.interpolate[match];
 
 		return full;
 	});

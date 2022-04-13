@@ -16,7 +16,7 @@ export function $(selector, context){
 	if(!selector)
 		throw new Error("First argument mustn't be falsy value, but got: " + selector);
 
-	if(selector.constructor === Function && selector !== internal.WindowClass)
+	if(selector instanceof Function && selector !== internal.WindowClass)
 		return Loader.onFinish(selector);
 
 	if(context){
@@ -638,7 +638,7 @@ $.animateKey = function(element, animationName, duration, callback){
 	if(element === void 0)
 		return;
 
-	if(duration && duration.constructor === Function){
+	if(duration && duration instanceof Function){
 		callback = duration;
 		duration = void 0;
 	}

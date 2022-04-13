@@ -1,10 +1,10 @@
 export function request(method, url, data, options, callback){
-	if(data && data.constructor === Function){
+	if(data && data instanceof Function){
 		callback = data;
 		data = void 0;
 	}
 
-	if(options && options.constructor === Function){
+	if(options && options instanceof Function){
 		callback = options;
 		options = void 0;
 	}

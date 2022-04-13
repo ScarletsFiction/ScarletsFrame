@@ -419,7 +419,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 				continue;
 
 			const temp = scope[prop];
-			if(temp != null && temp.constructor === Function)
+			if(temp != null && temp instanceof Function)
 				refunction(prop);
 		}
 		return;
@@ -430,7 +430,7 @@ function reapplyScope(proxy, space, scope, func, forceHaveLoaded){
 	var firstTime = scope.hotReloading === void 0;
 	!firstTime && scope.hotReload && scope.hotReload(scope);
 
-	if(func.constructor === Function){
+	if(func instanceof Function){
 		if(scope.sf$internalData === void 0)
 			Object.defineProperty(scope, 'sf$internalData', {value:{}});
 

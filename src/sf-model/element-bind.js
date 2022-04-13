@@ -574,7 +574,7 @@ function findDescriptor(object, propertyName){
 	let desc = Object.getOwnPropertyDescriptor(object, propertyName);
 	if(desc !== void 0) return desc;
 
-	if(object.constructor !== Object && object.constructor !== Function)
+	if(object.constructor !== Object && (object instanceof Function) === false)
 		return findDescriptor(Object.getPrototypeOf(object), propertyName);
 }
 

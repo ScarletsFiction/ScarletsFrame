@@ -36,7 +36,7 @@ function createRoot_(registered, id, space){
 			};
 
 			const func = modelFunc[scope];
-			if(func && func.constructor === Function)
+			if(func && func instanceof Function)
 				func(temp, SpaceScope);
 
 			return temp;
@@ -66,7 +66,7 @@ if(window.sf$proxy)
 	internal.space = window.sf$proxy.internalSpace;
 else{
 	internal.space.initComponent = function(root, tagName, elem, $item, asScope){
-		Component.new(tagName, elem, $item, root.constructor === Function ? root : root.sf$space, asScope);
+		Component.new(tagName, elem, $item, root instanceof Function ? root : root.sf$space, asScope);
 	}
 	internal.space.initModel = function(root, elem){
 		const name = elem.getAttribute('name');
@@ -166,7 +166,7 @@ export class Space{
 
 	model(name, options, func){
 		if(options !== void 0){
-			if(options.constructor === Function)
+			if(options instanceof Function)
 				func = options;
 			else{
 				if(options.constructor === Object && func == null){

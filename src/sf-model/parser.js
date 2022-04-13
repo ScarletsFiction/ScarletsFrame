@@ -995,7 +995,7 @@ export function revalidateBindingPath(refRoot, paths, modelRef){
 			refRoot[str] = collect;
 		}
 		// We're not binding the native stuff
-		else if(deep.constructor === Function){
+		else if(deep instanceof Function){
 			// Delete the property
 			var str = stringifyPropertyPath(path);
 			for(var keys in refRoot){

@@ -1580,7 +1580,7 @@ export class ElementManipulator{
 			return temp;
 		}
 
-		if(template.constructor === Function)
+		if(template instanceof Function)
 			temp = new template(item, this.namespace, this.asScope);
 		else temp = templateParser(template, item, false, this.modelRef, this.parentNode, void 0, template.uniqPattern && index);
 

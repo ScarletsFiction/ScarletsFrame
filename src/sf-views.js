@@ -608,12 +608,12 @@ export function Views(selector, name){
 			Self.lastPath = Self.currentPath;
 		}
 
-		if(data !== void 0 && data.constructor === Function){
+		if(data !== void 0 && data instanceof Function){
 			callback = data;
 			data = void 0;
 		}
 
-		if(method !== void 0 && method.constructor === Function){
+		if(method !== void 0 && method instanceof Function){
 			callback = method;
 			method = void 0;
 		}

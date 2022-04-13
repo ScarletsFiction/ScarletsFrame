@@ -59,7 +59,7 @@ export function onEvent(element, event, selector, callback, options, _opt){
 		callback = temp;
 	}
 
-	if(selector.constructor === Function){
+	if(selector instanceof Function){
 		callback = selector;
 		selector = null;
 	}
@@ -208,7 +208,7 @@ export function offEvent(element, event, selector, callback, options){
 	}
 
 	if(selector != null){
-		if(selector.constructor === Function){
+		if(selector instanceof Function){
 			callback = selector;
 			selector = null;
 		}

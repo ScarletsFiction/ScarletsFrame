@@ -17,7 +17,7 @@ function callInputListener(ref, value){
 			if(v2m !== void 0)
 				v2mValue = v2m.call(ref.sfModel, value);
 
-			if(on !== void 0 && on.constructor === Function){
+			if(on !== void 0 && on instanceof Function){
 				newValue = on.call(ref.sfModel, value, false);
 				if(newValue !== void 0)
 					ref.sfFeedback = true;

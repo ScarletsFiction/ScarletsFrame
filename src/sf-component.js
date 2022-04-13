@@ -12,13 +12,13 @@ import {handleSFSlot} from "./sf-slot.js";
 
 export function component(name, options, func, namespace){
 	if(options !== void 0){
-		if(options.constructor === Function)
+		if(options instanceof Function)
 			func = options;
 
 		if(func !== options)
 			component.html(name, options, namespace);
 
-		if(func === void 0 || func.constructor === Function)
+		if(func === void 0 || func instanceof Function)
 			return component.for(name, options, func, namespace);
 	}
 
@@ -86,7 +86,7 @@ function checkWaiting(name, namespace){
 }
 
 component.for = function(name, options, func, namespace){
-	if(options.constructor === Function)
+	if(options instanceof Function)
 		func = options;
 	else{
 		if(options.constructor === Object && func == null){
@@ -369,7 +369,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	let reusing = void 0;
 	if(index === 0 && newObj.destroy !== false){
 		const func = registrar[0];
-		if(func.constructor === Function){
+		if(func instanceof Function){
 			if(inherit !== void 0){
 				if(asScope){
 					Model.reuse = newObj;
