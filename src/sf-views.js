@@ -681,6 +681,8 @@ export function Views(selector, name){
 		}
 
 		const currentData = Self.data = url.data;
+		if(data != null)
+			Object.assign(currentData, data);
 
 		// When new dom.property added, please find "Index-AB" with text editor
 		// to replace on that section too
