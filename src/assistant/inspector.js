@@ -1194,7 +1194,7 @@ function onTracedChanges(name, property, old, now){
 		}
 	}
 
-	console.log(`Errorless: stack trace\n${stack.join('\n')}`);
+	console.log(`Error: stack trace obtained\n${stack.join('\n')}`);
 	console.groupEnd();
 }
 
