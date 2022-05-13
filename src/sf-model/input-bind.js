@@ -232,14 +232,14 @@ function inputBoundRun(val, elements){
 inputBoundRun.inputBoundRun = true;
 inputBoundRun._sf = true; // flag as internal
 
-function triggerInputEvent(e){
-	if(e.fromSFFramework === true) return;
-	if(e.target.viewInputted === true){
-		e.target.viewInputted = false;
-		return;
-	}
-	e.target.dispatchEvent(new Event('input'));
-}
+// function triggerInputEvent(e){
+// 	if(e.fromSFFramework === true) return;
+// 	if(e.target.viewInputted === true){
+// 		e.target.viewInputted = false;
+// 		return;
+// 	}
+// 	e.target.dispatchEvent(new Event('input'));
+// }
 
 function elementBoundChanges(model, property, element, oneWay, modelLocal, propertyNameLocal){
 	// Enable multiple element binding
@@ -258,7 +258,7 @@ function elementBoundChanges(model, property, element, oneWay, modelLocal, prope
 		typeData = typeof val === 'object' ? Object : val.constructor;
 
 	element.typeData = typeData;
-	onEvent(element, 'change', triggerInputEvent);
+	//onEvent(element, 'change', triggerInputEvent);
 
 	// Bound value change
 	if(element.constructor === HTMLTextAreaElement){
