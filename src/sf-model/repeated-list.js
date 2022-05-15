@@ -2146,16 +2146,42 @@ export class ElementManipulatorProxy{
 		return got;
 	}
 
-	$el(selector, item){
-		if(item != null)
-			return $(selector, this.getElements(item));
+	$el(selector, key){
+		if(key != null){
+			let list = [];
+			let $EMs = this.list;
 
-		const list = [];
-		const $EMs = this.list;
+			let isObject, objValue;
+			for (let i = 0; i < $EMs.length; i++) {
+				let em = $EMs[i];
+
+				if(isObject == null){
+					objValue = em.list[key];
+					isObject = typeof objValue === 'object';
+				}
+
+				let el;
+				if(isObject)
+					el = em.elementRef.get(objValue);
+				else el = (em.parentChilds || em.elements)[key];
+
+				if(el == null) continue;
+				el = el.querySelector(selector);
+
+				if(el != null)
+					list.push(el);
+			}
+
+			return $(list);
+		}
+
+		let list = [];
+		let $EMs = this.list;
 		for (let i = 0; i < $EMs.length; i++) {
-			const em = $EMs[i];
+			let em = $EMs[i];
 			list.push(...queryElements((em.parentChilds || em.elements), selector));
 		}
+
 		return $(list);
 	}
 
@@ -2250,13 +2276,13 @@ function RE_getBindedList(modelRoot, binded){
 	const RE_Prototype = {
 		// For PropertyList, ReactiveArray, ReactiveMap, ReactiveSet
 		$el:{
-			value(selector, item){
+			value(selector, key){
 				const { $EM } = this;
 				if($EM.constructor === ElementManipulatorProxy)
-					return $EM.$el(selector, item)
+					return $EM.$el(selector, key)
 
-				if(item != null)
-					return $(selector, this.getElements(item));
+				if(key != null)
+					return $(selector, this.getElements(key));
 
 				return $(queryElements(($EM.parentChilds || $EM.elements), selector));
 			}
