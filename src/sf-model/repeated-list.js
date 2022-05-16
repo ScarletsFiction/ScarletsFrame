@@ -608,7 +608,6 @@ export class PropertyList { // extends Object
 			hiddenProperty(that, '_list', Object.keys(that), true);
 
 			Object.defineProperty(target, prop, {
-				enumerable: true,
 				configurable: true,
 				get:()=> that,
 				set:val=> {
@@ -780,7 +779,6 @@ export class ReactiveMap extends Map {
 		// Initialize property once
 		if(firstInit){
 			Object.defineProperty(target, prop, {
-				enumerable: true,
 				configurable: true,
 				get:()=> that,
 				set:val=> {
@@ -849,7 +847,6 @@ export class ReactiveSet extends Set {
 		// Initialize property once
 		if(firstInit){
 			Object.defineProperty(target, prop, {
-				enumerable: true,
 				configurable: true,
 				get:()=> that,
 				set:val=> {
@@ -918,7 +915,6 @@ function ProxyProperty(obj, prop, force){
 
 		Object.defineProperty(obj, prop, {
 			configurable:true,
-			enumerable:true,
 			get:()=> temp,
 			set:val=> {
 				temp = val;
@@ -1043,7 +1039,6 @@ export class ReactiveArray extends Array {
 		// Initialize property once
 		if(firstInit && pattern.call === void 0){
 			Object.defineProperty(target, prop, {
-				enumerable: true,
 				configurable: true,
 				get:()=> that,
 				set:val=> {

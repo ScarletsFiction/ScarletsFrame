@@ -98,13 +98,14 @@ export function initPendingComponentScope(list, html){
 		}
 		else el = childIndexes(ref.addr, html);
 
-		const obj = deepProperty(html.model, ref.rule);
-		const temp = ref.rule.slice(0);
-		const key = temp.pop();
+		let obj = deepProperty(html.model, ref.rule);
+		let temp = ref.rule.slice(0);
+		let key = temp.pop();
 
-		Object.defineProperty(deepProperty(html.model, temp) || html.model, key, {
-			enumerabe:true,
-			configurable:true,
+		let model = deepProperty(html.model, temp) || html.model;
+
+		Object.defineProperty(model, key, {
+			configurable: true,
 			get:()=> obj,
 			set:val=> {
 				Object.assign(obj, val)
