@@ -130,8 +130,12 @@ class DOMList extends Array{
 		return this;
 	}
 	find(selector){
-		if(this.length === 1) // Optimize perf ~66%
-			return _DOMList(this[0].querySelectorAll(selector));
+		if(this.length === 1){ // Optimize perf ~66%
+			let temp = this[0];
+			if(temp == null) return _DOMList([]);
+
+			return _DOMList(temp.querySelectorAll(selector));
+		}
 
 		const t = [];
 		for (let i = 0; i < this.length; i++)
@@ -140,9 +144,12 @@ class DOMList extends Array{
 	}
 	parent(selector){
 		if(this.length === 1){
+			let temp = this[0];
+			if(temp == null) return _DOMList([]);
+			
 			if(selector)
-				return _DOMList(this[0].closest(selector));
-			return _DOMList(this[0].parentNode);
+				return _DOMList(temp.closest(selector));
+			return _DOMList(temp.parentNode);
 		}
 
 		const t = [];
@@ -208,7 +215,10 @@ class DOMList extends Array{
 	// Action only
 	remove(){
 		if(this.length === 1){
-			this[0].remove();
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp.remove();
 			return this;
 		}
 
@@ -218,7 +228,10 @@ class DOMList extends Array{
 	}
 	empty(){
 		if(this.length === 1){
-			this[0].textContent = '';
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp.textContent = '';
 			return this;
 		}
 
@@ -229,7 +242,10 @@ class DOMList extends Array{
 	addClass(name){
 		name = name.split(' ');
 		if(this.length === 1){
-			DOMTokenListAdd.apply(this[0].classList, name);
+			let temp = this[0];
+			if(temp == null) return this;
+
+			DOMTokenListAdd.apply(temp.classList, name);
 			return this;
 		}
 
@@ -240,7 +256,10 @@ class DOMList extends Array{
 	removeClass(name){
 		name = name.split(' ');
 		if(this.length === 1){
-			DOMTokenListRemove.apply(this[0].classList, name);
+			let temp = this[0];
+			if(temp == null) return this;
+
+			DOMTokenListRemove.apply(temp.classList, name);
 			return this;
 		}
 
@@ -251,7 +270,10 @@ class DOMList extends Array{
 	toggleClass(name){
 		name = name.split(' ');
 		if(this.length === 1){
-			DOMTokenListToggle.apply(this[0].classList, name);
+			let temp = this[0];
+			if(temp == null) return this;
+
+			DOMTokenListToggle.apply(temp.classList, name);
 			return this;
 		}
 
@@ -260,8 +282,12 @@ class DOMList extends Array{
 		return this;
 	}
 	hasClass(name){
-		if(this.length === 1)
-			return this[0].classList.contains(name);
+		if(this.length === 1){
+			let temp = this[0];
+			if(temp == null) return this;
+
+			return temp.classList.contains(name);
+		}
 
 		for (let i = 0; i < this.length; i++)
 			if(this[i].classList.contains(name))
@@ -270,10 +296,13 @@ class DOMList extends Array{
 	}
 	prop(name, value){
 		if(value === void 0)
-			return this.length !== 0 ? this[0][name] : '';
+			return this[0] != null ? this[0][name] : '';
 
 		if(this.length === 1){
-			this[0][name] = value;
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp[name] = value;
 			return this;
 		}
 
@@ -284,10 +313,13 @@ class DOMList extends Array{
 	}
 	attr(name, value){
 		if(value === void 0)
-			return this.length !== 0 ? this[0].getAttribute(name) : '';
+			return this[0] != null ? this[0].getAttribute(name) : '';
 
 		if(this.length === 1){
-			this[0].setAttribute(name, value);
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp.setAttribute(name, value);
 			return this;
 		}
 
@@ -298,7 +330,10 @@ class DOMList extends Array{
 	}
 	removeAttr(name){
 		if(this.length === 1){
-			this[0].removeAttribute(name);
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp.removeAttribute(name);
 			return this;
 		}
 
@@ -309,7 +344,7 @@ class DOMList extends Array{
 	}
 	css(name, value){
 		if(value === void 0 && name.constructor === String)
-			return this.length !== 0 ? this[0].style[name] : '';
+			return this[0] != null ? this[0].style[name] : '';
 
 		if(name.constructor === Object){
 			for(let key in name){
@@ -494,10 +529,13 @@ class DOMList extends Array{
 
 	text(text){
 		if(text === void 0)
-			return this.length !== 0 ? this[0].textContent : '';
+			return this[0] != null ? this[0].textContent : '';
 
 		if(this.length === 1){
-			this[0].textContent = text;
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp.textContent = text;
 			return this;
 		}
 
@@ -507,10 +545,13 @@ class DOMList extends Array{
 	}
 	html(text){
 		if(text === void 0)
-			return this.length !== 0 ? this[0].innerHTML : '';
+			return this[0] != null ? this[0].innerHTML : '';
 
 		if(this.length === 1){
-			this[0].innerHTML = text;
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp.innerHTML = text;
 			return this;
 		}
 
@@ -520,10 +561,13 @@ class DOMList extends Array{
 	}
 	val(text){
 		if(text === void 0)
-			return this.length !== 0 ? this[0].value : '';
+			return this[0] != null ? this[0].value : '';
 
 		if(this.length === 1){
-			this[0].value = text;
+			let temp = this[0];
+			if(temp == null) return this;
+
+			temp.value = text;
 			return this;
 		}
 
