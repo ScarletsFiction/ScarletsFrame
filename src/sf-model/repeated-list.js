@@ -668,45 +668,47 @@ export class PropertyList { // extends Object
 	}
 
 	refresh(){
+		const list = this._list;
+
 		// Check if not a single RepeatedElement instance
 		if(this.$EM.constructor === ElementManipulatorProxy)
-			return this.$EM.refresh_RP(this);
+			this.$EM.refresh_RP(this);
+		else{
+			const elemList = (this.$EM.parentChilds || this.$EM.elements);
+			if(elemList === void 0)
+				return;
 
-		const elemList = (this.$EM.parentChilds || this.$EM.elements);
-		if(elemList === void 0)
-			return;
+			let values = Object.values(this);
+			let isArray = elemList.constructor === Array;
 
-		let values = Object.values(this);
-		let isArray = elemList.constructor === Array;
+			// Remove element first
+			for (let i = elemList.length-1; i >= 0; i--) {
+				const elem = elemList[i];
+				if(values.includes(elem.model)) continue;
 
-		// Remove element first
-		for (let i = elemList.length-1; i >= 0; i--) {
-			const elem = elemList[i];
-			if(values.includes(elem.model)) continue;
-
-			elem.remove();
-			if(isArray) elemList.splice(i, 1);
-		}
-
-		const list = this._list;
-		for (let i = 0; i < list.length; i++) {
-			const elem = elemList[i];
-			let item = this[list[i]];
-
-			if(item == null){
-				delete this[list[i]];
-				list.splice(i--, 1);
-				continue;
+				elem.remove();
+				if(isArray) elemList.splice(i, 1);
 			}
 
-			if(elem == null)
-				this.$EM.append(list[i]);
-			else if(item !== elem.model){
-				const newElem = this.$EM.createElement(list[i]);
-				this.$EM.parentNode.replaceChild(newElem, elem);
+			for (let i = 0; i < list.length; i++) {
+				const elem = elemList[i];
+				let item = this[list[i]];
 
-				if(this.$EM.elements !== void 0)
-					elemList[i] = newElem;
+				if(item == null){
+					delete this[list[i]];
+					list.splice(i--, 1);
+					continue;
+				}
+
+				if(elem == null)
+					this.$EM.append(list[i]);
+				else if(item !== elem.model){
+					const newElem = this.$EM.createElement(list[i]);
+					this.$EM.parentNode.replaceChild(newElem, elem);
+
+					if(this.$EM.elements !== void 0)
+						elemList[i] = newElem;
+				}
 			}
 		}
 
