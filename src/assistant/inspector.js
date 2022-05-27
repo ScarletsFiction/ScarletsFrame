@@ -909,7 +909,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 			func = func.ref;
 
 		if(e.shiftKey)
-			return console.log(func());
+			return console.log(func.call(My.model));
 
 		if(e.ctrlKey)
 			return SFDevSpace.openEditor(My.model, propName);
