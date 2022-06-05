@@ -253,7 +253,7 @@ SFDevMode = SFDevSpace.component('sf-inspector', {
 			};
 		}
 
-		My.views.assign(viewList);
+		try { My.views.assign(viewList); } catch {};
 	}
 
 	My.init = function(){
@@ -914,8 +914,25 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 		if(e.ctrlKey)
 			return SFDevSpace.openEditor(My.model, propName);
 
+		if(e.altKey){
+			if(func._traceRef != null){
+				My.model[propName] = func._traceRef; // Reset
+				target.style.color = '';
+				return;
+			}
+
+			let tracer = My.model[propName] = function(){
+				onTracedChanges(My.titles[My.titles.length-1], propName, 'call', arguments, true);
+				func.apply(this, arguments);
+			}
+
+			tracer._traceRef = func;
+			target.style.color = 'yellow';
+			return;
+		}
+
 		window.Q = func;
-		console.log('%cwindow.Q >>', 'color:yellow', propName);
+		console.log('%cwindow.Q >>', 'color:yellow', propName+':', func);
 	}
 });
 
@@ -1089,7 +1106,7 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType, dontSave=false
 		template += `<div class="object" @click="clickObject"><span class="key">${cleanPropName(objects[i])}</span><span>:</span><div class="value">{{ objects${sanitized} || '{}' }}</div></div>`;
 	}
 
-	template += '</div><div class="function-list list"><div class="info" title="Ctrl + Click to open your editor">Shift+Click to execute</div>';
+	template += '</div><div class="function-list list"><div class="info" title="Ctrl + Click to open your editor, Alt + Click to log the call stack">Shift+Click to execute</div>';
 
 	for (var i = 0; i < functions.length; i++){
 		var args = model[cleanPropName(functions[i])];
@@ -1179,24 +1196,40 @@ function saveInspector(){
 	}, 1000);
 }
 
-function onTracedChanges(name, property, old, now){
+function onTracedChanges(name, property, old, now, isFunc){
 	console.groupCollapsed(`%c${name} %c> ${property}:`, 'color:yellow', 'color:lightgreen',  old, '->', now);
 
 	let stack = (new Error(1)).stack.split('\n');
 	stack.splice(0, 2);
 
-	for (var i = 0; i < stack.length; i++) {
-		stack.splice(0, 1);
+	if(isFunc){
+		for (var i = 0; i < stack.length; i++) {
+			if(stack[0].includes('.model.<computed> [as ')){
+				stack.splice(0, 1);
+				break;
+			}
 
-		if(stack[0].includes('.set ')){
 			stack.splice(0, 1);
-			break;
+		}
+	}
+	else {
+		for (var i = 0; i < stack.length; i++) {
+			stack.splice(0, 1);
+
+			if(stack[0].includes('.set ')){
+				stack.splice(0, 1);
+				break;
+			}
 		}
 	}
 
 	console.log(`Error: stack trace obtained\n${stack.join('\n')}`);
 	console.groupEnd();
+
+	if(window.sf._debugTrace) debugger;
 }
+
+window.sf._debugTrace = false;
 
 initElement();
 function initElement(){
