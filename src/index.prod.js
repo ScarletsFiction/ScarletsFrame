@@ -21,5 +21,6 @@ export {internal} from "./internal.js";
 export {Obj} from "./sf-model/repeated-list.js";
 export {CustomEvent as DOMEvent} from "./sf-model/custom-event.js";
 export {watch, unwatch} from "./sf-model/element-bind.js";
+export {Collection} from "./sf-collection.js";
 
 // import.meta.hot?.accept();
