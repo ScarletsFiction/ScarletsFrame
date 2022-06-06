@@ -5,16 +5,16 @@
 declare type ModelScope = (state: SFModel, root:(name: String) => SFModel) => void;
 declare type ComponentScope = (state: SFModel, root:(name: String) => SFModel, $item: any) => SFModel | void;
 
-declare class DOMList extends Array<HTMLElement> {
+declare class DOMList extends Array<Element> {
 	constructor(arrayLength?: number);
 	constructor(arrayLength: number);
 	constructor(...items: any[]);
-	parent(selector: HTMLElement): DOMList;
-	prev(selector: HTMLElement): DOMList;
-	prevAll(selector: HTMLElement): DOMList;
-	next(selector: HTMLElement): DOMList;
-	nextAll(selector: HTMLElement): DOMList;
-	children(selector: HTMLElement): DOMList;
+	parent(selector: Element): DOMList;
+	prev(selector: Element): DOMList;
+	prevAll(selector: Element): DOMList;
+	next(selector: Element): DOMList;
+	nextAll(selector: Element): DOMList;
+	children(selector: Element): DOMList;
 	remove(): DOMList;
 	empty(): DOMList;
 	addClass(name: string): DOMList;
@@ -33,11 +33,11 @@ declare class DOMList extends Array<HTMLElement> {
 	each(callback: (index?: number, value?: any) => void): DOMList;
 	data(key: string, value?: any): DOMList;
 	removeData(key: string): DOMList;
-	append(element: HTMLElement | DOMList): DOMList;
-	prepend(element: HTMLElement | DOMList): DOMList;
+	append(element: Element | DOMList): DOMList;
+	prepend(element: Element | DOMList): DOMList;
 	eq(index: number, count?: number): DOMList;
-	inserAfter(element: HTMLElement | DOMList): DOMList;
-	inserBefore(element: HTMLElement | DOMList): DOMList;
+	inserAfter(element: Element | DOMList): DOMList;
+	inserBefore(element: Element | DOMList): DOMList;
 	text(text?: string): DOMList | string;
 	html(text?: string): DOMList | string;
 	val(val?: string): DOMList | string;
@@ -63,20 +63,11 @@ declare class DOMList extends Array<HTMLElement> {
 	touchmove(data?: any): DOMList;
 	resize(data?: any): DOMList;
 	scroll(data?: any): DOMList;
-	get(url: String, data?:object, options?:RequestOptions): XHRPromise;
-	post(url: String, data?:object, options?:RequestOptions): XHRPromise;
-	getJSON(url: String, data?:object, options?:RequestOptions): XHRPromise;
-	postJSON(url: String, data?:object, options?:RequestOptions): XHRPromise;
 }
-declare class SFModel {
-	/**
-	 * Component or Model's container element list
-	 * $el: DOMList | ((selector:string) => DOMList);
-	 */
-    $el: any;
 
-    // TypeScript issues: https://github.com/microsoft/TypeScript/issues/37663
-    // $el: DOMList | ((selector:string) => DOMList);
+declare class SFModel {
+	/** Component or Model's container element list */
+    $el: DOMList & ((selector:string) => DOMList);
 
 	[key: string]: any;
 }
@@ -133,12 +124,12 @@ declare class SFSpace {
 	/** Similar like sf.model */
 	model: {
 		(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
-		index(element: HTMLElement): number;
+		index(element: Element): number;
 	};
 	/** Similar like sf.component */
 	component: {
 		(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
-		html(name: String, template: HTMLElement | String | TemplateOptions): void;
+		html(name: String, template: Element | String | TemplateOptions): void;
 	};
 	/** Destroy sf-space */
 	destroy(): void;
@@ -155,19 +146,24 @@ interface WindowOptions {
 	width?: number;
 	height?: number;
 	route?: string;
-	templateHTML?: HTMLElement;
+	templateHTML?: Element;
 	templatePath?: string;
 	templateURL?: string;
 }
-interface RequestOptions{
-	receiveType?: String,
-	responseType?: String,
-	sendType?: String,
-	beforeOpen?: Function,
-	mimeType?: String,
-	timeout?: Number,
-	headers?: Object
-}
+
+type RequestOptions = {
+	receiveType?: 'JSON',
+	sendType?: 'JSON',
+	timeout?: number,
+	beforeOpen?: function(XMLHttpRequest): void,
+	beforeSend?: function(XMLHttpRequest): void,
+	async?: boolean,
+	user?: string,
+	password?: string,
+	responseType?: string,
+	mimeType?: string,
+	headers?: {[key]: string},
+};
 declare interface XHRPromise extends XMLHttpRequest, Promise<any>{
     done(func:(data?:any) => void): XHRPromise;
     fail(func:(status?:any, data?:any) => void): XHRPromise;
@@ -175,7 +171,7 @@ declare interface XHRPromise extends XMLHttpRequest, Promise<any>{
     progress(func:(status?:ProgressEvent) => void): XHRPromise;
     uploadProgress(func:(status?:ProgressEvent) => void): XHRPromise;
 }
-declare class API {
+export class API {
 	/** @param url API Root url, ex: https://example.com/api/v2 */
 	constructor(url: string);
 	/** Set X-Authentication: AccessToken bearer on the header */
@@ -194,7 +190,25 @@ declare class API {
 	upload(url: string, data: FormData): XHRPromise;
 	request(method: HTTPMethod, url: string, data?: object, options?: RequestOptions): XHRPromise;
 }
-declare class Window {
+
+/** Query element inside of <html> */
+export function $(selector: string): DOMList;
+
+/** Query element inside of other element */
+export function $(selector: string, context: Element | DOMList): DOMList;
+
+/** Run a function when the DOM is ready */
+export function $(selector: Function): void;
+
+export namespace $ {
+	const fn: DOMList;
+	function get(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
+	function post(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
+	function getJSON(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
+	function postJSON(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
+}
+
+export class Window {
 	/** Create new window with options */
 	constructor(options: WindowOptions, onLoaded?: Function);
 
@@ -207,9 +221,9 @@ declare class Window {
 	/** Destroy a window */
 	static destroy(id: string): void;
 	/** Find element that from a window where the event triggered from */
-	static source(lists: HTMLElement[], ev: EventTarget): HTMLElement;
+	static source(lists: Element[], ev: EventTarget): Element;
 }
-declare class Space {
+export class Space {
 	/**
 	 * @param namespace name for <sf-space name>
 	 * @param options optional if the element was empty on the DOM
@@ -224,7 +238,7 @@ declare class Space {
 	 * Create new space HTML from template
 	 * @param index if not specified then it will return default index
 	 */
-	createHTML(index?: string): HTMLElement;
+	createHTML(index?: string): Element;
 	/** List of SpaceScope */
 	list: SpaceScopes;
 	/**
@@ -258,7 +272,7 @@ interface Router {
 	/** Views template URL from an URL */
 	templateURL?: string;
 	/** Clone an HTML element as default views template */
-	html?: HTMLElement;
+	html?: Element;
 	/** Default data when routing to this views URL path */
 	defaultData?: object;
 	/** Router event listener */
@@ -283,10 +297,10 @@ declare enum RouteEvent {
 declare type RouteEventStart = (currentPath?: string, targetPath?: string) => boolean | void;
 declare type RouteEventFinish = (previousPath?: string, currentPath?: string) => boolean | void;
 declare type RouteEventLoading = (loaded?: number, total?: number) => boolean | void;
-declare type RouteEventLoaded = (loaded?: number, total?: number, element?: HTMLElement) => boolean | void;
+declare type RouteEventLoaded = (loaded?: number, total?: number, element?: Element) => boolean | void;
 declare type RouteEventError = (statusCode?: number, data?: object) => boolean | void;
 
-declare class Views {
+export class Views {
 	/**
 	 * Page routing for ScarletsFrame
 	 * @param selector Specify custom element as views container
@@ -302,11 +316,11 @@ declare class Views {
 	/** Last views path */
 	lastPath: string;
 	/** Previous page element after routed to new page */
-	lastDOM: HTMLElement | null;
+	lastDOM: Element | null;
 	/** Current page element after routed to new page */
-	currentDOM: HTMLElement | null;
+	currentDOM: Element | null;
 	/** Related page element parents after routed to new page */
-	relatedDOM: HTMLElement[];
+	relatedDOM: Element[];
 	/** Views data from URL or page data */
 	data: {};
 	/** Listen to an page event */
@@ -344,9 +358,9 @@ declare class VirtualScroll {
 
 /**
  * If got element then the model object will be returned.
- * @param elem HTMLElement
+ * @param elem Element
  */
-export function getScope(elem:HTMLElement): HTMLElement | null | void;
+export function getScope(elem:Element): Element | null | void;
 /**
  * Define new < sf-m name="" > element handler, the model scope can be shared with every < sf-m name="" >
  * @param name < sf-m name="name.here" >< /sf-m >
@@ -359,7 +373,7 @@ export namespace model {
 	 * Find the index of RepeatedElement on DOM
 	 * @param element single RepeatedElement
 	 */
-	function index(element: HTMLElement): number;
+	function index(element: Element): number;
 }
 /**
  * Define new < component-name > element handler, if the component scope is returning a model scope it would be used as current scope instead
@@ -376,9 +390,8 @@ export namespace component {
 	 * @param name Component name
 	 * @param template The template content for the component
 	 */
-	function html(name: String, template: String | HTMLElement | TemplateOptions): void;
+	function html(name: String, template: String | Element | TemplateOptions): void;
 }
-export { API };
 export namespace loader {
 	/** Called when page is loading some resource */
 	function onProgress(callback: (loaded?: number, total?: number) => void): void;
@@ -387,11 +400,9 @@ export namespace loader {
 	/** Add some js to resource loading list */
 	function js(list: string[]): void;
 }
-export { Space };
 /**
  * Get full URL with sf-views hash
  */
-export function URI(): string;
 export namespace URI {
 	/** URI Data */
 	const data: {};
@@ -403,8 +414,11 @@ export namespace URI {
 	const query: string;
 	/** Parse URI data from a string */
 	function parse(uri: string): URIData;
+	/** Push into latest history */
+	function push(): void;
+	/** Remove next history and change current history */
+	function replace(): void;
 }
-export function language(): void;
 export namespace language {
 	/** List of loaded language */
 	export const list: {};
@@ -420,19 +434,19 @@ export namespace language {
 	/** Get language from path */
 	export function get(path: string, obj?: object | Function, callback?: Function): void;
 	/** Init SF Language for selected element */
-	export function init(el: HTMLElement): void;
+	export function init(el: Element): void;
+	/** Change language */
+	export function changeDefault(el: string): void;
+	/** Assign language data */
+	export function assign(model: object, keyPath: string): void;
+	export function assign(model: object, keyPath: string, callback: function): void;
+	export function assign(model: object, keyPath: string, obj: object, callback: function): void;
 }
-export { Window };
 /**
  * Enable Hot Reload
  * @param mode 1=Reload scope function only, 2=Reload all
  */
 export function hotReload(mode: number): void;
-export { Views };
-export function $(selector: string | Function | HTMLElement | HTMLElement[], context?: HTMLElement | DOMList): DOMList;
-export namespace $ {
-	const fn: DOMList;
-}
 export function request(method:HTTPMethod, url:string, data?:object, options?:RequestOptions): XHRPromise;
 
 // ==================== Type Definitions ====================
@@ -442,22 +456,22 @@ export class PropertyList {
 	 * Select related elements from this list with query selector
 	 * @param selector Query selector
 	 */
-	$el(selector: string): Array<HTMLElement>;
+	$el(selector: string, key: string | number): DOMList;
 	/**
 	 * Get an element from this list
 	 * @param  index This can be an index/property name, or object value from this list
 	 */
-	getElement(index: object | number): HTMLElement;
+	getElement(index: object | number | string): Element;
 	/**
 	 * Get related elements from this list
 	 * @param  index This can be an index/property name, or object value from this list
 	 */
-	getElements(index: object | number): Array<HTMLElement>;
+	getElements(index: object | number | string): Array<Element>;
 	/** Refresh whole list if something was dynamically added no by calling a function */
 	refresh(): any;
 }
 
-export class ReactiveArray extends PropertyList {
+export class ReactiveArray extends Array, PropertyList {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
 	/** Almost like usual array replacement, but this will reuse available elements to improve performance */
@@ -475,6 +489,23 @@ export class ReactiveArray extends PropertyList {
 	 * @param count Total item to be moved
 	 */
 	move(from: number, to: number, count?: number): void;
-	/** Get the index of an item or element */
-	indexOf(index: object | HTMLElement): number;
+	/** Get the index of an item */
+	indexOf(index: any): number;
+}
+
+export class ReactiveSet extends Set {
+	/** Only exist if the container was flagged as virtual list */
+	$virtual: VirtualScroll;
+}
+
+export class ReactiveMap extends Map {
+	/** Only exist if the container was flagged as virtual list */
+	$virtual: VirtualScroll;
+}
+
+export class Collection {
+	list: Array<any>;
+	add(item: any): void;
+	delete(item: any): void;
+	clear(item: any): void;
 }
