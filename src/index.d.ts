@@ -151,20 +151,24 @@ interface WindowOptions {
 	templateURL?: string;
 }
 
+type RequestHeader = {
+	[key: string]: string;
+}
+
 type RequestOptions = {
 	receiveType?: 'JSON',
 	sendType?: 'JSON',
 	timeout?: number,
-	beforeOpen?: function(XMLHttpRequest): void,
-	beforeSend?: function(XMLHttpRequest): void,
+	beforeOpen?: (XMLHttpRequest) => void,
+	beforeSend?: (XMLHttpRequest) => void,
 	async?: boolean,
 	user?: string,
 	password?: string,
 	responseType?: string,
 	mimeType?: string,
-	headers?: {[key]: string},
+	headers?: RequestHeader,
 };
-declare interface XHRPromise extends XMLHttpRequest, Promise<any>{
+declare interface XHRPromise extends XMLHttpRequest, Promise<any> {
     done(func:(data?:any) => void): XHRPromise;
     fail(func:(status?:any, data?:any) => void): XHRPromise;
     always(func:(status?:any) => void): XHRPromise;
@@ -202,10 +206,10 @@ export function $(selector: Function): void;
 
 export namespace $ {
 	const fn: DOMList;
-	function get(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
-	function post(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
-	function getJSON(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
-	function postJSON(url: string, data?: object, options?: RequestOptions, callback?: function): XHRPromise;
+	function get(url: string, data?: object, options?: RequestOptions, callback?: Function): XHRPromise;
+	function post(url: string, data?: object, options?: RequestOptions, callback?: Function): XHRPromise;
+	function getJSON(url: string, data?: object, options?: RequestOptions, callback?: Function): XHRPromise;
+	function postJSON(url: string, data?: object, options?: RequestOptions, callback?: Function): XHRPromise;
 }
 
 export class Window {
@@ -439,8 +443,8 @@ export namespace language {
 	export function changeDefault(el: string): void;
 	/** Assign language data */
 	export function assign(model: object, keyPath: string): void;
-	export function assign(model: object, keyPath: string, callback: function): void;
-	export function assign(model: object, keyPath: string, obj: object, callback: function): void;
+	export function assign(model: object, keyPath: string, callback: Function): void;
+	export function assign(model: object, keyPath: string, obj: object, callback: Function): void;
 }
 /**
  * Enable Hot Reload
@@ -471,7 +475,7 @@ export class PropertyList {
 	refresh(): any;
 }
 
-export class ReactiveArray extends Array, PropertyList {
+export class ReactiveArray extends Array {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
 	/** Almost like usual array replacement, but this will reuse available elements to improve performance */
@@ -491,16 +495,43 @@ export class ReactiveArray extends Array, PropertyList {
 	move(from: number, to: number, count?: number): void;
 	/** Get the index of an item */
 	indexOf(index: any): number;
+	/**
+	 * Select related elements from this list with query selector
+	 * @param selector Query selector
+	 */
+	$el(selector: string, key: string | number): DOMList;
+	/**
+	 * Get an element from this list
+	 * @param  index This can be an index/property name, or object value from this list
+	 */
+	getElement(index: object | number | string): Element;
+	/**
+	 * Get related elements from this list
+	 * @param  index This can be an index/property name, or object value from this list
+	 */
+	getElements(index: object | number | string): Array<Element>;
+	/** Refresh whole list if something was dynamically added no by calling a function */
+	refresh(): any;
 }
 
 export class ReactiveSet extends Set {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
+	/**
+	 * Select related elements from this list with query selector
+	 * @param selector Query selector
+	 */
+	$el(selector: string, key: string | number): DOMList;
 }
 
 export class ReactiveMap extends Map {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
+	/**
+	 * Select related elements from this list with query selector
+	 * @param selector Query selector
+	 */
+	$el(selector: string, key: string | number): DOMList;
 }
 
 export class Collection {
