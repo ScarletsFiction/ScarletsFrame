@@ -5,7 +5,8 @@
 declare type ModelScope = (state: SFModel, root:(name: String) => SFModel) => void;
 declare type ComponentScope = (state: SFModel, root:(name: String) => SFModel, $item: any) => SFModel | void;
 
-declare class DOMList extends Array<Element> {
+export type sQuery = DOMList;
+export class DOMList extends Array<Element> {
 	constructor(arrayLength?: number);
 	constructor(arrayLength: number);
 	constructor(...items: any[]);
@@ -71,6 +72,8 @@ declare class SFModel {
 
 	[key: string]: any;
 }
+export type { SFModel as Model };
+
 interface ModelOptions {
 	/** Your extendable class */
 	extend: Function;
@@ -84,6 +87,8 @@ declare class SFComponent {
 	 */
 	constructor($item?: object, namespace?: typeof SpaceScope | boolean, asScope?: boolean);
 }
+export type { SFComponent as Component };
+
 /** Component scope collection */
 declare class ComponentList extends Array<SFModel> {
 	constructor(arrayLength?: number);
@@ -91,6 +96,7 @@ declare class ComponentList extends Array<SFModel> {
 	constructor(...items: SFModel[]);
 	element: SFComponent;
 }
+
 interface TemplateOptions {
 	/** Template path from window.templates */
 	template: String;
@@ -119,20 +125,6 @@ interface SpaceModel {
 }
 interface SpaceComponent {
 	[key: string]: SFModel[];
-}
-declare class SFSpace {
-	/** Similar like sf.model */
-	model: {
-		(name: String, options?: ModelScope | ModelOptions, scope?: ModelScope): SFModel;
-		index(element: Element): number;
-	};
-	/** Similar like sf.component */
-	component: {
-		(name: String, options?: ComponentScope | ModelOptions, scope?: ComponentScope): ComponentList;
-		html(name: String, template: Element | String | TemplateOptions): void;
-	};
-	/** Destroy sf-space */
-	destroy(): void;
 }
 declare class URIData {
 	path: string;
@@ -291,13 +283,8 @@ interface Router {
 	/** Call a function before routing to this views URL path */
 	beforeRoute?: (data?: object) => boolean | void;
 }
-declare enum RouteEvent {
-	"start" = "start",
-	"finish" = "finish",
-	"loading" = "loading",
-	"loaded" = "loaded",
-	"error" = "error"
-}
+
+declare type RouteEvent = 'start' | 'finish' | 'loading' | 'loaded' | 'error';
 declare type RouteEventStart = (currentPath?: string, targetPath?: string) => boolean | void;
 declare type RouteEventFinish = (previousPath?: string, currentPath?: string) => boolean | void;
 declare type RouteEventLoading = (loaded?: number, total?: number) => boolean | void;
@@ -328,7 +315,7 @@ export class Views {
 	/** Views data from URL or page data */
 	data: {};
 	/** Listen to an page event */
-	on(event: 'finish', callback?: RouteEventStart | RouteEventFinish | RouteEventLoading | RouteEventLoaded | RouteEventError): void;
+	on(event: RouteEvent, callback?: RouteEventStart | RouteEventFinish | RouteEventLoading | RouteEventLoaded | RouteEventError): void;
 	/**
 	 * Stop listen to an page event
 	 * @param event if empty then remove all event
@@ -455,7 +442,8 @@ export function request(method:HTTPMethod, url:string, data?:object, options?:Re
 
 // ==================== Type Definitions ====================
 
-export class PropertyList {
+export type PropertyList = _PropertyList;
+declare class _PropertyList {
 	/**
 	 * Select related elements from this list with query selector
 	 * @param selector Query selector
@@ -475,7 +463,8 @@ export class PropertyList {
 	refresh(): any;
 }
 
-export class ReactiveArray extends Array {
+export type ReactiveArray = _ReactiveArray;
+declare class _ReactiveArray extends Array {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
 	/** Almost like usual array replacement, but this will reuse available elements to improve performance */
@@ -514,7 +503,8 @@ export class ReactiveArray extends Array {
 	refresh(): any;
 }
 
-export class ReactiveSet extends Set {
+export type ReactiveSet = _ReactiveSet;
+declare class _ReactiveSet extends Set {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
 	/**
@@ -524,7 +514,8 @@ export class ReactiveSet extends Set {
 	$el(selector: string, key: string | number): DOMList;
 }
 
-export class ReactiveMap extends Map {
+export type ReactiveMap = _ReactiveMap;
+declare class _ReactiveMap extends Map {
 	/** Only exist if the container was flagged as virtual list */
 	$virtual: VirtualScroll;
 	/**
@@ -540,3 +531,18 @@ export class Collection {
 	delete(item: any): void;
 	clear(item: any): void;
 }
+
+export namespace Obj {
+	/** Used to assign and refresh reactive object property */
+	export function set(obj: object, prop: string, val: any): void;
+
+	/** Delete and refresh reactive object property */
+	function _delete(obj: object, prop: string): void;
+	export { _delete as delete };
+}
+
+/** Watch changes of a object */
+export function watch(model: object, prop: string, callback: Function): void;
+
+/** Unwatch changes of a object */
+export function unwatch(model: object, prop: string, callback: Function): void;
