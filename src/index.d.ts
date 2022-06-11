@@ -525,11 +525,20 @@ declare class _ReactiveMap extends Map {
 	$el(selector: string, key: string | number): DOMList;
 }
 
+/** Create a separate collection that linked with Array/Set/Object/Map object */
 export class Collection {
+	constructor(obj: Object, options?: {
+		/** default to Infinity */
+		maxItem?: Number,
+		onOverflow?: 'shift' | 'pop' | ((item: any) => void),
+		onAdd?: (item: any, elements: Array<Node>) => void,
+		onDelete?: (item: any, elements: Array<Node>) => void,
+	});
+
 	list: Array<any>;
 	add(item: any): void;
 	delete(item: any): void;
-	clear(item: any): void;
+	clear(): void;
 }
 
 export namespace Obj {
