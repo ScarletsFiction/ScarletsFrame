@@ -315,7 +315,7 @@ export function Views(selector, name){
 				DOM.insertBefore(temp, firstChild);
 
 				for (let i = 1, n = DOM.childNodes.length; i < n; i++)
-					temp.appendChild(DOM.childNodes.item(1));
+					temp.appendChild(DOM.childNodes[1]);
 
 				temp.routePath = currentPath || Self.currentPath;
 				temp.routeCached = routes.findRoute(temp.routePath);

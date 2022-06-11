@@ -398,7 +398,7 @@ export function childIndexes(array, context){
 	for (let i = 0; i < array.length; i++) {
 		element = array[i] === 0
 			? element.firstChild
-			: element.childNodes.item(array[i]); // 37ms
+			: element.childNodes[array[i]]; // 37ms
 
 		if(element === null)
 			return null;

@@ -519,7 +519,7 @@ function assignSquareBracket(value, elem, template, eRef){
 	const { childNodes } = elem;
 	const backup = {};
 	for(var a=0, n=childNodes.length; a<n; a++){
-		var place, elemBackup = childNodes.item(a);
+		var place, elemBackup = childNodes[a];
 		if(elemBackup.nodeType === 3)
 			place = backup._text ??= [];
 		else if(elemBackup.nodeType === 1)

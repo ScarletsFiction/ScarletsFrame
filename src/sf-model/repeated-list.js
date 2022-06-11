@@ -2019,7 +2019,7 @@ export class ElementManipulator{
 		if(elemList.constructor !== Array){
 			// Loop for every element between range first (important)
 			for (var i = from; i < to; i++) {
-				var elem = elemList.item(i);
+				var elem = elemList[i];
 
 				// Loop for any related property
 				for (var a = binded.length-1; a >= 0; a--) {
