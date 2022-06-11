@@ -25,8 +25,12 @@ function createReactiveSetter(key){
 	let _m2v = `m2v$${key}`;
 	let _on = `on$${key}`;
 
+	let getKey;
+	if(/^\d/.test(key)) getKey = `[${key}]`;
+	else getKey = `.${key}`;
+	
 	return {
-		get: Function(`return this.sf$bindedKey._$fo.${key}`),
+		get: Function(`return this.sf$bindedKey._$fo${getKey}`),
 		set(val){
 			var bindedKey = this.sf$bindedKey[key];
 			var objSave = this.sf$bindedKey._$fo;

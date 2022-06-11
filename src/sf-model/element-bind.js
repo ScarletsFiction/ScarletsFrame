@@ -429,9 +429,12 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		}
 	}
 
+	let isDeepProperty = false;
 	if(originalPropertyName.constructor === Array){
 		// Cache deep sf$bindingKey path
 		if(originalPropertyName.length !== 1){
+			isDeepProperty = true;
+
 			if(originalModel.sf$internal === void 0){
 				Object.defineProperty(originalModel, 'sf$internal', {configurable:true, value:{
 					deepBinding:{}
@@ -449,14 +452,18 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(model.sf$internal && model.sf$internal._regex === void 0 && bindedKey._regex !== void 0)
 		model.sf$internal._regex = bindedKey._regex;
 
-	let enumerable = desc?.enumerable ?? false;
 	let objValue = model[propertyName]; // Object value
 	let set;
 
-	if(isALength === false && callback.template.repeatedList){
-		let cache = cachedReactivity(model, propertyName, setter, enumerable);
+	if(isALength === false && callback.template != null && callback.template.repeatedList){
+		let cache = cachedReactivity(model, propertyName, setter);
 		set = cache.set;
 		getter ??= cache.get;
+
+		if(isDeepProperty){
+			callback.model = originalModel;
+			callback.prop = originalPropertyName;
+		}
 	}
 	else{
 		let _on = `on$${propertyName}`; // Everytime value's going changed, callback value will assigned as new value
@@ -573,7 +580,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 		return forceReactive(model, propertyName);
 
 	Object.defineProperty(model, propertyName, {
-		enumerable,
+		enumerable: desc?.enumerable ?? false,
 		configurable: true,
 		get: getter || (()=> objValue),
 		set
