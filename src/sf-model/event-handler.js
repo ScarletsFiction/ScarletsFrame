@@ -56,10 +56,10 @@ export function eventHandler(that, data, _modelScope, rootHandler, template){
 		the @event="..." that was made by the developer (you)
 
 		For the example, if you make a template on HTML like below
-		<div @click="clickMe('hi')">Click me</div>
+		ex: <div @click="clickMe('hi')">Click me</div>
 
 		This framework will create a custom function based on the content inside of @click="..."
-		Function(args, "clickMe('hi')")
+		ex: Function(args, "clickMe('hi')")
 		*/
 		if(direct)
 			var func = getDirectReference(_modelScope, script);

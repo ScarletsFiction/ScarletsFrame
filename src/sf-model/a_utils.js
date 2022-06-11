@@ -76,10 +76,10 @@ export function modelScript(mask, script, repeatedListKey, _list){
 	the HTML template that was made by the developer (you)
 
 	For the example, if you make a template on HTML like below
-	<div> {{ hello(text) }} </div>
+	ex: <div> {{ hello(text) }} </div>
 
 	This framework will create a custom function based on the content inside of {{ ... }}
-	Function(args, "hello(text)")
+	ex: Function(args, "hello(text)")
 
 	The developer itself must be aware and becareful if they're allowing their user
 	to create custom template dynamically on their project. The vulnerability is just
