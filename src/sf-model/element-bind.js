@@ -3,6 +3,7 @@ import {stringifyPropertyPath, deepProperty, parsePropertyPath} from "../utils.j
 import {syntheticTemplate, templateParser, syntheticReactiveArray} from "./template.js";
 import {extractPreprocess, revalidateBindingPath} from "./parser.js";
 import {initBindingInformation} from "./a_utils.js";
+import {cachedReactivity} from "./bind-structure.js";
 import {ReactiveArray, ReactiveMap, ReactiveSet, PropertyList, ElementManipulatorProxy, forceReactive, RL_BindStatus} from "./repeated-list.js";
 
 export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElement){
@@ -340,7 +341,7 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 			if(bindedKey === RL_BindStatus)
 				bindedKey = {_RL: true}; // Unfreeze
 
-			let ref = bindedKey[bindName] ??= []; // ToDo: I forgot why I use Array
+			let ref = bindedKey[bindName] ??= [];
 
 			if(ref.includes(callback) === false){
 				const prop = stringifyPropertyPath(originalPropertyName);
@@ -448,71 +449,82 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(model.sf$internal && model.sf$internal._regex === void 0 && bindedKey._regex !== void 0)
 		model.sf$internal._regex = bindedKey._regex;
 
+	let enumerable = desc?.enumerable ?? false;
 	let objValue = model[propertyName]; // Object value
-	// if(objValue == null)
-	// 	objValue = '';
+	let set;
 
-	let _on = `on$${propertyName}`; // Everytime value's going changed, callback value will assigned as new value
-	let _m2v = `m2v$${propertyName}`; // Everytime value changed from script (not from View), callback value will only affect View
+	if(isALength === false && callback.template.repeatedList){
+		let cache = cachedReactivity(model, propertyName, setter, enumerable);
+		set = cache.set;
+		getter ??= cache.get;
+	}
+	else{
+		let _on = `on$${propertyName}`; // Everytime value's going changed, callback value will assigned as new value
+		let _m2v = `m2v$${propertyName}`; // Everytime value changed from script (not from View), callback value will only affect View
 
-	// Must use function, and don't use ()=> {}
-	const set = function(val){
-		if(objValue !== val){
-			let newValue, noFeedback;
-			if(internal.inputBoundRunning === false){
-				if(_m2v in model){
-					newValue = model[_m2v](val);
+		// Must use function, and don't use ()=> {}
+		// If this was modified, please also adapt it to ./bind-structure.js
+		set = function(val){
+			if(objValue !== val){
+				let newValue, noFeedback;
+				if(internal.inputBoundRunning === false){
+					if(_m2v in model){
+						newValue = model[_m2v](val);
 
-					if(newValue !== void 0)
-						noFeedback = true;
+						if(newValue !== void 0)
+							noFeedback = true;
+					}
+
+					if(_on in model)
+						newValue = model[_on](val, true);
 				}
 
-				if(_on in model)
-					newValue = model[_on](val, true);
-			}
+				objValue = newValue !== void 0 ? newValue : val;
 
-			objValue = newValue !== void 0 ? newValue : val;
-
-			if(setter !== void 0){
-				setter.call(this, objValue);
-				objValue = getter.call(this);
-			}
-
-			if(bindedKey.inputBound)
-				bindedKey.inputBound(objValue, bindedKey.input);
-
-			if(bindedKey.callback){
-				const {callback} = bindedKey;
-				for (var i = 0; i < callback.length; i++)
-					callback[i].call(this, propertyName, objValue);
-			}
-
-			var temp;
-			if(bindedKey.bindList){
-				const {bindList} = bindedKey;
-				for (var i = 0; i < bindList.length; i++){
-					temp = bindList[i];
-
-					syntheticReactiveArray(temp, temp.prop || originalPropertyName, temp.model || originalModel);
+				if(setter !== void 0){
+					setter.call(this, objValue);
+					objValue = getter.call(this);
 				}
-			}
 
-			if(bindedKey.elements){
-				const {elements} = bindedKey;
-				for (var i = 0; i < elements.length; i++){
-					temp = elements[i];
+				if(bindedKey.inputBound)
+					bindedKey.inputBound(objValue, bindedKey.input);
 
-					// false === no update
-					syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel);
+				if(bindedKey.callback){
+					const {callback} = bindedKey;
+					for (var i = 0; i < callback.length; i++)
+						callback[i].call(this, propertyName, objValue);
 				}
+
+				var temp;
+				if(bindedKey.bindList){
+					const {bindList} = bindedKey;
+					for (var i = 0; i < bindList.length; i++){
+						temp = bindList[i];
+
+						syntheticReactiveArray(temp, temp.prop || originalPropertyName, temp.model || originalModel);
+					}
+				}
+
+				if(bindedKey.elements){
+					const {elements} = bindedKey;
+					for (var i = 0; i < elements.length; i++){
+						temp = elements[i];
+
+						// false === no update
+						syntheticTemplate(temp.element, temp.template, temp.prop || originalPropertyName, temp.model || originalModel);
+					}
+				}
+
+				if(noFeedback) objValue = val;
 			}
 
-			if(noFeedback) objValue = val;
+			internal.inputBoundRunning = false;
 		}
 
-		internal.inputBoundRunning = false;
+		if(setter !== void 0) set.cache = setter;
 	}
 
+	// binding for Array.length, Set.size, or Map.size
 	if(isALength !== false && !(isALength in model)){
 		let propName = parsePropertyPath(originalPropertyName);
 		if(propName.length === 1){
@@ -560,10 +572,8 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 	if(SFOptions.devMode && objValue != null && objValue.$EM !== void 0)
 		return forceReactive(model, propertyName);
 
-	if(setter !== void 0) set.cache = setter;
-
 	Object.defineProperty(model, propertyName, {
-		enumerable: desc?.enumerable ?? false,
+		enumerable,
 		configurable: true,
 		get: getter || (()=> objValue),
 		set
