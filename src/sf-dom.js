@@ -16,8 +16,8 @@ export function $(selector, context){
 	if(!selector)
 		throw new Error("First argument mustn't be falsy value, but got: " + selector);
 
-	if(selector instanceof Function && selector !== internal.WindowClass)
-		return Loader.onFinish(selector);
+	// if Array
+	if(selector.splice != null) return _DOMList(selector);
 
 	if(context){
 		if(context.classList === void 0){
@@ -37,6 +37,9 @@ export function $(selector, context){
 			return _DOMList($.parseElement(selector, true));
 		return _DOMList(document.querySelectorAll(selector));
 	}
+
+	if(selector instanceof Function && selector !== internal.WindowClass)
+		return Loader.onFinish(selector);
 
 	return _DOMList(selector);
 }
@@ -606,7 +609,7 @@ class DOMList extends Array{
 }
 
 function _DOMList(list){
-	if(!list || list.forEach === void 0 || list.constructor !== NodeList || list === window)
+	if(list.constructor !== NodeList && (list.splice === void 0 || list === window))
 		return new DOMList(list);
 
 	const { length } = list;
