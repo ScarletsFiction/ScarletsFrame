@@ -4,7 +4,7 @@
 // Note: using .apply can be more faster than ...spread
 
 import {component as Component} from "../sf-component.js";
-import {internal as Internal} from "../internal.js";
+// import {internal as Internal} from "../internal.js";
 import {$, queryElements} from "../sf-dom.js";
 import {modelScript, initBindingInformation} from "./a_utils.js";
 import {findScrollerElement, addScrollerStyle, VirtualScroll, VirtualScrollManipulator} from "../sf-virtual_scroll.js";

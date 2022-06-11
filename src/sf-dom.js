@@ -1,7 +1,7 @@
 // This file contains code for sQuery (sf.$)
 
 import {internal} from "./shared.js";
-let {windowEv} = internal;
+// let {windowEv} = internal;
 
 import {loader as Loader} from "./sf-loader.js";
 import {request as Request} from "./sf-request.js";

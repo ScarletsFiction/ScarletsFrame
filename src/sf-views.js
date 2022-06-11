@@ -1,4 +1,4 @@
-import {internal, forProxying, SFOptions} from "./shared.js";
+import {internal, SFOptions} from "./shared.js";
 import {onEvent, parseElement} from "./sf-dom.utils.js";
 import {URI} from "./sf-uri.js";
 import {request as Request} from "./sf-request.js";

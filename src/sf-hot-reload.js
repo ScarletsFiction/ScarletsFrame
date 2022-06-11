@@ -1,9 +1,9 @@
 // Allow direct function replacement to accelerate development
 // Note: This feature will allocate more small memory and small slow down
 import {SFOptions, internal, HotReload, sfRegex} from "./shared.js";
-import {loader as Loader} from "./sf-loader.js";
+// import {loader as Loader} from "./sf-loader.js";
 import {component as Component, prepareComponentTemplate} from "./sf-component.js";
-import {model as Model} from "./sf-model.js";
+// import {model as Model} from "./sf-model.js";
 import {Views} from "./sf-views.js";
 import "./sf-views.hot.js";
 import {Inspector} from "./assistant/inspector.js";

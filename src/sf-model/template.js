@@ -1,5 +1,5 @@
 import {internal as Internal} from "../internal.js";
-import {internal, emptyArray} from "../shared.js";
+import {emptyArray} from "../shared.js";
 import {templateErrorInfo, _eP, applyParseIndex, parserForAttribute, templateExec} from "./a_utils.js";
 import {parseElement, prevAll, childIndexes} from "../sf-dom.utils.js";
 import {repeatedListBinding} from "./repeated-list.js";

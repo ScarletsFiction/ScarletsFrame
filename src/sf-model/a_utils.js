@@ -153,7 +153,8 @@ export function findErrorLocation(text, error, slicedX, msg, slicedY){
 
 export function templateErrorInfo(e, element, item, modelRef, template){
 	if(e.sf$throwed){
-		var el, isSingle = 'From element:';
+		var el;
+		// var isSingle = 'From element:';
 
 		if(item?.$el !== void 0 && modelRef?.$el === void 0){
 			modelRef = item;
@@ -164,7 +165,7 @@ export function templateErrorInfo(e, element, item, modelRef, template){
 			el = modelRef.$el[0];
 			if(el && el.constructor === ModelInternal._ref){
 				if(modelRef.$el.length !== 1){
-					isSingle = "From one of shared model's element:";
+					// isSingle = "From one of shared model's element:";
 					el = modelRef.$el.slice(0);
 				}
 			}
