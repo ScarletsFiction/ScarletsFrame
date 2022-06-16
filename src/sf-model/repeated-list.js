@@ -984,7 +984,15 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 
 	if(that._$sfReactive === PropertyList){
 		temp = that;
-		that = Object.values(that);
+
+		let list = that._list;
+		if(list && list.length !== 0){
+			that = new Array(list.length);
+			for (let i=0; i < list.length; i++) {
+				that[i] = temp[list[i]];
+			}
+		}
+		else that = Object.values(that);
 	}
 
 	const len = that.length;
@@ -1027,11 +1035,11 @@ function injectArrayElements(EM, tempDOM, beforeChild, that, modelRef, parentNod
 		tempDOM.append(...pending);
 
 	// For PropertyList
-	if(temp !== void 0){
-		var i = 0;
-		for(let keys in temp)
-			temp[keys] = that[i++];
-	}
+	// if(temp !== void 0){
+	// 	var i = 0;
+	// 	for(let keys in temp)
+	// 		temp[keys] = that[i++];
+	// }
 }
 
 export class ReactiveArray extends Array {
