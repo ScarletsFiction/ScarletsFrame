@@ -609,7 +609,7 @@ class DOMList extends Array{
 }
 
 function _DOMList(list){
-	if(list.constructor !== NodeList && (list.splice === void 0 || list === window))
+	if(list == null || (list.constructor !== NodeList && (list.splice === void 0 || list === window)))
 		return new DOMList(list);
 
 	const { length } = list;
