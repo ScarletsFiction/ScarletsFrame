@@ -253,7 +253,7 @@ SFDevMode = SFDevSpace.component('sf-inspector', {
 			};
 		}
 
-		try { My.views.assign(viewList); } catch {};
+		try { My.views.assign(viewList); } catch {throw "Failed to inspect element"};
 	}
 
 	My.init = function(){
