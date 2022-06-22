@@ -99,11 +99,24 @@ export function repeatedListBinding(elements, modelRef, namespace, modelKeysRege
 
 			if(isDeep.length !== 1){
 				pattern.source = isDeep;
-				target = deepProperty(modelRef, isDeep);
+
+				let parentPath = isDeep.slice(0, -1);
+				let parentObj = deepProperty(modelRef, parentPath);
+				let targetPath = isDeep[isDeep.length-1];
+				target = parentObj[targetPath];
 
 				// Cache deep
-				if(modelRef.sf$internal)
-					modelRef.sf$internal.deepBinding[isDeep.slice(0, -1).join('%$')] = true;
+				if(modelRef.sf$internal === void 0){
+					Object.defineProperty(modelRef, 'sf$internal', {configurable:false, value:{
+						deepBinding:{}
+					}});
+				}
+
+				if(parentObj.sf$bindedKey === void 0)
+					initBindingInformation(parentObj);
+
+				parentObj.sf$bindedKey[targetPath] = RL_BindStatus;
+				modelRef.sf$internal.deepBinding[parentPath.join('%$')] = true;
 			}
 
 			if(target === void 0){

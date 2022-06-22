@@ -128,9 +128,32 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 			bindLength += elements.length;
 		}
 		if(bindList){
-			for (var i = bindList.length-1; i >= 0; i--) {
-				if(bindList[i].bindList.$EM === void 0)
+			let exist = new Set();
+			for (let i = bindList.length-1; i >= 0; i--) {
+				let bindList_ = bindList[i].bindList;
+
+				if(exist.has(bindList_)){
 					bindList.splice(i, 1);
+					continue;
+				}
+
+				let EM = bindList_.$EM;
+				if(EM && EM.constructor === ElementManipulatorProxy){
+					let temp = EM.list;
+
+					for (let a=temp.length-1; a >= 0; a--) {
+						if(temp[a].parentNode.isConnected === false)
+							temp.splice(a, 1);
+					}
+
+					if(temp.length === 0)
+						EM = bindList[i].bindList.$EM = void 0;
+				}
+
+				if(EM === void 0)
+					bindList.splice(i, 1);
+
+				exist.add(bindList_);
 			}
 
 			bindLength += bindList.length;
@@ -213,6 +236,8 @@ function repeatedRemoveDeepBinding(obj, refPaths, isLazy, isUniqList, ignoreInEl
 			}
 			continue that;
 		}
+
+		// ToDo: check if ReactiveMap, ReactiveSet, PropertyList also need to be cleared
 
 		for(let key in obj){
 			var deep = deepProperty(obj[key], ref);
@@ -365,7 +390,10 @@ export function modelToViewBinding(model, propertyName, callback, elementBind, t
 							});
 						}
 
-						originalModel.sf$internal.deepBinding = callback.hasDeep;
+						let deepBinding = originalModel.sf$internal.deepBinding;
+
+						if(deepBinding != null) Object.assign(deepBinding, callback.hasDeep);
+						else originalModel.sf$internal.deepBinding = callback.hasDeep;
 					}
 
 					// ToDo: Make this more efficient

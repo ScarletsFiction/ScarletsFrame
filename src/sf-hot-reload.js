@@ -147,6 +147,18 @@ export function hotReload(mode){
 
 	// On component scope reregistered
 	HotReload.ComponentRefresh = function(space, name, func){
+		if(space.Space != null && space.id === "default"){
+			let list = space.Space.list;
+			for (let key in list) {
+				if(key === 'Space' || key === 'default') continue;
+
+				let temp = list[key];
+				if(temp == null) continue;
+
+				HotReload.ComponentRefresh(temp, name, func);
+			}
+		}
+
 		let list = proxySpace.get(space);
 		if(list === void 0 || !(name in list))
 			return;
@@ -290,9 +302,23 @@ export function hotReload(mode){
 	});
 
 	// Refresh component html
-	HotReload.ComponentTemplate = function(scope, name){
+	HotReload.ComponentTemplate = function(scope, name, objList){
 		const registrar = scope.registered[name];
-		const freezed = registrar[2].slice(0); // freeze to avoid infinity loop if have any nest
+		const freezed = (objList || registrar[2]).slice(0); // freeze to avoid infinity loop if have any nest
+
+		if(objList == null && scope.Space != null){
+			let list = scope.Space.list;
+			for (let key in list) {
+				if(key === 'Space') continue;
+
+				let temp = list[key]?.components[name];
+				if(temp == null) continue;
+
+				HotReload.ComponentTemplate(scope, name, temp);
+			}
+
+			return;
+		}
 
 		for (let z = 0; z < freezed.length; z++) {
 			const model = freezed[z];
@@ -351,6 +377,9 @@ export function hotReload(mode){
 				// Put it back after children was ready
 				if(parentNode !== null)
 					parentNode.insertBefore(element, nextNode);
+
+				// Do some clean up again
+				removeModelBinding(model);
 			}
 
 			model.hotReloadedHTML && model.hotReloadedHTML();
