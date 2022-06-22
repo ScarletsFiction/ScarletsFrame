@@ -4,6 +4,7 @@
 /dist/inspector.js
 /dist/inspector.css
 /dist/scarletsframe.min.js
+/dist/scarletsframe.modern.js
 /dist/scarletsframe.dev.js
 /dist/squery.min.js
 mynote.md
