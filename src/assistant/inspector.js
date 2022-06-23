@@ -223,6 +223,16 @@ SFDevMode = SFDevSpace.component('sf-inspector', {
 		My.models.assign(modelList);
 		My.components.assign(componentList);
 
+		let _list = My.models;
+		for (let i=0, n=_list.length; i < n; i++) {
+			_list[i].inspectorInit();
+		}
+
+		_list = My.components;
+		for (let i=0, n=_list.length; i < n; i++) {
+			_list[i].inspectorInit();
+		}
+
 		// Space
 		var spaces = $(e.target).parents('sf-space');
 		spaceList.length = spaces.length;
@@ -287,11 +297,19 @@ SFDevSpace.modelListHoverLeave = function($dom){
 // For model & component only
 SFDevSpace.openEditor_ = {err(){
 	console.error("Source path couldn't be found");
-}, go(devPath, propName){
-	window.___browserSync___.socket.emit('sf-open-source', [devPath, propName]);
+}, go(devPath, propName, rawText){
+	window.___browserSync___.socket.emit('sf-open-source', [devPath, propName, rawText]);
 }};
 
 SFDevSpace.openEditor = function(model, propName){
+	if(model.sf$resolveSrc !== void 0){
+		let temp = model.sf$resolveSrc;
+		if(temp.url == null || (temp.propName == null && temp.rawText == null))
+			throw new Error("sf$resolveSrc have incorrect format");
+
+		return SFDevSpace.openEditor_.go(temp.url, temp.propName, temp.rawText);
+	}
+
 	if(model.$el === void 0){
 		if(model.sf$filePath === void 0)
 			return SFDevSpace.openEditor_.err();
@@ -325,9 +343,25 @@ SFDevSpace.openEditor = function(model, propName){
 
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-model-info', {
-	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }}</div>`
+	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }} <span style="display: {{ !canInspect && 'none' }}" title="CTRL + Click to open into your text editor">📂</span></div>`
 }, function(My, root){
 	// My.name = $item.name;
+	My.canInspect = false;
+	My._lastModel = null;
+
+	My.inspectorInit = function(){
+		let model = My.model;
+		if(My._lastModel === model || window.___browserSync___ == null) return;
+
+		My.canInspect = model.sf$resolveSrc != null || model.sf$filePath != null;
+
+		if(My.canInspect === false && model.$el != null){
+			My.canInspect = model.$el.$devData != null || model.$el[0]?.sf$collection?.$devData != null;
+		}
+
+		My._lastModel = model;
+	}
+
 	My.clicked = function(e){
 		My.leave();
 		setTimeout(()=> {
@@ -351,9 +385,25 @@ SFDevSpace.component('sf-model-info', {
 
 // sf-each-> sf-as-scope enabled
 SFDevSpace.component('sf-component-info', {
-	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }}</div>`
+	html:`<div @click="clicked" @pointerenter="enter" @pointerleave="leave">{{ name }} <span style="display: {{ !canInspect && 'none' }}" title="CTRL + Click to open into your text editor">📂</span></div>`
 }, function(My, root){
 	// My.name = $item.name;
+	My.canInspect = false;
+	My._lastModel = null;
+
+	My.inspectorInit = function(){
+		let model = My.model;
+		if(My._lastModel === model || window.___browserSync___ == null) return;
+
+		My.canInspect = model.sf$resolveSrc != null || model.sf$filePath != null;
+
+		if(My.canInspect === false && model.$el != null){
+			My.canInspect = model.$el.$devData != null || model.$el[0]?.sf$collection?.$devData != null;
+		}
+
+		My._lastModel = model;
+	}
+
 	My.clicked = function(e){
 		My.leave();
 		setTimeout(()=> {

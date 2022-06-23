@@ -207,11 +207,9 @@ export function toArray(b){
 }
 
 export function getCallerFile(step){
-	try{throw new Error()}catch(e){
-		var temp = e.stack.split('\n')[step+2];
-		if(!temp) return '';
-		return temp.split('://').pop();
-	}
+	var temp = (new Error(1)).stack.split('\n')[step+2];
+	if(!temp) return '';
+	return temp.split('://').pop();
 }
 
 // Get property of the model

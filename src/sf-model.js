@@ -165,7 +165,7 @@ model.for = function(name, options, func, namespace){
 				configurable: true,
 				value: {
 					func,
-					filePath: getCallerFile(namespace ? 2 : 2)
+					filePath: getCallerFile(namespace ? 3 : 2)
 				}
 			});
 	}

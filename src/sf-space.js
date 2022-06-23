@@ -1,7 +1,7 @@
 import {model as Model} from "./sf-model.js";
 import {component as Component} from "./sf-component.js";
 import {$} from "./sf-dom.js";
-import {internal, forProxying} from "./shared.js";
+import {internal, forProxying, SFOptions} from "./shared.js";
 import {ModelInit} from "./sf-model/a_model.js";
 
 // ToDo: Tidy up, the implementation seems dirty
@@ -66,7 +66,11 @@ if(window.sf$proxy)
 	internal.space = window.sf$proxy.internalSpace;
 else{
 	internal.space.initComponent = function(root, tagName, elem, $item, asScope){
-		Component.new(tagName, elem, $item, root instanceof Function ? root : root.sf$space, asScope);
+		let space = root instanceof Function ? root : root.sf$space;
+		Component.new(tagName, elem, $item, space, asScope);
+
+		if(SFOptions.devMode && space.Space != null)
+			elem.sf$collection.$devData ??= space.Space.list.default(tagName).$devData;
 	}
 	internal.space.initModel = function(root, elem){
 		const name = elem.getAttribute('name');
@@ -80,6 +84,9 @@ else{
 			return space.modelFunc[name].push([elem, name, root.sf$space]);
 
 		ModelInit(elem, name, root.sf$space);
+
+		if(SFOptions.devMode && space != null)
+			elem.model.$el.$devData ??= space.list.default(name).$el.$devData;
 	};
 }
 
