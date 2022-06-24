@@ -687,7 +687,7 @@ function defineComponent(name){
 	if(name.replace(/[^\w-]+/g, '').length !== len)
 		return console.error("Please use '-' and latin character when defining component tags");
 
-	class Copy extends SFComponent{}
+	class Copy extends SFComponent{static sf$c = true;}
 
 	if(window.sf$proxy)
 		Copy.constructor = window.opener.Function;
