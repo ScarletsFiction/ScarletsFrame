@@ -233,18 +233,19 @@ export function syntheticTemplate(element, template, property, item, asyncing){
 		return false;
 	// else: Update all binding
 
+	const repeatListIndex = element.sf$repeatListIndex;
+	if(repeatListIndex !== void 0)
+		item = element.model || item;
+
 	if(changesReference.parsed === void 0){
-		if(template.parse.length !== 0)
+		if(template.parse.length !== 0){
 			changesReference.parsed = new Array(template.parse.length);
+			changes = void 0;
+		}
 		else changesReference.parsed = emptyArray;
 	}
 
 	const { parsed } = changesReference;
-	const repeatListIndex = element.sf$repeatListIndex;
-
-	if(repeatListIndex !== void 0)
-		item = element.model || item;
-
 	if(!asyncing
 	   && template.parse.length !== 0
 	   && templateExec(template.parse, item, changes, parsed, repeatListIndex) === false)
