@@ -7,6 +7,8 @@ export function handleSFSlot(model, element){
 		let Slot = slotList[i];
 
 		let target = Slot.getAttribute('for');
+		if(target == null) continue;
+
 		Slot.removeAttribute('for');
 
 		let parent = Slot.parentNode;

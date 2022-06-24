@@ -1279,7 +1279,8 @@ function onTracedChanges(name, property, old, now, isFunc){
 	if(window.sf._debugTrace) debugger;
 }
 
-window.sf._debugTrace = false;
+if(window.sf != null)
+	window.sf._debugTrace = false;
 
 initElement();
 function initElement(){

@@ -69,8 +69,10 @@ else{
 		let space = root instanceof Function ? root : root.sf$space;
 		Component.new(tagName, elem, $item, space, asScope);
 
-		if(SFOptions.devMode && space.Space != null)
+		if(SFOptions.devMode && space.Space != null){
+			elem.sf$collection ??= space.Space.list.default(tagName);
 			elem.sf$collection.$devData ??= space.Space.list.default(tagName).$devData;
+		}
 	}
 	internal.space.initModel = function(root, elem){
 		const name = elem.getAttribute('name');
