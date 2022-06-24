@@ -1,4 +1,4 @@
-import {model, component, language} from "../index.dev.js";
+import {model, component, language, $} from "../index.dev.js";
 import {ModelInit} from "../sf-model/a_model.js";
 import {adder, minimalTest, windowTest} from "./t-shared.js";
 
@@ -148,6 +148,22 @@ component('comp-bind-test', function(My){
 model('components', function(My){
 	My.items = [1];
 	My.test = 'this must getting changed'+adder;
+
+	let temp = '<div>slot ok</div>';
+	if(window.vulTest){
+		My.test = adder;
+		temp = '<div>slot ok {{ test }}.</div> {{ test }} .<i></i>';
+	}
+
+	My.slot1 = $(temp)[0];
+	My.slot2 = $(temp)[0];
+	My.slot3 = $(temp)[0];
+	My.slot4 = $(temp)[0];
+
+	setTimeout(() => {
+		if(document.querySelector('sf-slot') != null) console.log("sf-slot was not filled ❌", document.querySelector('sf-slot'));
+	}, 4000);
+
 	My.handleClick = function(e){
 		console.log('element click', e.target || '❌');
 	}

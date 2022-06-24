@@ -33,6 +33,18 @@ component('comp-test', {extend: InheritComponent}, (My, root, item)=>{
 	My.item = item;
 	My.tries = [1,2,3+adder];
 	My.data = 'zxc'+adder;
+
+	let temp = '<div>slot ok</div>';
+	if(window.vulTest){
+		My.test = adder;
+		temp = '<div>slot ok {{ test }}.</div> {{ test }} .<i></i>';
+	}
+
+	My.slot1 = $(temp)[0];
+	My.slot2 = $(temp)[0];
+	My.slot3 = $(temp)[0];
+	My.slot4 = $(temp)[0];
+
 	My.select = function(zx){
 		console.log('My.super returning', My.super(zx));
 

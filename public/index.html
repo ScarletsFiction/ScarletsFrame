@@ -333,15 +333,23 @@
     <sf-m name="components" id='components'>
       <div id="nyam" @click="handleClick" test="{{ test }}">
        <a @click="clickOK">test click</a><br>
+       <sf-slot for="slot1"></sf-slot>
        <comp-test id="henlos">
           <input type="text" sf-bind="data"/>
           <span sf-lang="test.complex">custom {{data}} <b>{{item}}</b> here</span>
           <span sf-each="num in tries">{{num}},</span>
+          <sf-slot for="slot1"></sf-slot>
           <comp-test id="deepTest">
             Deep repeat yeah
             <comp-test id="deepRepeat" style="display:inline-block" sf-each="item in tries"></comp-test>
           </comp-test>
+          <div><sf-slot for="slot3"></sf-slot></div>
+          <sf-slot for="slot2"></sf-slot>
+          <div><sf-slot for="slot4"></sf-slot></div>
        </comp-test>
+       <div><sf-slot for="slot3"></sf-slot></div>
+       <sf-slot for="slot2"></sf-slot>
+       <div><sf-slot for="slot4"></sf-slot></div>
        <comp-test id="async"></comp-test>
        <comp-test id="repeat" sf-each="item in items"></comp-test>
      </div>
