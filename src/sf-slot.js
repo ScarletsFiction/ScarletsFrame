@@ -16,13 +16,13 @@ export function handleSFSlot(model, element){
 
 		target = parsePropertyPath(target);
 
-		model = deepProperty(model, target.slice(0, -1))
+		let model_ = deepProperty(model, target.slice(0, -1))
 		target = target.pop();
 
-		let ref = model[target];
-		let refCallback = model[`on$${target}`];
+		let ref = model_[target];
+		let refCallback = model_[`on$${target}`];
 
-		Object.defineProperty(model, target, {
+		Object.defineProperty(model_, target, {
 			get: ()=> ref,
 			set: val => {
 				if(val == null){ // Rollback to empty sf-slot element
@@ -54,7 +54,7 @@ export function handleSFSlot(model, element){
 						usedElement = list[0];
 					}
 				}
-				else return Object.assign(model, val); // Assign all properties to model
+				else return Object.assign(model_, val); // Assign all properties to model
 
 				refCallback !== void 0 && refCallback(val);
 				ref = val;
@@ -62,6 +62,6 @@ export function handleSFSlot(model, element){
 		});
 
 		// Refresh it
-		model[target] = ref;
+		model_[target] = ref;
 	}
 }
