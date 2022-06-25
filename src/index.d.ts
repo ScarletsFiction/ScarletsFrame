@@ -26,6 +26,7 @@ export class DOMList extends Array<Element> {
 	attr(name: string, value?: string): DOMList;
 	removeAttr(name: string): DOMList;
 	css(name: string, value?: string): DOMList;
+	css(props: {[key: string]: string}): DOMList;
 	on(event: string, selector: string, callback: Function, options?: object): DOMList;
 	on(event: string, options: object, callback: Function): DOMList;
 	on(event: string, callback: Function): DOMList;
