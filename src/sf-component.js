@@ -670,6 +670,11 @@ class SFComponent extends HTMLElement{
 		const model = this.model;
 		model.$el = model.$el.push(element);
 	}
+
+	cloneFrame(asScope){
+		if(this.isConnected === false) return this;
+		return new this.constructor(this.model, this.sf$space, asScope);
+	}
 }
 
 if(window.sf$proxy)
