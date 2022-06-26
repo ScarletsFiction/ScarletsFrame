@@ -364,7 +364,7 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 	else index = newObj.$el.length;
 
 	if(namespace !== void 0)
-		newObj.$space = namespace;
+		newObj.$space ??= namespace;
 
 	let reusing = void 0;
 	if(index === 0 && newObj.destroy !== false){

@@ -32,7 +32,7 @@ export function ModelInit(el, modelName, namespace){
 	model.$el = model.$el.push(el);
 
 	if(namespace !== void 0)
-		model.$space = namespace;
+		model.$space ??= namespace;
 
 	if(model.sf$internal === void 0){
 		Object.defineProperty(model, 'sf$internal', {configurable:true, value:{
