@@ -34,7 +34,7 @@ export var sfRegex = {
 
 	repeatedList:/(.*?) in (.*?)$/,
 	itemsObserve:/\b(_model_|_modelScope)\.([\w$_\['"`\].]+)/g,
-	parsePropertyPath:/(?:\[(['"`\w$_]+)\]|\.([\w$_]+))/g,
+	parsePropertyPath:/(?:\.([\w$_]+)|\[((['"`])(?:\\\3|.)*?\3)\]|\[(\d+)\])/g,
 	getSingleMask:['([^\\w$_.]|^)','([^\\w$_:]|$)'], //gm
 	getScopeList:['(?:[^\\w$_.]|^)(',')(?:[^\\w$_:]|$)'], //gm
 

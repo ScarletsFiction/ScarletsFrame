@@ -9,23 +9,14 @@ export function parsePropertyPath(str){
 		return temp;
 	}
 
-	temp.unshift(str.replace(sfRegex.parsePropertyPath, function(full, g1, g2){
-		if(g1 !== void 0){
-			if(isNaN(g1) === false)
-				g1 = Number(g1);
-			else if(g1.slice(0, 1) === '"' || g1.slice(0, 1) === "'")
-				g1 = g1.slice(1, -1);
-			else{
-				console.error(unsupportedDynamic, str);
-				// temp.hasDynamic = true;
-				// g1 = `@${g1}`;
-			}
+	temp.unshift(str.replace(sfRegex.parsePropertyPath, function(full, direct, inQuote, quote, useIndex){
+		if(direct !== void 0)
+			temp.push(direct);
+		else if(useIndex !== void 0)
+			temp.push(Number(useIndex));
+		else if(inQuote !== void 0)
+			temp.push(inQuote.slice(1, -1));
 
-			temp.push(g1);
-			return '';
-		}
-
-		temp.push(g2);
 		return '';
 	}).trim());
 
