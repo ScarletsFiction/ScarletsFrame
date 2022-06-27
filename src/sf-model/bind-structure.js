@@ -65,7 +65,7 @@ function createReactiveSetter(key){
 				if(bindedKey.callback){
 					var callback = bindedKey.callback;
 					for (var i = 0; i < callback.length; i++)
-						callback[i].call(this, propertyName, objValue);
+						callback[i].call(this, key, objValue);
 				}
 
 				var temp;
