@@ -395,7 +395,7 @@ export namespace component {
 }
 export namespace loader {
 	/** Called when page is loading some resource */
-	function onProgress(callback: (loaded?: number, total?: number) => void): void;
+	function onProgress(callback: (loaded?: number, total?: number) => void, persistent: Boolean): void;
 	/** Add some css to resource loading list */
 	function css(list: string[]): void;
 	/** Add some js to resource loading list */
