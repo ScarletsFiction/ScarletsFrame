@@ -416,14 +416,11 @@ class DOMList extends Array{
 					continue;
 				}
 
-				let evt;
-				try {
-					evt = new window.CustomEvent(event, {detail: data, bubbles: true, cancelable: true});
-				} catch (e) {
-					evt = document.createEvent('Event');
-					evt.initEvent(event, true, true);
-					evt.detail = data;
-				}
+				let evt = new window.CustomEvent(event, {
+					detail: data,
+					bubbles: true,
+					cancelable: true,
+				});
 
 				this[j].dispatchEvent(evt);
 			}
