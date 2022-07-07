@@ -419,6 +419,20 @@ component.new = function(name, element, $item, namespace, asScope, _fromCheck){
 		}
 	}
 
+	return initComponentElement(element, registrar, newObj, name, namespace, reusing, false);
+}
+
+function initComponentElement(element, registrar, newObj, name, namespace, reusing, isBeforeInit){
+	if(!reusing && isBeforeInit === false && newObj.beforeInit != null){
+		let temp = newObj.beforeInit();
+		if(temp.then != null && temp.finally != null){
+			temp.then(function(){
+				initComponentElement(element, registrar, newObj, name, namespace, reusing, true);
+			}).catch(console.error);
+			return element;
+		}
+	}
+
 	registrar[4] ??= createModelKeysRegex(element, newObj, null);
 
 	let forceConnectCall = false, dontPushElement = false;
