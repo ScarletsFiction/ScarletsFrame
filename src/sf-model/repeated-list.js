@@ -1648,8 +1648,9 @@ export class ElementManipulator{
 
 		for (var i = index; i < list.length; i++) {
 			const ref = list[i];
-			let temp = this.elementRef.get(ref);
+			if(ref == null) throw new Error("Can't create element from null");
 
+			let temp = this.elementRef.get(ref);
 			if(temp === void 0){
 				if(this.isComponent)
 					temp = new this.template(ref, this.namespace, this.asScope);
