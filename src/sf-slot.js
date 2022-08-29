@@ -54,7 +54,7 @@ export function handleSFSlot(model, element){
 						usedElement = list[0];
 					}
 				}
-				else return Object.assign(model_, val); // Assign all properties to model
+				else return Object.assign(model_[target], val); // Assign all properties to model
 
 				refCallback !== void 0 && refCallback(val);
 				ref = val;

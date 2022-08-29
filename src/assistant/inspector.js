@@ -1256,18 +1256,22 @@ function onTracedChanges(name, property, old, now, isFunc){
 		for (var i = 0; i < stack.length; i++) {
 			if(stack[0].includes('.model.<computed> [as ')){
 				stack.splice(0, 1);
+				i--;
 				break;
 			}
 
 			stack.splice(0, 1);
+			i--;
 		}
 	}
 	else {
 		for (var i = 0; i < stack.length; i++) {
 			stack.splice(0, 1);
+			i--;
 
 			if(stack[0].includes('.set ')){
 				stack.splice(0, 1);
+				i--;
 				break;
 			}
 		}

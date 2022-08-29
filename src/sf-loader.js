@@ -207,7 +207,7 @@ export class loader{
 		options ??= {};
 
 		let modules = new Array(list);
-		for(var i = list.length; i >= 0; i--){
+		for(var i = list.length - 1; i >= 0; i--){
 			let exist = ES6URLCache[list[i]];
 			if(exist === void 0) continue;
 
