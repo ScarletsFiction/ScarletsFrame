@@ -3,7 +3,6 @@ import {internal} from "./internal.js";
 let whenDOMReady = [];
 let whenDOMLoaded = [];
 let whenProgress = [];
-var pendingOrderedJS = [];
 let ES6URLCache = {};
 
 let promiseResolver = false;
@@ -61,11 +60,6 @@ export class loader{
 			}
 
 			loader.pendingResources.delete(url);
-		}
-
-		if(pendingOrderedJS.length !== 0){
-			if(pendingOrderedJS.length + loader.loadedContent === loader.totalContent)
-				document.head.appendChild(pendingOrderedJS.shift());
 		}
 
 		if(whenProgress.length === 0){
@@ -184,21 +178,34 @@ export class loader{
 
 		for(var i = 0; i < list.length; i++){
 			const s = document.createElement('script');
-			s.addEventListener('load', loader.f, {once:true});
-			s.addEventListener('error', loader.f, {once:true});
 			s.type = "text/javascript";
 			s.crossOrigin = "anonymous";
 			if(async) s.async = true;
 			s.src = list[i];
 
-			loader.pendingResources.add((list[i].slice(0,1) === '/' ? location.origin:'') + list[i]);
+			let tempPath = (list[i].slice(0,1) === '/' ? location.origin:'') + list[i];
+			loader.pendingResources.add(tempPath);
 
-			if(!ordered)
+			if(!ordered){
+				s.addEventListener('load', loader.f, {once:true});
+				s.addEventListener('error', loader.f, {once:true});
 				document.head.appendChild(s);
-			else pendingOrderedJS.push(s);
-		}
+			}
+			else{
+				await new Promise(resolve => {
+					function onFinish(){
+						loader.loadedContent++;
+						loader.pendingResources.delete(tempPath);
 
-		return loader.task;
+						resolve();
+					}
+
+					s.addEventListener('load', onFinish, {once:true});
+					s.addEventListener('error', onFinish, {once:true});
+					document.head.appendChild(s);
+				});
+			}
+		}
 	}
 
 	static async mjs(list, options){
