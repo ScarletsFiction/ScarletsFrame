@@ -1460,6 +1460,7 @@ export class ReactiveArray extends Array {
 	}
 
 	move(from, to, count){
+		to = to < 0 ? (this.length + to + 1) : to;
 		if(from === to) return;
 		if(count === void 0) count = 1;
 
@@ -1663,6 +1664,9 @@ export class ElementManipulator{
 
 					this.elementRef.set(ref, temp);
 				}
+
+				if(this.callback.create)
+					this.callback.create(temp);
 			}
 			else if(temp.model.$el === void 0){
 				// This is not a component, lets check if all property are equal
@@ -1685,6 +1689,9 @@ export class ElementManipulator{
 					temp.sf$repeatListIndex = i;
 					syntheticTemplate(temp, this.template, '_sfkey_', ref);
 				}
+
+				if(this.callback.create)
+					this.callback.create(temp);
 			}
 
 			if(this.elements !== void 0)
@@ -1785,7 +1792,6 @@ export class ElementManipulator{
 
 	move(from, to, count){
 		const exist = this.parentChilds || this.elements;
-
 		const overflow = this.list.length - from - count;
 		if(overflow < 0)
 			count += overflow;
@@ -1842,10 +1848,8 @@ export class ElementManipulator{
 		}
 		else this.$VSM.swap(ii, oo);
 
-		if(this.callback.update){
-			this.callback.update(exist[other], 'swap');
-			this.callback.update(exist[index], 'swap');
-		}
+		if(this.callback.update)
+			this.callback.update(exist[ii], 'swap', exist[oo]);
 	}
 
 	remove(index, item, isMap){
@@ -2030,6 +2034,9 @@ export class ElementManipulator{
 				for (var i = 0; i < elems.length; i++)
 					this.parentNode.insertBefore(elems[i], this.bound_end);
 		}
+
+		if(this.callback.update)
+			this.callback.update(null, 'reverse');
 	}
 
 	clearBinding(elemList, from, to){
