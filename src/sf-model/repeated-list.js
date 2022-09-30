@@ -1,5 +1,5 @@
-// Known bugs: using keys for repeated list won't changed when refreshed
-// - we also need to support bind into array/object index/key if specified
+// Known limitation: using keys for repeated list won't changed when refreshed
+// - should we also need to support bind into array/object if using index/key?
 //
 // Note: using .apply can be more faster than ...spread
 
@@ -1528,8 +1528,10 @@ export class ReactiveArray extends Array {
 		const overflow = this.length - length;
 		if(overflow < 0) length = length + overflow;
 
-		if(this.$EM.constructor === ElementManipulatorProxy)
+		if(this.$EM.constructor === ElementManipulatorProxy){
+			if(this.$EM.list.length === 0) return;
 			var elems = this.$EM.list[0].parentChilds || this.$EM.list[0].elements;
+		}
 		else
 			var elems = this.$EM.parentChilds || this.$EM.elements;
 
