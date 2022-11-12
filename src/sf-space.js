@@ -56,10 +56,31 @@ function createRoot_(registered, id, space){
 	SpaceScope.id = String(id);
 	SpaceScope.registered = registered;
 	SpaceScope.domList = [];
+	SpaceScope.destroy = destroySpaceScope;
 	space.modelList[id] = SpaceScope.root = {};
 	space.componentList[id] = SpaceScope.components = {};
 
 	return SpaceScope;
+}
+
+function destroySpaceScope(){
+	let space = this.Space;
+
+	for(var keys in this.root){
+		let scope = this.root[keys];
+		scope.$el.remove();
+	}
+
+	for(var keys in this.components){
+		let scopes = this.components[keys];
+		for (let i=0; i < scopes.length; i++) {
+			scopes[i].$el.remove();
+		}
+	}
+
+	delete space.componentList[this.id];
+	delete space.modelList[this.id];
+	delete space.list[this.id];
 }
 
 if(window.sf$proxy)
@@ -223,21 +244,8 @@ export class Space{
 	}
 
 	destroy(){
-		for(var keys in this.root){
-			if(keys.indexOf(namespace) === 0){
-				this.root[keys].$el.remove();
-				delete this.root[keys];
-			}
-		}
-
-		for(var keys in this.components.registered){
-			if(keys.indexOf(namespace) === 0)
-				delete this.components.registered[keys];
-		}
-
-		for(var keys in internal.component){
-			if(keys.indexOf(namespace) === 0)
-				delete internal.component[keys];
+		for (let key in this.list) {
+			this.list[key].destroy();
 		}
 	}
 }
