@@ -167,6 +167,12 @@ SFDevMode = SFDevSpace.component('sf-inspector', {
 				return;
 			}
 
+			if(My.sideOpenLock){
+				for (let i=1; i <= 50; i++) {
+					delete window[`$$${i}`];
+				}
+			}
+
 			const Rect = el.getBoundingClientRect();
 			My.x = Rect.x;
 			My.y = Rect.y;
@@ -281,6 +287,17 @@ SFDevMode = SFDevSpace.component('sf-inspector', {
 		setTimeout(function(){
 			locking = false;
 		}, 1000);
+
+		let {components, models } = My;
+		for (let i=0; i < components.length; i++) {
+			let { nested, model } = components[i];
+			window[`$$${nested + 1}`] = model;
+		}
+
+		for (let i=0; i < models.length; i++) {
+			let { nested, model } = models[i];
+			window[`$$${nested + 1}`] = model;
+		}
 	}
 });
 
