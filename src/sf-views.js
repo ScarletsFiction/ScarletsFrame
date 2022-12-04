@@ -44,7 +44,7 @@ window.addEventListener('popstate', function(ev){
 	URI.trigger();
 }, false);
 
-const cachedURL = {};
+let cachedURL = {};
 const knownKeys = ['path','url','template','templateURL','html','on','routes','beforeRoute','defaultData','cache'];
 
 internal.router = {};
