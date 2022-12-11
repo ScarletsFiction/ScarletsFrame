@@ -125,17 +125,17 @@ export class URI{
 			    URLQuery = void 0;
 
 			    if(URLHash.includes('#')){
-			      URLHash = URLHash.split('#');
-			      obj.path = URLHash.shift();
+			    	URLHash = URLHash.split('#');
+			    	obj.path = URLHash.shift() || '/';
 			    }
 			    else{
-			        obj.path = URLHash;
+			        obj.path = URLHash || '/';
 			        URLHash = void 0;
 			    }
 			}
 			// /URLPath?URLQuery#URLHash#;URLData
 			else{
-				obj.path = URLQuery[0];
+				obj.path = URLQuery[0] || '/';
 				[URLHash, URLData] = URLQuery[1].split('#;');
 
 			    if(URLHash.includes('#')){
