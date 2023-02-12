@@ -68,7 +68,7 @@ const DOMTokenListToggle = DOMTokenList.prototype.toggle;
 
 class DOMList extends Array{
 	constructor(elements){
-		if(elements === null){
+		if(elements == null){
 			super();
 			return;
 		}
@@ -179,7 +179,7 @@ class DOMList extends Array{
 	}
 	prevAll(selector){
 		if(this.length === 1)
-			return this.prev(selector);
+			return _DOMList($.prevAll(this[0], selector));
 
 		const t = [];
 		for (let i = 0; i < this.length; i++)
@@ -194,7 +194,7 @@ class DOMList extends Array{
 	}
 	nextAll(selector){
 		if(this.length === 1)
-			return this.next(selector);
+			return $.prevAll(this[0], selector, true);
 
 		const t = [];
 		for (let i = 0; i < this.length; i++)
@@ -649,7 +649,7 @@ function recreateDOMList($el, length){
 
 // ToDo: Optimize performance by using `length` check instead of `for` loop
 $.fn = DOMList.prototype;
-$.fn.add = $.fn.push;
+Object.defineProperty($.fn, 'add', {value: $.fn.push});
 
 $.findOne = function(selector, context){
 	if(context !== void 0) return context.querySelector(selector);
