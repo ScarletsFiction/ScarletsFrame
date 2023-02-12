@@ -96,8 +96,10 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 					}
 					else if(obj.$EM.constructor === ElementManipulatorProxy)
 						obj.$EM.list.length = 0;
-					else if(obj.$size === void 0 && obj.$length === void 0)
+					else if(obj.$size === void 0 && obj.$length === void 0){
 						delete obj.$EM;
+						resetReactiveProto(obj);
+					}
 				}
 
 				if(isUniqList)
@@ -146,8 +148,11 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 							temp.splice(a, 1);
 					}
 
-					if(temp.length === 0)
-						EM = bindList[i].bindList.$EM = void 0;
+					if(temp.length === 0){
+						let obj = bindList[i].bindList;
+						EM = obj.$EM = void 0;
+						resetReactiveProto(obj);
+					}
 				}
 
 				if(EM === void 0)
@@ -211,6 +216,18 @@ export function removeModelBinding(ref, isDeep, isLazy, isUniqList, ignoreInElem
 		if(model !== void 0)
 			removeModelBinding(model, true, isLazy, path === 'sf$uniqList', ignoreInElement);
 	}
+}
+
+function resetReactiveProto(obj){
+	// reset prototype
+	if(obj._$sfReactive === ReactiveArray)
+		Object.setPrototypeOf(obj, Array.prototype);
+	else if(obj._$sfReactive === ReactiveMap)
+		Object.setPrototypeOf(obj, Map.prototype);
+	else if(obj._$sfReactive === ReactiveSet)
+		Object.setPrototypeOf(obj, Set.prototype);
+	else if(obj._$sfReactive === PropertyList)
+		Object.setPrototypeOf(obj, Object.prototype);
 }
 
 
