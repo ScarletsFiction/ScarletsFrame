@@ -1118,8 +1118,9 @@ export class ReactiveArray extends Array {
 
 	pop(){
 		this.$EM.remove(this.length - 1);
+		let val = super.pop();
 		if(this.$length !== void 0) this.$length();
-		return super.pop();
+		return val;
 	}
 
 	push(){

@@ -1181,7 +1181,9 @@ SFDevSpace.addModelView = function(titles, model, ev, viewerType, dontSave=false
 
 		if(args.length !== 0){
 			const len = args.length;
-			args = args.toString().split(')')[0].split('(')[1] || '...'+len;
+			args = args.toString().split('\n')[0];
+			if(args.includes('=>') && !args.includes('(')) args = '('+args.replace(/^async /m, '').replace(/ ?=>/, ')');
+			args = args.split(')')[0].split('(')[1] || '...'+len;
 		}
 		else args = '';
 
