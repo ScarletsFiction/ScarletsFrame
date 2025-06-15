@@ -1,7 +1,7 @@
 {
   "name": "scarletsframe",
   "description": "A frontend framework that can help you write a simple web structure",
-  "version": "0.35.26",
+  "version": "0.35.27",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScarletsFiction/ScarletsFrame.git"
