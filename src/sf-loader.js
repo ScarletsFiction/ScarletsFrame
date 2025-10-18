@@ -241,16 +241,29 @@ export class loader{
 
 			loader.pendingResources.add((url.slice(0,1) === '/' ? location.origin:'') + url);
 
-			waits[i] = async function(){
+			let timeout = null;
+			waits[i] = new Promise(async resolve => {
+				let forcedFinish = false;
 				try{
-					modules[i] = ES6URLCache[url] = await import(url);
+					timeout = setTimeout(() => { // Rorce resolve
+						forcedFinish = true;
+						console.warn(`await import("${url}") timed out`);
+						loader.f(url);
+						resolve();
+					}, loader.timeout || 60e3);
+
+					modules[i] = ES6URLCache[url] ??= await import(url);
 				} finally {
+					if(forcedFinish) return;
+
+					clearTimeout(timeout);
 					loader.f(url); // Call when finished
+					resolve();
 				}
-			}();
+			});
 
 			if(options.ordered)
-				await waits[i]();
+				await waits[i];
 		}
 
 		if(!options.ordered)

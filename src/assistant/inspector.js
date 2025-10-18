@@ -848,7 +848,7 @@ SFDevSpace.component('sf-model-viewer', function(My, include){
 							let path = v+'_path';
 							if(current.template[path] != null){
 								let list = current.template[path];
-	
+
 								for (let i = 0; i < list.length; i++) {
 									let item = list[i];
 									if(item[item.length-1] === propName){
@@ -1367,11 +1367,11 @@ function initElement(){
 						const {name, nested, modelEl, model, ref} = frame;
 						console.groupCollapsed(
 						    (nested !== 0 ? `%c>> Parent frame (${nested})%c > ` : "%c>> Clicked frame%c > ") + name
-						    , 'color:yellow', 'color:lightgreen',
-							`\n${modelEl.sf$collection ? 'Component' : 'Model'}:`, model,
-							"\nElement:", modelEl,
-							"\nReferences:", ref
+						    , 'color:yellow', 'color:lightgreen'
 						);
+						console.log(`${modelEl.sf$collection ? 'Component' : 'Model'}:`, model,
+							"\nElement:", modelEl,
+							"\nReferences:", ref)
 					}
 
 					for (var i = 0; i < frameList.length; i++)
